@@ -21,31 +21,22 @@ describe("always-run invariant registry", () => {
     expect(tracked.value.warmRuntimeTargetMs).toBe(60_000);
     expect(tracked.value.entries.map((entry) => entry.id)).toEqual([
       "protected-integrity",
-      "architecture-ownership",
-      "canonical-encoding",
-      "fixed-tick-action-neutrality",
-      "save-replay-smoke-integrity",
-      "standard-origin-neutrality",
-      "node-worker-technical-parity",
-      "public-protocol-compatibility",
+      "orchestrator-schema-integrity",
+      "orchestrator-policy-integrity",
       "fail-closed-evidence",
     ]);
     expect(
       tracked.value.entries.find(
-        (entry) => entry.id === "standard-origin-neutrality",
-      ),
-    ).toMatchObject({
-      testFile: "packages/simulation/src/authorization.test.ts",
-      testTitle:
-        "is chunk deterministic and gives human, bot, and replay callers identical economics",
-    });
+        (entry) => entry.id === "protected-integrity",
+      )?.ownerPaths,
+    ).toEqual(["PROJECT_GOAL.md", "evals/", "scripts/verify.mjs"]);
     expect(
       tracked.value.entries.find(
-        (entry) => entry.id === "node-worker-technical-parity",
+        (entry) => entry.id === "fail-closed-evidence",
       )?.ownerPaths,
     ).toEqual([
-      "apps/web/src/worker/simulation.worker.ts",
-      "apps/headless/src/smoke.ts",
+      "tools/milestone-orchestrator/src/verifier.ts",
+      "tools/evidence.mjs",
     ]);
 
     const bytes = await readFile(tracked.absolutePath);

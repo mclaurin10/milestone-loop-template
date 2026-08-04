@@ -7,7 +7,7 @@
   "mandatoryExpectedCheckIds": [
     "test-unit",
     "test-unit-migrations",
-    "standard-utility-construction",
-    "authorization-simulation"
+    "domain-construction-standard",
+    "domain-simulation"
   ]
 }

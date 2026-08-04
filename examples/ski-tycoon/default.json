@@ -1,0 +1,99 @@
+{
+  "schemaVersion": "1.3.0",
+  "project": {
+    "name": "Ski Tycoon",
+    "authorityFile": "SKI_TYCOON_GOAL.md",
+    "verticalSpine": {
+      "minimumCategories": 4,
+      "categoryPatterns": [
+        "\\blifts?\\b",
+        "\\btrails?\\b",
+        "\\bguests?\\b",
+        "\\b(?:tickets?|pricing)\\b",
+        "\\b(?:snow|weather|avalanche)\\b",
+        "\\bstaff\\b",
+        "\\b(?:transport|parking|town)\\b",
+        "\\b(?:environment|watershed|wildlife)\\b"
+      ]
+    }
+  },
+  "targetBranch": "main",
+  "statePath": "artifacts/orchestrator/state/state.json",
+  "artifactRoot": "artifacts/orchestrator/runs",
+  "workspaceRoot": "artifacts/orchestrator/workspaces",
+  "workerSandbox": "workspace-write",
+  "plannerSandbox": "read-only",
+  "reviewerSandbox": "read-only",
+  "approvalPolicy": "on-request",
+  "networkAccessEnabled": false,
+  "preserveFailedWorkspaces": true,
+  "cleanupCompletedWorkspaces": true,
+  "evidenceRetention": {
+    "artifactRoot": "artifacts",
+    "keepRecentRuns": 20
+  },
+  "hiddenValidationEnabled": false,
+  "agentPolicy": {
+    "schemaVersion": "1.0.0",
+    "sdk": {
+      "package": "@openai/codex-sdk",
+      "version": "0.146.0",
+      "maxEffortTransport": "thread-option-runtime-compatibility"
+    },
+    "execution": {
+      "maximumConcurrentAgentInvocations": 1,
+      "proactiveDelegation": false,
+      "ultraAllowed": false
+    },
+    "roles": {
+      "planner": {
+        "model": "gpt-5.6-sol",
+        "reasoningEffort": "max"
+      },
+      "feature-worker-initial": {
+        "model": "gpt-5.6-sol",
+        "reasoningEffort": "xhigh"
+      },
+      "feature-worker-escalated": {
+        "model": "gpt-5.6-sol",
+        "reasoningEffort": "max"
+      },
+      "reviewer": {
+        "model": "gpt-5.6-sol",
+        "reasoningEffort": "max"
+      },
+      "lightweight-reporting": {
+        "model": "gpt-5.6-terra",
+        "reasoningEffort": "medium"
+      }
+    },
+    "workerEscalation": {
+      "substantiveFailureAttempts": 2,
+      "repeatedAcceptanceCriterionFailures": 2,
+      "replacementThreadOnPolicyChange": true
+    },
+    "overrides": []
+  },
+  "limits": {
+    "attemptsPerMilestone": 3,
+    "consecutiveInfrastructureFailures": 3,
+    "wallClockMs": 21600000,
+    "codexInvocations": 12,
+    "tokenBudget": 3000000,
+    "milestonesPerInvocation": 3,
+    "codexTurnMs": 3600000,
+    "commandMs": 1800000,
+    "hiddenValidationCooldownMs": 604800000,
+    "plannerProposalAttempts": 2,
+    "maximumPermittedPaths": 12,
+    "maximumAcceptanceCriteria": 12,
+    "maximumEstimatedFiles": 30
+  },
+  "protectedPaths": [
+    "SKI_TYCOON_GOAL.md",
+    "evals/ACCEPTANCE.md",
+    "evals/acceptance-manifest.json",
+    "evals/HIDDEN_VALIDATION_PROTOCOL.md",
+    "evals/immutable-contract-lock.json"
+  ]
+}

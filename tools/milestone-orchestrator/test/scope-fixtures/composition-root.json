@@ -6,8 +6,8 @@
   "expectedUnknownPaths": [],
   "mandatoryExpectedCheckIds": [
     "test-unit",
-    "standard-utility-construction",
-    "construction-resources",
-    "authorization-browser"
+    "domain-construction-standard",
+    "domain-resources",
+    "domain-browser"
   ]
 }

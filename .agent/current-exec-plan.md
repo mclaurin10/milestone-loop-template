@@ -34,7 +34,7 @@ Measured remediation now passes all fifteen reconciliation tests in 16.09 second
 
 - D-031 clean baseline commit `1a4412d833194c4565f6b01914b78d305f8989ae` proves one communications corridor through eighteen normal actions, exact Construction-v2/Standard-v5 migration, Construction-v3 completion, root-derived registration, one-tick-later service, save/load/replay/origin convergence, and production Worker parity.
 - The current Standard-v6 boundary has one connected communications service. Power, sewage, and water remain `connection-required`; the operations-base target remains planned demand rather than a facility.
-- `verify:standard-utility-construction`, `verify:utility-networks`, `verify:authorization-simulation`, and `verify:authorization-browser` own the compatibility seams that must remain exact.
+- `verify:domain-construction-standard`, `verify:domain-networks`, `verify:domain-simulation`, and `verify:domain-browser` own the compatibility seams that must remain exact.
 - D-032 governance tooling provides non-authoritative verification tiers, invariants, telemetry, shadow affected-scope evidence, read-only inventory, integrated-proposal enforcement, and resumable reconciliation. Its exact final empirical benchmark and state adoption are post-commit evidence, not facts asserted by this tracked plan.
 - At the tracked handoff boundary, `.agent/next-milestone.json` is schema `1.1.0`, policy-accepted in readiness, and has no implementation attempt or product commit.
 
@@ -66,10 +66,10 @@ Run focused tests during implementation, then require these proposal-owned comma
 
 ```powershell
 pnpm verify:standard-operations-base-utilities
-pnpm verify:standard-utility-construction
-pnpm verify:utility-networks
-pnpm verify:authorization-simulation
-pnpm verify:authorization-browser
+pnpm verify:domain-construction-standard
+pnpm verify:domain-networks
+pnpm verify:domain-simulation
+pnpm verify:domain-browser
 pnpm test:unit
 pnpm verify
 ```

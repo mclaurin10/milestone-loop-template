@@ -1,0 +1,192 @@
+{
+  "schemaVersion": "verification-manifest.v1",
+  "milestoneId": "d032-loop-efficiency-recommissioning",
+  "objective": "Recommission the autonomous loop with tiered non-authoritative verification, representative invariants, honest telemetry, shadow scope selection, non-destructive evidence inventory, vertical milestone policy, recoverable controller-boundary reconciliation, an empirical before/after benchmark, and a dependency-valid next proposal without weakening exact readiness closure.",
+  "exclusions": [
+    "No readiness-stage, acceptance, frozen-authority, or success-threshold change.",
+    "No active selector suppression of candidate or milestone checks.",
+    "No artifact or legacy-workspace deletion.",
+    "No second utility corridor, operations-base facility, visible build control, or other product implementation.",
+    "No fabricated historical planner, worker, reviewer, attempt, timing, token, or thread record."
+  ],
+  "baseCommit": "951e80d99d1dad1da8920a4ef19f07d4f104bd75",
+  "d031BaselineCommit": "1a4412d833194c4565f6b01914b78d305f8989ae",
+  "focusedCommands": [
+    {
+      "id": "test-invariants",
+      "argv": ["pnpm", "test:invariants"],
+      "tiers": ["iteration", "candidate", "milestone"],
+      "expectedArtifactKinds": ["invariant-suite-report"]
+    },
+    {
+      "id": "test-unit-fast",
+      "argv": ["pnpm", "test:unit:fast"],
+      "tiers": ["candidate", "milestone"],
+      "expectedArtifactKinds": ["fast-unit-vitest-report", "unit-partition-report"]
+    },
+    {
+      "id": "test-unit-migrations",
+      "argv": ["pnpm", "test:unit:migrations"],
+      "tiers": ["milestone"],
+      "expectedArtifactKinds": [
+        "migration-unit-vitest-report",
+        "unit-partition-report"
+      ]
+    },
+    {
+      "id": "test-orchestrator",
+      "argv": ["pnpm", "test:orchestrator"],
+      "tiers": ["candidate", "milestone"],
+      "expectedArtifactKinds": ["orchestrator-vitest-report"]
+    },
+    {
+      "id": "format-check",
+      "argv": ["pnpm", "format:check"],
+      "tiers": ["candidate", "milestone"],
+      "expectedArtifactKinds": ["format-report"]
+    },
+    {
+      "id": "lint",
+      "argv": ["pnpm", "lint"],
+      "tiers": ["candidate", "milestone"],
+      "expectedArtifactKinds": ["lint-report"]
+    },
+    {
+      "id": "lint-architecture",
+      "argv": ["pnpm", "lint:architecture"],
+      "tiers": ["candidate", "milestone"],
+      "expectedArtifactKinds": ["architecture-report"]
+    },
+    {
+      "id": "typecheck",
+      "argv": ["pnpm", "typecheck"],
+      "tiers": ["candidate", "milestone"],
+      "expectedArtifactKinds": ["typecheck-report"]
+    },
+    {
+      "id": "build",
+      "argv": ["pnpm", "build"],
+      "tiers": ["candidate", "milestone"],
+      "expectedArtifactKinds": ["build-report"]
+    },
+    {
+      "id": "standard-utility-construction",
+      "argv": ["pnpm", "verify:standard-utility-construction"],
+      "tiers": ["milestone"],
+      "expectedArtifactKinds": [
+        "standard-utility-construction-proof",
+        "independent-standard-utility-construction-proof",
+        "standard-utility-construction-vitest-report",
+        "standard-utility-construction-worker-parity-report",
+        "playwright-report",
+        "browser-diagnostics",
+        "standard-utility-construction-verification-report"
+      ]
+    },
+    {
+      "id": "construction-resources",
+      "argv": ["pnpm", "verify:construction-resources"],
+      "tiers": ["milestone"],
+      "expectedArtifactKinds": []
+    },
+    {
+      "id": "utility-networks",
+      "argv": ["pnpm", "verify:utility-networks"],
+      "tiers": ["milestone"],
+      "expectedArtifactKinds": []
+    },
+    {
+      "id": "utility-planning",
+      "argv": ["pnpm", "verify:utility-planning"],
+      "tiers": ["milestone"],
+      "expectedArtifactKinds": []
+    },
+    {
+      "id": "utility-entitlement",
+      "argv": ["pnpm", "verify:utility-entitlement"],
+      "tiers": ["milestone"],
+      "expectedArtifactKinds": []
+    },
+    {
+      "id": "standard-utility-entitlement",
+      "argv": ["pnpm", "verify:standard-utility-entitlement"],
+      "tiers": ["milestone"],
+      "expectedArtifactKinds": []
+    },
+    {
+      "id": "development-simulation",
+      "argv": ["pnpm", "verify:development-simulation"],
+      "tiers": ["milestone"],
+      "expectedArtifactKinds": []
+    },
+    {
+      "id": "authorization-simulation",
+      "argv": ["pnpm", "verify:authorization-simulation"],
+      "tiers": ["milestone"],
+      "expectedArtifactKinds": []
+    },
+    {
+      "id": "authorization-browser",
+      "argv": ["pnpm", "verify:authorization-browser"],
+      "tiers": ["milestone"],
+      "expectedArtifactKinds": []
+    }
+  ],
+  "requiredProtectedPaths": [
+    "SKI_TYCOON_GOAL.md",
+    "AGENTS.md",
+    "evals/ACCEPTANCE.md",
+    "evals/acceptance-manifest.json",
+    "evals/HIDDEN_VALIDATION_PROTOCOL.md",
+    "evals/immutable-contract-lock.json",
+    ".agent/readiness-profile-activated.json",
+    "scripts/verify.mjs",
+    "pnpm-lock.yaml",
+    "docs/audits/LOOP_EFFECTIVENESS_AND_EFFICIENCY_AUDIT.md"
+  ],
+  "requiredInvariantSuiteId": "d032-core-invariants.v1",
+  "requiredBenchmarkMatrixId": "d032-loop-efficiency.v1",
+  "requiredReconciliationReviewChecks": [
+    "completeCommitLineage",
+    "protectedIntegrity",
+    "noFabricatedHistory",
+    "d031ScopeCompliance",
+    "d031MigrationIntegrity",
+    "d031NodeWorkerParity",
+    "commandOwnedEvidenceValidity",
+    "verificationTierNonAuthority",
+    "invariantSuiteQuality",
+    "selectorShadowOnlyEnforcement",
+    "telemetryNonSemanticBehavior",
+    "artifactContainmentAndNonDeletion",
+    "stateMigrationAndRecovery",
+    "verticalMilestonePolicy",
+    "dependencyValidNextProposal",
+    "noScopeReductionOrSuspiciousShortcut"
+  ],
+  "expectedArtifactKinds": [
+    "invariant-suite-report",
+    "fast-unit-vitest-report",
+    "migration-unit-vitest-report",
+    "unit-partition-report",
+    "orchestrator-vitest-report",
+    "standard-utility-construction-proof",
+    "independent-standard-utility-construction-proof",
+    "standard-utility-construction-worker-parity-report",
+    "browser-diagnostics",
+    "standard-utility-construction-verification-report"
+  ],
+  "authorityChanges": {
+    "readinessStagesChanged": false,
+    "acceptanceChanged": false,
+    "defaultProfileChanged": false,
+    "exactVerifyCommandChanged": false
+  },
+  "nextProposalPath": ".agent/next-milestone.json",
+  "finalExactVerification": {
+    "argv": ["pnpm", "verify"],
+    "requiresNoArguments": true,
+    "profileId": "readiness",
+    "selectedByOverride": false
+  }
+}

@@ -275,7 +275,7 @@ describe("milestone policy", () => {
       objective:
         "Expose the completed utility kernel through one Standard public footprint action.",
       rationale:
-        "The immediate consumer turns the bounded precursor into one inspectable player consequence.",
+        "The immediate consumer turns the bounded precursor into one inspectable user consequence.",
       dependencies: [source.id],
       acceptanceCriteria: [
         {
@@ -290,15 +290,15 @@ describe("milestone policy", () => {
     ).toMatchObject({ status: "accepted", findings: [] });
   });
 
-  it("rejects a multi-goal or whole-skiing-spine worker attempt", () => {
+  it("rejects a multi-goal or whole-product-spine worker attempt", () => {
     const decision = evaluateProposal(
       validFeatureProposal({
         objective:
-          "Build lifts, trails, guest pricing, snow weather, staff, and town transport in one attempt.",
+          "Build catalog, checkout, billing, search, inventory, and shipping in one attempt.",
         verticalSlice: {
           ...validFeatureProposal().verticalSlice!,
           userGoal:
-            "Build the utility footprint and then operate the entire resort.",
+            "Build the utility footprint and then operate the entire platform.",
         },
       }),
       validState(process.cwd()),

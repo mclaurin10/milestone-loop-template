@@ -15,8 +15,8 @@ afterEach(async () => {
 });
 
 describe("orchestrator configuration migration", () => {
-  it.each(["1.0.0", "1.1.0"])(
-    "migrates %s to 1.2.0 without changing policy facts",
+  it.each(["1.0.0", "1.1.0", "1.2.0"])(
+    "migrates %s to 1.3.0 without changing policy facts",
     async (schemaVersion) => {
       const root = await mkdtemp(join(tmpdir(), "milestone-loop-config-"));
       temporaryDirectories.push(root);
@@ -27,13 +27,22 @@ describe("orchestrator configuration migration", () => {
         schemaVersion,
       } as Record<string, unknown>;
       if (schemaVersion === "1.0.0") delete legacy["evidenceRetention"];
+      delete legacy["project"];
       await writeFile(path, `${JSON.stringify(legacy, null, 2)}\n`);
 
       const loaded = await loadConfig(root, path);
       expect(loaded).toEqual({
         ...current,
-        schemaVersion: "1.2.0",
+        schemaVersion: "1.3.0",
         evidenceRetention: current.evidenceRetention,
+        project: {
+          name: "Example Project",
+          authorityFile: "PROJECT_GOAL.md",
+          verticalSpine: {
+            minimumCategories: 4,
+            categoryPatterns: [],
+          },
+        },
         protectedPaths: [...current.protectedPaths, "legacy-config.json"],
       });
     },

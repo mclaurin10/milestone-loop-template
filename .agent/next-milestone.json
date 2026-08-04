@@ -65,10 +65,10 @@
   ],
   "requiredTests": [
     "pnpm verify:standard-operations-base-utilities",
-    "pnpm verify:standard-utility-construction",
-    "pnpm verify:utility-networks",
-    "pnpm verify:authorization-simulation",
-    "pnpm verify:authorization-browser",
+    "pnpm verify:domain-construction-standard",
+    "pnpm verify:domain-networks",
+    "pnpm verify:domain-simulation",
+    "pnpm verify:domain-browser",
     "pnpm test:unit",
     "pnpm verify"
   ],
@@ -80,27 +80,27 @@
       "parser": "exit-code"
     },
     {
-      "id": "standard-utility-construction-compatibility",
+      "id": "domain-construction-standard-compatibility",
       "executable": "pnpm",
-      "args": ["verify:standard-utility-construction"],
+      "args": ["verify:domain-construction-standard"],
       "parser": "exit-code"
     },
     {
       "id": "utility-network-compatibility",
       "executable": "pnpm",
-      "args": ["verify:utility-networks"],
+      "args": ["verify:domain-networks"],
       "parser": "exit-code"
     },
     {
       "id": "authorization-node-parity",
       "executable": "pnpm",
-      "args": ["verify:authorization-simulation"],
+      "args": ["verify:domain-simulation"],
       "parser": "exit-code"
     },
     {
-      "id": "authorization-browser-parity",
+      "id": "domain-browser-parity",
       "executable": "pnpm",
-      "args": ["verify:authorization-browser"],
+      "args": ["verify:domain-browser"],
       "parser": "exit-code"
     },
     {
@@ -146,7 +146,7 @@
       "standard.project.commit"
     ],
     "sharedRuleOwners": [
-      "packages/simulation/src/utility-entitlement.ts",
+      "packages/simulation/src/domain-entitlement.ts",
       "packages/simulation/src/construction.ts",
       "packages/simulation/src/utilities.ts"
     ],

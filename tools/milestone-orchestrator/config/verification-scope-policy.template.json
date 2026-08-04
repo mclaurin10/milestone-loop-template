@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "<YOUR_SCOPE_POLICY_ID>.v1",
+  "mode": "shadow-only",
+  "unknownDisposition": "fail-broad",
+  "closureSuppressionAllowed": false,
+  "browserHostScriptPatterns": [
+    "<REGEX_MATCHING_YOUR_BROWSER_VERIFICATION_SCRIPT_PATHS>"
+  ],
+  "triggerClasses": [
+    "protected-authority",
+    "canonical-encoding",
+    "shared-protocol",
+    "persistence-codec",
+    "migration",
+    "accepted-fixture",
+    "standard-state",
+    "composition-root",
+    "worker-message",
+    "package-graph",
+    "browser-host",
+    "ui-renderer",
+    "domain-local-simulation",
+    "orchestrator-evidence",
+    "documentation-only",
+    "unknown"
+  ],
+  "broadTriggerClasses": [
+    "protected-authority",
+    "canonical-encoding",
+    "shared-protocol",
+    "persistence-codec",
+    "migration",
+    "accepted-fixture",
+    "standard-state",
+    "composition-root",
+    "worker-message",
+    "package-graph",
+    "unknown"
+  ],
+  "mandatoryChecks": {
+    "protected-authority": ["<CHECK_IDS_FROM_YOUR_VERIFICATION_MANIFEST>"],
+    "canonical-encoding": ["<...>"],
+    "shared-protocol": ["<...>"],
+    "persistence-codec": ["<...>"],
+    "migration": ["<...>"],
+    "accepted-fixture": ["<...>"],
+    "standard-state": ["<...>"],
+    "composition-root": ["<...>"],
+    "worker-message": ["<...>"],
+    "package-graph": ["<...>"],
+    "browser-host": ["<...>"],
+    "ui-renderer": ["<...>"],
+    "domain-local-simulation": ["<...>"],
+    "orchestrator-evidence": ["<...>"],
+    "documentation-only": ["<...>"],
+    "unknown": ["<...>"]
+  },
+  "workspaceChecks": {
+    "<EVERY_PNPM_WORKSPACE_PACKAGE_NAME_INCLUDING_THE_ROOT>": [
+      "<CHECK_IDS_TO_RUN_WHEN_THAT_PACKAGE_CHANGES>"
+    ]
+  },
+  "graduation": {
+    "deferred": true,
+    "minimumComparisons": 30,
+    "minimumExamplesPerTrigger": 3,
+    "requiresZeroFalseNegatives": true,
+    "requiresZeroUnknowns": true,
+    "requiresDeterministicRecommendations": true,
+    "requiresMeasuredSavingsAboveNoise": true,
+    "requiresNoClosureRegression": true,
+    "requiresIndependentReview": true,
+    "requiresExplicitPolicyChange": true
+  }
+}

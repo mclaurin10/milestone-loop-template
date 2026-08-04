@@ -7,6 +7,6 @@
   "mandatoryExpectedCheckIds": [
     "test-unit",
     "test-unit-migrations",
-    "authorization-simulation"
+    "domain-simulation"
   ]
 }

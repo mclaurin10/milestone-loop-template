@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "<YOUR_INVARIANT_SUITE_ID>.v1",
+  "warmRuntimeTargetMs": 60000,
+  "serial": true,
+  "entries": [
+    {
+      "id": "protected-integrity",
+      "ownerPaths": ["<YOUR_AUTHORITY_FILE>.md", "evals/", "scripts/verify.mjs"],
+      "triggerPaths": [
+        "<YOUR_AUTHORITY_FILE>.md",
+        "AGENTS.md",
+        "evals/",
+        ".agent/",
+        "scripts/verify.mjs"
+      ],
+      "argv": ["pnpm", "verify", "--", "--stage", "contract-integrity"],
+      "expectedArtifactKinds": []
+    },
+    {
+      "id": "<YOUR_CORE_INVARIANT_ID>",
+      "ownerPaths": ["<PATH_TO_THE_FILE_THAT_OWNS_THE_INVARIANT>"],
+      "triggerPaths": ["<PATH_PREFIX_THAT_SHOULD_TRIGGER_THIS_INVARIANT>/"],
+      "testFile": "<OPTIONAL_EXACT_TEST_FILE>.test.ts",
+      "testTitle": "<OPTIONAL_EXACT_TEST_TITLE_STRING_PINNED_INSIDE_THAT_FILE>",
+      "argv": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "<OPTIONAL_EXACT_TEST_FILE>.test.ts",
+        "--fileParallelism=false"
+      ],
+      "expectedArtifactKinds": []
+    }
+  ]
+}

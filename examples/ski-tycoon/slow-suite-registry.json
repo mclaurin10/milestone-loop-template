@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "d032-explicit-migration-suites.v1",
+  "files": [
+    "packages/persistence/src/authorization-utility-construction.test.ts",
+    "packages/persistence/src/pre-utility-composition-fixtures.test.ts",
+    "packages/persistence/src/project-execution-fixtures.test.ts",
+    "packages/persistence/src/standard-v3-road-access-fixture.test.ts",
+    "packages/persistence/src/standard-v5-entitlement-fixture.test.ts"
+  ]
+}

@@ -14,8 +14,8 @@
   "mandatoryExpectedCheckIds": [
     "typecheck",
     "build",
-    "authorization-simulation",
-    "authorization-browser",
-    "standard-utility-construction"
+    "domain-simulation",
+    "domain-browser",
+    "domain-construction-standard"
   ]
 }

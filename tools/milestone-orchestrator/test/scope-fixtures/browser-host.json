@@ -4,5 +4,5 @@
   "changedPaths": ["playwright.config.ts"],
   "expectedTriggerClasses": ["browser-host"],
   "expectedUnknownPaths": [],
-  "mandatoryExpectedCheckIds": ["build", "authorization-browser"]
+  "mandatoryExpectedCheckIds": ["build", "domain-browser"]
 }

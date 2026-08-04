@@ -132,22 +132,13 @@ describe("shadow affected-scope selection", () => {
 
     expect(scopeSelectionBytes(first)).toEqual(scopeSelectionBytes(second));
     expect(first.candidate).toEqual(candidate);
-    expect(first.classifications[0]?.reverseDependentPackages).toEqual([
-      "@example/headless",
-      "@example/persistence",
-      "@example/renderer",
-      "@example/simulation",
-      "@example/ui",
-      "@example/web",
-      "example-project",
-    ]);
+    expect(first.classifications[0]?.reverseDependentPackages).toEqual([]);
     expect(first.recommendedCheckIds).toEqual(
       expect.arrayContaining([
+        "test-invariants",
         "test-unit",
-        "test-unit-migrations",
+        "typecheck",
         "build",
-        "authorization-simulation",
-        "authorization-browser",
       ]),
     );
   });

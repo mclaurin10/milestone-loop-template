@@ -12,16 +12,13 @@
   "unknownProbePaths": ["benchmark-inputs/unowned-change.probe"],
   "historical": {
     "fullSafeCheckIds": [
-      "format-check",
-      "lint",
-      "typecheck",
-      "build",
-      "test-unit",
-      "test-orchestrator"
+      "<EVERY_CHECK_ID_THE_LOOP_RAN_BEFORE_SCOPE_SELECTION_EXISTED>"
     ],
     "iterationCheckIdsByClass": {
-      "leaf-ui-only": ["format-check", "lint", "typecheck", "build"],
-      "domain-local-simulation": ["typecheck", "build", "test-unit"]
+      "leaf-ui-only": ["<HISTORICAL_ITERATION_CHECK_IDS_FOR_LEAF_UI_CHANGES>"],
+      "domain-local-simulation": [
+        "<HISTORICAL_ITERATION_CHECK_IDS_FOR_DOMAIN_LOCAL_CHANGES>"
+      ]
     }
   },
   "classes": [
@@ -29,43 +26,28 @@
       "id": "leaf-ui-only",
       "measurement": "command-workflows",
       "comparisons": ["iteration", "candidate"],
-      "paths": ["packages/ui/src/index.tsx"],
-      "mustExclude": [
-        "packages/protocol/",
-        "packages/simulation/",
-        "packages/persistence/",
-        "apps/web/src/worker/"
-      ]
+      "paths": ["<A_LEAF_UI_FILE_IN_YOUR_REPO>"],
+      "mustExclude": ["<PATH_PREFIXES_A_LEAF_UI_SELECTION_MUST_NOT_TOUCH>/"]
     },
     {
       "id": "domain-local-simulation",
       "measurement": "command-workflows",
       "comparisons": ["iteration"],
-      "paths": [
-        "packages/simulation/src/utilities.ts",
-        "packages/simulation/src/utilities.test.ts"
-      ],
-      "mustExclude": ["packages/protocol/", "packages/persistence/"]
+      "paths": ["<A_DOMAIN_LOCAL_FILE_IN_YOUR_REPO>"],
+      "mustExclude": ["<PATH_PREFIXES_A_DOMAIN_LOCAL_SELECTION_MUST_NOT_TOUCH>/"]
     },
     {
       "id": "shared-protocol-persistence",
       "measurement": "selection-expansion",
       "comparisons": ["scope-expansion"],
-      "paths": [
-        "packages/protocol/src/authorization.ts",
-        "packages/persistence/src/authorization.ts",
-        "tests/fixtures/saves/standard-authorization-save-replay-v5-domain-entitlement.json"
-      ],
+      "paths": ["<SHARED_PROTOCOL_AND_PERSISTENCE_FILES_IN_YOUR_REPO>"],
       "mustExclude": []
     },
     {
       "id": "worker-public-message",
       "measurement": "selection-expansion",
       "comparisons": ["scope-expansion"],
-      "paths": [
-        "apps/web/src/worker/simulation.worker.ts",
-        "packages/protocol/src/authorization.ts"
-      ],
+      "paths": ["<WORKER_BOUNDARY_FILES_IN_YOUR_REPO>"],
       "mustExclude": []
     },
     {

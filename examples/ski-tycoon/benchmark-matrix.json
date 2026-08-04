@@ -14,14 +14,43 @@
     "fullSafeCheckIds": [
       "format-check",
       "lint",
+      "lint-architecture",
       "typecheck",
       "build",
       "test-unit",
-      "test-orchestrator"
+      "test-orchestrator",
+      "standard-utility-construction",
+      "construction-resources",
+      "utility-networks",
+      "utility-planning",
+      "utility-entitlement",
+      "standard-utility-entitlement",
+      "development-simulation",
+      "authorization-simulation",
+      "authorization-browser"
     ],
     "iterationCheckIdsByClass": {
-      "leaf-ui-only": ["format-check", "lint", "typecheck", "build"],
-      "domain-local-simulation": ["typecheck", "build", "test-unit"]
+      "leaf-ui-only": [
+        "format-check",
+        "lint",
+        "lint-architecture",
+        "typecheck",
+        "build",
+        "test-unit",
+        "authorization-browser"
+      ],
+      "domain-local-simulation": [
+        "typecheck",
+        "build",
+        "test-unit",
+        "construction-resources",
+        "utility-networks",
+        "utility-planning",
+        "utility-entitlement",
+        "standard-utility-entitlement",
+        "development-simulation",
+        "authorization-simulation"
+      ]
     }
   },
   "classes": [
@@ -54,7 +83,7 @@
       "paths": [
         "packages/protocol/src/authorization.ts",
         "packages/persistence/src/authorization.ts",
-        "tests/fixtures/saves/standard-authorization-save-replay-v5-domain-entitlement.json"
+        "tests/fixtures/saves/standard-authorization-save-replay-v5-utility-entitlement.json"
       ],
       "mustExclude": []
     },

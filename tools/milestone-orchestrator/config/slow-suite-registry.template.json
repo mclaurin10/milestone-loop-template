@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "<YOUR_MIGRATION_SUITE_REGISTRY_ID>.v1",
+  "files": [
+    "<EVERY_EXPLICIT_MIGRATION_OR_SLOW_TEST_FILE_DISCOVERED_BY_VITEST>.test.ts"
+  ]
+}

@@ -22,7 +22,7 @@ export function validProposal(
     rationale: "The improvement removes a recurring automation obstacle.",
     dependencies: [],
     permittedPaths: ["tools/milestone-orchestrator/**"],
-    exclusions: ["No feature systems.", "No frozen authority changes."],
+    exclusions: ["No product feature work.", "No frozen authority changes."],
     acceptanceCriteria: [
       {
         id: "tooling-behavior",
@@ -86,27 +86,27 @@ export function validFeatureProposal(
     ],
     requiredTests: [
       "pnpm test:orchestrator",
-      "pnpm verify:utility-planning",
-      "pnpm verify:authorization-browser",
-      "pnpm verify:authorization-simulation",
+      "pnpm verify:domain-planning",
+      "pnpm verify:domain-browser",
+      "pnpm verify:domain-simulation",
     ],
     verificationCommands: [
       {
         id: "focused-utility",
         executable: "pnpm",
-        args: ["verify:utility-planning"],
+        args: ["verify:domain-planning"],
         parser: "exit-code",
       },
       {
         id: "browser-utility",
         executable: "pnpm",
-        args: ["verify:authorization-browser"],
+        args: ["verify:domain-browser"],
         parser: "exit-code",
       },
       {
         id: "node-worker-simulation",
         executable: "pnpm",
-        args: ["verify:authorization-simulation"],
+        args: ["verify:domain-simulation"],
         parser: "exit-code",
       },
       {
@@ -153,6 +153,23 @@ export function validConfig(
 ): OrchestratorConfig {
   return {
     schemaVersion: CONFIG_SCHEMA_VERSION,
+    project: {
+      name: "Example Project",
+      authorityFile: "PROJECT_GOAL.md",
+      verticalSpine: {
+        minimumCategories: 4,
+        categoryPatterns: [
+          "\\bcatalog(?:ue)?s?\\b",
+          "\\bcheckout\\b",
+          "\\bbilling\\b",
+          "\\bsearch\\b",
+          "\\binventory\\b",
+          "\\bshipping\\b",
+          "\\baccounts?\\b",
+          "\\bnotifications?\\b",
+        ],
+      },
+    },
     targetBranch: "main",
     statePath: "artifacts/orchestrator/state/state.json",
     artifactRoot: "artifacts/orchestrator/runs",

@@ -1,0 +1,143 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "d032-core-invariants.v1",
+  "warmRuntimeTargetMs": 60000,
+  "serial": true,
+  "entries": [
+    {
+      "id": "protected-integrity",
+      "ownerPaths": ["SKI_TYCOON_GOAL.md", "evals/", "scripts/verify.mjs"],
+      "triggerPaths": [
+        "SKI_TYCOON_GOAL.md",
+        "AGENTS.md",
+        "evals/",
+        ".agent/",
+        "scripts/verify.mjs"
+      ],
+      "argv": ["pnpm", "verify", "--", "--stage", "contract-integrity"],
+      "expectedArtifactKinds": []
+    },
+    {
+      "id": "architecture-ownership",
+      "ownerPaths": ["tools/verify-architecture.mjs", "eslint.config.mjs"],
+      "triggerPaths": ["apps/", "packages/", "tools/"],
+      "argv": ["pnpm", "lint:architecture"],
+      "expectedArtifactKinds": ["architecture-report"]
+    },
+    {
+      "id": "canonical-encoding",
+      "ownerPaths": ["packages/foundation/src/index.ts"],
+      "triggerPaths": [
+        "packages/foundation/",
+        "packages/protocol/",
+        "packages/persistence/"
+      ],
+      "argv": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "packages/foundation/src/index.test.ts",
+        "--fileParallelism=false"
+      ],
+      "expectedArtifactKinds": []
+    },
+    {
+      "id": "fixed-tick-action-neutrality",
+      "ownerPaths": ["packages/simulation/src/index.ts"],
+      "triggerPaths": ["packages/simulation/", "packages/protocol/"],
+      "argv": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "packages/simulation/src/index.test.ts",
+        "--fileParallelism=false"
+      ],
+      "expectedArtifactKinds": []
+    },
+    {
+      "id": "save-replay-smoke-integrity",
+      "ownerPaths": ["packages/persistence/src/index.ts"],
+      "triggerPaths": [
+        "packages/persistence/",
+        "packages/simulation/",
+        "packages/protocol/"
+      ],
+      "argv": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "packages/persistence/src/index.test.ts",
+        "--fileParallelism=false"
+      ],
+      "expectedArtifactKinds": []
+    },
+    {
+      "id": "standard-origin-neutrality",
+      "ownerPaths": ["packages/simulation/src/authorization.ts"],
+      "triggerPaths": [
+        "packages/simulation/src/authorization",
+        "packages/protocol/src/authorization"
+      ],
+      "testFile": "packages/simulation/src/authorization.test.ts",
+      "testTitle": "is chunk deterministic and gives human, bot, and replay callers identical economics",
+      "argv": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "packages/simulation/src/authorization.test.ts",
+        "--fileParallelism=false",
+        "--testNamePattern",
+        "is chunk deterministic and gives human, bot, and replay callers identical economics"
+      ],
+      "expectedArtifactKinds": []
+    },
+    {
+      "id": "node-worker-technical-parity",
+      "ownerPaths": [
+        "apps/web/src/worker/simulation.worker.ts",
+        "apps/headless/src/smoke.ts"
+      ],
+      "triggerPaths": [
+        "apps/web/src/worker/",
+        "apps/headless/",
+        "packages/protocol/",
+        "packages/simulation/"
+      ],
+      "argv": ["pnpm", "verify:bootstrap:simulation"],
+      "expectedArtifactKinds": []
+    },
+    {
+      "id": "public-protocol-compatibility",
+      "ownerPaths": ["tsconfig.base.json", "packages/protocol/"],
+      "triggerPaths": ["apps/", "packages/", "tests/", "tools/"],
+      "argv": ["pnpm", "typecheck"],
+      "expectedArtifactKinds": ["typecheck-report"]
+    },
+    {
+      "id": "fail-closed-evidence",
+      "ownerPaths": [
+        "tools/milestone-orchestrator/src/verifier.ts",
+        "tools/milestone-orchestrator/src/path-safety.ts"
+      ],
+      "triggerPaths": [
+        "scripts/verify.mjs",
+        "tools/evidence.mjs",
+        "tools/milestone-orchestrator/"
+      ],
+      "argv": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tools/milestone-orchestrator/src/verifier.test.ts",
+        "tools/milestone-orchestrator/src/path-safety.test.ts",
+        "--fileParallelism=false"
+      ],
+      "expectedArtifactKinds": []
+    }
+  ]
+}

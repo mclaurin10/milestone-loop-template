@@ -4,7 +4,10 @@
   "mode": "shadow-only",
   "unknownDisposition": "fail-broad",
   "closureSuppressionAllowed": false,
-  "browserHostScriptPatterns": [],
+  "browserHostScriptPatterns": [
+    "^tools/verify-(?:authorization|calendar|development|finance|standard-utility-construction|standard-utility-entitlement|utility-entitlement|utility-planning|valley|bootstrap-browser)\\.mjs$",
+    "^tools/browser-verifier-lease\\.mjs$"
+  ],
   "triggerClasses": [
     "protected-authority",
     "canonical-encoding",
@@ -47,78 +50,78 @@
       "test-invariants",
       "test-unit",
       "test-unit-migrations",
-      "domain-construction-standard",
-      "domain-resources",
-      "domain-networks",
-      "domain-planning",
-      "domain-entitlement",
-      "domain-entitlement-standard",
-      "domain-development",
-      "domain-simulation",
-      "domain-browser"
+      "standard-utility-construction",
+      "construction-resources",
+      "utility-networks",
+      "utility-planning",
+      "utility-entitlement",
+      "standard-utility-entitlement",
+      "development-simulation",
+      "authorization-simulation",
+      "authorization-browser"
     ],
     "shared-protocol": ["test-invariants", "test-unit", "typecheck", "build"],
     "persistence-codec": [
       "test-invariants",
       "test-unit",
       "test-unit-migrations",
-      "domain-construction-standard",
-      "domain-entitlement-standard",
-      "domain-simulation"
+      "standard-utility-construction",
+      "standard-utility-entitlement",
+      "authorization-simulation"
     ],
     "migration": [
       "test-invariants",
       "test-unit",
       "test-unit-migrations",
-      "domain-construction-standard",
-      "domain-entitlement-standard",
-      "domain-simulation"
+      "standard-utility-construction",
+      "standard-utility-entitlement",
+      "authorization-simulation"
     ],
     "accepted-fixture": [
       "test-invariants",
       "test-unit",
       "test-unit-migrations",
-      "domain-construction-standard",
-      "domain-entitlement-standard",
-      "domain-simulation"
+      "standard-utility-construction",
+      "standard-utility-entitlement",
+      "authorization-simulation"
     ],
     "standard-state": [
       "test-invariants",
       "test-unit",
       "typecheck",
       "build",
-      "domain-construction-standard",
-      "domain-resources",
-      "domain-networks",
-      "domain-planning",
-      "domain-entitlement",
-      "domain-entitlement-standard",
-      "domain-development",
-      "domain-simulation",
-      "domain-browser"
+      "standard-utility-construction",
+      "construction-resources",
+      "utility-networks",
+      "utility-planning",
+      "utility-entitlement",
+      "standard-utility-entitlement",
+      "development-simulation",
+      "authorization-simulation",
+      "authorization-browser"
     ],
     "composition-root": [
       "test-invariants",
       "test-unit",
       "typecheck",
       "build",
-      "domain-construction-standard",
-      "domain-resources",
-      "domain-networks",
-      "domain-planning",
-      "domain-entitlement",
-      "domain-entitlement-standard",
-      "domain-development",
-      "domain-simulation",
-      "domain-browser"
+      "standard-utility-construction",
+      "construction-resources",
+      "utility-networks",
+      "utility-planning",
+      "utility-entitlement",
+      "standard-utility-entitlement",
+      "development-simulation",
+      "authorization-simulation",
+      "authorization-browser"
     ],
     "worker-message": [
       "test-invariants",
       "typecheck",
       "build",
-      "domain-construction-standard",
-      "domain-simulation",
-      "domain-browser"
+      "standard-utility-construction",
+      "authorization-simulation",
+      "authorization-browser"
     ],
     "package-graph": [
       "test-invariants",
@@ -128,7 +131,12 @@
       "build",
       "test-unit"
     ],
-    "browser-host": ["test-invariants", "typecheck", "build", "domain-browser"],
+    "browser-host": [
+      "test-invariants",
+      "typecheck",
+      "build",
+      "authorization-browser"
+    ],
     "ui-renderer": ["test-invariants", "test-unit-fast", "build"],
     "domain-local-simulation": [
       "test-invariants",
@@ -144,8 +152,42 @@
     "unknown": ["test-invariants", "test-unit", "test-orchestrator", "build"]
   },
   "workspaceChecks": {
-    "@milestone-loop/orchestrator": ["test-orchestrator", "typecheck"],
-    "milestone-loop-template": [
+    "@ski-tycoon/foundation": ["test-invariants", "test-unit"],
+    "@ski-tycoon/headless": [
+      "typecheck",
+      "development-simulation",
+      "authorization-simulation",
+      "standard-utility-construction"
+    ],
+    "@ski-tycoon/orchestrator": ["test-orchestrator", "typecheck"],
+    "@ski-tycoon/persistence": [
+      "test-unit",
+      "test-unit-migrations",
+      "standard-utility-construction",
+      "standard-utility-entitlement",
+      "authorization-simulation"
+    ],
+    "@ski-tycoon/protocol": ["test-invariants", "test-unit", "typecheck"],
+    "@ski-tycoon/renderer": [
+      "test-unit-fast",
+      "build",
+      "authorization-browser"
+    ],
+    "@ski-tycoon/simulation": [
+      "test-unit",
+      "typecheck",
+      "standard-utility-construction",
+      "construction-resources",
+      "utility-networks",
+      "utility-planning",
+      "utility-entitlement",
+      "standard-utility-entitlement",
+      "development-simulation",
+      "authorization-simulation"
+    ],
+    "@ski-tycoon/ui": ["test-unit-fast", "build", "authorization-browser"],
+    "@ski-tycoon/web": ["typecheck", "build", "authorization-browser"],
+    "ski-tycoon": [
       "dependencies",
       "format-check",
       "lint",

@@ -27,14 +27,14 @@ describe("verification tier CLI", () => {
       parseVerificationCliArguments([
         "iteration",
         "--focused",
-        "authorization-simulation",
+        "domain-simulation",
       ]).focusedCheckIds,
-    ).toEqual(["authorization-simulation"]);
+    ).toEqual(["domain-simulation"]);
     expect(() =>
       parseVerificationCliArguments([
         "candidate",
         "--focused",
-        "authorization-simulation",
+        "domain-simulation",
       ]),
     ).toThrow(/only for iteration/i);
   });
