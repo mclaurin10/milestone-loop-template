@@ -10,7 +10,7 @@ import {
 } from "./agent-schemas.js";
 import type { CodexGateway } from "./codex-gateway.js";
 import { requestPlan } from "./planner.js";
-import { validProposal, validState } from "../test/fixtures.js";
+import { validConfig, validProposal, validState } from "../test/fixtures.js";
 
 function assertStrictOutputObjects(value: unknown): void {
   if (typeof value !== "object" || value === null || Array.isArray(value))
@@ -61,6 +61,7 @@ describe("planner structured output", () => {
       };
       const result = await requestPlan({
         gateway,
+        project: validConfig().project,
         state: validState(process.cwd()),
         artifactDirectory: directory,
         timeoutMs: 10_000,

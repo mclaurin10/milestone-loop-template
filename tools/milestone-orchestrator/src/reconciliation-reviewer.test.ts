@@ -10,7 +10,7 @@ import {
   reconciliationReviewApproves,
   requestReconciliationReview,
 } from "./reconciliation-reviewer.js";
-import { validReconciliationRecord } from "../test/fixtures.js";
+import { validConfig, validReconciliationRecord } from "../test/fixtures.js";
 
 const temporaryDirectories: string[] = [];
 
@@ -57,6 +57,7 @@ describe("independent reconciliation review", () => {
 
     const report = await requestReconciliationReview({
       gateway: gateway(reviewDraft()),
+      project: validConfig().project,
       record,
       workspacePath: process.cwd(),
       artifactDirectory: directory,
@@ -86,6 +87,7 @@ describe("independent reconciliation review", () => {
     await expect(
       requestReconciliationReview({
         gateway: gateway(reviewDraft({ candidateCommit: "f".repeat(40) })),
+        project: validConfig().project,
         record,
         workspacePath: process.cwd(),
         artifactDirectory: directory,
