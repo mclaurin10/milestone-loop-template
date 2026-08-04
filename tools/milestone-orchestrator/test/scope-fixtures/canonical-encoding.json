@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "canonical-encoding",
+  "changedPaths": ["packages/foundation/src/canonical.ts"],
+  "expectedTriggerClasses": ["canonical-encoding"],
+  "expectedUnknownPaths": [],
+  "mandatoryExpectedCheckIds": [
+    "test-unit",
+    "test-unit-migrations",
+    "standard-utility-construction",
+    "authorization-simulation"
+  ]
+}

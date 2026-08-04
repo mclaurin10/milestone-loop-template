@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "accepted-fixture",
+  "changedPaths": [
+    "packages/persistence/src/pre-utility-composition-fixtures.test.ts"
+  ],
+  "expectedTriggerClasses": ["accepted-fixture", "persistence-codec"],
+  "expectedUnknownPaths": [],
+  "mandatoryExpectedCheckIds": [
+    "test-unit",
+    "test-unit-migrations",
+    "authorization-simulation"
+  ]
+}

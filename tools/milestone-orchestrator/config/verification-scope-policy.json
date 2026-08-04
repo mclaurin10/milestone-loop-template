@@ -1,0 +1,208 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "d032-shadow-scope-policy.v1",
+  "mode": "shadow-only",
+  "unknownDisposition": "fail-broad",
+  "closureSuppressionAllowed": false,
+  "triggerClasses": [
+    "protected-authority",
+    "canonical-encoding",
+    "shared-protocol",
+    "persistence-codec",
+    "migration",
+    "accepted-fixture",
+    "standard-state",
+    "composition-root",
+    "worker-message",
+    "package-graph",
+    "browser-host",
+    "ui-renderer",
+    "domain-local-simulation",
+    "orchestrator-evidence",
+    "documentation-only",
+    "unknown"
+  ],
+  "broadTriggerClasses": [
+    "protected-authority",
+    "canonical-encoding",
+    "shared-protocol",
+    "persistence-codec",
+    "migration",
+    "accepted-fixture",
+    "standard-state",
+    "composition-root",
+    "worker-message",
+    "package-graph",
+    "unknown"
+  ],
+  "mandatoryChecks": {
+    "protected-authority": [
+      "test-invariants",
+      "test-unit",
+      "test-orchestrator",
+      "build"
+    ],
+    "canonical-encoding": [
+      "test-invariants",
+      "test-unit",
+      "test-unit-migrations",
+      "standard-utility-construction",
+      "construction-resources",
+      "utility-networks",
+      "utility-planning",
+      "utility-entitlement",
+      "standard-utility-entitlement",
+      "development-simulation",
+      "authorization-simulation",
+      "authorization-browser"
+    ],
+    "shared-protocol": ["test-invariants", "test-unit", "typecheck", "build"],
+    "persistence-codec": [
+      "test-invariants",
+      "test-unit",
+      "test-unit-migrations",
+      "standard-utility-construction",
+      "standard-utility-entitlement",
+      "authorization-simulation"
+    ],
+    "migration": [
+      "test-invariants",
+      "test-unit",
+      "test-unit-migrations",
+      "standard-utility-construction",
+      "standard-utility-entitlement",
+      "authorization-simulation"
+    ],
+    "accepted-fixture": [
+      "test-invariants",
+      "test-unit",
+      "test-unit-migrations",
+      "standard-utility-construction",
+      "standard-utility-entitlement",
+      "authorization-simulation"
+    ],
+    "standard-state": [
+      "test-invariants",
+      "test-unit",
+      "typecheck",
+      "build",
+      "standard-utility-construction",
+      "construction-resources",
+      "utility-networks",
+      "utility-planning",
+      "utility-entitlement",
+      "standard-utility-entitlement",
+      "development-simulation",
+      "authorization-simulation",
+      "authorization-browser"
+    ],
+    "composition-root": [
+      "test-invariants",
+      "test-unit",
+      "typecheck",
+      "build",
+      "standard-utility-construction",
+      "construction-resources",
+      "utility-networks",
+      "utility-planning",
+      "utility-entitlement",
+      "standard-utility-entitlement",
+      "development-simulation",
+      "authorization-simulation",
+      "authorization-browser"
+    ],
+    "worker-message": [
+      "test-invariants",
+      "typecheck",
+      "build",
+      "standard-utility-construction",
+      "authorization-simulation",
+      "authorization-browser"
+    ],
+    "package-graph": [
+      "test-invariants",
+      "dependencies",
+      "lint-architecture",
+      "typecheck",
+      "build",
+      "test-unit"
+    ],
+    "browser-host": [
+      "test-invariants",
+      "typecheck",
+      "build",
+      "authorization-browser"
+    ],
+    "ui-renderer": ["test-invariants", "test-unit-fast", "build"],
+    "domain-local-simulation": [
+      "test-invariants",
+      "test-unit-fast",
+      "typecheck"
+    ],
+    "orchestrator-evidence": [
+      "test-invariants",
+      "test-orchestrator",
+      "typecheck"
+    ],
+    "documentation-only": ["test-invariants"],
+    "unknown": ["test-invariants", "test-unit", "test-orchestrator", "build"]
+  },
+  "workspaceChecks": {
+    "@ski-tycoon/foundation": ["test-invariants", "test-unit"],
+    "@ski-tycoon/headless": [
+      "typecheck",
+      "development-simulation",
+      "authorization-simulation",
+      "standard-utility-construction"
+    ],
+    "@ski-tycoon/orchestrator": ["test-orchestrator", "typecheck"],
+    "@ski-tycoon/persistence": [
+      "test-unit",
+      "test-unit-migrations",
+      "standard-utility-construction",
+      "standard-utility-entitlement",
+      "authorization-simulation"
+    ],
+    "@ski-tycoon/protocol": ["test-invariants", "test-unit", "typecheck"],
+    "@ski-tycoon/renderer": [
+      "test-unit-fast",
+      "build",
+      "authorization-browser"
+    ],
+    "@ski-tycoon/simulation": [
+      "test-unit",
+      "typecheck",
+      "standard-utility-construction",
+      "construction-resources",
+      "utility-networks",
+      "utility-planning",
+      "utility-entitlement",
+      "standard-utility-entitlement",
+      "development-simulation",
+      "authorization-simulation"
+    ],
+    "@ski-tycoon/ui": ["test-unit-fast", "build", "authorization-browser"],
+    "@ski-tycoon/web": ["typecheck", "build", "authorization-browser"],
+    "ski-tycoon": [
+      "dependencies",
+      "format-check",
+      "lint",
+      "lint-architecture",
+      "typecheck",
+      "build",
+      "test-unit"
+    ]
+  },
+  "graduation": {
+    "deferred": true,
+    "minimumComparisons": 30,
+    "minimumExamplesPerTrigger": 3,
+    "requiresZeroFalseNegatives": true,
+    "requiresZeroUnknowns": true,
+    "requiresDeterministicRecommendations": true,
+    "requiresMeasuredSavingsAboveNoise": true,
+    "requiresNoClosureRegression": true,
+    "requiresIndependentReview": true,
+    "requiresExplicitPolicyChange": true
+  }
+}

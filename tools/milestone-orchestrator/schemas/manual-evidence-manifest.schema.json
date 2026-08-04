@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ski-tycoon.local/schemas/1.0.0/manual-evidence-manifest.schema.json",
+  "title": "Ski Tycoon future direct/manual evidence manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "manifestId",
+    "stageId",
+    "commandId",
+    "displayCommand",
+    "status",
+    "candidate",
+    "receipt",
+    "declaredArtifacts",
+    "telemetry",
+    "citationClass",
+    "durableCitations",
+    "createdAt",
+    "finishedAt",
+    "failureClassification"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "manifestId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,191}$"
+    },
+    "stageId": { "type": "string", "minLength": 1 },
+    "commandId": { "type": "string", "minLength": 1 },
+    "displayCommand": { "type": "string", "minLength": 1 },
+    "status": {
+      "enum": ["PASS", "NOT_READY", "FAIL", "ERROR", "TIMEOUT"]
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gitCommit", "gitTree", "workingTreeDirty"],
+      "properties": {
+        "gitCommit": {
+          "oneOf": [
+            { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+            { "type": "null" }
+          ]
+        },
+        "gitTree": {
+          "oneOf": [
+            { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+            { "type": "null" }
+          ]
+        },
+        "workingTreeDirty": { "type": "boolean" }
+      }
+    },
+    "receipt": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "sha256", "bytes"],
+          "properties": {
+            "path": { "const": "result.json" },
+            "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+            "bytes": { "type": "integer", "minimum": 1 }
+          }
+        }
+      ]
+    },
+    "declaredArtifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["count", "bytes", "declarations"],
+      "properties": {
+        "count": { "type": "integer", "minimum": 0 },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "declarations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "kind", "bytes", "sha256"],
+            "properties": {
+              "path": { "type": "string", "minLength": 1 },
+              "kind": { "type": "string", "minLength": 1 },
+              "bytes": { "type": "integer", "minimum": 0 },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          }
+        }
+      }
+    },
+    "telemetry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runId", "manifestPath"],
+      "properties": {
+        "runId": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+            },
+            { "type": "null" }
+          ]
+        },
+        "manifestPath": {
+          "oneOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }]
+        }
+      }
+    },
+    "citationClass": {
+      "enum": [
+        "uncited-at-creation",
+        "tracked",
+        "controller-state",
+        "active-reconciliation",
+        "mixed"
+      ]
+    },
+    "durableCitations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "trackedPaths",
+        "controllerStateReferences",
+        "activeReconciliationReference"
+      ],
+      "properties": {
+        "trackedPaths": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "controllerStateReferences": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "activeReconciliationReference": {
+          "oneOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }]
+        }
+      }
+    },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "finishedAt": { "type": "string", "format": "date-time" },
+    "failureClassification": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "message"],
+          "properties": {
+            "kind": {
+              "enum": ["product", "infrastructure", "usage", "unknown"]
+            },
+            "message": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "PASS" } } },
+      "then": {
+        "properties": {
+          "receipt": { "type": "object" },
+          "failureClassification": { "type": "null" }
+        }
+      },
+      "else": {
+        "properties": {
+          "receipt": { "type": "null" },
+          "failureClassification": { "type": "object" }
+        }
+      }
+    }
+  ]
+}

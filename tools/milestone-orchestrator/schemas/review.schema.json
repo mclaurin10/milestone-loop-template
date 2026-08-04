@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ski-tycoon.local/schemas/orchestrator-review-1.0.0.json",
+  "title": "Ski Tycoon Independent Review",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "decision", "summary", "findings", "checks"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "decision": { "enum": ["approve", "reject", "escalate"] },
+    "summary": { "type": "string" },
+    "findings": { "type": "array", "items": { "type": "object" } },
+    "checks": { "type": "object" }
+  }
+}

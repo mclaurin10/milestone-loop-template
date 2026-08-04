@@ -1,0 +1,295 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ski-tycoon.local/schemas/verification-tier.schema.json",
+  "title": "Ski Tycoon verification manifest and non-authoritative tier result",
+  "oneOf": [{ "$ref": "#/$defs/manifest" }, { "$ref": "#/$defs/result" }],
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "stringArray": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "argv": {
+      "type": "array",
+      "minItems": 2,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "focusedCommand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "argv", "tiers", "expectedArtifactKinds"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "argv": { "$ref": "#/$defs/argv" },
+        "tiers": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["iteration", "candidate", "milestone"] }
+        },
+        "expectedArtifactKinds": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "authorityChanges": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "readinessStagesChanged",
+        "acceptanceChanged",
+        "defaultProfileChanged",
+        "exactVerifyCommandChanged"
+      ],
+      "properties": {
+        "readinessStagesChanged": { "const": false },
+        "acceptanceChanged": { "const": false },
+        "defaultProfileChanged": { "const": false },
+        "exactVerifyCommandChanged": { "const": false }
+      }
+    },
+    "finalExactVerification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "argv",
+        "requiresNoArguments",
+        "profileId",
+        "selectedByOverride"
+      ],
+      "properties": {
+        "argv": {
+          "type": "array",
+          "prefixItems": [{ "const": "pnpm" }, { "const": "verify" }],
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "requiresNoArguments": { "const": true },
+        "profileId": { "const": "readiness" },
+        "selectedByOverride": { "const": false }
+      }
+    },
+    "manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "milestoneId",
+        "objective",
+        "exclusions",
+        "baseCommit",
+        "d031BaselineCommit",
+        "focusedCommands",
+        "requiredProtectedPaths",
+        "requiredInvariantSuiteId",
+        "requiredBenchmarkMatrixId",
+        "requiredReconciliationReviewChecks",
+        "expectedArtifactKinds",
+        "authorityChanges",
+        "nextProposalPath",
+        "finalExactVerification"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "verification-manifest.v1" },
+        "milestoneId": { "const": "d032-loop-efficiency-recommissioning" },
+        "objective": { "type": "string", "minLength": 1 },
+        "exclusions": { "$ref": "#/$defs/stringArray" },
+        "baseCommit": { "$ref": "#/$defs/commit" },
+        "d031BaselineCommit": { "$ref": "#/$defs/commit" },
+        "focusedCommands": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/focusedCommand" }
+        },
+        "requiredProtectedPaths": { "$ref": "#/$defs/stringArray" },
+        "requiredInvariantSuiteId": { "type": "string", "minLength": 1 },
+        "requiredBenchmarkMatrixId": { "type": "string", "minLength": 1 },
+        "requiredReconciliationReviewChecks": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "expectedArtifactKinds": { "$ref": "#/$defs/stringArray" },
+        "authorityChanges": { "$ref": "#/$defs/authorityChanges" },
+        "nextProposalPath": { "const": ".agent/next-milestone.json" },
+        "finalExactVerification": {
+          "$ref": "#/$defs/finalExactVerification"
+        }
+      }
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baseCommit", "gitCommit", "gitTree", "workingTreeDirty"],
+      "properties": {
+        "baseCommit": { "$ref": "#/$defs/commit" },
+        "gitCommit": { "$ref": "#/$defs/commit" },
+        "gitTree": { "$ref": "#/$defs/commit" },
+        "workingTreeDirty": { "type": "boolean" }
+      }
+    },
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "bytes"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "bytes": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total", "passed", "failed", "skipped"],
+      "properties": {
+        "total": { "type": "integer", "minimum": 0 },
+        "passed": { "type": "integer", "minimum": 0 },
+        "failed": { "type": "integer", "minimum": 0 },
+        "skipped": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "testCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["suites", "tests"],
+      "properties": {
+        "suites": { "$ref": "#/$defs/counts" },
+        "tests": { "$ref": "#/$defs/counts" }
+      }
+    },
+    "command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "argv",
+        "status",
+        "exitCode",
+        "signal",
+        "startedAt",
+        "finishedAt",
+        "durationMs",
+        "stdoutPath",
+        "stderrPath",
+        "receipt",
+        "receiptAbsenceReason",
+        "artifactCount",
+        "artifactBytes",
+        "testCounts",
+        "failureClass",
+        "message"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "argv": { "$ref": "#/$defs/argv" },
+        "status": { "enum": ["PASS", "NOT_READY", "FAIL", "ERROR", "TIMEOUT"] },
+        "exitCode": { "type": ["integer", "null"] },
+        "signal": { "type": ["string", "null"] },
+        "startedAt": { "type": "string", "format": "date-time" },
+        "finishedAt": { "type": "string", "format": "date-time" },
+        "durationMs": { "type": "integer", "minimum": 0 },
+        "stdoutPath": { "type": "string", "minLength": 1 },
+        "stderrPath": { "type": "string", "minLength": 1 },
+        "receipt": {
+          "oneOf": [{ "$ref": "#/$defs/receipt" }, { "type": "null" }]
+        },
+        "receiptAbsenceReason": { "type": ["string", "null"] },
+        "artifactCount": { "type": "integer", "minimum": 0 },
+        "artifactBytes": { "type": "integer", "minimum": 0 },
+        "testCounts": {
+          "oneOf": [{ "$ref": "#/$defs/testCounts" }, { "type": "null" }]
+        },
+        "failureClass": {
+          "enum": ["product", "infrastructure", null]
+        },
+        "message": { "type": "string", "minLength": 1 }
+      }
+    },
+    "exactVerification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "invokedWithNoArguments",
+        "resultPath",
+        "resultSha256",
+        "status",
+        "exitCode",
+        "disposition",
+        "profileId",
+        "selectedByOverride",
+        "candidateCommit",
+        "candidateTree"
+      ],
+      "properties": {
+        "invokedWithNoArguments": { "const": true },
+        "resultPath": { "type": "string", "minLength": 1 },
+        "resultSha256": { "$ref": "#/$defs/sha256" },
+        "status": { "enum": ["PASS", "NOT_READY"] },
+        "exitCode": { "enum": [0, 2] },
+        "disposition": {
+          "enum": ["completion-eligible", "incremental-readiness"]
+        },
+        "profileId": { "const": "readiness" },
+        "selectedByOverride": { "const": false },
+        "candidateCommit": { "$ref": "#/$defs/commit" },
+        "candidateTree": { "$ref": "#/$defs/commit" }
+      }
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "runId",
+        "tier",
+        "status",
+        "exitCode",
+        "authoritative",
+        "candidate",
+        "changedPaths",
+        "invariantSuiteId",
+        "invariantSuiteSha256",
+        "scopePolicySha256",
+        "shadowSelectionPath",
+        "selectedCheckIds",
+        "actualCheckIds",
+        "fullClosureCheckIds",
+        "commands",
+        "exactVerification",
+        "reviewRequired",
+        "telemetryManifestPath",
+        "startedAt",
+        "finishedAt",
+        "durationMs"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "runId": { "type": "string", "minLength": 1 },
+        "tier": { "enum": ["iteration", "candidate", "milestone", "periodic"] },
+        "status": { "enum": ["PASS", "NOT_READY", "FAIL", "ERROR"] },
+        "exitCode": { "enum": [0, 1, 2, 3] },
+        "authoritative": { "const": false },
+        "candidate": { "$ref": "#/$defs/candidate" },
+        "changedPaths": { "$ref": "#/$defs/stringArray" },
+        "invariantSuiteId": { "type": "string", "minLength": 1 },
+        "invariantSuiteSha256": { "$ref": "#/$defs/sha256" },
+        "scopePolicySha256": { "$ref": "#/$defs/sha256" },
+        "shadowSelectionPath": { "type": ["string", "null"] },
+        "selectedCheckIds": { "$ref": "#/$defs/stringArray" },
+        "actualCheckIds": { "$ref": "#/$defs/stringArray" },
+        "fullClosureCheckIds": { "$ref": "#/$defs/stringArray" },
+        "commands": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/command" }
+        },
+        "exactVerification": {
+          "oneOf": [{ "$ref": "#/$defs/exactVerification" }, { "type": "null" }]
+        },
+        "reviewRequired": { "type": "boolean" },
+        "telemetryManifestPath": { "type": ["string", "null"] },
+        "startedAt": { "type": "string", "format": "date-time" },
+        "finishedAt": { "type": "string", "format": "date-time" },
+        "durationMs": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

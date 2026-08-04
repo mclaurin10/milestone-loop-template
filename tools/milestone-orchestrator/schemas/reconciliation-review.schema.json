@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ski-tycoon.local/schemas/orchestrator-reconciliation-review-1.0.0.json",
+  "title": "Ski Tycoon controller-boundary reconciliation review",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "reconciliationId",
+    "sourceVerifiedCommit",
+    "candidateCommit",
+    "candidateTree",
+    "commitRangeManifestSha256",
+    "decision",
+    "summary",
+    "findings",
+    "checks",
+    "threadId",
+    "reviewedAt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "reconciliationId": { "type": "string", "minLength": 1 },
+    "sourceVerifiedCommit": { "$ref": "#/$defs/commit" },
+    "candidateCommit": { "$ref": "#/$defs/commit" },
+    "candidateTree": { "$ref": "#/$defs/commit" },
+    "commitRangeManifestSha256": { "$ref": "#/$defs/sha256" },
+    "decision": { "enum": ["approve", "reject", "escalate"] },
+    "summary": { "type": "string", "minLength": 1 },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["severity", "code", "message", "path"],
+        "properties": {
+          "severity": { "enum": ["low", "medium", "high", "critical"] },
+          "code": { "type": "string", "minLength": 1 },
+          "message": { "type": "string", "minLength": 1 },
+          "path": {
+            "oneOf": [
+              { "type": "null" },
+              {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^(?![A-Za-z]:[\\\\/])(?![\\\\/])(?!.*(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$))[^\\r\\n\\u0000]+$"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "completeCommitLineage",
+        "protectedIntegrity",
+        "noFabricatedHistory",
+        "d031ScopeCompliance",
+        "d031MigrationIntegrity",
+        "d031NodeWorkerParity",
+        "commandOwnedEvidenceValidity",
+        "verificationTierNonAuthority",
+        "invariantSuiteQuality",
+        "selectorShadowOnlyEnforcement",
+        "telemetryNonSemanticBehavior",
+        "artifactContainmentAndNonDeletion",
+        "stateMigrationAndRecovery",
+        "verticalMilestonePolicy",
+        "dependencyValidNextProposal",
+        "noScopeReductionOrSuspiciousShortcut"
+      ],
+      "properties": {
+        "completeCommitLineage": { "type": "boolean" },
+        "protectedIntegrity": { "type": "boolean" },
+        "noFabricatedHistory": { "type": "boolean" },
+        "d031ScopeCompliance": { "type": "boolean" },
+        "d031MigrationIntegrity": { "type": "boolean" },
+        "d031NodeWorkerParity": { "type": "boolean" },
+        "commandOwnedEvidenceValidity": { "type": "boolean" },
+        "verificationTierNonAuthority": { "type": "boolean" },
+        "invariantSuiteQuality": { "type": "boolean" },
+        "selectorShadowOnlyEnforcement": { "type": "boolean" },
+        "telemetryNonSemanticBehavior": { "type": "boolean" },
+        "artifactContainmentAndNonDeletion": { "type": "boolean" },
+        "stateMigrationAndRecovery": { "type": "boolean" },
+        "verticalMilestonePolicy": { "type": "boolean" },
+        "dependencyValidNextProposal": { "type": "boolean" },
+        "noScopeReductionOrSuspiciousShortcut": { "type": "boolean" }
+      }
+    },
+    "threadId": { "type": "string", "minLength": 1 },
+    "reviewedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "standard-state",
+  "changedPaths": ["packages/simulation/src/standard-authorization.ts"],
+  "expectedTriggerClasses": ["domain-local-simulation", "standard-state"],
+  "expectedUnknownPaths": [],
+  "mandatoryExpectedCheckIds": [
+    "test-unit",
+    "standard-utility-construction",
+    "construction-resources",
+    "authorization-browser"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "package-graph",
+  "changedPaths": ["pnpm-workspace.yaml"],
+  "expectedTriggerClasses": ["package-graph"],
+  "expectedUnknownPaths": [],
+  "mandatoryExpectedCheckIds": [
+    "dependencies",
+    "lint-architecture",
+    "typecheck",
+    "build",
+    "test-unit"
+  ]
+}

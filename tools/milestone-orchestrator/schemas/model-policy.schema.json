@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ski-tycoon.local/schemas/orchestrator-model-policy-1.0.0.json",
+  "title": "Ski Tycoon Orchestrator Agent Model Policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "sdk",
+    "execution",
+    "roles",
+    "workerEscalation",
+    "overrides"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "sdk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["package", "version", "maxEffortTransport"],
+      "properties": {
+        "package": { "const": "@openai/codex-sdk" },
+        "version": { "const": "0.146.0" },
+        "maxEffortTransport": {
+          "const": "thread-option-runtime-compatibility"
+        }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maximumConcurrentAgentInvocations",
+        "proactiveDelegation",
+        "ultraAllowed"
+      ],
+      "properties": {
+        "maximumConcurrentAgentInvocations": { "const": 1 },
+        "proactiveDelegation": { "const": false },
+        "ultraAllowed": { "const": false }
+      }
+    },
+    "roles": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "planner",
+        "gameplay-worker-initial",
+        "gameplay-worker-escalated",
+        "reviewer",
+        "lightweight-reporting"
+      ],
+      "properties": {
+        "planner": { "$ref": "#/$defs/solMax" },
+        "gameplay-worker-initial": { "$ref": "#/$defs/solXhigh" },
+        "gameplay-worker-escalated": { "$ref": "#/$defs/solMax" },
+        "reviewer": { "$ref": "#/$defs/solMax" },
+        "lightweight-reporting": { "$ref": "#/$defs/terraMedium" }
+      }
+    },
+    "workerEscalation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "substantiveFailureAttempts",
+        "repeatedAcceptanceCriterionFailures",
+        "replacementThreadOnPolicyChange"
+      ],
+      "properties": {
+        "substantiveFailureAttempts": { "const": 2 },
+        "repeatedAcceptanceCriterionFailures": { "const": 2 },
+        "replacementThreadOnPolicyChange": { "const": true }
+      }
+    },
+    "overrides": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role", "model", "reasoningEffort", "reason"],
+        "properties": {
+          "role": {
+            "enum": [
+              "planner",
+              "gameplay-worker-initial",
+              "gameplay-worker-escalated",
+              "reviewer",
+              "lightweight-reporting"
+            ]
+          },
+          "model": { "enum": ["gpt-5.6-sol", "gpt-5.6-terra"] },
+          "reasoningEffort": {
+            "enum": ["low", "medium", "high", "xhigh", "max"]
+          },
+          "reason": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "solMax": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model", "reasoningEffort"],
+      "properties": {
+        "model": { "const": "gpt-5.6-sol" },
+        "reasoningEffort": { "const": "max" }
+      }
+    },
+    "solXhigh": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model", "reasoningEffort"],
+      "properties": {
+        "model": { "const": "gpt-5.6-sol" },
+        "reasoningEffort": { "const": "xhigh" }
+      }
+    },
+    "terraMedium": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model", "reasoningEffort"],
+      "properties": {
+        "model": { "const": "gpt-5.6-terra" },
+        "reasoningEffort": { "const": "medium" }
+      }
+    }
+  }
+}

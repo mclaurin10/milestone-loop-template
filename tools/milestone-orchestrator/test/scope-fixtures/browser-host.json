@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "browser-host",
+  "changedPaths": ["playwright.config.ts"],
+  "expectedTriggerClasses": ["browser-host"],
+  "expectedUnknownPaths": [],
+  "mandatoryExpectedCheckIds": ["build", "authorization-browser"]
+}

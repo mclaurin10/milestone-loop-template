@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "persistence-codec",
+  "changedPaths": ["packages/persistence/src/codec.ts"],
+  "expectedTriggerClasses": ["persistence-codec"],
+  "expectedUnknownPaths": [],
+  "mandatoryExpectedCheckIds": [
+    "test-unit",
+    "test-unit-migrations",
+    "authorization-simulation"
+  ]
+}

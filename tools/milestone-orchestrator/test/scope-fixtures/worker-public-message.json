@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "worker-public-message",
+  "changedPaths": [
+    "apps/web/src/worker/simulation.worker.ts",
+    "packages/protocol/src/authorization.ts"
+  ],
+  "expectedTriggerClasses": [
+    "composition-root",
+    "shared-protocol",
+    "worker-message"
+  ],
+  "expectedUnknownPaths": [],
+  "mandatoryExpectedCheckIds": [
+    "typecheck",
+    "build",
+    "authorization-simulation",
+    "authorization-browser",
+    "standard-utility-construction"
+  ]
+}

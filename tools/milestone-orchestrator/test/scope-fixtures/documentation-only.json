@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "documentation-only",
+  "changedPaths": ["docs/selector.md"],
+  "expectedTriggerClasses": ["documentation-only"],
+  "expectedUnknownPaths": [],
+  "mandatoryExpectedCheckIds": ["test-invariants"]
+}

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "composition-root",
+  "changedPaths": ["packages/simulation/src/authorization.ts"],
+  "expectedTriggerClasses": ["composition-root", "domain-local-simulation"],
+  "expectedUnknownPaths": [],
+  "mandatoryExpectedCheckIds": [
+    "test-unit",
+    "standard-utility-construction",
+    "construction-resources",
+    "authorization-browser"
+  ]
+}

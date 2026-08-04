@@ -1,0 +1,18 @@
+# Installed workspace dependencies
+node_modules/
+
+# Build, test, and local tool output
+dist/
+coverage/
+playwright-report/
+test-results/
+.vite/
+.cache/
+*.tsbuildinfo
+
+# Repository-local browser/runtime downloads (normally stored in user caches)
+.playwright/
+.tools/
+
+# Generated verification and evaluation evidence
+artifacts/

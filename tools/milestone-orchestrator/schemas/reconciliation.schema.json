@@ -1,0 +1,248 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ski-tycoon.local/schemas/orchestrator-reconciliation-1.0.0.json",
+  "title": "Ski Tycoon controller-boundary reconciliation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "status",
+    "phase",
+    "sourceArchiveId",
+    "sourceState",
+    "sourceVerifiedCommit",
+    "targetBranch",
+    "candidateRevision",
+    "candidateCommit",
+    "candidateTree",
+    "cleanTree",
+    "commitRange",
+    "protectedComparison",
+    "externalGapReason",
+    "historicalMeasurementAvailability",
+    "focusedEvidenceIndex",
+    "exactVerification",
+    "benchmark",
+    "artifactInventory",
+    "independentReview",
+    "nextProposal",
+    "adoption",
+    "previousPhase",
+    "previousPhaseAt",
+    "currentPhaseAt",
+    "phaseTimestamps",
+    "failure"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,191}$" },
+    "status": { "enum": ["active", "completed", "failed"] },
+    "phase": { "$ref": "#/$defs/phase" },
+    "sourceArchiveId": { "type": "string", "minLength": 1 },
+    "sourceState": { "$ref": "#/$defs/artifactReference" },
+    "sourceVerifiedCommit": { "$ref": "#/$defs/commit" },
+    "targetBranch": { "type": "string", "minLength": 1 },
+    "candidateRevision": { "type": "string", "minLength": 1 },
+    "candidateCommit": { "$ref": "#/$defs/commit" },
+    "candidateTree": { "$ref": "#/$defs/commit" },
+    "cleanTree": { "const": true },
+    "commitRange": { "$ref": "#/$defs/commitRangeReference" },
+    "protectedComparison": { "$ref": "#/$defs/artifactReference" },
+    "externalGapReason": { "type": "string", "minLength": 1 },
+    "historicalMeasurementAvailability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "planner",
+        "worker",
+        "reviewer",
+        "attempts",
+        "timings",
+        "tokens",
+        "threadLineage"
+      ],
+      "properties": {
+        "planner": { "$ref": "#/$defs/unavailable" },
+        "worker": { "$ref": "#/$defs/unavailable" },
+        "reviewer": { "$ref": "#/$defs/unavailable" },
+        "attempts": { "$ref": "#/$defs/unavailable" },
+        "timings": { "$ref": "#/$defs/unavailable" },
+        "tokens": { "$ref": "#/$defs/unavailable" },
+        "threadLineage": { "$ref": "#/$defs/unavailable" }
+      }
+    },
+    "focusedEvidenceIndex": { "$ref": "#/$defs/nullableArtifactReference" },
+    "exactVerification": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path",
+            "sha256",
+            "bytes",
+            "runId",
+            "status",
+            "exitCode",
+            "disposition",
+            "exactResult"
+          ],
+          "properties": {
+            "path": { "$ref": "#/$defs/path" },
+            "sha256": { "$ref": "#/$defs/sha256" },
+            "bytes": { "type": "integer", "minimum": 1 },
+            "runId": { "type": "string", "minLength": 1 },
+            "status": { "const": "NOT_READY" },
+            "exitCode": { "const": 2 },
+            "disposition": { "const": "incremental-readiness" },
+            "exactResult": { "$ref": "#/$defs/artifactReference" }
+          }
+        }
+      ]
+    },
+    "benchmark": { "$ref": "#/$defs/artifactReference" },
+    "artifactInventory": { "$ref": "#/$defs/artifactReference" },
+    "independentReview": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "sha256", "bytes", "decision", "threadId"],
+          "properties": {
+            "path": { "$ref": "#/$defs/path" },
+            "sha256": { "$ref": "#/$defs/sha256" },
+            "bytes": { "type": "integer", "minimum": 1 },
+            "decision": { "enum": ["approve", "reject", "escalate"] },
+            "threadId": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    },
+    "nextProposal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "bytes", "id"],
+      "properties": {
+        "path": { "$ref": "#/$defs/path" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "bytes": { "type": "integer", "minimum": 1 },
+        "id": { "type": "string", "minLength": 1 }
+      }
+    },
+    "adoption": { "$ref": "#/$defs/nullableArtifactReference" },
+    "previousPhase": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/phase" }]
+    },
+    "previousPhaseAt": { "type": ["string", "null"], "format": "date-time" },
+    "currentPhaseAt": { "type": "string", "format": "date-time" },
+    "phaseTimestamps": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "prepared",
+        "verifying",
+        "candidate-verified",
+        "reviewing",
+        "review-approved",
+        "adopting",
+        "state-adopted",
+        "queueing-next",
+        "completed",
+        "failed"
+      ],
+      "properties": {
+        "prepared": { "$ref": "#/$defs/nullableTimestamp" },
+        "verifying": { "$ref": "#/$defs/nullableTimestamp" },
+        "candidate-verified": { "$ref": "#/$defs/nullableTimestamp" },
+        "reviewing": { "$ref": "#/$defs/nullableTimestamp" },
+        "review-approved": { "$ref": "#/$defs/nullableTimestamp" },
+        "adopting": { "$ref": "#/$defs/nullableTimestamp" },
+        "state-adopted": { "$ref": "#/$defs/nullableTimestamp" },
+        "queueing-next": { "$ref": "#/$defs/nullableTimestamp" },
+        "completed": { "$ref": "#/$defs/nullableTimestamp" },
+        "failed": { "$ref": "#/$defs/nullableTimestamp" }
+      }
+    },
+    "failure": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["classification", "message", "evidence"],
+          "properties": {
+            "classification": {
+              "enum": ["product", "infrastructure", "policy", "review"]
+            },
+            "message": { "type": "string", "minLength": 1 },
+            "evidence": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/artifactReference" }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?![A-Za-z]:[\\\\/])(?![\\\\/])(?!.*(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$))[^\\r\\n\\u0000]+$"
+    },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "phase": {
+      "enum": [
+        "prepared",
+        "verifying",
+        "candidate-verified",
+        "reviewing",
+        "review-approved",
+        "adopting",
+        "state-adopted",
+        "queueing-next",
+        "completed",
+        "failed"
+      ]
+    },
+    "nullableTimestamp": { "type": ["string", "null"], "format": "date-time" },
+    "artifactReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "bytes"],
+      "properties": {
+        "path": { "$ref": "#/$defs/path" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "bytes": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "nullableArtifactReference": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/artifactReference" }]
+    },
+    "commitRangeReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "bytes", "commitCount", "recordsSha256"],
+      "properties": {
+        "path": { "$ref": "#/$defs/path" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "bytes": { "type": "integer", "minimum": 1 },
+        "commitCount": { "type": "integer", "minimum": 1 },
+        "recordsSha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "unavailable": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["availability", "reason"],
+      "properties": {
+        "availability": { "const": "not-recorded" },
+        "reason": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

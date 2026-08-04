@@ -1,0 +1,172 @@
+{
+  "schemaVersion": "1.1.0",
+  "id": "complete-operations-base-utilities",
+  "title": "Complete the operations-base utility foothold through normal construction",
+  "kind": "gameplay",
+  "objective": "Use the existing normal permit, finance, mobilization, project, completed-asset, and root-derived registration paths to construct and connect the power, sewage, and water corridors; preserve communications; and make the unbuilt operations-base preview report all four utilities connected with exact capacity and bottleneck evidence.",
+  "rationale": "The communications corridor already proves the complete causal seam. Extending the same public-action and shared-rule boundary to the three remaining prerequisite utilities is the smallest dependency-valid vertical slice before operations-base construction and the later skiing spine.",
+  "dependencies": [],
+  "permittedPaths": [
+    ".agent/current-exec-plan.md",
+    "apps/headless/src/authorization.ts",
+    "apps/web/src/worker/simulation.worker.ts",
+    "docs/*.md",
+    "package.json",
+    "packages/persistence/src/*.ts",
+    "packages/protocol/src/*.ts",
+    "packages/simulation/src/*.ts",
+    "packages/ui/src/index.tsx",
+    "tests/e2e/authorization.spec.ts",
+    "tests/parity/*.spec.ts",
+    "tools/*utilit*"
+  ],
+  "exclusions": [
+    "Do not commit or construct the operations-base facility.",
+    "Do not add a new utility kind, global utility flag, instant-build command, privileged bot path, or test-only entitlement.",
+    "Do not add lifts, trails, guests, operating days, snow, avalanche, staffing, vehicles, maintenance, traffic, benchmark scenarios, readiness stages, calibration, or acceptance verdicts.",
+    "Do not add decorative skiing content before the operations prerequisite exists."
+  ],
+  "acceptanceCriteria": [
+    {
+      "id": "utilities-communications-preserved",
+      "description": "The accepted communications asset, root-derived registration, service connection, finance, construction, save/replay, and inspection facts remain exact.",
+      "evidence": "The prior communications verifier and the new combined verifier reproduce the accepted checkpoints and hashes before adding the other corridors."
+    },
+    {
+      "id": "utilities-normal-player-causality",
+      "description": "Power, sewage, and water each use normal disclosed finance, land/permit context, mobilization, material/crew, and project-commit player actions with no privileged mutation.",
+      "evidence": "A fresh-process proof records every public action, economic posting, authorization, resource reservation/consumption, crew assignment/release, schedule, and completion checkpoint."
+    },
+    {
+      "id": "utilities-root-derived-registration",
+      "description": "Each physical-network registration is derived only from its matching newly completed construction asset, and service changes only after canonical registration processing.",
+      "evidence": "One-tick boundary checkpoints prove no early segment, exact completed-asset evidence, pending registration, and subsequent connection for each utility."
+    },
+    {
+      "id": "utilities-standard-composition",
+      "description": "The canonical Standard read model reports communications, power, sewage, and water connected with exact source, capacity, demand, spare-capacity, and bottleneck evidence while the operations base remains unbuilt.",
+      "evidence": "Node and production Worker inspections match exactly and the rendered operations-base preview shows zero disconnected utilities without a facility action."
+    },
+    {
+      "id": "utilities-deterministic-persistence",
+      "description": "Direct/chunked execution, human/bot/replay origins, fresh reconstruction, save/re-encode, save/load continuation, replay/re-encode, and corruption rejection converge for all four corridors.",
+      "evidence": "The focused verifier owns two byte-identical fresh-process proofs, canonical save/replay checksums, checkpoint equality, and atomic rejection diagnostics."
+    },
+    {
+      "id": "utilities-node-worker-browser-parity",
+      "description": "The public Node host and dedicated production Worker execute the same actions and return the same complete projections, with inspectable Chromium evidence and no material diagnostics.",
+      "evidence": "The focused verifier retains Worker parity, Playwright, browser diagnostics, and command-owned receipt artifacts."
+    },
+    {
+      "id": "utilities-bounded-closure",
+      "description": "Focused compatibility, complete serial regression, static/build checks, exact clean no-argument readiness verification, and independent review pass without implementing the facility or reducing scope.",
+      "evidence": "All declared receipts/artifacts validate on the exact clean commit; readiness remains honestly governed by the unchanged fifteen-stage aggregate."
+    }
+  ],
+  "requiredTests": [
+    "pnpm verify:standard-operations-base-utilities",
+    "pnpm verify:standard-utility-construction",
+    "pnpm verify:utility-networks",
+    "pnpm verify:authorization-simulation",
+    "pnpm verify:authorization-browser",
+    "pnpm test:unit",
+    "pnpm verify"
+  ],
+  "verificationCommands": [
+    {
+      "id": "standard-operations-base-utilities",
+      "executable": "pnpm",
+      "args": ["verify:standard-operations-base-utilities"],
+      "parser": "exit-code"
+    },
+    {
+      "id": "standard-utility-construction-compatibility",
+      "executable": "pnpm",
+      "args": ["verify:standard-utility-construction"],
+      "parser": "exit-code"
+    },
+    {
+      "id": "utility-network-compatibility",
+      "executable": "pnpm",
+      "args": ["verify:utility-networks"],
+      "parser": "exit-code"
+    },
+    {
+      "id": "authorization-node-parity",
+      "executable": "pnpm",
+      "args": ["verify:authorization-simulation"],
+      "parser": "exit-code"
+    },
+    {
+      "id": "authorization-browser-parity",
+      "executable": "pnpm",
+      "args": ["verify:authorization-browser"],
+      "parser": "exit-code"
+    },
+    {
+      "id": "complete-unit-regression",
+      "executable": "pnpm",
+      "args": ["test:unit"],
+      "parser": "exit-code"
+    },
+    {
+      "id": "authoritative-verification",
+      "executable": "pnpm",
+      "args": ["verify"],
+      "parser": "pnpm-verify"
+    }
+  ],
+  "expectedArtifacts": [
+    "standard-operations-base-utilities-proof.json",
+    "independent-standard-operations-base-utilities-proof.json",
+    "standard-operations-base-utilities-worker-parity.json",
+    "standard-operations-base-utilities-vitest-report.json",
+    "playwright-report.json",
+    "browser-diagnostics.json",
+    "result.json"
+  ],
+  "terminalConditions": [
+    "All three additional corridors are constructed and connected through normal actions while communications remains exact.",
+    "The operations-base preview shows all four utilities connected and the facility remains unbuilt.",
+    "Every focused, compatibility, complete, exact, and independent-review gate passes on one clean commit."
+  ],
+  "estimatedFileCount": 28,
+  "requiresBrowserInspection": true,
+  "requiresHeadlessEvaluation": true,
+  "hiddenValidation": {
+    "requested": false
+  },
+  "verticalSlice": {
+    "mode": "integrated",
+    "playerGoal": "Make the operations-base blueprint utility-eligible without constructing the facility.",
+    "publicActionKinds": [
+      "standard.finance.loan.accept",
+      "standard.permit.apply",
+      "standard.construction.mobilize",
+      "standard.project.commit"
+    ],
+    "sharedRuleOwners": [
+      "packages/simulation/src/utility-entitlement.ts",
+      "packages/simulation/src/construction.ts",
+      "packages/simulation/src/utilities.ts"
+    ],
+    "standardCompositionOwner": "packages/simulation/src/authorization.ts",
+    "persistenceReplayEvidence": [
+      "Canonical save/load/replay and fresh reconstruction converge at every permit, funding, construction, registration, and connection checkpoint.",
+      "Original-version fixtures validate before any required version migration and gain no invented corridor, asset, registration, or service."
+    ],
+    "nodeWorkerParityEvidence": [
+      "The public Node host and dedicated production Worker submit the same complete action stream and return byte-identical checkpoints and read models.",
+      "Real desktop Chromium retains inspectable operations-base utility status with zero material console, page, or request failures."
+    ],
+    "inspectableConsequence": {
+      "readModelPaths": [
+        "standard.operationsBasePreview.utilities",
+        "standard.connectedUtilities"
+      ],
+      "browserEvidenceRequired": true,
+      "description": "The unbuilt operations-base preview reports communications, power, sewage, and water connected with exact capacity and bottleneck evidence and no utility blocker."
+    },
+    "exception": null
+  }
+}

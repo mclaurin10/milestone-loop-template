@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "orchestrator-evidence",
+  "changedPaths": ["tools/milestone-orchestrator/src/affected-scope.ts"],
+  "expectedTriggerClasses": ["orchestrator-evidence"],
+  "expectedUnknownPaths": [],
+  "mandatoryExpectedCheckIds": [
+    "test-invariants",
+    "test-orchestrator",
+    "typecheck"
+  ]
+}

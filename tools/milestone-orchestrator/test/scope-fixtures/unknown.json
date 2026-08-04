@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "unknown",
+  "changedPaths": ["unclassified/new-boundary.bin"],
+  "expectedTriggerClasses": ["unknown"],
+  "expectedUnknownPaths": ["unclassified/new-boundary.bin"],
+  "mandatoryExpectedCheckIds": ["test-unit", "test-orchestrator", "build"]
+}

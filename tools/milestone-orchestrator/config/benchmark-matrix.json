@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "d032-loop-efficiency.v1",
+  "serial": true,
+  "warmup": 1,
+  "repeat": 3,
+  "thresholds": {
+    "minimumImprovementMs": 10000,
+    "noiseMultiplier": 2,
+    "maximumClosureRegressionMs": 15000
+  },
+  "unknownProbePaths": ["benchmark-inputs/unowned-change.probe"],
+  "classes": [
+    {
+      "id": "leaf-ui-only",
+      "measurement": "command-workflows",
+      "comparisons": ["iteration", "candidate"],
+      "paths": ["packages/ui/src/index.tsx"],
+      "mustExclude": [
+        "packages/protocol/",
+        "packages/simulation/",
+        "packages/persistence/",
+        "apps/web/src/worker/"
+      ]
+    },
+    {
+      "id": "domain-local-simulation",
+      "measurement": "command-workflows",
+      "comparisons": ["iteration"],
+      "paths": [
+        "packages/simulation/src/utilities.ts",
+        "packages/simulation/src/utilities.test.ts"
+      ],
+      "mustExclude": ["packages/protocol/", "packages/persistence/"]
+    },
+    {
+      "id": "shared-protocol-persistence",
+      "measurement": "selection-expansion",
+      "comparisons": ["scope-expansion"],
+      "paths": [
+        "packages/protocol/src/authorization.ts",
+        "packages/persistence/src/authorization.ts",
+        "tests/fixtures/saves/standard-authorization-save-replay-v5-utility-entitlement.json"
+      ],
+      "mustExclude": []
+    },
+    {
+      "id": "worker-public-message",
+      "measurement": "selection-expansion",
+      "comparisons": ["scope-expansion"],
+      "paths": [
+        "apps/web/src/worker/simulation.worker.ts",
+        "packages/protocol/src/authorization.ts"
+      ],
+      "mustExclude": []
+    },
+    {
+      "id": "milestone-closure",
+      "measurement": "exact-closure",
+      "comparisons": ["closure"],
+      "paths": [".agent/completed/loop-recommissioning-verification.json"],
+      "mustExclude": []
+    }
+  ]
+}

@@ -1,0 +1,280 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ski-tycoon.invalid/schemas/scope-selection-1.0.0.json",
+  "title": "Ski Tycoon shadow affected-scope selection",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "mode",
+    "authoritative",
+    "closureSuppressionAllowed",
+    "graduationDeferred",
+    "scopeDisposition",
+    "changedPathSource",
+    "changedPaths",
+    "candidate",
+    "policyId",
+    "policySha256",
+    "checkCatalogueSha256",
+    "packageGraph",
+    "classifications",
+    "matchedTriggerClasses",
+    "unknownPaths",
+    "recommendedCheckIds",
+    "fullClosureCheckIds",
+    "actualCheckIds",
+    "omittedFromRecommendationActualCheckIds",
+    "recommendedOnlyCheckIds",
+    "failingActualCheckIds",
+    "falseNegativeCheckIds"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "mode": { "const": "shadow-only" },
+    "authoritative": { "const": false },
+    "closureSuppressionAllowed": { "const": false },
+    "graduationDeferred": { "const": true },
+    "scopeDisposition": {
+      "enum": ["shadow-recommendation", "governance-required"]
+    },
+    "changedPathSource": { "$ref": "#/$defs/changedPathSource" },
+    "changedPaths": { "$ref": "#/$defs/pathArray" },
+    "candidate": { "$ref": "#/$defs/candidate" },
+    "policyId": { "$ref": "#/$defs/nonEmptyString" },
+    "policySha256": { "$ref": "#/$defs/sha256" },
+    "checkCatalogueSha256": { "$ref": "#/$defs/sha256" },
+    "packageGraph": { "$ref": "#/$defs/packageGraph" },
+    "classifications": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/classification" }
+    },
+    "matchedTriggerClasses": { "$ref": "#/$defs/triggerArray" },
+    "unknownPaths": { "$ref": "#/$defs/pathArray" },
+    "recommendedCheckIds": { "$ref": "#/$defs/stringArray" },
+    "fullClosureCheckIds": { "$ref": "#/$defs/stringArray" },
+    "actualCheckIds": { "$ref": "#/$defs/stringArray" },
+    "omittedFromRecommendationActualCheckIds": {
+      "$ref": "#/$defs/stringArray"
+    },
+    "recommendedOnlyCheckIds": { "$ref": "#/$defs/stringArray" },
+    "failingActualCheckIds": { "$ref": "#/$defs/stringArray" },
+    "falseNegativeCheckIds": { "$ref": "#/$defs/stringArray" }
+  },
+  "$defs": {
+    "nonEmptyString": { "type": "string", "minLength": 1 },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+    },
+    "stringArray": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/nonEmptyString" }
+    },
+    "pathArray": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/path" }
+    },
+    "trigger": {
+      "enum": [
+        "protected-authority",
+        "canonical-encoding",
+        "shared-protocol",
+        "persistence-codec",
+        "migration",
+        "accepted-fixture",
+        "standard-state",
+        "composition-root",
+        "worker-message",
+        "package-graph",
+        "browser-host",
+        "ui-renderer",
+        "domain-local-simulation",
+        "orchestrator-evidence",
+        "documentation-only",
+        "unknown"
+      ]
+    },
+    "triggerArray": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/trigger" }
+    },
+    "changedPathSource": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "baseCommit", "headCommit"],
+          "properties": {
+            "kind": { "const": "git-range-and-working-tree" },
+            "baseCommit": { "$ref": "#/$defs/commit" },
+            "headCommit": { "$ref": "#/$defs/commit" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "fixtureId"],
+          "properties": {
+            "kind": { "const": "fixture" },
+            "fixtureId": { "$ref": "#/$defs/nonEmptyString" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "milestoneId"],
+          "properties": {
+            "kind": { "const": "proposal" },
+            "milestoneId": { "$ref": "#/$defs/nonEmptyString" }
+          }
+        }
+      ]
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baseCommit", "gitCommit", "gitTree", "workingTreeDirty"],
+      "properties": {
+        "baseCommit": { "$ref": "#/$defs/commit" },
+        "gitCommit": { "$ref": "#/$defs/commit" },
+        "gitTree": { "$ref": "#/$defs/commit" },
+        "workingTreeDirty": { "type": "boolean" }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "bytes", "sha256"],
+      "properties": {
+        "path": { "$ref": "#/$defs/path" },
+        "bytes": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "workspaceDependency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "dependencyType", "specifier"],
+      "properties": {
+        "name": { "$ref": "#/$defs/nonEmptyString" },
+        "dependencyType": {
+          "enum": [
+            "dependencies",
+            "devDependencies",
+            "optionalDependencies",
+            "peerDependencies"
+          ]
+        },
+        "specifier": { "type": "string", "pattern": "^workspace:" }
+      }
+    },
+    "packageNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "root",
+        "manifestPath",
+        "manifestBytes",
+        "manifestSha256",
+        "private",
+        "exports",
+        "workspaceDependencies"
+      ],
+      "properties": {
+        "name": { "$ref": "#/$defs/nonEmptyString" },
+        "root": {
+          "oneOf": [{ "const": "." }, { "$ref": "#/$defs/path" }]
+        },
+        "manifestPath": { "$ref": "#/$defs/path" },
+        "manifestBytes": { "type": "integer", "minimum": 1 },
+        "manifestSha256": { "$ref": "#/$defs/sha256" },
+        "private": { "type": "boolean" },
+        "exports": {},
+        "workspaceDependencies": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/workspaceDependency" }
+        }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to", "name", "dependencyType", "specifier"],
+      "properties": {
+        "from": { "$ref": "#/$defs/nonEmptyString" },
+        "to": { "$ref": "#/$defs/nonEmptyString" },
+        "name": { "$ref": "#/$defs/nonEmptyString" },
+        "dependencyType": {
+          "enum": [
+            "dependencies",
+            "devDependencies",
+            "optionalDependencies",
+            "peerDependencies"
+          ]
+        },
+        "specifier": { "type": "string", "pattern": "^workspace:" }
+      }
+    },
+    "packageGraph": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "workspaceManifest",
+        "packages",
+        "edges",
+        "sha256"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "workspaceManifest": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "bytes", "sha256", "patterns"],
+          "properties": {
+            "path": { "$ref": "#/$defs/path" },
+            "bytes": { "type": "integer", "minimum": 1 },
+            "sha256": { "$ref": "#/$defs/sha256" },
+            "patterns": { "$ref": "#/$defs/pathArray" }
+          }
+        },
+        "packages": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/packageNode" }
+        },
+        "edges": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/edge" }
+        },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "classification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "triggerClasses",
+        "workspacePackage",
+        "reverseDependentPackages"
+      ],
+      "properties": {
+        "path": { "$ref": "#/$defs/path" },
+        "triggerClasses": { "$ref": "#/$defs/triggerArray" },
+        "workspacePackage": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/nonEmptyString" }]
+        },
+        "reverseDependentPackages": { "$ref": "#/$defs/stringArray" }
+      }
+    }
+  }
+}

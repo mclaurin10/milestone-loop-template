@@ -1,0 +1,186 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ski-tycoon.local/schemas/orchestrator-state-1.3.0.json",
+  "title": "Ski Tycoon Orchestrator State",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "revision",
+    "repository",
+    "queue",
+    "milestones",
+    "activeMilestoneId",
+    "requiredNextVerticalConsumer",
+    "run",
+    "hiddenValidation",
+    "evidenceRetention",
+    "controllerHistory",
+    "reconciliation",
+    "nextAllowedAction",
+    "createdAt",
+    "updatedAt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.3.0" },
+    "revision": { "type": "integer", "minimum": 0 },
+    "repository": { "type": "object" },
+    "queue": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string" }
+    },
+    "milestones": { "type": "array", "items": { "type": "object" } },
+    "activeMilestoneId": { "type": ["string", "null"] },
+    "requiredNextVerticalConsumer": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sourceMilestoneId",
+            "consumerMilestoneId",
+            "consumerContractSha256"
+          ],
+          "properties": {
+            "sourceMilestoneId": { "type": "string", "minLength": 1 },
+            "consumerMilestoneId": { "type": "string", "minLength": 1 },
+            "consumerContractSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        }
+      ]
+    },
+    "run": { "type": "object" },
+    "hiddenValidation": { "type": "object" },
+    "evidenceRetention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "initializedAt",
+        "legacyRunIds",
+        "lastPrunedAt",
+        "lastReportPath"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "initializedAt": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        },
+        "legacyRunIds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+          }
+        },
+        "lastPrunedAt": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        },
+        "lastReportPath": { "type": ["string", "null"] }
+      }
+    },
+    "controllerHistory": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/controllerArchive" }
+    },
+    "reconciliation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["active", "history"],
+      "properties": {
+        "active": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "$ref": "https://ski-tycoon.local/schemas/orchestrator-reconciliation-1.0.0.json"
+            }
+          ]
+        },
+        "history": {
+          "type": "array",
+          "items": {
+            "$ref": "https://ski-tycoon.local/schemas/orchestrator-reconciliation-1.0.0.json"
+          }
+        }
+      }
+    },
+    "nextAllowedAction": {
+      "enum": [
+        "plan",
+        "start-milestone",
+        "resume-worker",
+        "verify",
+        "review",
+        "integrate",
+        "retry",
+        "reconcile",
+        "stop"
+      ]
+    },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "artifactReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "bytes"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?![A-Za-z]:[\\\\/])(?![\\\\/])(?!.*(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$))[^\\r\\n\\u0000]+$"
+        },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "bytes": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "controllerArchive": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "id",
+        "rawSourceState",
+        "sourceStateSchemaVersion",
+        "sourceRevision",
+        "priorVerifiedCommit",
+        "priorRun",
+        "priorQueue",
+        "priorActiveMilestoneId",
+        "priorNextAllowedAction",
+        "archivedAt",
+        "reason"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "id": { "type": "string", "minLength": 1 },
+        "rawSourceState": { "$ref": "#/$defs/artifactReference" },
+        "sourceStateSchemaVersion": { "type": "string", "minLength": 1 },
+        "sourceRevision": { "type": "integer", "minimum": 0 },
+        "priorVerifiedCommit": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "priorRun": { "type": "object" },
+        "priorQueue": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string" }
+        },
+        "priorActiveMilestoneId": { "type": ["string", "null"] },
+        "priorNextAllowedAction": { "type": "string", "minLength": 1 },
+        "archivedAt": { "type": "string", "format": "date-time" },
+        "reason": { "const": "external-integration-reconciliation" }
+      }
+    }
+  }
+}

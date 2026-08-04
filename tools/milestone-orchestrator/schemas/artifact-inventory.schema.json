@@ -1,0 +1,275 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ski-tycoon.local/schemas/1.0.0/artifact-inventory.schema.json",
+  "title": "Ski Tycoon read-only artifact inventory",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "inventoryId",
+    "artifactRoot",
+    "candidate",
+    "controller",
+    "activeReconciliation",
+    "entries",
+    "summary",
+    "createdAt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "inventoryId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,191}$"
+    },
+    "artifactRoot": { "type": "string", "minLength": 1 },
+    "candidate": { "$ref": "#/$defs/candidate" },
+    "controller": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "statePath",
+        "stateSha256",
+        "verifiedCommit",
+        "runStatus",
+        "activeMilestoneId"
+      ],
+      "properties": {
+        "statePath": { "type": "string", "minLength": 1 },
+        "stateSha256": {
+          "oneOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }]
+        },
+        "verifiedCommit": {
+          "oneOf": [{ "$ref": "#/$defs/commit" }, { "type": "null" }]
+        },
+        "runStatus": {
+          "oneOf": [
+            { "enum": ["idle", "running", "stopped", "escalated"] },
+            { "type": "null" }
+          ]
+        },
+        "activeMilestoneId": {
+          "oneOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }]
+        }
+      }
+    },
+    "activeReconciliation": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "path", "status"],
+          "properties": {
+            "id": { "type": "string", "minLength": 1 },
+            "path": { "type": "string", "minLength": 1 },
+            "status": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    },
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/entry" }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "entryCount",
+        "fileCount",
+        "totalBytes",
+        "classificationCounts",
+        "legacyWorkspaceCount",
+        "unknownProtectedCount"
+      ],
+      "properties": {
+        "entryCount": { "type": "integer", "minimum": 0 },
+        "fileCount": { "type": "integer", "minimum": 0 },
+        "totalBytes": { "type": "integer", "minimum": 0 },
+        "classificationCounts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "active-state",
+            "cited-tracked",
+            "exact-accepted",
+            "failed-diagnostic-cited",
+            "recent-managed",
+            "representative-failure",
+            "legacy-preserved-workspace",
+            "legacy-unmanaged-manual",
+            "eligible-future-dry-run",
+            "unknown-protected"
+          ],
+          "properties": {
+            "active-state": { "type": "integer", "minimum": 0 },
+            "cited-tracked": { "type": "integer", "minimum": 0 },
+            "exact-accepted": { "type": "integer", "minimum": 0 },
+            "failed-diagnostic-cited": { "type": "integer", "minimum": 0 },
+            "recent-managed": { "type": "integer", "minimum": 0 },
+            "representative-failure": { "type": "integer", "minimum": 0 },
+            "legacy-preserved-workspace": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "legacy-unmanaged-manual": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "eligible-future-dry-run": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "unknown-protected": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "legacyWorkspaceCount": { "type": "integer", "minimum": 0 },
+        "unknownProtectedCount": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "createdAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gitCommit", "gitTree", "workingTreeDirty"],
+      "properties": {
+        "gitCommit": { "$ref": "#/$defs/commit" },
+        "gitTree": { "$ref": "#/$defs/commit" },
+        "workingTreeDirty": { "type": "boolean" }
+      }
+    },
+    "manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "version", "path"],
+      "properties": {
+        "kind": { "type": "string", "minLength": 1 },
+        "version": {
+          "oneOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }]
+        },
+        "path": {
+          "oneOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }]
+        }
+      }
+    },
+    "receipt": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "sha256", "bytes"],
+          "properties": {
+            "path": { "type": "string", "minLength": 1 },
+            "sha256": { "$ref": "#/$defs/sha256" },
+            "bytes": { "type": "integer", "minimum": 1 }
+          }
+        }
+      ]
+    },
+    "pathSafety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lexicalContained",
+        "realpathContained",
+        "artifactRootSymlink",
+        "entrySymlink",
+        "disposition",
+        "symlinkPaths"
+      ],
+      "properties": {
+        "lexicalContained": { "type": "boolean" },
+        "realpathContained": { "type": "boolean" },
+        "artifactRootSymlink": { "type": "boolean" },
+        "entrySymlink": { "type": "boolean" },
+        "disposition": {
+          "enum": [
+            "contained",
+            "contains-symlink",
+            "symlink-rejected",
+            "containment-rejected"
+          ]
+        },
+        "symlinkPaths": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      }
+    },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "identity",
+        "stageId",
+        "commandId",
+        "candidate",
+        "status",
+        "path",
+        "manifest",
+        "receipt",
+        "fileCount",
+        "totalBytes",
+        "durableTrackedCitations",
+        "durableControllerStateReferences",
+        "activeReconciliationReference",
+        "classification",
+        "pathSafety"
+      ],
+      "properties": {
+        "identity": { "type": "string", "minLength": 1 },
+        "stageId": {
+          "oneOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }]
+        },
+        "commandId": {
+          "oneOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }]
+        },
+        "candidate": {
+          "oneOf": [{ "$ref": "#/$defs/candidate" }, { "type": "null" }]
+        },
+        "status": {
+          "oneOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }]
+        },
+        "path": { "type": "string", "minLength": 1 },
+        "manifest": { "$ref": "#/$defs/manifest" },
+        "receipt": { "$ref": "#/$defs/receipt" },
+        "fileCount": { "type": "integer", "minimum": 0 },
+        "totalBytes": { "type": "integer", "minimum": 0 },
+        "durableTrackedCitations": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "durableControllerStateReferences": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "activeReconciliationReference": {
+          "oneOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }]
+        },
+        "classification": {
+          "enum": [
+            "active-state",
+            "cited-tracked",
+            "exact-accepted",
+            "failed-diagnostic-cited",
+            "recent-managed",
+            "representative-failure",
+            "legacy-preserved-workspace",
+            "legacy-unmanaged-manual",
+            "eligible-future-dry-run",
+            "unknown-protected"
+          ]
+        },
+        "pathSafety": { "$ref": "#/$defs/pathSafety" }
+      }
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "domain-local-simulation",
+  "changedPaths": ["packages/simulation/src/avalanche.ts"],
+  "expectedTriggerClasses": ["domain-local-simulation"],
+  "expectedUnknownPaths": [],
+  "mandatoryExpectedCheckIds": [
+    "test-invariants",
+    "test-unit-fast",
+    "typecheck"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "migration",
+  "changedPaths": ["packages/persistence/src/authorization-migration.ts"],
+  "expectedTriggerClasses": ["migration", "persistence-codec"],
+  "expectedUnknownPaths": [],
+  "mandatoryExpectedCheckIds": [
+    "test-unit",
+    "test-unit-migrations",
+    "authorization-simulation"
+  ]
+}

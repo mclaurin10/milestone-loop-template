@@ -1,0 +1,324 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ski-tycoon.local/schemas/telemetry.schema.json",
+  "title": "Ski Tycoon loop telemetry event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "eventId",
+    "runId",
+    "source",
+    "sequence",
+    "previousEventSha256",
+    "operationId",
+    "eventType",
+    "phase",
+    "status",
+    "reason",
+    "startedAt",
+    "finishedAt",
+    "durationNanoseconds",
+    "candidate",
+    "command",
+    "tests",
+    "artifacts",
+    "retry",
+    "agent",
+    "baselineComparison",
+    "measurementAvailability"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "eventId": { "$ref": "#/$defs/nonEmptyString" },
+    "runId": { "$ref": "#/$defs/nonEmptyString" },
+    "source": { "enum": ["controller", "direct"] },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "previousEventSha256": {
+      "oneOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }]
+    },
+    "operationId": { "$ref": "#/$defs/nonEmptyString" },
+    "eventType": { "$ref": "#/$defs/nonEmptyString" },
+    "phase": { "$ref": "#/$defs/phase" },
+    "status": {
+      "oneOf": [{ "$ref": "#/$defs/status" }, { "type": "null" }]
+    },
+    "reason": {
+      "oneOf": [{ "$ref": "#/$defs/nonEmptyString" }, { "type": "null" }]
+    },
+    "startedAt": { "type": "string", "format": "date-time" },
+    "finishedAt": {
+      "oneOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }]
+    },
+    "durationNanoseconds": { "$ref": "#/$defs/nullableNanoseconds" },
+    "candidate": {
+      "oneOf": [{ "$ref": "#/$defs/candidate" }, { "type": "null" }]
+    },
+    "command": {
+      "oneOf": [{ "$ref": "#/$defs/command" }, { "type": "null" }]
+    },
+    "tests": {
+      "oneOf": [{ "$ref": "#/$defs/tests" }, { "type": "null" }]
+    },
+    "artifacts": {
+      "oneOf": [{ "$ref": "#/$defs/artifacts" }, { "type": "null" }]
+    },
+    "retry": {
+      "oneOf": [{ "$ref": "#/$defs/retry" }, { "type": "null" }]
+    },
+    "agent": {
+      "oneOf": [{ "$ref": "#/$defs/agent" }, { "type": "null" }]
+    },
+    "baselineComparison": {
+      "oneOf": [{ "$ref": "#/$defs/baselineComparison" }, { "type": "null" }]
+    },
+    "measurementAvailability": { "$ref": "#/$defs/availabilityObject" }
+  },
+  "$defs": {
+    "nonEmptyString": { "type": "string", "minLength": 1 },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "gitId": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "nullableGitId": {
+      "oneOf": [{ "$ref": "#/$defs/gitId" }, { "type": "null" }]
+    },
+    "nullableNanoseconds": {
+      "oneOf": [
+        { "type": "string", "pattern": "^(0|[1-9][0-9]*)$" },
+        { "type": "null" }
+      ]
+    },
+    "phase": {
+      "enum": [
+        "inspection",
+        "planning",
+        "implementation",
+        "verification",
+        "review",
+        "recording",
+        "integration",
+        "reconciliation"
+      ]
+    },
+    "status": {
+      "enum": ["PASS", "NOT_READY", "FAIL", "ERROR", "TIMEOUT", "ABORTED"]
+    },
+    "availability": {
+      "enum": [
+        "measured",
+        "sdk-unavailable",
+        "outside-controller",
+        "not-applicable",
+        "interrupted",
+        "unparseable",
+        "not-recorded"
+      ]
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baseCommit", "commit", "tree", "dirty"],
+      "properties": {
+        "baseCommit": { "$ref": "#/$defs/nullableGitId" },
+        "commit": { "$ref": "#/$defs/nullableGitId" },
+        "tree": { "$ref": "#/$defs/nullableGitId" },
+        "dirty": { "type": "boolean" }
+      }
+    },
+    "command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "argv",
+        "checkSetId",
+        "selectedCheckIds",
+        "actualCheckIds",
+        "exitCode",
+        "signal"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/nonEmptyString" },
+        "argv": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "checkSetId": {
+          "oneOf": [{ "$ref": "#/$defs/nonEmptyString" }, { "type": "null" }]
+        },
+        "selectedCheckIds": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "actualCheckIds": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "exitCode": {
+          "oneOf": [{ "type": "integer" }, { "type": "null" }]
+        },
+        "signal": {
+          "oneOf": [{ "$ref": "#/$defs/nonEmptyString" }, { "type": "null" }]
+        }
+      }
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total", "passed", "failed", "skipped"],
+      "properties": {
+        "total": { "type": "integer", "minimum": 0 },
+        "passed": { "type": "integer", "minimum": 0 },
+        "failed": { "type": "integer", "minimum": 0 },
+        "skipped": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "tests": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["suites", "tests"],
+      "properties": {
+        "suites": { "$ref": "#/$defs/counts" },
+        "tests": { "$ref": "#/$defs/counts" }
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fileCount",
+        "totalBytes",
+        "manifestReferences",
+        "receiptReferences"
+      ],
+      "properties": {
+        "fileCount": { "type": "integer", "minimum": 0 },
+        "totalBytes": { "type": "integer", "minimum": 0 },
+        "manifestReferences": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "receiptReferences": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        }
+      }
+    },
+    "retry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attempt", "failureClassification"],
+      "properties": {
+        "attempt": { "type": "integer", "minimum": 1 },
+        "failureClassification": {
+          "enum": [
+            "product",
+            "infrastructure",
+            "policy",
+            "evidence",
+            "timeout",
+            "unknown"
+          ]
+        }
+      }
+    },
+    "agent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "role",
+        "threadId",
+        "requestedModel",
+        "requestedReasoningEffort",
+        "resolvedModel",
+        "resolvedReasoningEffort",
+        "inputTokens",
+        "cachedInputTokens",
+        "outputTokens",
+        "reasoningOutputTokens"
+      ],
+      "properties": {
+        "role": { "$ref": "#/$defs/nonEmptyString" },
+        "threadId": {
+          "oneOf": [{ "$ref": "#/$defs/nonEmptyString" }, { "type": "null" }]
+        },
+        "requestedModel": {
+          "oneOf": [{ "$ref": "#/$defs/nonEmptyString" }, { "type": "null" }]
+        },
+        "requestedReasoningEffort": {
+          "oneOf": [{ "$ref": "#/$defs/nonEmptyString" }, { "type": "null" }]
+        },
+        "resolvedModel": {
+          "oneOf": [{ "$ref": "#/$defs/nonEmptyString" }, { "type": "null" }]
+        },
+        "resolvedReasoningEffort": {
+          "oneOf": [{ "$ref": "#/$defs/nonEmptyString" }, { "type": "null" }]
+        },
+        "inputTokens": {
+          "oneOf": [{ "type": "integer", "minimum": 0 }, { "type": "null" }]
+        },
+        "cachedInputTokens": {
+          "oneOf": [{ "type": "integer", "minimum": 0 }, { "type": "null" }]
+        },
+        "outputTokens": {
+          "oneOf": [{ "type": "integer", "minimum": 0 }, { "type": "null" }]
+        },
+        "reasoningOutputTokens": {
+          "oneOf": [{ "type": "integer", "minimum": 0 }, { "type": "null" }]
+        }
+      }
+    },
+    "baselineComparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "baselineId",
+        "changeClass",
+        "durationDeltaNanoseconds",
+        "artifactBytesDelta"
+      ],
+      "properties": {
+        "baselineId": { "$ref": "#/$defs/nonEmptyString" },
+        "changeClass": { "$ref": "#/$defs/nonEmptyString" },
+        "durationDeltaNanoseconds": {
+          "oneOf": [
+            { "type": "string", "pattern": "^-?(0|[1-9][0-9]*)$" },
+            { "type": "null" }
+          ]
+        },
+        "artifactBytesDelta": {
+          "oneOf": [{ "type": "integer" }, { "type": "null" }]
+        }
+      }
+    },
+    "availabilityObject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "durationNanoseconds",
+        "candidate",
+        "command",
+        "tests",
+        "artifacts",
+        "retry",
+        "agentThread",
+        "agentRequestedAssignment",
+        "agentResolvedAssignment",
+        "agentUsage",
+        "baselineComparison"
+      ],
+      "properties": {
+        "durationNanoseconds": { "$ref": "#/$defs/availability" },
+        "candidate": { "$ref": "#/$defs/availability" },
+        "command": { "$ref": "#/$defs/availability" },
+        "tests": { "$ref": "#/$defs/availability" },
+        "artifacts": { "$ref": "#/$defs/availability" },
+        "retry": { "$ref": "#/$defs/availability" },
+        "agentThread": { "$ref": "#/$defs/availability" },
+        "agentRequestedAssignment": { "$ref": "#/$defs/availability" },
+        "agentResolvedAssignment": { "$ref": "#/$defs/availability" },
+        "agentUsage": { "$ref": "#/$defs/availability" },
+        "baselineComparison": { "$ref": "#/$defs/availability" }
+      }
+    }
+  }
+}
