@@ -26,14 +26,12 @@ describe("always-run invariant registry", () => {
       "fail-closed-evidence",
     ]);
     expect(
-      tracked.value.entries.find(
-        (entry) => entry.id === "protected-integrity",
-      )?.ownerPaths,
+      tracked.value.entries.find((entry) => entry.id === "protected-integrity")
+        ?.ownerPaths,
     ).toEqual(["PROJECT_GOAL.md", "evals/", "scripts/verify.mjs"]);
     expect(
-      tracked.value.entries.find(
-        (entry) => entry.id === "fail-closed-evidence",
-      )?.ownerPaths,
+      tracked.value.entries.find((entry) => entry.id === "fail-closed-evidence")
+        ?.ownerPaths,
     ).toEqual([
       "tools/milestone-orchestrator/src/verifier.ts",
       "tools/evidence.mjs",

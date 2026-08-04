@@ -62,7 +62,9 @@ async function repositoryFixture(config = validConfig()): Promise<{
   readonly config: ReturnType<typeof validConfig>;
   readonly baseCommit: string;
 }> {
-  const root = await mkdtemp(join(tmpdir(), "milestone-loop-recovery-cleanup-"));
+  const root = await mkdtemp(
+    join(tmpdir(), "milestone-loop-recovery-cleanup-"),
+  );
   temporaryDirectories.push(root);
   git(root, "init", "-b", "main");
   git(root, "config", "user.name", "Recovery Cleanup Test");

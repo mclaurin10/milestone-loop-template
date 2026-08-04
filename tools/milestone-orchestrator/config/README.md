@@ -14,7 +14,7 @@ their contents, guided by the templates.
 ## default.json (`OrchestratorConfig`, schema 1.3.0)
 
 - `project.name` — interpolated into the planner/worker/reviewer prompt
-  preambles ("You are the read-only Planner for the *<name>* autonomous
+  preambles ("You are the read-only Planner for the _<name>_ autonomous
   milestone loop.").
 - `project.authorityFile` — the frozen goal document at the repository root.
   Interpolated into every agent preamble, must appear in `protectedPaths`, and
@@ -76,7 +76,7 @@ two partitions must be an exact disjoint union of discovery.
 The commissioned paired-benchmark instrument (D-032). Structure, thresholds,
 and class ids are pinned by `assertBenchmarkMatrix` and cannot be weakened.
 
-- `classes[].paths` — representative files in *your* repo for each benchmark
+- `classes[].paths` — representative files in _your_ repo for each benchmark
   class.
 - `historical.fullSafeCheckIds` — every check id the loop ran per candidate
   before scope selection existed (the "before" lane of the paired benchmark).

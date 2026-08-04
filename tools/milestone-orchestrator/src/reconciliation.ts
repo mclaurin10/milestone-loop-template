@@ -17,6 +17,7 @@ import {
   type DurableArtifactReference,
   type MilestoneProposal,
   type OrchestratorConfig,
+  type ProjectProfile,
   type OrchestratorState,
   type ReconciliationPhase,
   type ReconciliationRecord,
@@ -131,6 +132,7 @@ export interface ReconciliationDependencies {
   }>;
   readonly review?: (input: {
     readonly gateway: CodexGateway;
+    readonly project: ProjectProfile;
     readonly record: ReconciliationRecord;
     readonly workspacePath: string;
     readonly artifactDirectory: string;

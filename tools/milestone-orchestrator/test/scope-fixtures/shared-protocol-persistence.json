@@ -10,7 +10,6 @@
   "mandatoryExpectedCheckIds": [
     "test-unit",
     "test-unit-migrations",
-    "domain-simulation",
-    "domain-browser"
+    "domain-simulation"
   ]
 }

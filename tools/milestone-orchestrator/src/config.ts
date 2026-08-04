@@ -165,7 +165,9 @@ export async function loadConfig(
 ): Promise<OrchestratorConfig> {
   const path = resolve(
     repositoryRoot,
-    requestedPath ?? process.env["MILESTONE_LOOP_CONFIG"] ?? DEFAULT_CONFIG_PATH,
+    requestedPath ??
+      process.env["MILESTONE_LOOP_CONFIG"] ??
+      DEFAULT_CONFIG_PATH,
   );
   const parsed = migrateConfig(
     JSON.parse(await readFile(path, "utf8")) as unknown,

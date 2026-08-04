@@ -39,9 +39,7 @@ const definitions = {
     stageId: "format-lint",
     commandId: "lint",
     kind: "lint-report",
-    commands: [
-      ["exec", "eslint", "scripts", "tools", "vitest.config.ts"],
-    ],
+    commands: [["exec", "eslint", "scripts", "tools", "vitest.config.ts"]],
   },
   typecheck: {
     stageId: "typecheck",

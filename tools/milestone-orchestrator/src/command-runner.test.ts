@@ -15,7 +15,9 @@ afterEach(async () => {
 
 describe("safe pnpm launcher resolution", () => {
   it("accepts Corepack's pnpm.mjs entry from npm_execpath", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "milestone-loop-corepack-pnpm-"));
+    const directory = await mkdtemp(
+      join(tmpdir(), "milestone-loop-corepack-pnpm-"),
+    );
     temporaryDirectories.push(directory);
     const script = join(directory, "pnpm.mjs");
     await writeFile(script, "process.exit(0);\n", "utf8");

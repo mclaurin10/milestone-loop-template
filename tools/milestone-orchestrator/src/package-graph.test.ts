@@ -25,43 +25,33 @@ describe("runtime workspace package graph", () => {
 
     expect(first).toEqual(second);
     expect(first.sha256).toMatch(/^[a-f0-9]{64}$/);
-    expect(first.packages).toHaveLength(10);
+    expect(first.packages).toHaveLength(2);
     expect(first.packages.map((entry) => entry.name)).toEqual(
       [...first.packages.map((entry) => entry.name)].sort(),
     );
     expect(
-      first.packages.find((entry) => entry.name === "@example/protocol"),
+      first.packages.find(
+        (entry) => entry.name === "@milestone-loop/orchestrator",
+      ),
     ).toMatchObject({
-      root: "packages/protocol",
+      root: "tools/milestone-orchestrator",
       exports: { ".": "./src/index.ts" },
-      workspaceDependencies: [
-        {
-          name: "@example/foundation",
-          dependencyType: "dependencies",
-          specifier: "workspace:0.0.0",
-        },
-      ],
+      workspaceDependencies: [],
     });
-    expect(reverseDependentPackageNames(first, "@example/protocol")).toEqual(
-      [
-        "@example/headless",
-        "@example/persistence",
-        "@example/renderer",
-        "@example/simulation",
-        "@example/ui",
-        "@example/web",
-        "example-project",
-      ],
-    );
     expect(
-      workspaceOwnerForPath(first, "packages/protocol/src/authorization.ts")
+      reverseDependentPackageNames(first, "@milestone-loop/orchestrator"),
+    ).toEqual(["milestone-loop-template"]);
+    expect(
+      workspaceOwnerForPath(first, "tools/milestone-orchestrator/src/cli.ts")
         ?.name,
-    ).toBe("@example/protocol");
+    ).toBe("@milestone-loop/orchestrator");
     expect(workspaceOwnerForPath(first, "docs/verification.md")).toBeNull();
   });
 
   it("rejects a workspace pattern that can escape the repository", async () => {
-    const root = await mkdtemp(join(tmpdir(), "milestone-package-graph-unsafe-"));
+    const root = await mkdtemp(
+      join(tmpdir(), "milestone-package-graph-unsafe-"),
+    );
     temporaryDirectories.push(root);
     await writeFile(
       join(root, "pnpm-workspace.yaml"),
@@ -79,7 +69,9 @@ describe("runtime workspace package graph", () => {
 
   it("rejects a symlinked workspace directory", async () => {
     const root = await mkdtemp(join(tmpdir(), "milestone-package-graph-link-"));
-    const external = await mkdtemp(join(tmpdir(), "milestone-package-graph-target-"));
+    const external = await mkdtemp(
+      join(tmpdir(), "milestone-package-graph-target-"),
+    );
     temporaryDirectories.push(root, external);
     await mkdir(join(root, "packages"), { recursive: true });
     await writeFile(

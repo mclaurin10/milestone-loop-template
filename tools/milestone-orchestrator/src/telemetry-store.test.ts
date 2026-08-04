@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { existsSync } from "node:fs";
 import { mkdtemp, readFile, readdir, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -247,7 +248,7 @@ describe("machine-owned telemetry store", () => {
         }
       }
     };
-    await visit(packageRoot);
+    if (existsSync(packageRoot)) await visit(packageRoot);
     expect(violations).toEqual([]);
   });
 

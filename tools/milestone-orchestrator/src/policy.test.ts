@@ -86,7 +86,7 @@ describe("milestone policy", () => {
     ).toMatchObject({ status: "accepted", findings: [] });
   });
 
-  it("accepts the tracked D-033 utility-footprint proposal without starting it", async () => {
+  it("accepts the tracked example next milestone without starting it", async () => {
     const proposal = assertMilestoneProposal(
       JSON.parse(
         await readFile(
@@ -103,12 +103,11 @@ describe("milestone policy", () => {
         "readiness",
       ),
     ).toMatchObject({ status: "accepted", findings: [] });
-    expect(proposal.id).toBe("complete-operations-base-utilities");
+    expect(proposal.id).toBe("example-first-milestone");
     expect(proposal.dependencies).toEqual([]);
     expect(proposal.verticalSlice).toMatchObject({
-      mode: "integrated",
-      userGoal:
-        "Make the operations-base blueprint utility-eligible without constructing the facility.",
+      mode: "not-applicable",
+      userGoal: null,
       exception: null,
     });
     expect(proposal.requiredTests).toEqual(

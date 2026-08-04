@@ -241,6 +241,7 @@ export async function discoverUnitTestFiles(
   const files = new Set<string>();
   for (const root of roots) {
     const absoluteRoot = resolve(repositoryRoot, root.path);
+    if (!existsSync(absoluteRoot)) continue;
     for (const path of await walkFiles(absoluteRoot)) {
       if (path.endsWith(root.suffix))
         files.add(slash(relative(repositoryRoot, path)));

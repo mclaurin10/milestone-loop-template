@@ -310,7 +310,9 @@ describe("Codex SDK gateway", () => {
   });
 
   it("enforces deliberately sequential agent execution", async () => {
-    const root = await mkdtemp(join(tmpdir(), "milestone-loop-sequential-sdk-"));
+    const root = await mkdtemp(
+      join(tmpdir(), "milestone-loop-sequential-sdk-"),
+    );
     temporaryDirectories.push(root);
     let release!: () => void;
     const gate = new Promise<void>((resolveGate) => {

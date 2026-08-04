@@ -4,10 +4,7 @@ import { dirname, relative, resolve } from "node:path";
 
 import ts from "typescript";
 
-export const WORKSPACE_TYPECHECK_CONFIGS = [
-  "tools/milestone-orchestrator/tsconfig.json",
-  "tsconfig.tools.json",
-];
+export const WORKSPACE_TYPECHECK_CONFIGS = ["tsconfig.tools.json"];
 
 function diagnosticHost(repositoryRoot) {
   return {

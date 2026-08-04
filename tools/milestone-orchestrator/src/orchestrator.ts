@@ -18,6 +18,7 @@ import type {
   OrchestratorConfig,
   OrchestratorState,
   PolicyDecision,
+  ProjectProfile,
   ProposalProvenance,
   ReadinessHistoryEvidence,
   ReviewerReport,

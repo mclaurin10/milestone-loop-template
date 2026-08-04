@@ -6,7 +6,11 @@
   "entries": [
     {
       "id": "protected-integrity",
-      "ownerPaths": ["<YOUR_AUTHORITY_FILE>.md", "evals/", "scripts/verify.mjs"],
+      "ownerPaths": [
+        "<YOUR_AUTHORITY_FILE>.md",
+        "evals/",
+        "scripts/verify.mjs"
+      ],
       "triggerPaths": [
         "<YOUR_AUTHORITY_FILE>.md",
         "AGENTS.md",

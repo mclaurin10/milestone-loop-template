@@ -16,7 +16,7 @@
   "scripts": {
     "verify": "node scripts/verify.mjs",
     "verify:dependencies": "node tools/placeholder-check.mjs verify:dependencies",
-    "format": "prettier --write scripts tools evals .agent eslint.config.mjs package.json pnpm-workspace.yaml tsconfig.base.json tsconfig.tools.json vitest.config.ts CONTRACT.md README.md PROJECT_GOAL.md AGENTS.md",
+    "format": "prettier --write scripts tools eslint.config.mjs package.json pnpm-workspace.yaml tsconfig.base.json tsconfig.tools.json vitest.config.ts",
     "format:check": "tsx tools/run-tool-evidence.mjs format",
     "lint": "tsx tools/run-tool-evidence.mjs lint",
     "lint:architecture": "node tools/placeholder-check.mjs lint:architecture",

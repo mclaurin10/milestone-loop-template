@@ -34,7 +34,9 @@
       "measurement": "command-workflows",
       "comparisons": ["iteration"],
       "paths": ["<A_DOMAIN_LOCAL_FILE_IN_YOUR_REPO>"],
-      "mustExclude": ["<PATH_PREFIXES_A_DOMAIN_LOCAL_SELECTION_MUST_NOT_TOUCH>/"]
+      "mustExclude": [
+        "<PATH_PREFIXES_A_DOMAIN_LOCAL_SELECTION_MUST_NOT_TOUCH>/"
+      ]
     },
     {
       "id": "shared-protocol-persistence",

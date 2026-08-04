@@ -18,7 +18,7 @@
       "evidence": "A focused automated test and command result pass."
     }
   ],
-  "requiredTests": ["pnpm test:orchestrator"],
+  "requiredTests": ["pnpm test:orchestrator", "pnpm verify"],
   "verificationCommands": [
     {
       "id": "orchestrator-tests",
