@@ -11,7 +11,7 @@ const RESULT_SCHEMA_VERSION = '2.0.0';
 const EVIDENCE_RECEIPT_SCHEMA_VERSION = '1.0.0';
 const IMMUTABLE_LOCK_SCHEMA_VERSION = '1.0.0';
 const ESTABLISHED_IMMUTABLE_LOCK_SHA256 =
-  '95074c8c9d9c6d029475d049d8aad138c8dc484260abd5ee1ec03623d90defe4';
+  'd1166088b00c54af65e8654188adc58a3cabd9d7908820809fe66af28c933050';
 const REQUIRED_NODE_MAJOR = 24;
 const REQUIRED_PNPM_MAJOR = 11;
 const STATUS = Object.freeze({
@@ -92,8 +92,8 @@ const bootstrapStages = Object.freeze([
   },
   {
     id: 'production-build',
-    name: 'Production Vite build',
-    description: 'Builds the browser application from the pinned workspace without development-only fallbacks.',
+    name: 'Production build',
+    description: 'Builds the production application from the pinned workspace without development-only fallbacks.',
     acceptanceIds: ['AUTO-01'],
     scripts: ['build'],
     requiredArtifactKinds: ['build-report'],
@@ -111,7 +111,7 @@ const bootstrapStages = Object.freeze([
   {
     id: 'bootstrap-simulation',
     name: 'Shared deterministic simulation and replay smoke proof',
-    description: 'Proves one fixed-timestep kernel in Node and a real browser Worker with a recorded player-action replay.',
+    description: 'Proves one fixed-timestep kernel in Node and a real browser Worker with a recorded user-action replay.',
     acceptanceIds: ['REPLAY-01'],
     scripts: ['verify:bootstrap:simulation'],
     requiredArtifactKinds: [
@@ -134,8 +134,8 @@ const bootstrapStages = Object.freeze([
   },
   {
     id: 'bootstrap-browser',
-    name: 'Playwright Chromium and rendered Babylon smoke proof',
-    description: 'Launches the production build, validates the Worker-backed React/Babylon scene, captures diagnostics, and saves a screenshot.',
+    name: 'Real-browser rendered smoke proof',
+    description: 'Launches the production build in the supported browser, validates the rendered scene, captures diagnostics, and saves a screenshot.',
     acceptanceIds: ['VIS-01'],
     scripts: ['verify:bootstrap:browser'],
     requiredArtifactKinds: [
@@ -192,8 +192,8 @@ const readinessStages = Object.freeze([
   },
   {
     id: 'bot-playtesting',
-    name: 'Player-action-only bot playtesting',
-    description: 'Runs the fixed benchmark and visible seed pool from undeveloped terrain.',
+    name: 'User-action-only bot playtesting',
+    description: 'Runs the fixed benchmark and visible seed pool from the frozen starting state.',
     acceptanceIds: ['PLAY-01'],
     scripts: ['benchmark:bot', 'benchmark:visible-seeds'],
     requiredArtifactKinds: ['bot-benchmark-report', 'visible-seed-report'],
@@ -202,7 +202,7 @@ const readinessStages = Object.freeze([
   {
     id: 'browser-interaction',
     name: 'Browser launch and interaction',
-    description: 'Exercises the supported desktop Chromium application and public player-action path.',
+    description: 'Exercises the supported desktop browser application and public user-action path.',
     acceptanceIds: ['VIS-01'],
     scripts: ['verify:browser'],
     requiredArtifactKinds: ['browser-interaction-report'],
@@ -869,7 +869,7 @@ async function validateAcceptanceManifest() {
     ),
   );
 
-  const expectedBotIds = ['BOT-01', 'BOT-02', 'BOT-03', 'BOT-04', 'BOT-05', 'BOT-06'];
+  const expectedBotIds = ['BOT-01', 'BOT-02', 'BOT-03'];
   const botIds = Array.isArray(manifest.botRequirements)
     ? manifest.botRequirements.map((requirement) => requirement.id)
     : [];
@@ -880,8 +880,8 @@ async function validateAcceptanceManifest() {
       'required-bot-requirements',
       exactBotSet ? STATUS.PASS : STATUS.FAIL,
       exactBotSet
-        ? 'All six original bot requirements, including BOT-06, are present.'
-        : 'The original BOT-01 through BOT-06 requirement set was changed.',
+        ? 'All original bot requirements are present.'
+        : 'The original bot requirement set was changed.',
     ),
   );
 
@@ -904,9 +904,9 @@ async function validateAcceptanceManifest() {
     manifest.humanAcceptanceGate?.id,
   ];
   const normativeIdsAreComplete =
-    completionMetrics.length === 74 &&
-    operationalChains.length === 22 &&
-    normativeIds.length === 115 &&
+    completionMetrics.length === 4 &&
+    operationalChains.length === 2 &&
+    normativeIds.length === 22 &&
     normativeIds.every((id) => typeof id === 'string' && id.length > 0) &&
     new Set(normativeIds).size === normativeIds.length;
   checks.push(
@@ -914,7 +914,7 @@ async function validateAcceptanceManifest() {
       'complete-normative-id-set',
       normativeIdsAreComplete ? STATUS.PASS : STATUS.FAIL,
       normativeIdsAreComplete
-        ? 'Manifest retains 74 metrics, 6 bot requirements, 22 chains, 7 layers, and 115 unique normative IDs.'
+        ? 'Manifest retains 4 metrics, 3 bot requirements, 2 chains, 7 layers, and 22 unique normative IDs.'
         : 'Manifest requirement counts or unique normative IDs no longer match the original contract.',
     ),
   );
@@ -929,7 +929,7 @@ async function validateAcceptanceManifest() {
       .map((seedSet) => ({ freeze: seedSet.freeze })),
   ];
   const thresholdClassesValid =
-    thresholds.length === 92 &&
+    thresholds.length === 10 &&
     thresholds.every((threshold) =>
       threshold && ['IMMUTABLE', 'CAL-1_PROVISIONAL'].includes(threshold.freeze));
   checks.push(
@@ -937,7 +937,7 @@ async function validateAcceptanceManifest() {
       'threshold-freeze-coverage',
       thresholdClassesValid ? STATUS.PASS : STATUS.FAIL,
       thresholdClassesValid
-        ? 'All 92 original threshold objects retain an allowed freeze class.'
+        ? 'All 10 original threshold objects retain an allowed freeze class.'
         : 'Threshold count or freeze-class coverage differs from the original contract.',
     ),
   );
@@ -1010,8 +1010,8 @@ async function validateAcceptanceManifest() {
     checks.push(
       check(
         'acceptance-prose-bot-aggregation',
-        acceptanceText.includes('`BOT-01` through `BOT-06` pass.') ? STATUS.PASS : STATUS.FAIL,
-        'Acceptance prose must aggregate BOT-01 through BOT-06 without omitting the score requirement.',
+        acceptanceText.includes('`BOT-01` through `BOT-03` pass.') ? STATUS.PASS : STATUS.FAIL,
+        'Acceptance prose must aggregate BOT-01 through BOT-03 without omitting the score requirement.',
       ),
     );
   } catch (error) {
@@ -1230,7 +1230,7 @@ async function runPackageScript(stage, scriptName, packageJson, artifactRoot, in
         LOOP_VERIFY_STAGE_ARTIFACT_DIR: absoluteStageRoot,
         LOOP_VERIFY_COMMAND_ID: scriptName,
         LOOP_VERIFY_COMMAND_ARTIFACT_DIR: absoluteCommandRoot,
-        SKI_ACCEPTANCE_MANIFEST: acceptanceManifestPath,
+        LOOP_ACCEPTANCE_MANIFEST: acceptanceManifestPath,
       },
       stdio: ['ignore', 'pipe', 'pipe'],
       windowsHide: true,

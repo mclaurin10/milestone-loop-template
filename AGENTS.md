@@ -11,7 +11,7 @@ Read `PROJECT_GOAL.md` before planning or changing the repository. It is the fro
 
 If authorities conflict, preserve the higher authority, record the conflict, and do not choose the easier interpretation. Plans and logs never amend the frozen goal.
 
-The following are immutable: the frozen product scope and non-goals; the required stack and simulation/rendering separation; determinism, replay, save/load, and player-action-only bot rules; the completion categories and breadth minima; the one-time calibration constraints; the original acceptance tests; and the autonomous readiness and human-verification gates. Only an explicit human revision to the frozen goal may change them.
+The following are immutable: the frozen product scope and non-goals; the required stack and simulation/rendering separation; determinism, replay, save/load, and user-action-only bot rules; the completion categories and breadth minima; the one-time calibration constraints; the original acceptance tests; and the autonomous readiness and human-verification gates. Only an explicit human revision to the frozen goal may change them.
 
 `evals/immutable-contract-lock.json` records baseline and active hashes for the frozen goal and original evaluation contract. A hash mismatch is a blocking contract defect, not permission to regenerate the lock. The goal and hidden protocol are human-revision-only. The acceptance prose/manifest active hashes may change without a human revision only once, when `CAL-1` closes, and only after an executable semantic diff proves that every change is confined to an explicitly provisional field, the complete calibration record exists, and every immutable ID/meaning/gate remains equal to the baseline. Baseline hashes never change during calibration. Until that transition is actually being implemented, all active hashes must equal their baselines.
 
@@ -19,14 +19,14 @@ The following are immutable: the frozen product scope and non-goals; the require
 
 `pnpm verify` selects the profile declared at `package.json` -> `milestoneLoop.verification.defaultProfile`. The only valid profiles are:
 
-- `bootstrap`: proves the technical scaffold, shared deterministic smoke kernel, minimal persistence/replay, production build, and real Chromium rendering/evidence path. It is never evidence of game-system completion or autonomous readiness.
+- `bootstrap`: proves the technical scaffold, shared deterministic smoke kernel, minimal persistence/replay, production build, and real browser rendering/evidence path. It is never evidence of product-system completion or autonomous readiness.
 - `readiness`: exercises the complete frozen evaluation surface and is the only profile eligible to support `AUTONOMOUS-READINESS-01`.
 
-The bootstrap profile exists so the first application increment can become truthfully green without fabricating future game, bot, seed, fault, or performance systems. It is also a strict scope ceiling: while `bootstrap` is the default, do not implement terrain, economy, lifts, trails, guests, staff, weather/snow/avalanche, construction, transport, utilities, town, environment, resort operations, content breadth, production bot policy, or other substantive feature.
+The bootstrap profile exists so the first application increment can become truthfully green without fabricating future product, bot, seed, fault, or performance systems. It is also a strict scope ceiling: while `bootstrap` is the default, do not implement product domain systems, content breadth, production bot policy, or any other substantive feature work.
 
-Bootstrap ends only at a clean committed tree with a passing no-argument `pnpm verify` and the required structured receipts/artifacts. A later plan must change the default profile to `readiness` and add the permanent `.agent/readiness-profile-activated.json` transition marker before the first substantive game-system implementation. From that transition onward, missing readiness stages remain non-passing until genuinely implemented; the marker may not be deleted and the profile may not be changed back to obtain a green result. The verifier checks marker history to reject rollback. A bootstrap result, focused `--stage` result, explicit non-default profile run, dirty-tree run, or result whose `completion.eligible` is false cannot support a completion claim.
+Bootstrap ends only at a clean committed tree with a passing no-argument `pnpm verify` and the required structured receipts/artifacts. A later plan must change the default profile to `readiness` and add the permanent `.agent/readiness-profile-activated.json` transition marker before the first substantive product-system implementation. From that transition onward, missing readiness stages remain non-passing until genuinely implemented; the marker may not be deleted and the profile may not be changed back to obtain a green result. The verifier checks marker history to reject rollback. A bootstrap result, focused `--stage` result, explicit non-default profile run, dirty-tree run, or result whose `completion.eligible` is false cannot support a completion claim.
 
-Every successful child verification command must write the command-owned evidence receipt required by `docs/verification.md`. Exit code zero without a valid receipt and independently verified artifacts is a failure. Do not use placeholder/no-op scripts or receipts that merely assert success without exercising the production boundary named by the stage.
+Every successful child verification command must write the command-owned evidence receipt required by `CONTRACT.md`. Exit code zero without a valid receipt and independently verified artifacts is a failure. Do not use placeholder/no-op scripts or receipts that merely assert success without exercising the production boundary named by the stage.
 
 ## Operating Loop
 
@@ -75,7 +75,7 @@ Escalate only when progress actually requires:
 
 - unavailable credentials or an unavailable external service;
 - mutually contradictory frozen requirements or immutable tests;
-- a genuinely irreversible product decision that changes the game's identity; or
+- a genuinely irreversible product decision that changes the product's identity; or
 - a credible risk of destructive loss outside normal source-control recovery.
 
 Before escalation, exhaust safe local alternatives and present the blocker, evidence, attempted alternatives, and the smallest decision needed. Human preference, uncertainty, difficult engineering, and routine prioritization are not escalation grounds.

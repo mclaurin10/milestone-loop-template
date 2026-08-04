@@ -463,7 +463,7 @@ export async function beginDirectTelemetry(context, input = {}) {
   const identity = commandIdentity();
   const timestamp = new Date().toISOString().replaceAll(/[^0-9]/g, "");
   const runId =
-    process.env.SKI_LOOP_TELEMETRY_RUN_ID ??
+    process.env.MILESTONE_LOOP_TELEMETRY_RUN_ID ??
     `direct-${safeName(context.commandId)}-${timestamp}-${process.pid}-${randomUUID().slice(0, 8)}`;
   const store = await TelemetryStore.open({
     repositoryRoot: context.repositoryRoot,

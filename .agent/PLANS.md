@@ -32,9 +32,9 @@ If blocked under `AGENTS.md`, leave the plan marked blocked with the exact block
 
 ## Feature Milestone Shape
 
-New feature plans default to one vertically integrated player outcome. The plan must name the normal public action path, shared deterministic rule owners, Standard composition owner, save/load/replay evidence, Node/production-Worker parity, and one inspectable consequence. Kernel-, fixture-, migration-, or preview-only work is an exception: it requires a narrow justification and one machine-enforced immediate consumer before unrelated work can start.
+New feature plans default to one vertically integrated user outcome. The plan must name the normal public action path, shared deterministic rule owners, Standard composition owner, save/load/replay evidence, Node/production-Worker parity, and one inspectable consequence. Kernel-, fixture-, migration-, or preview-only work is an exception: it requires a narrow justification and one machine-enforced immediate consumer before unrelated work can start.
 
-Keep dependency order explicit. A plan may not bundle an entire skiing spine merely to make a precursor look complete, and it may not add decorative or acceptance-facing content before its causal prerequisites. The current sequence after the first communications corridor is remaining utilities, operations-base construction, minimum operations staffing/finance/safety, first functional lift and trail, guests, then an operating day.
+Keep dependency order explicit. A plan may not bundle the entire product spine merely to make a precursor look complete, and it may not add decorative or acceptance-facing content before its causal prerequisites.
 
 ## External Boundary Reconciliation
 

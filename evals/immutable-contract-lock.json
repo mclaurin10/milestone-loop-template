@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0.0",
+  "calibrationTransition": {
+    "state": "open_not_started",
+    "completedCount": 0,
+    "maximumCount": 1,
+    "recordPath": null
+  },
+  "files": [
+    {
+      "path": "PROJECT_GOAL.md",
+      "changeClass": "HUMAN_REVISION_ONLY",
+      "baselineSha256": "72b08d4132159866cceba7f19c54a5484d1acf2a142e5e6285903d0a3a231b88",
+      "activeSha256": "72b08d4132159866cceba7f19c54a5484d1acf2a142e5e6285903d0a3a231b88"
+    },
+    {
+      "path": "evals/ACCEPTANCE.md",
+      "changeClass": "CAL1_PROVISIONAL_FIELDS_ONCE_OR_HUMAN_REVISION",
+      "baselineSha256": "84d2027a4196a2446ca7d519025f0cacac2c0576c65bb6d8590c111b1a267dba",
+      "activeSha256": "84d2027a4196a2446ca7d519025f0cacac2c0576c65bb6d8590c111b1a267dba"
+    },
+    {
+      "path": "evals/acceptance-manifest.json",
+      "changeClass": "CAL1_PROVISIONAL_FIELDS_ONCE_OR_HUMAN_REVISION",
+      "baselineSha256": "365e452dcc770e99a9689d3a36b74660f7ec3c4c25c298f9eee4ea20b18a001c",
+      "activeSha256": "365e452dcc770e99a9689d3a36b74660f7ec3c4c25c298f9eee4ea20b18a001c"
+    },
+    {
+      "path": "evals/HIDDEN_VALIDATION_PROTOCOL.md",
+      "changeClass": "HUMAN_REVISION_ONLY",
+      "baselineSha256": "89628e97a8a535ea3fc4771c273efc7f79b0d1881695aa0c513ab552486f1673",
+      "activeSha256": "89628e97a8a535ea3fc4771c273efc7f79b0d1881695aa0c513ab552486f1673"
+    }
+  ]
+}

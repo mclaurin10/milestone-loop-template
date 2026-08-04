@@ -4,8 +4,6 @@ export default defineConfig({
   test: {
     environment: "node",
     include: [
-      "packages/**/*.test.ts",
-      "apps/headless/**/*.test.ts",
       "tools/milestone-orchestrator/**/*.test.ts",
       "tools/**/*.test.mjs",
     ],

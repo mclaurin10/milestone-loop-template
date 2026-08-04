@@ -5,14 +5,7 @@ import { dirname, relative, resolve } from "node:path";
 import ts from "typescript";
 
 export const WORKSPACE_TYPECHECK_CONFIGS = [
-  "packages/foundation/tsconfig.json",
-  "packages/protocol/tsconfig.json",
-  "packages/simulation/tsconfig.json",
-  "packages/persistence/tsconfig.json",
-  "packages/renderer/tsconfig.json",
-  "packages/ui/tsconfig.json",
-  "apps/headless/tsconfig.json",
-  "apps/web/tsconfig.json",
+  "tools/milestone-orchestrator/tsconfig.json",
   "tsconfig.tools.json",
 ];
 

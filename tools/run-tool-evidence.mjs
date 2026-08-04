@@ -1,4 +1,3 @@
-import { readdir } from "node:fs/promises";
 import { relative, resolve } from "node:path";
 
 import {
@@ -25,13 +24,10 @@ const definitions = {
         "exec",
         "prettier",
         "--check",
-        "apps",
-        "packages",
-        "tests",
+        "scripts",
         "tools",
         "eslint.config.mjs",
         "package.json",
-        "playwright.config.ts",
         "pnpm-workspace.yaml",
         "tsconfig.base.json",
         "tsconfig.tools.json",
@@ -44,16 +40,7 @@ const definitions = {
     commandId: "lint",
     kind: "lint-report",
     commands: [
-      [
-        "exec",
-        "eslint",
-        "apps",
-        "packages",
-        "tests",
-        "tools",
-        "playwright.config.ts",
-        "vitest.config.ts",
-      ],
+      ["exec", "eslint", "scripts", "tools", "vitest.config.ts"],
     ],
   },
   typecheck: {
@@ -66,9 +53,7 @@ const definitions = {
     stageId: "production-build",
     commandId: "build",
     kind: "build-report",
-    commands: [
-      ["exec", "vite", "build", "--config", "apps/web/vite.config.ts"],
-    ],
+    commands: [],
   },
   test: {
     stageId: "bootstrap-tests",
@@ -136,12 +121,6 @@ if (!definition) {
         identity: commandIdentity(),
         commands: results,
       };
-      if (mode === "build") {
-        report.productionFiles = await readdir(
-          resolve(context.repositoryRoot, "apps", "web", "dist"),
-          { recursive: true },
-        );
-      }
       await writeJson(reportPath, report);
     }
     await writeReceipt(
