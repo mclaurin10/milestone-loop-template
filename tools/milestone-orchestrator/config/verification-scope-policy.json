@@ -4,6 +4,7 @@
   "mode": "shadow-only",
   "unknownDisposition": "fail-broad",
   "closureSuppressionAllowed": false,
+  "browserHostScriptPatterns": [],
   "triggerClasses": [
     "protected-authority",
     "canonical-encoding",
@@ -148,28 +149,28 @@
     "unknown": ["test-invariants", "test-unit", "test-orchestrator", "build"]
   },
   "workspaceChecks": {
-    "@ski-tycoon/foundation": ["test-invariants", "test-unit"],
-    "@ski-tycoon/headless": [
+    "@example/foundation": ["test-invariants", "test-unit"],
+    "@example/headless": [
       "typecheck",
       "development-simulation",
       "authorization-simulation",
       "standard-utility-construction"
     ],
-    "@ski-tycoon/orchestrator": ["test-orchestrator", "typecheck"],
-    "@ski-tycoon/persistence": [
+    "@milestone-loop/orchestrator": ["test-orchestrator", "typecheck"],
+    "@example/persistence": [
       "test-unit",
       "test-unit-migrations",
       "standard-utility-construction",
       "standard-utility-entitlement",
       "authorization-simulation"
     ],
-    "@ski-tycoon/protocol": ["test-invariants", "test-unit", "typecheck"],
-    "@ski-tycoon/renderer": [
+    "@example/protocol": ["test-invariants", "test-unit", "typecheck"],
+    "@example/renderer": [
       "test-unit-fast",
       "build",
       "authorization-browser"
     ],
-    "@ski-tycoon/simulation": [
+    "@example/simulation": [
       "test-unit",
       "typecheck",
       "standard-utility-construction",
@@ -181,9 +182,9 @@
       "development-simulation",
       "authorization-simulation"
     ],
-    "@ski-tycoon/ui": ["test-unit-fast", "build", "authorization-browser"],
-    "@ski-tycoon/web": ["typecheck", "build", "authorization-browser"],
-    "ski-tycoon": [
+    "@example/ui": ["test-unit-fast", "build", "authorization-browser"],
+    "@example/web": ["typecheck", "build", "authorization-browser"],
+    "example-project": [
       "dependencies",
       "format-check",
       "lint",

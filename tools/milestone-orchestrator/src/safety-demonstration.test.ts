@@ -26,7 +26,7 @@ function git(root: string, ...args: string[]): void {
 
 describe("safety demonstration evidence", () => {
   it("uses fresh durable recovery state and preserves the pinned worker lineage", async () => {
-    const root = await mkdtemp(join(tmpdir(), "ski-loop-safety-demo-"));
+    const root = await mkdtemp(join(tmpdir(), "milestone-loop-safety-demo-"));
     directories.push(root);
     const config = validConfig();
     for (const path of config.protectedPaths) {

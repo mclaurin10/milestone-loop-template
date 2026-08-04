@@ -177,17 +177,18 @@ function activeRun(
 }
 
 function workerPrompt(
+  project: ProjectProfile,
   milestone: MilestoneRecord,
   relevantDiff: string | null,
 ): string {
   const feedback = milestone.retryFeedback;
   const replacement =
-    milestone.workerPolicy.activeRole === "gameplay-worker-escalated";
+    milestone.workerPolicy.activeRole === "feature-worker-escalated";
   return [
-    "You are the Worker for one approved Ski Tycoon milestone in an isolated local clone.",
-    "Read SKI_TYCOON_GOAL.md, AGENTS.md, everything under .agent, relevant architecture and verification docs, then inspect the current branch before acting.",
+    `You are the Worker for one approved ${project.name} milestone in an isolated local clone.`,
+    `Read ${project.authorityFile}, AGENTS.md, everything under .agent, relevant architecture and verification docs, then inspect the current branch before acting.`,
     "Inspect, plan, implement, run the milestone's focused tests, and document only the approved bounded milestone below. The external controller will run the declared verification commands, pnpm verify, and independent review after your turn.",
-    "Do not modify any path outside permittedPaths. Do not weaken tests, edit frozen authority/evals, activate readiness unless explicitly in scope, implement unrelated gameplay, use hidden validation, or expose/request hidden seeds.",
+    "Do not modify any path outside permittedPaths. Do not weaken tests, edit frozen authority/evals, activate readiness unless explicitly in scope, implement unrelated features, use hidden validation, or expose/request hidden seeds.",
     "Do not spawn subagents or perform an independent review. Do not run the full pnpm verify unless it is explicitly a focused milestone test; avoid duplicating the controller's authoritative work.",
     "Use ordinary repository commands and the existing exact toolchain. Attempt to commit the finished change and leave the tree clean. If the workspace sandbox denies writes to Git metadata, do not work around it: leave only approved working-tree changes for the controller's scope-checked checkpoint. Do not push, rewrite history, merge, or contact external services.",
     `Approved milestone: ${JSON.stringify(milestone.proposal)}.`,
@@ -217,7 +218,7 @@ function replacementVerificationEvidence(
 
 function replacementDiff(milestone: MilestoneRecord): string | null {
   if (
-    milestone.workerPolicy.activeRole !== "gameplay-worker-escalated" ||
+    milestone.workerPolicy.activeRole !== "feature-worker-escalated" ||
     !milestone.workspace
   )
     return null;
@@ -1262,7 +1263,7 @@ export class MilestoneOrchestrator {
           this.config.agentPolicy,
           invocation.role,
         );
-        const escalated = invocation.role === "gameplay-worker-escalated";
+        const escalated = invocation.role === "feature-worker-escalated";
         if (escalated !== (invocation.escalationReason !== null))
           throw new Error(
             "Controller invocation role and escalation reason are inconsistent.",
@@ -1499,6 +1500,7 @@ export class MilestoneOrchestrator {
       );
       const result = await requestPlan({
         gateway: this.accountingGateway(),
+        project: this.config.project,
         state: this.stateValue,
         artifactDirectory: directory,
         timeoutMs: this.phaseTimeout(this.config.limits.codexTurnMs),
@@ -1566,7 +1568,7 @@ export class MilestoneOrchestrator {
   private async setWorkerThread(
     milestoneId: string,
     threadId: string,
-    role: "gameplay-worker-initial" | "gameplay-worker-escalated",
+    role: "feature-worker-initial" | "feature-worker-escalated",
   ): Promise<void> {
     const current = milestoneById(this.stateValue, milestoneId);
     const assignment = resolveAgentAssignment(this.config.agentPolicy, role);
@@ -1869,7 +1871,11 @@ export class MilestoneOrchestrator {
     }
     const turn = await this.accountingGateway().run({
       role,
-      prompt: workerPrompt(milestone, replacementDiff(milestone)),
+      prompt: workerPrompt(
+        this.config.project,
+        milestone,
+        replacementDiff(milestone),
+      ),
       workingDirectory: milestone.workspace.path,
       threadId: milestone.workerThreadId,
       eventLogPath: resolve(
@@ -1879,7 +1885,7 @@ export class MilestoneOrchestrator {
       timeoutMs: this.phaseTimeout(this.config.limits.codexTurnMs),
       attempt: milestone.attempts,
       escalationReason:
-        role === "gameplay-worker-escalated"
+        role === "feature-worker-escalated"
           ? milestone.workerPolicy.escalationReason
           : null,
       telemetryPhase: "implementation",
@@ -2054,6 +2060,7 @@ export class MilestoneOrchestrator {
     );
     const report = await requestReview({
       gateway: this.accountingGateway(),
+      project: this.config.project,
       proposal: milestone.proposal,
       verification,
       workspacePath: milestone.workspace.path,

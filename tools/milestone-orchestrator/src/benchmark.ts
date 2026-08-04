@@ -131,6 +131,12 @@ export interface BenchmarkMatrix {
   readonly repeat: 3;
   readonly thresholds: typeof COMMISSIONED_BENCHMARK_THRESHOLDS;
   readonly unknownProbePaths: readonly string[];
+  readonly historical: {
+    readonly fullSafeCheckIds: readonly string[];
+    readonly iterationCheckIdsByClass: Readonly<
+      Partial<Record<BenchmarkClassId, readonly string[]>>
+    >;
+  };
   readonly classes: readonly BenchmarkMatrixClass[];
 }
 
@@ -422,6 +428,7 @@ export function assertBenchmarkMatrix(value: unknown): BenchmarkMatrix {
       "repeat",
       "thresholds",
       "unknownProbePaths",
+      "historical",
       "classes",
     ]) ||
     value["schemaVersion"] !== "1.0.0" ||
@@ -486,6 +493,21 @@ export function assertBenchmarkMatrix(value: unknown): BenchmarkMatrix {
         `Benchmark class ${id} changes its measurement contract.`,
       );
   }
+  const historical = value["historical"];
+  if (
+    !isRecord(historical) ||
+    !exactKeys(historical, ["fullSafeCheckIds", "iterationCheckIdsByClass"]) ||
+    !uniqueStrings(historical["fullSafeCheckIds"]) ||
+    historical["fullSafeCheckIds"].length === 0 ||
+    !isRecord(historical["iterationCheckIdsByClass"]) ||
+    Object.entries(historical["iterationCheckIdsByClass"]).some(
+      ([classId, ids]) =>
+        !(BENCHMARK_CLASS_IDS as readonly string[]).includes(classId) ||
+        !uniqueStrings(ids) ||
+        ids.length === 0,
+    )
+  )
+    throw new Error("Benchmark matrix historical check-id sets are malformed.");
   return value as unknown as BenchmarkMatrix;
 }
 
@@ -1908,48 +1930,6 @@ async function latestInventoryReference(
   );
 }
 
-const D031_FULL_SAFE_CHECK_IDS = [
-  "format-check",
-  "lint",
-  "lint-architecture",
-  "typecheck",
-  "build",
-  "test-unit",
-  "test-orchestrator",
-  "standard-utility-construction",
-  "construction-resources",
-  "utility-networks",
-  "utility-planning",
-  "utility-entitlement",
-  "standard-utility-entitlement",
-  "development-simulation",
-  "authorization-simulation",
-  "authorization-browser",
-] as const;
-
-const D031_LEAF_ITERATION_CHECK_IDS = [
-  "format-check",
-  "lint",
-  "lint-architecture",
-  "typecheck",
-  "build",
-  "test-unit",
-  "authorization-browser",
-] as const;
-
-const D031_DOMAIN_ITERATION_CHECK_IDS = [
-  "typecheck",
-  "build",
-  "test-unit",
-  "construction-resources",
-  "utility-networks",
-  "utility-planning",
-  "utility-entitlement",
-  "standard-utility-entitlement",
-  "development-simulation",
-  "authorization-simulation",
-] as const;
-
 export const BENCHMARK_BROAD_SAFE_CHECK_IDS = [
   "test-invariants",
   "test-unit",
@@ -2251,9 +2231,9 @@ async function executeCheck(input: {
     artifactDirectory: logRoot,
     timeoutMs: 20 * 60 * 1000,
     extraEnvironment: {
-      SKI_VERIFY_STAGE_ID: "loop-benchmark",
-      SKI_VERIFY_COMMAND_ID: input.definition.id,
-      SKI_VERIFY_COMMAND_ARTIFACT_DIR: evidenceRoot,
+      LOOP_VERIFY_STAGE_ID: "loop-benchmark",
+      LOOP_VERIFY_COMMAND_ID: input.definition.id,
+      LOOP_VERIFY_COMMAND_ARTIFACT_DIR: evidenceRoot,
     },
     ...(telemetryProxy
       ? {
@@ -2705,16 +2685,16 @@ function classComparison(
 }
 
 function historicalCheckIds(
+  matrix: BenchmarkMatrix,
   classId: BenchmarkClassId,
   comparisonId: BenchmarkComparisonId,
 ): readonly string[] {
-  if (classId === "leaf-ui-only" && comparisonId === "iteration")
-    return D031_LEAF_ITERATION_CHECK_IDS;
-  if (classId === "leaf-ui-only" && comparisonId === "candidate")
-    return D031_FULL_SAFE_CHECK_IDS;
-  if (classId === "domain-local-simulation" && comparisonId === "iteration")
-    return D031_DOMAIN_ITERATION_CHECK_IDS;
-  return D031_FULL_SAFE_CHECK_IDS;
+  if (comparisonId === "iteration")
+    return (
+      matrix.historical.iterationCheckIdsByClass[classId] ??
+      matrix.historical.fullSafeCheckIds
+    );
+  return matrix.historical.fullSafeCheckIds;
 }
 
 function afterSelection(
@@ -2730,6 +2710,7 @@ async function runCommandWorkflowClass(input: {
   readonly repositoryRoot: string;
   readonly outputRoot: string;
   readonly benchmarkId: string;
+  readonly matrix: BenchmarkMatrix;
   readonly matrixClass: BenchmarkMatrixClass;
   readonly before: PreparedWorktree;
   readonly after: PreparedWorktree;
@@ -2766,7 +2747,11 @@ async function runCommandWorkflowClass(input: {
                 paths: input.matrixClass.paths,
                 candidate: worktree.identity,
                 actualCheckIds: orderScopeCheckIds(
-                  historicalCheckIds(input.matrixClass.id, comparison),
+                  historicalCheckIds(
+                    input.matrix,
+                    input.matrixClass.id,
+                    comparison,
+                  ),
                   input.catalogue,
                 ),
                 fullClosureCheckIds: plan.recommendation.fullClosureCheckIds,
@@ -2849,6 +2834,7 @@ async function runCommandWorkflowClass(input: {
 }
 
 async function runSelectionExpansionClass(input: {
+  readonly matrix: BenchmarkMatrix;
   readonly matrixClass: BenchmarkMatrixClass;
   readonly before: PreparedWorktree;
   readonly after: PreparedWorktree;
@@ -2870,7 +2856,7 @@ async function runSelectionExpansionClass(input: {
       paths: input.matrixClass.paths,
       candidate: input.before.identity,
       actualCheckIds: orderScopeCheckIds(
-        D031_FULL_SAFE_CHECK_IDS,
+        input.matrix.historical.fullSafeCheckIds,
         buildScopeCheckCatalogue(input.manifest),
       ),
       fullClosureCheckIds: after.recommendation.fullClosureCheckIds,
@@ -3336,6 +3322,7 @@ export async function runLoopBenchmark(
             repositoryRoot: root,
             outputRoot,
             benchmarkId: id,
+            matrix: matrix.value,
             matrixClass,
             before,
             after,
@@ -3348,6 +3335,7 @@ export async function runLoopBenchmark(
       } else if (matrixClass.measurement === "selection-expansion") {
         classes.push(
           await runSelectionExpansionClass({
+            matrix: matrix.value,
             matrixClass,
             before,
             after,

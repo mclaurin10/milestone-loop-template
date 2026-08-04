@@ -218,6 +218,7 @@ export function orderScopeCheckIds(
 export function classifyAffectedPath(
   path: string,
   protectedPaths: readonly string[],
+  browserHostScriptPatterns: readonly RegExp[],
 ): readonly ScopeTriggerClass[] {
   const normalized = normalizeChangedPath(path);
   const classes = new Set<ScopeTriggerClass>();
@@ -274,10 +275,7 @@ export function classifyAffectedPath(
   if (
     /(?:^|\/)(?:playwright|vite)(?:\.|\/)/i.test(normalized) ||
     normalized === "playwright.config.ts" ||
-    normalized === "tools/browser-verifier-lease.mjs" ||
-    /^tools\/verify-(?:authorization|calendar|development|finance|standard-utility-construction|standard-utility-entitlement|utility-entitlement|utility-planning|valley|bootstrap-browser)\.mjs$/.test(
-      normalized,
-    )
+    browserHostScriptPatterns.some((pattern) => pattern.test(normalized))
   )
     classes.add("browser-host");
   if (
@@ -296,7 +294,7 @@ export function classifyAffectedPath(
   )
     classes.add("orchestrator-evidence");
   if (
-    /(?:^|\/)(?:README|AGENTS|SKI_TYCOON_GOAL)\.md$/i.test(normalized) ||
+    /(?:^|\/)(?:README|AGENTS)\.md$/i.test(normalized) ||
     normalized.startsWith("docs/") ||
     normalized.endsWith(".md")
   )
@@ -348,11 +346,15 @@ export function recommendAffectedScope(input: {
   const changedPaths = [
     ...new Set(input.changedPaths.map(normalizeChangedPath)),
   ].sort();
+  const browserHostScriptPatterns = input.policy.browserHostScriptPatterns.map(
+    (pattern) => new RegExp(pattern),
+  );
   const classifications: ScopePathClassification[] = changedPaths.map(
     (path) => {
       const triggerClasses = classifyAffectedPath(
         path,
         input.manifest.requiredProtectedPaths,
+        browserHostScriptPatterns,
       );
       const owner = workspaceOwnerForPath(input.packageGraph, path);
       const reverseDependentPackages =

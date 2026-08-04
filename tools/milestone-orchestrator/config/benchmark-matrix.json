@@ -10,6 +10,20 @@
     "maximumClosureRegressionMs": 15000
   },
   "unknownProbePaths": ["benchmark-inputs/unowned-change.probe"],
+  "historical": {
+    "fullSafeCheckIds": [
+      "format-check",
+      "lint",
+      "typecheck",
+      "build",
+      "test-unit",
+      "test-orchestrator"
+    ],
+    "iterationCheckIdsByClass": {
+      "leaf-ui-only": ["format-check", "lint", "typecheck", "build"],
+      "domain-local-simulation": ["typecheck", "build", "test-unit"]
+    }
+  },
   "classes": [
     {
       "id": "leaf-ui-only",

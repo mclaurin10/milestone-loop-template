@@ -183,7 +183,7 @@ export async function runCommand(
       env: {
         ...safeAgentEnvironment(),
         ...options.extraEnvironment,
-        ...(options.telemetry ? { SKI_TELEMETRY_PARENT_MANAGED: "1" } : {}),
+        ...(options.telemetry ? { LOOP_TELEMETRY_PARENT_MANAGED: "1" } : {}),
       },
       stdio: ["ignore", "pipe", "pipe"],
       windowsHide: true,

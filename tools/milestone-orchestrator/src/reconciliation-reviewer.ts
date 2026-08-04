@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 
 import type {
+  ProjectProfile,
   ReconciliationRecord,
   ReconciliationReview,
 } from "./contracts.js";
@@ -17,14 +18,15 @@ export function reconciliationReviewApproves(
 }
 
 function reconciliationReviewPrompt(input: {
+  readonly project: ProjectProfile;
   readonly record: ReconciliationRecord;
   readonly d031BaseCommit: string;
   readonly d031CandidateCommit: string;
 }): string {
   const record = input.record;
   return [
-    "You are the fresh independent read-only reviewer for a Ski Tycoon external controller-boundary reconciliation. You did not implement the range and must not modify any repository or artifact.",
-    "Read SKI_TYCOON_GOAL.md, AGENTS.md, the active execution plan, architecture/verification records, the exact commit-range manifest, focused-evidence index, benchmark, inventory, next proposal, and actual committed diffs. Do not trust implementation prose as evidence.",
+    `You are the fresh independent read-only reviewer for an external controller-boundary reconciliation of ${input.project.name}. You did not implement the range and must not modify any repository or artifact.`,
+    `Read ${input.project.authorityFile}, AGENTS.md, the active execution plan, architecture/verification records, the exact commit-range manifest, focused-evidence index, benchmark, inventory, next proposal, and actual committed diffs. Do not trust implementation prose as evidence.`,
     `Review exact external range ${record.sourceVerifiedCommit}..${record.candidateCommit}, tree ${record.candidateTree}, reconciliation ${record.id}, and commit-range manifest SHA-256 ${record.commitRange.sha256}.`,
     `Explicitly review D-031 sub-boundary ${input.d031BaseCommit}..${input.d031CandidateCommit} and its fresh-process, original-version migration, corruption, persistence/replay, public-action causality, and production Worker-parity closure evidence.`,
     "Explicitly assess complete lineage; protected integrity; absence of fabricated planner/worker/reviewer/attempt/timing/token/thread history; D-031 scope and migration integrity; command-owned evidence; verification-tier non-authority; invariant quality; selector shadow-only enforcement; telemetry non-semantic behavior; artifact containment/non-deletion; state migration/recovery; vertical milestone policy; and dependency-valid next-proposal shape.",
@@ -34,6 +36,7 @@ function reconciliationReviewPrompt(input: {
 
 export async function requestReconciliationReview(input: {
   readonly gateway: CodexGateway;
+  readonly project: ProjectProfile;
   readonly record: ReconciliationRecord;
   readonly workspacePath: string;
   readonly artifactDirectory: string;

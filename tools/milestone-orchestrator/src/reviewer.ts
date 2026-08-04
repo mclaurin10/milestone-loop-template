@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 
 import type {
   MilestoneProposal,
+  ProjectProfile,
   ReviewerReport,
   VerificationSummary,
 } from "./contracts.js";
@@ -32,6 +33,7 @@ export function reviewerApproves(report: ReviewerReport): boolean {
 }
 
 function reviewPrompt(
+  project: ProjectProfile,
   proposal: MilestoneProposal,
   baseCommit: string,
   headCommit: string,
@@ -39,7 +41,7 @@ function reviewPrompt(
 ): string {
   return [
     "You are an independent, read-only reviewer. You did not implement this milestone and must not modify the repository.",
-    "Read SKI_TYCOON_GOAL.md, AGENTS.md, the approved proposal, architecture documentation, and the actual committed diff.",
+    `Read ${project.authorityFile}, AGENTS.md, the approved proposal, architecture documentation, and the actual committed diff.`,
     `Review the exact range ${baseCommit}..${headCommit}.`,
     `Approved proposal: ${JSON.stringify(proposal)}.`,
     `Machine verification summary: ${JSON.stringify(verification)}.`,
@@ -51,6 +53,7 @@ function reviewPrompt(
 
 export async function requestReview(input: {
   readonly gateway: CodexGateway;
+  readonly project: ProjectProfile;
   readonly proposal: MilestoneProposal;
   readonly verification: VerificationSummary;
   readonly workspacePath: string;
@@ -65,6 +68,7 @@ export async function requestReview(input: {
   const turn = await input.gateway.run({
     role: "reviewer",
     prompt: reviewPrompt(
+      input.project,
       input.proposal,
       input.baseCommit,
       input.headCommit,

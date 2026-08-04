@@ -6,9 +6,9 @@
   "entries": [
     {
       "id": "protected-integrity",
-      "ownerPaths": ["SKI_TYCOON_GOAL.md", "evals/", "scripts/verify.mjs"],
+      "ownerPaths": ["PROJECT_GOAL.md", "evals/", "scripts/verify.mjs"],
       "triggerPaths": [
-        "SKI_TYCOON_GOAL.md",
+        "PROJECT_GOAL.md",
         "AGENTS.md",
         "evals/",
         ".agent/",

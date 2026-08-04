@@ -117,7 +117,7 @@ const bootstrapStages = Object.freeze([
     requiredArtifactKinds: [
       'node-checkpoints',
       'worker-checkpoints',
-      'player-action-log',
+      'user-action-log',
       'replay-report',
       'parity-report',
     ],
@@ -323,7 +323,7 @@ function parseArguments(argv) {
 }
 
 function printHelp() {
-  console.log(`Ski Tycoon authoritative verification harness
+  console.log(`Example Project authoritative verification harness
 
 Usage:
   pnpm verify
@@ -626,14 +626,14 @@ async function evaluateEnvironment(
     ),
   );
 
-  const configuredProfile = packageJson?.skiTycoon?.verification?.defaultProfile;
+  const configuredProfile = packageJson?.milestoneLoop?.verification?.defaultProfile;
   checks.push(
     check(
       'default-verification-profile',
       Object.hasOwn(PROFILES, configuredProfile) ? STATUS.PASS : STATUS.NOT_READY,
       Object.hasOwn(PROFILES, configuredProfile)
         ? `package.json selects the supported ${configuredProfile} verification profile.`
-        : 'package.json must select bootstrap or readiness at skiTycoon.verification.defaultProfile.',
+        : 'package.json must select bootstrap or readiness at milestoneLoop.verification.defaultProfile.',
       { configuredProfile: configuredProfile ?? null, selectedProfile: profile.id },
     ),
   );
@@ -722,7 +722,7 @@ async function evaluateEnvironment(
 async function validateAcceptanceManifest() {
   const checks = [];
   const immutablePaths = [
-    'SKI_TYCOON_GOAL.md',
+    'PROJECT_GOAL.md',
     'evals/ACCEPTANCE.md',
     'evals/acceptance-manifest.json',
     'evals/HIDDEN_VALIDATION_PROTOCOL.md',
@@ -983,7 +983,7 @@ async function validateAcceptanceManifest() {
       profileContract?.additiveRequirementId === 'HARNESS-PROFILE-01' &&
         profileContract?.bootstrapIsAutonomousReadinessEvidence === false &&
         profileContract?.requiredDefaultProfileForAutonomousReadiness === 'readiness' &&
-        profileContract?.profileOwner === 'package.json#skiTycoon.verification.defaultProfile'
+        profileContract?.profileOwner === 'package.json#milestoneLoop.verification.defaultProfile'
         ? STATUS.PASS
         : STATUS.FAIL,
       'The manifest must reject bootstrap as readiness evidence and require the package-default readiness profile.',
@@ -1224,12 +1224,12 @@ async function runPackageScript(stage, scriptName, packageJson, artifactRoot, in
       cwd: repositoryRoot,
       env: {
         ...process.env,
-        SKI_VERIFY_RUN_ID: artifactRoot.split(/[\\/]/).at(-1),
-        SKI_VERIFY_ARTIFACT_ROOT: artifactRoot,
-        SKI_VERIFY_STAGE_ID: stage.id,
-        SKI_VERIFY_STAGE_ARTIFACT_DIR: absoluteStageRoot,
-        SKI_VERIFY_COMMAND_ID: scriptName,
-        SKI_VERIFY_COMMAND_ARTIFACT_DIR: absoluteCommandRoot,
+        LOOP_VERIFY_RUN_ID: artifactRoot.split(/[\\/]/).at(-1),
+        LOOP_VERIFY_ARTIFACT_ROOT: artifactRoot,
+        LOOP_VERIFY_STAGE_ID: stage.id,
+        LOOP_VERIFY_STAGE_ARTIFACT_DIR: absoluteStageRoot,
+        LOOP_VERIFY_COMMAND_ID: scriptName,
+        LOOP_VERIFY_COMMAND_ARTIFACT_DIR: absoluteCommandRoot,
         SKI_ACCEPTANCE_MANIFEST: acceptanceManifestPath,
       },
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -1365,7 +1365,7 @@ function markdownCell(value) {
 
 function buildSummary(result) {
   const lines = [
-    '# Ski Tycoon Verification Result',
+    '# Example Project Verification Result',
     '',
     `- Run: \`${result.runId}\``,
     `- Profile: \`${result.profile.id}\` (${result.profile.name})`,
@@ -1419,7 +1419,7 @@ async function loadPackageJson() {
 async function runVerification(options) {
   const packageLoad = await loadPackageJson();
   const { packageJson } = packageLoad;
-  const configuredProfileId = packageJson?.skiTycoon?.verification?.defaultProfile;
+  const configuredProfileId = packageJson?.milestoneLoop?.verification?.defaultProfile;
   const profile = resolveProfile(options.profileId ?? configuredProfileId ?? 'bootstrap');
   const fullRun = options.stageIds.length === 0;
   const selectedIds = options.stageIds.length > 0

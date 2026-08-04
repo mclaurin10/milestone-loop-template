@@ -7,6 +7,7 @@ import {
   type OrchestratorState,
   type PolicyDecision,
   type PolicyFinding,
+  type ProjectProfile,
 } from "./contracts.js";
 import { validateMilestoneProposal } from "./schema.js";
 import { verificationCommandSafetyError } from "./command-policy.js";
@@ -91,18 +92,17 @@ function pathIsPermitted(proposal: MilestoneProposal, path: string): boolean {
   return proposal.permittedPaths.some((pattern) => globMatches(pattern, path));
 }
 
-function wholeSkiingSpine(text: string): boolean {
-  const categories = [
-    /\blifts?\b/i,
-    /\btrails?\b/i,
-    /\bguests?\b/i,
-    /\b(?:tickets?|pricing)\b/i,
-    /\b(?:snow|weather|avalanche)\b/i,
-    /\bstaff\b/i,
-    /\b(?:transport|parking|town)\b/i,
-    /\b(?:environment|watershed|wildlife)\b/i,
-  ];
-  return categories.filter((pattern) => pattern.test(text)).length >= 4;
+function wholeDomainSpine(
+  text: string,
+  spine: ProjectProfile["verticalSpine"],
+): boolean {
+  const categories = spine.categoryPatterns.map(
+    (pattern) => new RegExp(pattern, "i"),
+  );
+  return (
+    categories.filter((pattern) => pattern.test(text)).length >=
+    spine.minimumCategories
+  );
 }
 
 export function evaluateProposal(
@@ -260,39 +260,39 @@ export function evaluateProposal(
       "Proposal language contradicts frozen scope, verification, or hidden-validation protections.",
     );
 
-  if (currentProfile === "bootstrap" && proposal.kind === "gameplay")
+  if (currentProfile === "bootstrap" && proposal.kind === "feature")
     addsFinding(
       findings,
       "BOOTSTRAP_GAMEPLAY_FORBIDDEN",
-      "Substantive gameplay cannot begin while bootstrap is the package default.",
+      "Substantive feature work cannot begin while bootstrap is the package default.",
     );
 
   const vertical = proposal.verticalSlice;
-  if (proposal.kind !== "gameplay" && vertical?.mode !== "not-applicable")
+  if (proposal.kind !== "feature" && vertical?.mode !== "not-applicable")
     addsFinding(
       findings,
       "VERTICAL_SLICE_REQUIRED",
-      "Tooling, verification, lifecycle, and documentation proposals must mark the gameplay vertical slice not-applicable.",
+      "Tooling, verification, lifecycle, and documentation proposals must mark the feature vertical slice not-applicable.",
     );
-  if (proposal.kind === "gameplay") {
+  if (proposal.kind === "feature") {
     if (!vertical || !["integrated", "exception"].includes(vertical.mode))
       addsFinding(
         findings,
         "VERTICAL_SLICE_REQUIRED",
-        "Gameplay milestones must use an integrated vertical slice or one enumerated immediate-consumer exception.",
+        "Feature milestones must use an integrated vertical slice or one enumerated immediate-consumer exception.",
       );
     else if (vertical.mode === "integrated") {
       if (
-        !vertical.playerGoal ||
+        !vertical.userGoal ||
         vertical.publicActionKinds.length === 0 ||
         /(?:;|\band then\b|\bas well as\b|\bplus also\b)/i.test(
-          vertical.playerGoal ?? "",
+          vertical.userGoal ?? "",
         )
       )
         addsFinding(
           findings,
           "PUBLIC_ACTION_REQUIRED",
-          "An integrated gameplay slice needs exactly one primary player goal and at least one normal public action kind.",
+          "An integrated feature slice needs exactly one primary user goal and at least one normal public action kind.",
         );
       if (
         vertical.sharedRuleOwners.length === 0 ||
@@ -303,7 +303,7 @@ export function evaluateProposal(
         addsFinding(
           findings,
           "SHARED_RULE_OWNER_REQUIRED",
-          "An integrated gameplay slice needs a permitted smallest shared deterministic rule owner.",
+          "An integrated feature slice needs a permitted smallest shared deterministic rule owner.",
         );
       if (
         !vertical.standardCompositionOwner ||
@@ -312,19 +312,19 @@ export function evaluateProposal(
         addsFinding(
           findings,
           "STANDARD_COMPOSITION_REQUIRED",
-          "An integrated gameplay slice needs a permitted Standard composition owner.",
+          "An integrated feature slice needs a permitted Standard composition owner.",
         );
       if (vertical.persistenceReplayEvidence.length === 0)
         addsFinding(
           findings,
           "PERSISTENCE_REPLAY_REQUIRED",
-          "An integrated gameplay slice needs explicit persistence and replay evidence.",
+          "An integrated feature slice needs explicit persistence and replay evidence.",
         );
       if (vertical.nodeWorkerParityEvidence.length === 0)
         addsFinding(
           findings,
           "NODE_WORKER_PARITY_REQUIRED",
-          "An integrated gameplay slice needs explicit Node and production Worker parity evidence.",
+          "An integrated feature slice needs explicit Node and production Worker parity evidence.",
         );
       if (
         !vertical.inspectableConsequence ||
@@ -335,7 +335,7 @@ export function evaluateProposal(
         addsFinding(
           findings,
           "INSPECTABLE_CONSEQUENCE_REQUIRED",
-          "An integrated gameplay slice needs one read-model consequence and any required browser inspection.",
+          "An integrated feature slice needs one read-model consequence and any required browser inspection.",
         );
       if (vertical.exception !== null)
         addsFinding(
@@ -351,17 +351,17 @@ export function evaluateProposal(
         addsFinding(
           findings,
           "VERTICAL_SLICE_REQUIRED",
-          "An integrated gameplay slice needs focused verification in addition to full closure.",
+          "An integrated feature slice needs focused verification in addition to full closure.",
         );
-      const verticalText = `${proposal.objective}\n${proposal.rationale}\n${vertical.playerGoal ?? ""}`;
+      const verticalText = `${proposal.objective}\n${proposal.rationale}\n${vertical.userGoal ?? ""}`;
       if (
-        wholeSkiingSpine(verticalText) ||
+        wholeDomainSpine(verticalText, config.project.verticalSpine) ||
         /(?:;|\n[-*])/.test(vertical.inspectableConsequence?.description ?? "")
       )
         addsFinding(
           findings,
           "VERTICAL_SLICE_REQUIRED",
-          "A gameplay worker attempt cannot combine a whole skiing spine or multiple unrelated inspectable consequences.",
+          "A feature worker attempt cannot combine the whole product spine or multiple unrelated inspectable consequences.",
         );
     } else {
       const exception = vertical.exception;
@@ -387,7 +387,7 @@ export function evaluateProposal(
           "A vertical-slice exception needs a future, distinct immediate consumer and an exact consumer contract.",
         );
       if (
-        vertical.playerGoal !== null ||
+        vertical.userGoal !== null ||
         vertical.publicActionKinds.length > 0 ||
         vertical.sharedRuleOwners.length > 0 ||
         vertical.standardCompositionOwner !== null ||
@@ -398,7 +398,7 @@ export function evaluateProposal(
         addsFinding(
           findings,
           "VERTICAL_SLICE_REQUIRED",
-          "An exception must remain a narrow precursor and cannot claim integrated gameplay evidence.",
+          "An exception must remain a narrow precursor and cannot claim integrated feature evidence.",
         );
     }
   }

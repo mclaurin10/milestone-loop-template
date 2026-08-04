@@ -22,7 +22,7 @@ Measured remediation now passes all fifteen reconciliation tests in 16.09 second
 
 ## Goal Constraints
 
-- Preserve `SKI_TYCOON_GOAL.md`, the original evaluation contract, `AGENTS.md`, the readiness marker/default, the canonical fifteen-stage registry, `scripts/verify.mjs`, dependency pins, and `pnpm-lock.yaml`.
+- Preserve `PROJECT_GOAL.md`, the original evaluation contract, `AGENTS.md`, the readiness marker/default, the canonical fifteen-stage registry, `scripts/verify.mjs`, dependency pins, and `pnpm-lock.yaml`.
 - Preserve deterministic fixed-tick shared rules, canonical save/load/replay, origin neutrality, player-action-only bot behavior, the single production Worker composition root, and simulation/rendering separation.
 - Use only existing public Standard action families: `standard.finance.loan.accept`, `standard.permit.apply`, `standard.construction.mobilize`, and `standard.project.commit`.
 - Reuse the existing utility-corridor planning, entitlement, Construction-v3, and utility-network-v1 owners. Do not add a global connection flag, direct registration action, privileged bot path, instant build, test-only entitlement, or second host-owned rule implementation.
@@ -90,7 +90,7 @@ The exact no-argument result remains governed by the unchanged readiness profile
 ## Progress and Evidence
 
 - The D-033 proposal and this plan are tracked preparation only.
-- Policy validation accepts the proposal as one integrated readiness gameplay slice with bounded paths, seven exact verification commands, no hidden validation, and no exception consumer.
+- Policy validation accepts the proposal as one integrated readiness feature slice with bounded paths, seven exact verification commands, no hidden validation, and no exception consumer.
 - No D-033 worker, attempt, product mutation, implementation commit, facility action, or additional corridor exists at this handoff.
 - The later dependency sequence remains: remaining utilities -> operations-base construction -> minimum operations staffing/finance/safety -> first functional lift and trail -> guests -> operating day.
 

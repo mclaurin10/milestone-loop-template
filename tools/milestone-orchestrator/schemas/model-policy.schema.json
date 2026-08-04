@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ski-tycoon.local/schemas/orchestrator-model-policy-1.0.0.json",
-  "title": "Ski Tycoon Orchestrator Agent Model Policy",
+  "$id": "https://milestone-loop.local/schemas/orchestrator-model-policy-1.0.0.json",
+  "title": "Example Project Orchestrator Agent Model Policy",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -45,15 +45,15 @@
       "additionalProperties": false,
       "required": [
         "planner",
-        "gameplay-worker-initial",
-        "gameplay-worker-escalated",
+        "feature-worker-initial",
+        "feature-worker-escalated",
         "reviewer",
         "lightweight-reporting"
       ],
       "properties": {
         "planner": { "$ref": "#/$defs/solMax" },
-        "gameplay-worker-initial": { "$ref": "#/$defs/solXhigh" },
-        "gameplay-worker-escalated": { "$ref": "#/$defs/solMax" },
+        "feature-worker-initial": { "$ref": "#/$defs/solXhigh" },
+        "feature-worker-escalated": { "$ref": "#/$defs/solMax" },
         "reviewer": { "$ref": "#/$defs/solMax" },
         "lightweight-reporting": { "$ref": "#/$defs/terraMedium" }
       }
@@ -82,8 +82,8 @@
           "role": {
             "enum": [
               "planner",
-              "gameplay-worker-initial",
-              "gameplay-worker-escalated",
+              "feature-worker-initial",
+              "feature-worker-escalated",
               "reviewer",
               "lightweight-reporting"
             ]

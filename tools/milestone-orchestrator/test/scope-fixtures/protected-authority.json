@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "id": "protected-authority",
-  "changedPaths": ["SKI_TYCOON_GOAL.md"],
+  "changedPaths": ["PROJECT_GOAL.md"],
   "expectedTriggerClasses": ["documentation-only", "protected-authority"],
   "expectedUnknownPaths": [],
   "mandatoryExpectedCheckIds": [

@@ -1,7 +1,7 @@
 export const LEGACY_MILESTONE_SCHEMA_VERSION = "1.0.0" as const;
 export const MILESTONE_SCHEMA_VERSION = "1.1.0" as const;
 export const STATE_SCHEMA_VERSION = "1.3.0" as const;
-export const CONFIG_SCHEMA_VERSION = "1.2.0" as const;
+export const CONFIG_SCHEMA_VERSION = "1.3.0" as const;
 export const REVIEW_SCHEMA_VERSION = "1.0.0" as const;
 export const RECONCILIATION_SCHEMA_VERSION = "1.0.0" as const;
 export const RECONCILIATION_REVIEW_SCHEMA_VERSION = "1.0.0" as const;
@@ -16,8 +16,8 @@ export const VERIFICATION_MANIFEST_SCHEMA_VERSION =
 
 export const AGENT_ROLES = [
   "planner",
-  "gameplay-worker-initial",
-  "gameplay-worker-escalated",
+  "feature-worker-initial",
+  "feature-worker-escalated",
   "reviewer",
   "lightweight-reporting",
 ] as const;
@@ -59,8 +59,8 @@ export interface AgentModelPolicy {
   };
   readonly roles: {
     readonly planner: AgentAssignment;
-    readonly "gameplay-worker-initial": AgentAssignment;
-    readonly "gameplay-worker-escalated": AgentAssignment;
+    readonly "feature-worker-initial": AgentAssignment;
+    readonly "feature-worker-escalated": AgentAssignment;
     readonly reviewer: AgentAssignment;
     readonly "lightweight-reporting": AgentAssignment;
   };
@@ -124,7 +124,6 @@ export const READINESS_VERIFICATION_STAGE_IDS = [
 ] as const;
 
 export const REQUIRED_PROTECTED_PATHS = [
-  "SKI_TYCOON_GOAL.md",
   "evals/ACCEPTANCE.md",
   "evals/acceptance-manifest.json",
   "evals/HIDDEN_VALIDATION_PROTOCOL.md",
@@ -158,7 +157,7 @@ export const NEXT_ACTIONS = [
 export type NextAllowedAction = (typeof NEXT_ACTIONS)[number];
 
 export type MilestoneKind =
-  "tooling" | "verification" | "lifecycle" | "gameplay" | "documentation";
+  "tooling" | "verification" | "lifecycle" | "feature" | "documentation";
 
 export interface AcceptanceCriterion {
   readonly id: string;
@@ -269,6 +268,7 @@ export interface VerificationScopePolicy {
   readonly mode: "shadow-only";
   readonly unknownDisposition: "fail-broad";
   readonly closureSuppressionAllowed: false;
+  readonly browserHostScriptPatterns: readonly string[];
   readonly triggerClasses: readonly ScopeTriggerClass[];
   readonly broadTriggerClasses: readonly ScopeTriggerClass[];
   readonly mandatoryChecks: Readonly<
@@ -391,7 +391,7 @@ export type VerticalSliceExceptionKind =
 
 export interface VerticalSliceContract {
   readonly mode: VerticalSliceMode;
-  readonly playerGoal: string | null;
+  readonly userGoal: string | null;
   readonly publicActionKinds: readonly string[];
   readonly sharedRuleOwners: readonly string[];
   readonly standardCompositionOwner: string | null;
@@ -651,7 +651,7 @@ export interface WorkerFailureRecord {
 }
 
 export interface WorkerPolicyState {
-  readonly activeRole: "gameplay-worker-initial" | "gameplay-worker-escalated";
+  readonly activeRole: "feature-worker-initial" | "feature-worker-escalated";
   readonly escalated: boolean;
   readonly escalationReason: string | null;
   readonly escalatedAt: string | null;
@@ -660,7 +660,7 @@ export interface WorkerPolicyState {
 
 export interface WorkerThreadLineageRecord {
   readonly threadId: string;
-  readonly role: "gameplay-worker-initial" | "gameplay-worker-escalated";
+  readonly role: "feature-worker-initial" | "feature-worker-escalated";
   readonly model: AgentModel | "legacy-unrecorded";
   readonly reasoningEffort: AgentReasoningEffort | "legacy-unrecorded";
   readonly startedAt: string;
@@ -910,8 +910,18 @@ export interface OrchestratorLimits {
   readonly maximumEstimatedFiles: number;
 }
 
+export interface ProjectProfile {
+  readonly name: string;
+  readonly authorityFile: string;
+  readonly verticalSpine: {
+    readonly minimumCategories: number;
+    readonly categoryPatterns: readonly string[];
+  };
+}
+
 export interface OrchestratorConfig {
   readonly schemaVersion: typeof CONFIG_SCHEMA_VERSION;
+  readonly project: ProjectProfile;
   readonly targetBranch: string;
   readonly statePath: string;
   readonly artifactRoot: string;

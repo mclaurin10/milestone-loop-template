@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ski-tycoon.local/schemas/orchestrator-reconciliation-1.0.0.json",
-  "title": "Ski Tycoon controller-boundary reconciliation",
+  "$id": "https://milestone-loop.local/schemas/orchestrator-reconciliation-1.0.0.json",
+  "title": "Example Project controller-boundary reconciliation",
   "type": "object",
   "additionalProperties": false,
   "required": [

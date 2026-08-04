@@ -68,7 +68,7 @@ describe("versioned orchestrator schemas", () => {
     expect(
       validateOrchestratorConfig({
         ...validConfig(),
-        protectedPaths: ["SKI_TYCOON_GOAL.md"],
+        protectedPaths: ["PROJECT_GOAL.md"],
       }),
     ).toMatchObject({ valid: false });
     expect(
@@ -246,7 +246,7 @@ describe("versioned orchestrator schemas", () => {
             workerThreadLineage: [
               {
                 threadId: "initial-thread",
-                role: "gameplay-worker-initial",
+                role: "feature-worker-initial",
                 model: "gpt-5.6-sol",
                 reasoningEffort: "xhigh",
                 startedAt: "2026-08-02T00:00:01.000Z",
@@ -256,7 +256,7 @@ describe("versioned orchestrator schemas", () => {
               },
               {
                 threadId: "replacement-thread",
-                role: "gameplay-worker-escalated",
+                role: "feature-worker-escalated",
                 model: "gpt-5.6-sol",
                 reasoningEffort: "max",
                 startedAt: "2026-08-02T00:00:02.000Z",
@@ -266,7 +266,7 @@ describe("versioned orchestrator schemas", () => {
               },
             ],
             workerPolicy: {
-              activeRole: "gameplay-worker-escalated",
+              activeRole: "feature-worker-escalated",
               escalated: true,
               escalationReason: "Invalid lineage fixture.",
               escalatedAt: "2026-08-02T00:00:02.000Z",

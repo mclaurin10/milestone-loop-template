@@ -16,7 +16,7 @@ afterEach(async () => {
 });
 
 async function temporaryRepository(): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), "ski-loop-telemetry-"));
+  const root = await mkdtemp(join(tmpdir(), "milestone-loop-telemetry-"));
   temporaryDirectories.push(root);
   return root;
 }

@@ -148,7 +148,7 @@ function completedMilestone(
     workspace: {
       isolation: "standalone-local-clone-branch",
       path: "C:/isolated/readiness-increment",
-      branch: `ski-loop/test/${id}`,
+      branch: `milestone-loop/test/${id}`,
       baseCommit: "b".repeat(40),
       headCommit: evidence.candidateCommit,
       createdAt: NOW,
@@ -342,14 +342,14 @@ describe("durable monotonic readiness history", () => {
   });
 
   it("derives first versus established readiness from committed Git history", async () => {
-    const workspace = await mkdtemp(join(tmpdir(), "ski-loop-history-"));
+    const workspace = await mkdtemp(join(tmpdir(), "milestone-loop-history-"));
     temporaryDirectories.push(workspace);
     git(workspace, "init", "-b", "main");
     git(workspace, "config", "user.name", "Orchestrator Test");
     git(workspace, "config", "user.email", "orchestrator@example.invalid");
     await writeFile(
       join(workspace, "package.json"),
-      `${JSON.stringify({ skiTycoon: { verification: { defaultProfile: "bootstrap" } } })}\n`,
+      `${JSON.stringify({ milestoneLoop: { verification: { defaultProfile: "bootstrap" } } })}\n`,
       "utf8",
     );
     git(workspace, "add", "package.json");
@@ -370,7 +370,7 @@ describe("durable monotonic readiness history", () => {
     );
     await writeFile(
       join(workspace, "package.json"),
-      `${JSON.stringify({ skiTycoon: { verification: { defaultProfile: "readiness" } } })}\n`,
+      `${JSON.stringify({ milestoneLoop: { verification: { defaultProfile: "readiness" } } })}\n`,
       "utf8",
     );
     git(

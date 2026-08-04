@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ski-tycoon.local/schemas/telemetry.schema.json",
-  "title": "Ski Tycoon loop telemetry event",
+  "$id": "https://milestone-loop.local/schemas/telemetry.schema.json",
+  "title": "Example Project loop telemetry event",
   "type": "object",
   "additionalProperties": false,
   "required": [

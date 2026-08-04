@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ski-tycoon.local/schemas/orchestrator-milestone-1.1.0.json",
-  "title": "Ski Tycoon Orchestrator Milestone",
+  "$id": "https://milestone-loop.local/schemas/orchestrator-milestone-1.1.0.json",
+  "title": "Example Project Orchestrator Milestone",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -33,7 +33,7 @@
         "tooling",
         "verification",
         "lifecycle",
-        "gameplay",
+        "feature",
         "documentation"
       ]
     },
@@ -121,7 +121,7 @@
       "additionalProperties": false,
       "required": [
         "mode",
-        "playerGoal",
+        "userGoal",
         "publicActionKinds",
         "sharedRuleOwners",
         "standardCompositionOwner",
@@ -132,7 +132,7 @@
       ],
       "properties": {
         "mode": { "enum": ["not-applicable", "integrated", "exception"] },
-        "playerGoal": { "type": ["string", "null"] },
+        "userGoal": { "type": ["string", "null"] },
         "publicActionKinds": { "$ref": "#/$defs/stringArray" },
         "sharedRuleOwners": { "$ref": "#/$defs/stringArray" },
         "standardCompositionOwner": { "type": ["string", "null"] },

@@ -13,7 +13,7 @@ import { evaluateProposal, enforceDiffPolicy, globMatches } from "./policy.js";
 import { assertMilestoneProposal } from "./schema.js";
 import {
   validConfig,
-  validGameplayProposal,
+  validFeatureProposal,
   validProposal,
   validState,
 } from "../test/fixtures.js";
@@ -64,10 +64,10 @@ describe("milestone policy", () => {
     ).toContain("HIDDEN_VALIDATION_DISABLED");
   });
 
-  it("rejects gameplay before the one-way readiness transition", () => {
+  it("rejects feature before the one-way readiness transition", () => {
     expect(
       evaluateProposal(
-        validProposal({ kind: "gameplay" }),
+        validProposal({ kind: "feature" }),
         validState(process.cwd()),
         validConfig(),
         "bootstrap",
@@ -75,10 +75,10 @@ describe("milestone policy", () => {
     ).toContain("BOOTSTRAP_GAMEPLAY_FORBIDDEN");
   });
 
-  it("accepts one fully integrated gameplay slice in readiness", () => {
+  it("accepts one fully integrated feature slice in readiness", () => {
     expect(
       evaluateProposal(
-        validGameplayProposal(),
+        validFeatureProposal(),
         validState(process.cwd()),
         validConfig(),
         "readiness",
@@ -107,7 +107,7 @@ describe("milestone policy", () => {
     expect(proposal.dependencies).toEqual([]);
     expect(proposal.verticalSlice).toMatchObject({
       mode: "integrated",
-      playerGoal:
+      userGoal:
         "Make the operations-base blueprint utility-eligible without constructing the facility.",
       exception: null,
     });
@@ -118,11 +118,11 @@ describe("milestone policy", () => {
     );
   });
 
-  it("reports each missing integrated gameplay dimension", () => {
-    const proposal = validGameplayProposal({
+  it("reports each missing integrated feature dimension", () => {
+    const proposal = validFeatureProposal({
       verticalSlice: {
         mode: "integrated",
-        playerGoal: null,
+        userGoal: null,
         publicActionKinds: [],
         sharedRuleOwners: [],
         standardCompositionOwner: null,
@@ -151,11 +151,11 @@ describe("milestone policy", () => {
   });
 
   it("allows only a justified narrow exception with a future immediate consumer", () => {
-    const exception = validGameplayProposal({
+    const exception = validFeatureProposal({
       id: "utility-kernel",
       verticalSlice: {
         mode: "exception",
-        playerGoal: null,
+        userGoal: null,
         publicActionKinds: [],
         sharedRuleOwners: [],
         standardCompositionOwner: null,
@@ -200,12 +200,12 @@ describe("milestone policy", () => {
     expect(
       requiredVerticalConsumerAfterCompletion(
         required,
-        validGameplayProposal({ id: "utility-kernel-consumer" }),
+        validFeatureProposal({ id: "utility-kernel-consumer" }),
       ),
     ).toBeNull();
 
     const missing = evaluateProposal(
-      validGameplayProposal({
+      validFeatureProposal({
         id: "invalid-kernel",
         verticalSlice: {
           ...exception.verticalSlice!,
@@ -227,11 +227,11 @@ describe("milestone policy", () => {
   it("blocks every unrelated or contract-mismatched proposal until the exact consumer", () => {
     const consumerContract =
       "Compose the utility connectivity kernel through the Standard public action.";
-    const source = validGameplayProposal({
+    const source = validFeatureProposal({
       id: "utility-kernel",
       verticalSlice: {
         mode: "exception",
-        playerGoal: null,
+        userGoal: null,
         publicActionKinds: [],
         sharedRuleOwners: [],
         standardCompositionOwner: null,
@@ -270,7 +270,7 @@ describe("milestone policy", () => {
       ).findings.map((finding) => finding.code),
     ).toContain("REQUIRED_CONSUMER_MISMATCH");
 
-    const consumer = validGameplayProposal({
+    const consumer = validFeatureProposal({
       id: "utility-kernel-consumer",
       objective:
         "Expose the completed utility kernel through one Standard public footprint action.",
@@ -292,12 +292,12 @@ describe("milestone policy", () => {
 
   it("rejects a multi-goal or whole-skiing-spine worker attempt", () => {
     const decision = evaluateProposal(
-      validGameplayProposal({
+      validFeatureProposal({
         objective:
           "Build lifts, trails, guest pricing, snow weather, staff, and town transport in one attempt.",
         verticalSlice: {
-          ...validGameplayProposal().verticalSlice!,
-          playerGoal:
+          ...validFeatureProposal().verticalSlice!,
+          userGoal:
             "Build the utility footprint and then operate the entire resort.",
         },
       }),
@@ -315,13 +315,13 @@ describe("milestone policy", () => {
 
   it("enforces protected and permitted paths on the actual diff", () => {
     const result = enforceDiffPolicy(
-      ["tools/milestone-orchestrator/src/cli.ts", "SKI_TYCOON_GOAL.md"],
+      ["tools/milestone-orchestrator/src/cli.ts", "PROJECT_GOAL.md"],
       validProposal(),
       validConfig().protectedPaths,
     );
     expect(result.allowed).toBe(false);
-    expect(result.protectedChanges).toEqual(["SKI_TYCOON_GOAL.md"]);
-    expect(result.outOfScopeChanges).toEqual(["SKI_TYCOON_GOAL.md"]);
+    expect(result.protectedChanges).toEqual(["PROJECT_GOAL.md"]);
+    expect(result.outOfScopeChanges).toEqual(["PROJECT_GOAL.md"]);
     expect(globMatches("tools/**", "tools/a/b.ts")).toBe(true);
   });
 

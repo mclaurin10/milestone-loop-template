@@ -1422,6 +1422,7 @@ export class ReconciliationController {
     );
     const report = await this.review({
       gateway: this.gateway,
+      project: this.config.project,
       record,
       workspacePath: this.repositoryRoot,
       artifactDirectory: resolve(

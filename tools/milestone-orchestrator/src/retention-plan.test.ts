@@ -147,7 +147,7 @@ describe("dry-run-only artifact retention planning", () => {
   });
 
   it("does not mutate even safely eligible evidence", async () => {
-    const root = await mkdtemp(join(tmpdir(), "ski-retention-plan-"));
+    const root = await mkdtemp(join(tmpdir(), "milestone-retention-plan-"));
     temporaryDirectories.push(root);
     const evidence = join(root, "artifacts", "eligible", "result.json");
     await mkdir(join(root, "artifacts", "eligible"), { recursive: true });

@@ -15,7 +15,7 @@ afterEach(async () => {
 
 describe("safe pnpm launcher resolution", () => {
   it("accepts Corepack's pnpm.mjs entry from npm_execpath", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "ski-loop-corepack-pnpm-"));
+    const directory = await mkdtemp(join(tmpdir(), "milestone-loop-corepack-pnpm-"));
     temporaryDirectories.push(directory);
     const script = join(directory, "pnpm.mjs");
     await writeFile(script, "process.exit(0);\n", "utf8");
@@ -23,7 +23,7 @@ describe("safe pnpm launcher resolution", () => {
   });
 
   it("finds the pnpm JavaScript entry from PATH when npm_execpath is absent", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "ski-loop-pnpm-"));
+    const directory = await mkdtemp(join(tmpdir(), "milestone-loop-pnpm-"));
     temporaryDirectories.push(directory);
     const script = join(directory, "node_modules", "pnpm", "bin", "pnpm.cjs");
     await mkdir(join(directory, "node_modules", "pnpm", "bin"), {
@@ -39,7 +39,7 @@ describe("safe pnpm launcher resolution", () => {
 describe("command telemetry", () => {
   it("turns a telemetry persistence failure into an ERROR result", async () => {
     const directory = await mkdtemp(
-      join(tmpdir(), "ski-loop-command-telemetry-"),
+      join(tmpdir(), "milestone-loop-command-telemetry-"),
     );
     temporaryDirectories.push(directory);
     const recordCommand = vi.fn(async () => {

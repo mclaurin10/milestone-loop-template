@@ -22,7 +22,7 @@ export function canaryMilestone(): MilestoneProposal {
       "docs/orchestrator.md",
     ],
     exclusions: [
-      "No ski-resort gameplay or readiness-profile activation.",
+      "No product feature work or readiness-profile activation.",
       "No frozen goal, acceptance, hidden-validation, dependency, or verification-contract changes.",
       "No network calls, credential validation calls, or secret values in diagnostic output.",
     ],
@@ -37,7 +37,7 @@ export function canaryMilestone(): MilestoneProposal {
       {
         id: "bounded-canary",
         description:
-          "The committed diff stays within the approved diagnostic paths and does not begin gameplay.",
+          "The committed diff stays within the approved diagnostic paths and does not begin product feature work.",
         evidence:
           "Diff policy, protected hashes, authoritative pnpm verify, and independent review all pass.",
       },
@@ -84,7 +84,7 @@ export function canaryMilestone(): MilestoneProposal {
     hiddenValidation: { requested: false },
     verticalSlice: {
       mode: "not-applicable",
-      playerGoal: null,
+      userGoal: null,
       publicActionKinds: [],
       sharedRuleOwners: [],
       standardCompositionOwner: null,

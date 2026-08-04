@@ -62,14 +62,14 @@ async function repositoryFixture(config = validConfig()): Promise<{
   readonly config: ReturnType<typeof validConfig>;
   readonly baseCommit: string;
 }> {
-  const root = await mkdtemp(join(tmpdir(), "ski-loop-recovery-cleanup-"));
+  const root = await mkdtemp(join(tmpdir(), "milestone-loop-recovery-cleanup-"));
   temporaryDirectories.push(root);
   git(root, "init", "-b", "main");
   git(root, "config", "user.name", "Recovery Cleanup Test");
   git(root, "config", "user.email", "recovery@example.invalid");
   await mkdir(join(root, "evals"), { recursive: true });
   for (const path of [
-    "SKI_TYCOON_GOAL.md",
+    "PROJECT_GOAL.md",
     "evals/ACCEPTANCE.md",
     "evals/acceptance-manifest.json",
     "evals/HIDDEN_VALIDATION_PROTOCOL.md",
@@ -78,7 +78,7 @@ async function repositoryFixture(config = validConfig()): Promise<{
     await writeFile(join(root, path), `${path}\n`);
   await writeFile(
     join(root, "package.json"),
-    `${JSON.stringify({ skiTycoon: { verification: { defaultProfile: "readiness" } } })}\n`,
+    `${JSON.stringify({ milestoneLoop: { verification: { defaultProfile: "readiness" } } })}\n`,
   );
   await writeFile(join(root, ".gitignore"), "artifacts/\nnode_modules/\n");
   await writeFile(join(root, "change.txt"), "base\n");

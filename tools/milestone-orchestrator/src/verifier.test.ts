@@ -146,7 +146,7 @@ const STAGE_CONTRACTS: Readonly<Record<string, StageContract>> = {
     requiredKinds: [
       "node-checkpoints",
       "worker-checkpoints",
-      "player-action-log",
+      "user-action-log",
       "replay-report",
       "parity-report",
     ],
@@ -266,7 +266,7 @@ function milestoneProposal(id: string): MilestoneProposal {
     rationale: "Exercise persisted incremental evidence.",
     dependencies: [],
     permittedPaths: ["change.txt"],
-    exclusions: ["No gameplay.", "No scope reduction."],
+    exclusions: ["No feature.", "No scope reduction."],
     acceptanceCriteria: [
       {
         id: "FIXTURE-01",
@@ -458,7 +458,7 @@ async function createFixture(input: {
   status: "PASS" | "NOT_READY";
   runId?: string;
 }): Promise<VerificationFixture> {
-  const workspace = await mkdtemp(join(tmpdir(), "ski-loop-verify-"));
+  const workspace = await mkdtemp(join(tmpdir(), "milestone-loop-verify-"));
   temporaryDirectories.push(workspace);
   const runId =
     input.runId ?? `verify-${input.profile}-${input.status.toLowerCase()}`;

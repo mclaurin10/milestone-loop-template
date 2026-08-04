@@ -30,9 +30,9 @@ A plan is complete only when all acceptance criteria and verification requiremen
 
 If blocked under `AGENTS.md`, leave the plan marked blocked with the exact blocker, evidence, attempts, and smallest requested human decision. All other incomplete plans retain a concrete autonomous next action.
 
-## Gameplay Milestone Shape
+## Feature Milestone Shape
 
-New gameplay plans default to one vertically integrated player outcome. The plan must name the normal public action path, shared deterministic rule owners, Standard composition owner, save/load/replay evidence, Node/production-Worker parity, and one inspectable consequence. Kernel-, fixture-, migration-, or preview-only work is an exception: it requires a narrow justification and one machine-enforced immediate consumer before unrelated work can start.
+New feature plans default to one vertically integrated player outcome. The plan must name the normal public action path, shared deterministic rule owners, Standard composition owner, save/load/replay evidence, Node/production-Worker parity, and one inspectable consequence. Kernel-, fixture-, migration-, or preview-only work is an exception: it requires a narrow justification and one machine-enforced immediate consumer before unrelated work can start.
 
 Keep dependency order explicit. A plan may not bundle an entire skiing spine merely to make a precursor look complete, and it may not add decorative or acceptance-facing content before its causal prerequisites. The current sequence after the first communications corridor is remaining utilities, operations-base construction, minimum operations staffing/finance/safety, first functional lift and trail, guests, then an operating day.
 

@@ -15,7 +15,7 @@ export interface WorkerEscalationDecision {
   readonly reason: string | null;
 }
 
-type WorkerRole = "gameplay-worker-initial" | "gameplay-worker-escalated";
+type WorkerRole = "feature-worker-initial" | "feature-worker-escalated";
 
 export function assertWorkerThreadPolicy(input: {
   readonly milestone: MilestoneRecord;
@@ -55,7 +55,7 @@ export function recordWorkerThreadLineage(input: {
   if (milestone.workerThreadId)
     throw new Error("Worker thread identity changed within one policy role.");
   const previous = milestone.workerThreadLineage.at(-1) ?? null;
-  if (role === "gameplay-worker-escalated" && !previous)
+  if (role === "feature-worker-escalated" && !previous)
     throw new Error(
       "Escalated worker replacement has no prior thread lineage.",
     );
@@ -72,11 +72,11 @@ export function recordWorkerThreadLineage(input: {
         startedAt: input.now,
         attempt: milestone.attempts,
         replacesThreadId:
-          role === "gameplay-worker-escalated"
+          role === "feature-worker-escalated"
             ? (previous?.threadId ?? null)
             : null,
         replacementReason:
-          role === "gameplay-worker-escalated"
+          role === "feature-worker-escalated"
             ? milestone.workerPolicy.escalationReason
             : null,
       },
@@ -98,7 +98,7 @@ export function promoteWorkerPolicy(
     workerThreadId: null,
     workerPolicy: {
       ...milestone.workerPolicy,
-      activeRole: "gameplay-worker-escalated",
+      activeRole: "feature-worker-escalated",
       escalated: true,
       escalationReason: reason,
       escalatedAt: now,

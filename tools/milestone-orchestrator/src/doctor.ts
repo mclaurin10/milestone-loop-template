@@ -232,7 +232,7 @@ export async function runDoctorDiagnostic(
   try {
     const environmentConfigPath = environmentValue(
       environment,
-      "SKI_LOOP_CONFIG",
+      "MILESTONE_LOOP_CONFIG",
     );
     config = await loadConfig(
       repositoryRoot,

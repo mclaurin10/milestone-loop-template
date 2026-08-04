@@ -132,7 +132,7 @@ function migrateConfig(value: unknown): unknown {
     typeof value !== "object" ||
     value === null ||
     Array.isArray(value) ||
-    !["1.0.0", "1.1.0"].includes(
+    !["1.0.0", "1.1.0", "1.2.0"].includes(
       String((value as Record<string, unknown>)["schemaVersion"]),
     )
   )
@@ -140,7 +140,7 @@ function migrateConfig(value: unknown): unknown {
   const legacy = value as Record<string, unknown>;
   return {
     ...legacy,
-    schemaVersion: "1.2.0",
+    schemaVersion: "1.3.0",
     evidenceRetention:
       legacy["schemaVersion"] === "1.0.0"
         ? {
@@ -148,6 +148,14 @@ function migrateConfig(value: unknown): unknown {
             keepRecentRuns: 20,
           }
         : legacy["evidenceRetention"],
+    project: legacy["project"] ?? {
+      name: "Example Project",
+      authorityFile: "PROJECT_GOAL.md",
+      verticalSpine: {
+        minimumCategories: 4,
+        categoryPatterns: [],
+      },
+    },
   };
 }
 
@@ -157,7 +165,7 @@ export async function loadConfig(
 ): Promise<OrchestratorConfig> {
   const path = resolve(
     repositoryRoot,
-    requestedPath ?? process.env["SKI_LOOP_CONFIG"] ?? DEFAULT_CONFIG_PATH,
+    requestedPath ?? process.env["MILESTONE_LOOP_CONFIG"] ?? DEFAULT_CONFIG_PATH,
   );
   const parsed = migrateConfig(
     JSON.parse(await readFile(path, "utf8")) as unknown,

@@ -141,8 +141,9 @@ export function collectTierCandidateIdentity(
 export function classifyVerificationPath(
   path: string,
   protectedPaths: readonly string[],
+  browserHostScriptPatterns: readonly RegExp[] = [],
 ): readonly string[] {
-  return classifyAffectedPath(path, protectedPaths);
+  return classifyAffectedPath(path, protectedPaths, browserHostScriptPatterns);
 }
 
 type PlannedCommand = ScopeCheckDefinition;
@@ -284,9 +285,9 @@ async function tierCommandRecord(input: {
     artifactDirectory: resolve(commandRoot, "logs"),
     timeoutMs: DEFAULT_COMMAND_TIMEOUT_MS,
     extraEnvironment: {
-      SKI_VERIFY_STAGE_ID: `verification-tier-${input.tier}`,
-      SKI_VERIFY_COMMAND_ID: input.command.id,
-      SKI_VERIFY_COMMAND_ARTIFACT_DIR: evidenceRoot,
+      LOOP_VERIFY_STAGE_ID: `verification-tier-${input.tier}`,
+      LOOP_VERIFY_COMMAND_ID: input.command.id,
+      LOOP_VERIFY_COMMAND_ARTIFACT_DIR: evidenceRoot,
     },
     telemetry: {
       store: input.telemetry,

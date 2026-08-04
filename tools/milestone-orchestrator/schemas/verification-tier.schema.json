@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ski-tycoon.local/schemas/verification-tier.schema.json",
-  "title": "Ski Tycoon verification manifest and non-authoritative tier result",
+  "$id": "https://milestone-loop.local/schemas/verification-tier.schema.json",
+  "title": "Example Project verification manifest and non-authoritative tier result",
   "oneOf": [{ "$ref": "#/$defs/manifest" }, { "$ref": "#/$defs/result" }],
   "$defs": {
     "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },

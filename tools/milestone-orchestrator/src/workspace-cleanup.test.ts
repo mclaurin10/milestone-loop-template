@@ -39,7 +39,7 @@ async function fixture(): Promise<{
   readonly artifactRoot: string;
   readonly runDirectory: string;
 }> {
-  const root = await mkdtemp(join(tmpdir(), "ski-loop-cleanup-"));
+  const root = await mkdtemp(join(tmpdir(), "milestone-loop-cleanup-"));
   temporaryDirectories.push(root);
   const workspaceRoot = join(root, "workspaces");
   const artifactRoot = join(root, "runs");

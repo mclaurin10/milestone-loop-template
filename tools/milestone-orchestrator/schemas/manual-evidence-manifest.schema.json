@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ski-tycoon.local/schemas/1.0.0/manual-evidence-manifest.schema.json",
-  "title": "Ski Tycoon future direct/manual evidence manifest",
+  "$id": "https://milestone-loop.local/schemas/1.0.0/manual-evidence-manifest.schema.json",
+  "title": "Example Project future direct/manual evidence manifest",
   "type": "object",
   "additionalProperties": false,
   "required": [

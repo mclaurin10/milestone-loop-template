@@ -19,7 +19,7 @@ afterEach(async () => {
 });
 
 async function temporaryDirectory(): Promise<string> {
-  const directory = await mkdtemp(join(tmpdir(), "ski-loop-path-safety-"));
+  const directory = await mkdtemp(join(tmpdir(), "milestone-loop-path-safety-"));
   temporaryDirectories.push(directory);
   return directory;
 }

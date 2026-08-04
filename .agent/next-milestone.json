@@ -2,7 +2,7 @@
   "schemaVersion": "1.1.0",
   "id": "complete-operations-base-utilities",
   "title": "Complete the operations-base utility foothold through normal construction",
-  "kind": "gameplay",
+  "kind": "feature",
   "objective": "Use the existing normal permit, finance, mobilization, project, completed-asset, and root-derived registration paths to construct and connect the power, sewage, and water corridors; preserve communications; and make the unbuilt operations-base preview report all four utilities connected with exact capacity and bottleneck evidence.",
   "rationale": "The communications corridor already proves the complete causal seam. Extending the same public-action and shared-rule boundary to the three remaining prerequisite utilities is the smallest dependency-valid vertical slice before operations-base construction and the later skiing spine.",
   "dependencies": [],
@@ -138,7 +138,7 @@
   },
   "verticalSlice": {
     "mode": "integrated",
-    "playerGoal": "Make the operations-base blueprint utility-eligible without constructing the facility.",
+    "userGoal": "Make the operations-base blueprint utility-eligible without constructing the facility.",
     "publicActionKinds": [
       "standard.finance.loan.accept",
       "standard.permit.apply",

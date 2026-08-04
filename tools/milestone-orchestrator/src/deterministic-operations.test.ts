@@ -28,11 +28,11 @@ function git(root: string, ...args: string[]): string {
 
 describe("deterministic controller operations", () => {
   it("opens status/dry-run state without invoking an agent", async () => {
-    const root = await mkdtemp(join(tmpdir(), "ski-loop-deterministic-"));
+    const root = await mkdtemp(join(tmpdir(), "milestone-loop-deterministic-"));
     directories.push(root);
     const config = validConfig();
     const files = [
-      "SKI_TYCOON_GOAL.md",
+      "PROJECT_GOAL.md",
       "evals/ACCEPTANCE.md",
       "evals/acceptance-manifest.json",
       "evals/HIDDEN_VALIDATION_PROTOCOL.md",

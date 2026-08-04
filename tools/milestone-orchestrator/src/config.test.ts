@@ -18,7 +18,7 @@ describe("orchestrator configuration migration", () => {
   it.each(["1.0.0", "1.1.0"])(
     "migrates %s to 1.2.0 without changing policy facts",
     async (schemaVersion) => {
-      const root = await mkdtemp(join(tmpdir(), "ski-loop-config-"));
+      const root = await mkdtemp(join(tmpdir(), "milestone-loop-config-"));
       temporaryDirectories.push(root);
       const path = join(root, "legacy-config.json");
       const current = validConfig();

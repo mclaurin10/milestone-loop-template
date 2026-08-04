@@ -130,7 +130,7 @@ export function migrateOrchestratorState(value: unknown): unknown {
                 : [
                     {
                       threadId,
-                      role: "gameplay-worker-initial",
+                      role: "feature-worker-initial",
                       model: "legacy-unrecorded",
                       reasoningEffort: "legacy-unrecorded",
                       startedAt:
@@ -145,7 +145,7 @@ export function migrateOrchestratorState(value: unknown): unknown {
                     },
                   ],
             workerPolicy: {
-              activeRole: "gameplay-worker-initial",
+              activeRole: "feature-worker-initial",
               escalated: false,
               escalationReason: null,
               escalatedAt: null,

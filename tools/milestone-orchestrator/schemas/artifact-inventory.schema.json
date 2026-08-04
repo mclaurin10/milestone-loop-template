@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ski-tycoon.local/schemas/1.0.0/artifact-inventory.schema.json",
-  "title": "Ski Tycoon read-only artifact inventory",
+  "$id": "https://milestone-loop.local/schemas/1.0.0/artifact-inventory.schema.json",
+  "title": "Example Project read-only artifact inventory",
   "type": "object",
   "additionalProperties": false,
   "required": [

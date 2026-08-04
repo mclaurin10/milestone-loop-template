@@ -2,9 +2,9 @@
 
 ## Authority
 
-Read `SKI_TYCOON_GOAL.md` before planning or changing the repository. It is the frozen product authority. In descending order, follow:
+Read `PROJECT_GOAL.md` before planning or changing the repository. It is the frozen product authority. In descending order, follow:
 
-1. `SKI_TYCOON_GOAL.md` and the original immutable acceptance suite.
+1. `PROJECT_GOAL.md` and the original immutable acceptance suite.
 2. This contract.
 3. The active executable plan in `.agent/current-exec-plan.md`.
 4. Architecture notes, decision records, and other implementation documentation.
@@ -17,12 +17,12 @@ The following are immutable: the frozen product scope and non-goals; the require
 
 ## Verification Profiles and Bootstrap Boundary
 
-`pnpm verify` selects the profile declared at `package.json` -> `skiTycoon.verification.defaultProfile`. The only valid profiles are:
+`pnpm verify` selects the profile declared at `package.json` -> `milestoneLoop.verification.defaultProfile`. The only valid profiles are:
 
 - `bootstrap`: proves the technical scaffold, shared deterministic smoke kernel, minimal persistence/replay, production build, and real Chromium rendering/evidence path. It is never evidence of game-system completion or autonomous readiness.
 - `readiness`: exercises the complete frozen evaluation surface and is the only profile eligible to support `AUTONOMOUS-READINESS-01`.
 
-The bootstrap profile exists so the first application increment can become truthfully green without fabricating future game, bot, seed, fault, or performance systems. It is also a strict scope ceiling: while `bootstrap` is the default, do not implement terrain, economy, lifts, trails, guests, staff, weather/snow/avalanche, construction, transport, utilities, town, environment, resort operations, content breadth, production bot policy, or other substantive gameplay.
+The bootstrap profile exists so the first application increment can become truthfully green without fabricating future game, bot, seed, fault, or performance systems. It is also a strict scope ceiling: while `bootstrap` is the default, do not implement terrain, economy, lifts, trails, guests, staff, weather/snow/avalanche, construction, transport, utilities, town, environment, resort operations, content breadth, production bot policy, or other substantive feature.
 
 Bootstrap ends only at a clean committed tree with a passing no-argument `pnpm verify` and the required structured receipts/artifacts. A later plan must change the default profile to `readiness` and add the permanent `.agent/readiness-profile-activated.json` transition marker before the first substantive game-system implementation. From that transition onward, missing readiness stages remain non-passing until genuinely implemented; the marker may not be deleted and the profile may not be changed back to obtain a green result. The verifier checks marker history to reject rollback. A bootstrap result, focused `--stage` result, explicit non-default profile run, dirty-tree run, or result whose `completion.eligible` is false cannot support a completion claim.
 
@@ -88,7 +88,7 @@ Never silently reduce scope, weaken or remove tests, change success definitions,
 
 A future agent must be able to resume from the repository alone. On entry:
 
-1. Read `SKI_TYCOON_GOAL.md`, this file, `.agent/PLANS.md`, and `.agent/current-exec-plan.md`.
+1. Read `PROJECT_GOAL.md`, this file, `.agent/PLANS.md`, and `.agent/current-exec-plan.md`.
 2. Read the latest entries in `docs/autonomy-log.md` and `docs/decision-log.md` plus relevant architecture/evidence records.
 3. Inspect `git status`, recent commits, tests, and artifacts; do not assume logged claims are current.
 4. Reproduce the active plan's last verification or first unresolved gap.

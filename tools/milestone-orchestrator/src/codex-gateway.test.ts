@@ -43,7 +43,7 @@ function events(): AsyncGenerator<ThreadEvent> {
 
 describe("Codex SDK gateway", () => {
   it("records measured usage without prompts, responses, or invented resolution fields", async () => {
-    const root = await mkdtemp(join(tmpdir(), "ski-loop-sdk-telemetry-"));
+    const root = await mkdtemp(join(tmpdir(), "milestone-loop-sdk-telemetry-"));
     temporaryDirectories.push(root);
     const telemetry = await TelemetryStore.open({
       repositoryRoot: root,
@@ -109,7 +109,7 @@ describe("Codex SDK gateway", () => {
   });
 
   it("starts a workspace-write worker, persists its ID, and resumes that ID", async () => {
-    const root = await mkdtemp(join(tmpdir(), "ski-loop-sdk-"));
+    const root = await mkdtemp(join(tmpdir(), "milestone-loop-sdk-"));
     temporaryDirectories.push(root);
     const runStreamed = vi.fn(
       async (_prompt: string, _options?: TurnOptions) => ({ events: events() }),
@@ -126,7 +126,7 @@ describe("Codex SDK gateway", () => {
     const gateway = new SdkCodexGateway(validConfig(), client);
     const onStarted = vi.fn(async (_id: string) => undefined);
     const first = await gateway.run({
-      role: "gameplay-worker-initial",
+      role: "feature-worker-initial",
       prompt: "Make a bounded change.",
       workingDirectory: root,
       threadId: null,
@@ -154,7 +154,7 @@ describe("Codex SDK gateway", () => {
     );
 
     await gateway.run({
-      role: "gameplay-worker-initial",
+      role: "feature-worker-initial",
       prompt: "Address verification feedback.",
       workingDirectory: root,
       threadId: first.threadId,
@@ -177,7 +177,7 @@ describe("Codex SDK gateway", () => {
   });
 
   it("uses a fresh read-only thread for a reviewer", async () => {
-    const root = await mkdtemp(join(tmpdir(), "ski-loop-review-sdk-"));
+    const root = await mkdtemp(join(tmpdir(), "milestone-loop-review-sdk-"));
     temporaryDirectories.push(root);
     const client: CodexClientLike = {
       startThread: vi.fn((options: PinnedThreadOptions) => {
@@ -208,9 +208,9 @@ describe("Codex SDK gateway", () => {
 
   it.each([
     ["planner", "gpt-5.6-sol", "max", null],
-    ["gameplay-worker-initial", "gpt-5.6-sol", "xhigh", null],
+    ["feature-worker-initial", "gpt-5.6-sol", "xhigh", null],
     [
-      "gameplay-worker-escalated",
+      "feature-worker-escalated",
       "gpt-5.6-sol",
       "max",
       "Two substantive implementation attempts failed.",
@@ -220,7 +220,7 @@ describe("Codex SDK gateway", () => {
   ] as const)(
     "pins %s to %s/%s and records invocation evidence",
     async (role, model, effort, escalationReason) => {
-      const root = await mkdtemp(join(tmpdir(), "ski-loop-role-sdk-"));
+      const root = await mkdtemp(join(tmpdir(), "milestone-loop-role-sdk-"));
       temporaryDirectories.push(root);
       let observed: PinnedThreadOptions | null = null;
       const client: CodexClientLike = {
@@ -260,7 +260,7 @@ describe("Codex SDK gateway", () => {
   );
 
   it("applies and logs only a validated explicit override", async () => {
-    const root = await mkdtemp(join(tmpdir(), "ski-loop-override-sdk-"));
+    const root = await mkdtemp(join(tmpdir(), "milestone-loop-override-sdk-"));
     temporaryDirectories.push(root);
     const base = validConfig();
     const config = validConfig({
@@ -310,7 +310,7 @@ describe("Codex SDK gateway", () => {
   });
 
   it("enforces deliberately sequential agent execution", async () => {
-    const root = await mkdtemp(join(tmpdir(), "ski-loop-sequential-sdk-"));
+    const root = await mkdtemp(join(tmpdir(), "milestone-loop-sequential-sdk-"));
     temporaryDirectories.push(root);
     let release!: () => void;
     const gate = new Promise<void>((resolveGate) => {
@@ -358,7 +358,7 @@ describe("Codex SDK gateway", () => {
   });
 
   it("fails clearly and preserves evidence when a pinned assignment is rejected", async () => {
-    const root = await mkdtemp(join(tmpdir(), "ski-loop-rejected-sdk-"));
+    const root = await mkdtemp(join(tmpdir(), "milestone-loop-rejected-sdk-"));
     temporaryDirectories.push(root);
     const client: CodexClientLike = {
       startThread: vi.fn(() => ({

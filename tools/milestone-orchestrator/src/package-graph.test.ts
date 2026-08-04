@@ -30,38 +30,38 @@ describe("runtime workspace package graph", () => {
       [...first.packages.map((entry) => entry.name)].sort(),
     );
     expect(
-      first.packages.find((entry) => entry.name === "@ski-tycoon/protocol"),
+      first.packages.find((entry) => entry.name === "@example/protocol"),
     ).toMatchObject({
       root: "packages/protocol",
       exports: { ".": "./src/index.ts" },
       workspaceDependencies: [
         {
-          name: "@ski-tycoon/foundation",
+          name: "@example/foundation",
           dependencyType: "dependencies",
           specifier: "workspace:0.0.0",
         },
       ],
     });
-    expect(reverseDependentPackageNames(first, "@ski-tycoon/protocol")).toEqual(
+    expect(reverseDependentPackageNames(first, "@example/protocol")).toEqual(
       [
-        "@ski-tycoon/headless",
-        "@ski-tycoon/persistence",
-        "@ski-tycoon/renderer",
-        "@ski-tycoon/simulation",
-        "@ski-tycoon/ui",
-        "@ski-tycoon/web",
-        "ski-tycoon",
+        "@example/headless",
+        "@example/persistence",
+        "@example/renderer",
+        "@example/simulation",
+        "@example/ui",
+        "@example/web",
+        "example-project",
       ],
     );
     expect(
       workspaceOwnerForPath(first, "packages/protocol/src/authorization.ts")
         ?.name,
-    ).toBe("@ski-tycoon/protocol");
+    ).toBe("@example/protocol");
     expect(workspaceOwnerForPath(first, "docs/verification.md")).toBeNull();
   });
 
   it("rejects a workspace pattern that can escape the repository", async () => {
-    const root = await mkdtemp(join(tmpdir(), "ski-package-graph-unsafe-"));
+    const root = await mkdtemp(join(tmpdir(), "milestone-package-graph-unsafe-"));
     temporaryDirectories.push(root);
     await writeFile(
       join(root, "pnpm-workspace.yaml"),
@@ -78,8 +78,8 @@ describe("runtime workspace package graph", () => {
   });
 
   it("rejects a symlinked workspace directory", async () => {
-    const root = await mkdtemp(join(tmpdir(), "ski-package-graph-link-"));
-    const external = await mkdtemp(join(tmpdir(), "ski-package-graph-target-"));
+    const root = await mkdtemp(join(tmpdir(), "milestone-package-graph-link-"));
+    const external = await mkdtemp(join(tmpdir(), "milestone-package-graph-target-"));
     temporaryDirectories.push(root, external);
     await mkdir(join(root, "packages"), { recursive: true });
     await writeFile(

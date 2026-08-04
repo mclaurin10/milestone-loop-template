@@ -26,7 +26,7 @@ function milestone(
     workerThreadLineage: [
       {
         threadId: "worker-thread",
-        role: "gameplay-worker-initial",
+        role: "feature-worker-initial",
         model: "gpt-5.6-sol",
         reasoningEffort: "xhigh",
         startedAt: "2026-08-01T00:00:00.000Z",
@@ -36,7 +36,7 @@ function milestone(
       },
     ],
     workerPolicy: {
-      activeRole: "gameplay-worker-initial",
+      activeRole: "feature-worker-initial",
       escalated: false,
       escalationReason: null,
       escalatedAt: null,
@@ -99,7 +99,7 @@ describe("retry and recovery policy", () => {
         workerThreadId: null,
         workerPolicy: {
           ...milestone(2).workerPolicy,
-          activeRole: "gameplay-worker-escalated",
+          activeRole: "feature-worker-escalated",
           escalated: true,
           escalationReason: "Two substantive attempts failed.",
           escalatedAt: "2026-08-01T00:00:00.000Z",

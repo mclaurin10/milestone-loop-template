@@ -21,7 +21,7 @@ import {
   type ReconciliationDependencies,
 } from "./reconciliation.js";
 import { createInitialState } from "./state-store.js";
-import { validConfig, validGameplayProposal } from "../test/fixtures.js";
+import { validConfig, validFeatureProposal } from "../test/fixtures.js";
 
 const temporaryDirectories: string[] = [];
 
@@ -63,7 +63,7 @@ interface Fixture {
 }
 
 async function fixtureRepository(): Promise<Fixture> {
-  const root = await mkdtemp(join(tmpdir(), "ski-reconciliation-"));
+  const root = await mkdtemp(join(tmpdir(), "milestone-reconciliation-"));
   temporaryDirectories.push(root);
   git(root, "init", "-b", "main");
   git(root, "config", "user.name", "Reconciliation Test");
@@ -79,13 +79,13 @@ async function fixtureRepository(): Promise<Fixture> {
       {
         name: "reconciliation-fixture",
         private: true,
-        skiTycoon: { verification: { defaultProfile: "readiness" } },
+        milestoneLoop: { verification: { defaultProfile: "readiness" } },
       },
       null,
       2,
     )}\n`,
   );
-  await writeFile(join(root, "SKI_TYCOON_GOAL.md"), "Frozen test goal.\n");
+  await writeFile(join(root, "PROJECT_GOAL.md"), "Frozen test goal.\n");
   await writeFile(join(root, "docs", "history.md"), "Tracked history.\n");
   await writeFile(
     join(root, ".agent", "completed", "loop-recommissioning-verification.json"),
@@ -98,18 +98,18 @@ async function fixtureRepository(): Promise<Fixture> {
     "add",
     ".gitignore",
     "package.json",
-    "SKI_TYCOON_GOAL.md",
+    "PROJECT_GOAL.md",
     "docs/history.md",
     ".agent/completed/loop-recommissioning-verification.json",
   );
   git(root, "commit", "-m", "source boundary");
   const sourceCommit = git(root, "rev-parse", "HEAD");
-  const goal = await readFile(join(root, "SKI_TYCOON_GOAL.md"));
+  const goal = await readFile(join(root, "PROJECT_GOAL.md"));
   const state = createInitialState({
     repositoryRoot: root,
     targetBranch: "main",
     verifiedCommit: sourceCommit,
-    protectedFiles: [{ path: "SKI_TYCOON_GOAL.md", sha256: sha256(goal) }],
+    protectedFiles: [{ path: "PROJECT_GOAL.md", sha256: sha256(goal) }],
     now: "2026-08-04T00:00:00.000Z",
   });
   const legacy = structuredClone(state) as unknown as Record<string, unknown>;
@@ -131,7 +131,7 @@ async function fixtureRepository(): Promise<Fixture> {
 
   const configPath = join(root, "orchestrator-config.json");
   await writeFile(configPath, `${JSON.stringify(validConfig(), null, 2)}\n`);
-  const proposal = validGameplayProposal({
+  const proposal = validFeatureProposal({
     id: "complete-operations-base-utilities",
     title: "Complete the operations base utility foothold",
   });
@@ -514,7 +514,7 @@ async function runHappyLifecycleScenario() {
     reconciliationId: "range-fixture",
     sourceVerifiedCommit: fixture.sourceCommit,
     candidateCommit: fixture.candidateCommit,
-    protectedPaths: ["SKI_TYCOON_GOAL.md"],
+    protectedPaths: ["PROJECT_GOAL.md"],
   });
 
   const invalid = await ReconciliationController.open(

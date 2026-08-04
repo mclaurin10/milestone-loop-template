@@ -71,7 +71,7 @@ async function createControllerRun(
 
 describe("verification evidence retention", () => {
   it("keeps recent, legacy, durable-state, and committed-record run IDs", async () => {
-    const root = await mkdtemp(join(tmpdir(), "ski-loop-retention-"));
+    const root = await mkdtemp(join(tmpdir(), "milestone-loop-retention-"));
     temporaryDirectories.push(root);
     git(root, "init", "-b", "main");
     git(root, "config", "user.name", "Retention Test");
@@ -128,7 +128,7 @@ describe("verification evidence retention", () => {
   });
 
   it("treats malformed and unmanifested directories as unmanaged", async () => {
-    const root = await mkdtemp(join(tmpdir(), "ski-loop-retention-"));
+    const root = await mkdtemp(join(tmpdir(), "milestone-loop-retention-"));
     temporaryDirectories.push(root);
     const artifactRoot = join(root, "artifacts");
     await mkdir(join(artifactRoot, "malformed"), { recursive: true });
@@ -143,7 +143,7 @@ describe("verification evidence retention", () => {
   });
 
   it("applies the same bounded policy to completed controller run trees", async () => {
-    const root = await mkdtemp(join(tmpdir(), "ski-loop-retention-"));
+    const root = await mkdtemp(join(tmpdir(), "milestone-loop-retention-"));
     temporaryDirectories.push(root);
     git(root, "init", "-b", "main");
     git(root, "config", "user.name", "Retention Test");
@@ -189,7 +189,7 @@ describe("verification evidence retention", () => {
   });
 
   it("suspends deletion when candidate, reconciliation, escalation, or inventory references are unresolved", async () => {
-    const root = await mkdtemp(join(tmpdir(), "ski-loop-retention-"));
+    const root = await mkdtemp(join(tmpdir(), "milestone-loop-retention-"));
     temporaryDirectories.push(root);
     git(root, "init", "-b", "main");
     git(root, "config", "user.name", "Retention Test");

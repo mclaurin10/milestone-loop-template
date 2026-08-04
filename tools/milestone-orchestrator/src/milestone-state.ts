@@ -31,7 +31,7 @@ export function createMilestoneRecord(
     workerThreadId: null,
     workerThreadLineage: [],
     workerPolicy: {
-      activeRole: "gameplay-worker-initial",
+      activeRole: "feature-worker-initial",
       escalated: false,
       escalationReason: null,
       escalatedAt: null,

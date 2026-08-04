@@ -31,7 +31,7 @@ function failure(
 
 function state(failures: readonly WorkerFailureRecord[]): WorkerPolicyState {
   return {
-    activeRole: "gameplay-worker-initial",
+    activeRole: "feature-worker-initial",
     escalated: false,
     escalationReason: null,
     escalatedAt: null,
@@ -105,7 +105,7 @@ describe("worker reasoning escalation", () => {
     const withInitialThread = recordWorkerThreadLineage({
       milestone: initial,
       threadId: "initial-thread",
-      role: "gameplay-worker-initial",
+      role: "feature-worker-initial",
       assignment: {
         model: "gpt-5.6-sol",
         reasoningEffort: "xhigh",
@@ -115,7 +115,7 @@ describe("worker reasoning escalation", () => {
     expect(() =>
       assertWorkerThreadPolicy({
         milestone: withInitialThread,
-        role: "gameplay-worker-initial",
+        role: "feature-worker-initial",
         assignment: {
           model: "gpt-5.6-sol",
           reasoningEffort: "max",
@@ -134,7 +134,7 @@ describe("worker reasoning escalation", () => {
             },
           ],
         },
-        role: "gameplay-worker-initial",
+        role: "feature-worker-initial",
         assignment: {
           model: "gpt-5.6-sol",
           reasoningEffort: "xhigh",
@@ -153,7 +153,7 @@ describe("worker reasoning escalation", () => {
     const replacement = recordWorkerThreadLineage({
       milestone: promoted,
       threadId: "max-thread",
-      role: "gameplay-worker-escalated",
+      role: "feature-worker-escalated",
       assignment: { model: "gpt-5.6-sol", reasoningEffort: "max" },
       now: NOW,
     });
@@ -161,13 +161,13 @@ describe("worker reasoning escalation", () => {
     expect(replacement.workerThreadLineage).toEqual([
       expect.objectContaining({
         threadId: "initial-thread",
-        role: "gameplay-worker-initial",
+        role: "feature-worker-initial",
         reasoningEffort: "xhigh",
         replacesThreadId: null,
       }),
       expect.objectContaining({
         threadId: "max-thread",
-        role: "gameplay-worker-escalated",
+        role: "feature-worker-escalated",
         reasoningEffort: "max",
         replacesThreadId: "initial-thread",
         replacementReason: "Two substantive implementation attempts failed.",

@@ -32,7 +32,7 @@ async function fixtureRepository(): Promise<{
   readonly root: string;
   readonly commits: readonly [string, string, string];
 }> {
-  const root = await mkdtemp(join(tmpdir(), "ski-loop-report-"));
+  const root = await mkdtemp(join(tmpdir(), "milestone-loop-report-"));
   temporaryDirectories.push(root);
   git(root, ["init"]);
   const data = (value: string): string =>

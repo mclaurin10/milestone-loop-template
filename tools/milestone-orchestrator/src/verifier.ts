@@ -299,7 +299,7 @@ const STAGE_EVIDENCE_CONTRACTS: Readonly<
     requiredArtifactKinds: [
       "node-checkpoints",
       "worker-checkpoints",
-      "player-action-log",
+      "user-action-log",
       "replay-report",
       "parity-report",
     ],

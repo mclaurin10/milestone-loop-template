@@ -32,7 +32,7 @@ export const MILESTONE_OUTPUT_SCHEMA = {
         "tooling",
         "verification",
         "lifecycle",
-        "gameplay",
+        "feature",
         "documentation",
       ],
     },
@@ -103,7 +103,7 @@ export const MILESTONE_OUTPUT_SCHEMA = {
       additionalProperties: false,
       required: [
         "mode",
-        "playerGoal",
+        "userGoal",
         "publicActionKinds",
         "sharedRuleOwners",
         "standardCompositionOwner",
@@ -117,7 +117,7 @@ export const MILESTONE_OUTPUT_SCHEMA = {
           type: "string",
           enum: ["not-applicable", "integrated", "exception"],
         },
-        playerGoal: {
+        userGoal: {
           anyOf: [{ type: "string" }, { type: "null" }],
         },
         publicActionKinds: { type: "array", items: { type: "string" } },

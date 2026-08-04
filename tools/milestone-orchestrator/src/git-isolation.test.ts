@@ -32,7 +32,7 @@ function git(repository: string, ...args: string[]): string {
 
 describe("Git isolation", () => {
   it("keeps failed work isolated and integrates only an approved fast-forward", async () => {
-    const parent = await mkdtemp(join(tmpdir(), "ski-loop-git-"));
+    const parent = await mkdtemp(join(tmpdir(), "milestone-loop-git-"));
     temporaryDirectories.push(parent);
     const repository = join(parent, "source");
     await import("node:fs/promises").then(({ mkdir }) => mkdir(repository));

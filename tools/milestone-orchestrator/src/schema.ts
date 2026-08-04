@@ -284,7 +284,7 @@ function validAgentInvocation(value: unknown): boolean {
   )
     return false;
   return (
-    (value["role"] === "gameplay-worker-escalated") === value["escalated"] &&
+    (value["role"] === "feature-worker-escalated") === value["escalated"] &&
     value["escalated"] === (value["escalationReason"] !== null) &&
     value["overrideApplied"] === (value["overrideReason"] !== null) &&
     (value["status"] === "starting") === (value["finishedAt"] === null) &&
@@ -302,7 +302,7 @@ function validWorkerPolicy(value: unknown): boolean {
       "escalatedAt",
       "failures",
     ]) ||
-    !["gameplay-worker-initial", "gameplay-worker-escalated"].includes(
+    !["feature-worker-initial", "feature-worker-escalated"].includes(
       String(value["activeRole"]),
     ) ||
     typeof value["escalated"] !== "boolean" ||
@@ -340,7 +340,7 @@ function validWorkerPolicy(value: unknown): boolean {
     return false;
   return (
     value["escalated"] ===
-      (value["activeRole"] === "gameplay-worker-escalated") &&
+      (value["activeRole"] === "feature-worker-escalated") &&
     value["escalated"] === (value["escalationReason"] !== null) &&
     value["escalated"] === (value["escalatedAt"] !== null)
   );
@@ -364,7 +364,7 @@ function validWorkerLineage(value: unknown): boolean {
           "replacementReason",
         ]) &&
         nonEmptyString(entry["threadId"]) &&
-        ["gameplay-worker-initial", "gameplay-worker-escalated"].includes(
+        ["feature-worker-initial", "feature-worker-escalated"].includes(
           String(entry["role"]),
         ) &&
         (entry["model"] === "legacy-unrecorded" ||
@@ -393,14 +393,14 @@ function validWorkerLineage(value: unknown): boolean {
   const initial = entries[0];
   if (
     initial &&
-    (initial["role"] !== "gameplay-worker-initial" ||
+    (initial["role"] !== "feature-worker-initial" ||
       initial["replacesThreadId"] !== null)
   )
     return false;
   const replacement = entries[1];
   return (
     !replacement ||
-    (replacement["role"] === "gameplay-worker-escalated" &&
+    (replacement["role"] === "feature-worker-escalated" &&
       replacement["model"] !== "legacy-unrecorded" &&
       replacement["replacesThreadId"] === initial?.["threadId"] &&
       Number(replacement["attempt"]) > Number(initial?.["attempt"]))
@@ -466,7 +466,7 @@ export function validateMilestoneProposal(
       "tooling",
       "verification",
       "lifecycle",
-      "gameplay",
+      "feature",
       "documentation",
     ].includes(String(value["kind"]))
   )
@@ -573,7 +573,7 @@ export function validateMilestoneProposal(
       !isRecord(vertical) ||
       !hasOnlyKeys(vertical, [
         "mode",
-        "playerGoal",
+        "userGoal",
         "publicActionKinds",
         "sharedRuleOwners",
         "standardCompositionOwner",
@@ -585,8 +585,8 @@ export function validateMilestoneProposal(
       !["not-applicable", "integrated", "exception"].includes(
         String(vertical?.["mode"]),
       ) ||
-      (vertical?.["playerGoal"] !== null &&
-        !nonEmptyString(vertical?.["playerGoal"])) ||
+      (vertical?.["userGoal"] !== null &&
+        !nonEmptyString(vertical?.["userGoal"])) ||
       !stringArray(vertical?.["publicActionKinds"]) ||
       !stringArray(vertical?.["sharedRuleOwners"]) ||
       (Array.isArray(vertical?.["sharedRuleOwners"]) &&
@@ -638,7 +638,7 @@ export function validateMilestoneProposal(
         errors.push("Milestone vertical exception is malformed.");
       if (
         vertical["mode"] === "not-applicable" &&
-        (vertical["playerGoal"] !== null ||
+        (vertical["userGoal"] !== null ||
           (Array.isArray(vertical["publicActionKinds"]) &&
             vertical["publicActionKinds"].length > 0) ||
           (Array.isArray(vertical["sharedRuleOwners"]) &&
@@ -652,7 +652,7 @@ export function validateMilestoneProposal(
           vertical["exception"] !== null)
       )
         errors.push(
-          "A not-applicable verticalSlice must not carry gameplay or exception claims.",
+          "A not-applicable verticalSlice must not carry feature or exception claims.",
         );
     }
   }
@@ -1071,6 +1071,21 @@ function validReconciliationRecord(
   );
 }
 
+function validRegexSourceArray(value: unknown): value is readonly string[] {
+  return (
+    Array.isArray(value) &&
+    value.every((entry) => {
+      if (typeof entry !== "string" || entry.length === 0) return false;
+      try {
+        new RegExp(entry, "i");
+        return true;
+      } catch {
+        return false;
+      }
+    })
+  );
+}
+
 export function validateOrchestratorConfig(
   value: unknown,
 ): ValidationResult<OrchestratorConfig> {
@@ -1080,6 +1095,21 @@ export function validateOrchestratorConfig(
   }
   if (value["schemaVersion"] !== CONFIG_SCHEMA_VERSION)
     errors.push(`Config schemaVersion must be ${CONFIG_SCHEMA_VERSION}.`);
+  const project = value["project"];
+  if (
+    !isRecord(project) ||
+    !hasOnlyKeys(project, ["name", "authorityFile", "verticalSpine"]) ||
+    !nonEmptyString(project["name"]) ||
+    !safeRelativePath(project["authorityFile"]) ||
+    !isRecord(project["verticalSpine"]) ||
+    !hasOnlyKeys(project["verticalSpine"], [
+      "minimumCategories",
+      "categoryPatterns",
+    ]) ||
+    !positiveInteger(project["verticalSpine"]["minimumCategories"]) ||
+    !validRegexSourceArray(project["verticalSpine"]["categoryPatterns"])
+  )
+    errors.push("Project profile configuration is malformed.");
   if (!nonEmptyString(value["targetBranch"]))
     errors.push("targetBranch is required.");
   for (const key of ["statePath", "artifactRoot", "workspaceRoot"] as const) {
@@ -1132,6 +1162,12 @@ export function validateOrchestratorConfig(
       )
     )
       errors.push("protectedPaths omits mandatory frozen authority.");
+    if (
+      isRecord(project) &&
+      typeof project["authorityFile"] === "string" &&
+      !protectedPaths.includes(project["authorityFile"])
+    )
+      errors.push("protectedPaths omits the project authority file.");
   }
   const limits = value["limits"];
   const limitKeys = [
@@ -1297,7 +1333,7 @@ export function validateOrchestratorState(
         if (
           (!escalated &&
             lineage.some(
-              (entry) => entry["role"] === "gameplay-worker-escalated",
+              (entry) => entry["role"] === "feature-worker-escalated",
             )) ||
           (escalated && lineage.length === 0) ||
           (milestone["workerThreadId"] !== null &&
@@ -1865,6 +1901,7 @@ export function validateVerificationScopePolicy(
       "mode",
       "unknownDisposition",
       "closureSuppressionAllowed",
+      "browserHostScriptPatterns",
       "triggerClasses",
       "broadTriggerClasses",
       "mandatoryChecks",
@@ -1876,6 +1913,7 @@ export function validateVerificationScopePolicy(
     value["mode"] !== "shadow-only" ||
     value["unknownDisposition"] !== "fail-broad" ||
     value["closureSuppressionAllowed"] !== false ||
+    !validRegexSourceArray(value["browserHostScriptPatterns"]) ||
     !stringArray(triggerClasses, SCOPE_TRIGGER_CLASSES.length) ||
     triggerClasses.length !== SCOPE_TRIGGER_CLASSES.length ||
     triggerClasses.some(

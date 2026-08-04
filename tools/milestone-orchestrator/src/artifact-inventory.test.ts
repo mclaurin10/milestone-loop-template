@@ -62,7 +62,7 @@ async function fixtureRepository(): Promise<{
   readonly commit: string;
   readonly tree: string;
 }> {
-  const root = await mkdtemp(join(tmpdir(), "ski-artifact-inventory-"));
+  const root = await mkdtemp(join(tmpdir(), "milestone-artifact-inventory-"));
   temporaryDirectories.push(root);
   git(root, "init", "-b", "main");
   git(root, "config", "user.name", "Artifact Inventory Test");
@@ -247,7 +247,7 @@ describe("future manual evidence manifests", () => {
   });
 
   it("preserves an explicit failure classification when the process exits nonzero", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "ski-manual-exit-"));
+    const directory = await mkdtemp(join(tmpdir(), "milestone-manual-exit-"));
     temporaryDirectories.push(directory);
     const evidenceModule = pathToFileURL(
       resolve(process.cwd(), "tools", "evidence.mjs"),
@@ -266,7 +266,7 @@ describe("future manual evidence manifests", () => {
         encoding: "utf8",
         env: {
           ...process.env,
-          SKI_VERIFY_COMMAND_ARTIFACT_DIR: directory,
+          LOOP_VERIFY_COMMAND_ARTIFACT_DIR: directory,
         },
         windowsHide: true,
       },

@@ -51,7 +51,7 @@ function gateway(finalResponse: unknown): CodexGateway {
 
 describe("independent reconciliation review", () => {
   it("pins a fresh read-only review to the exact range and persists approval", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "ski-reconcile-review-"));
+    const directory = await mkdtemp(join(tmpdir(), "milestone-reconcile-review-"));
     temporaryDirectories.push(directory);
     const record = validReconciliationRecord();
 
@@ -80,7 +80,7 @@ describe("independent reconciliation review", () => {
   });
 
   it("rejects reviewer identity drift and any false required check", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "ski-reconcile-review-"));
+    const directory = await mkdtemp(join(tmpdir(), "milestone-reconcile-review-"));
     temporaryDirectories.push(directory);
     const record = validReconciliationRecord();
     await expect(

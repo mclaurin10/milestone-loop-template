@@ -16,7 +16,7 @@ afterEach(async () => {
 });
 
 async function temporaryDirectory(): Promise<string> {
-  const directory = await mkdtemp(join(tmpdir(), "ski-loop-state-"));
+  const directory = await mkdtemp(join(tmpdir(), "milestone-loop-state-"));
   temporaryDirectories.push(directory);
   return directory;
 }
@@ -161,7 +161,7 @@ describe("atomic state persistence", () => {
         workspace: {
           isolation: "standalone-local-clone-branch",
           path: join(directory, "artifacts", "workspaces", "legacy"),
-          branch: "ski-loop/legacy/workspace",
+          branch: "milestone-loop/legacy/workspace",
           baseCommit: "a".repeat(40),
           headCommit: "b".repeat(40),
           createdAt: "2026-08-01T00:00:00.000Z",

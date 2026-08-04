@@ -133,13 +133,13 @@ describe("shadow affected-scope selection", () => {
     expect(scopeSelectionBytes(first)).toEqual(scopeSelectionBytes(second));
     expect(first.candidate).toEqual(candidate);
     expect(first.classifications[0]?.reverseDependentPackages).toEqual([
-      "@ski-tycoon/headless",
-      "@ski-tycoon/persistence",
-      "@ski-tycoon/renderer",
-      "@ski-tycoon/simulation",
-      "@ski-tycoon/ui",
-      "@ski-tycoon/web",
-      "ski-tycoon",
+      "@example/headless",
+      "@example/persistence",
+      "@example/renderer",
+      "@example/simulation",
+      "@example/ui",
+      "@example/web",
+      "example-project",
     ]);
     expect(first.recommendedCheckIds).toEqual(
       expect.arrayContaining([
@@ -179,7 +179,7 @@ describe("shadow affected-scope selection", () => {
     const { manifest, policy, graph } = await setup();
     expect(() =>
       recommendAffectedScope({
-        changedPaths: ["SKI_TYCOON_GOAL.md"],
+        changedPaths: ["PROJECT_GOAL.md"],
         changedPathSource: { kind: "proposal", milestoneId: "ordinary-work" },
         candidate,
         manifest: manifest.value,

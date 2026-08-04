@@ -17,11 +17,11 @@ export const PINNED_CODEX_SDK_VERSION = "0.146.0" as const;
 
 const REQUIRED_DEFAULTS: Readonly<Record<AgentRole, AgentAssignment>> = {
   planner: { model: "gpt-5.6-sol", reasoningEffort: "max" },
-  "gameplay-worker-initial": {
+  "feature-worker-initial": {
     model: "gpt-5.6-sol",
     reasoningEffort: "xhigh",
   },
-  "gameplay-worker-escalated": {
+  "feature-worker-escalated": {
     model: "gpt-5.6-sol",
     reasoningEffort: "max",
   },

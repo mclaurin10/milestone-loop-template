@@ -4,6 +4,7 @@ import type {
   MilestoneProposal,
   OrchestratorState,
   PolicyDecision,
+  ProjectProfile,
 } from "./contracts.js";
 import { MILESTONE_OUTPUT_SCHEMA } from "./agent-schemas.js";
 import type { CodexGateway } from "./codex-gateway.js";
@@ -34,6 +35,7 @@ function normalizeStructuredProposal(value: unknown): unknown {
 }
 
 function plannerPrompt(
+  project: ProjectProfile,
   state: OrchestratorState,
   feedback: PolicyDecision | null,
 ): string {
@@ -53,14 +55,14 @@ function plannerPrompt(
       status: milestone.status,
     }));
   return [
-    "You are the read-only Planner for the Ski Tycoon autonomous milestone loop.",
-    "Inspect SKI_TYCOON_GOAL.md, AGENTS.md, everything under .agent, relevant docs, tests, current Git state, and verification evidence.",
+    `You are the read-only Planner for the ${project.name} autonomous milestone loop.`,
+    `Inspect ${project.authorityFile}, AGENTS.md, everything under .agent, relevant docs, tests, current Git state, and verification evidence.`,
     "Propose exactly one bounded next milestone. Do not edit files, invoke hidden validation, reveal or request hidden seeds, or claim completion.",
     "The frozen goal and original evals are immutable. Respect the bootstrap/readiness transition and all scope ceilings.",
     "Use only argv-form verification commands with executables pnpm, node, or git. Include exactly one pnpm verify command with parser pnpm-verify.",
     "The permitted path list must be narrow, objective evidence must exist, and terminal conditions must be explicit.",
-    "Use milestone schema 1.1.0. Gameplay defaults to one integrated vertical slice: one public player goal/action, smallest shared deterministic rule owner, Standard composition, persistence/replay proof, Node/production-Worker parity proof, one inspectable consequence, a focused command, and full pnpm verify closure.",
-    "Use mode exception only for kernel-only, fixture-only, migration-only, or preview-only work, with a justified exact immediate consumer ID and a consumer contract that the next proposal must quote exactly. Tooling, verification, lifecycle, and documentation may use not-applicable with every gameplay/exception field empty or null.",
+    "Use milestone schema 1.1.0. Feature work defaults to one integrated vertical slice: one public user goal/action, smallest shared deterministic rule owner, Standard composition, persistence/replay proof, Node/production-Worker parity proof, one inspectable consequence, a focused command, and full pnpm verify closure.",
+    "Use mode exception only for kernel-only, fixture-only, migration-only, or preview-only work, with a justified exact immediate consumer ID and a consumer contract that the next proposal must quote exactly. Tooling, verification, lifecycle, and documentation may use not-applicable with every feature/exception field empty or null.",
     `Verified target commit: ${state.repository.verifiedCommit}.`,
     `Required immediate vertical consumer: ${JSON.stringify(state.requiredNextVerticalConsumer)}.`,
     `Completed milestones: ${JSON.stringify(completed)}.`,
@@ -74,6 +76,7 @@ function plannerPrompt(
 
 export async function requestPlan(input: {
   readonly gateway: CodexGateway;
+  readonly project: ProjectProfile;
   readonly state: OrchestratorState;
   readonly artifactDirectory: string;
   readonly timeoutMs: number;
@@ -87,7 +90,7 @@ export async function requestPlan(input: {
 }> {
   const turn = await input.gateway.run({
     role: "planner",
-    prompt: plannerPrompt(input.state, input.feedback),
+    prompt: plannerPrompt(input.project, input.state, input.feedback),
     workingDirectory: input.state.repository.root,
     threadId: input.priorThreadId,
     outputSchema: MILESTONE_OUTPUT_SCHEMA,

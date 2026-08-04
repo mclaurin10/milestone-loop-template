@@ -26,7 +26,7 @@ function git(root: string, ...args: string[]): void {
 
 describe("live model-policy check wrapper", () => {
   it("uses only the explicitly pinned lightweight role and leaves Git unchanged", async () => {
-    const root = await mkdtemp(join(tmpdir(), "ski-loop-live-policy-"));
+    const root = await mkdtemp(join(tmpdir(), "milestone-loop-live-policy-"));
     directories.push(root);
     git(root, "init", "-b", "main");
     git(root, "config", "user.name", "Model Policy Test");

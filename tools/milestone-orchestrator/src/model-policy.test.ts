@@ -20,13 +20,13 @@ describe("versioned agent model policy", () => {
       overrideApplied: false,
     });
     expect(
-      resolveAgentAssignment(policy, "gameplay-worker-initial"),
+      resolveAgentAssignment(policy, "feature-worker-initial"),
     ).toMatchObject({
       model: "gpt-5.6-sol",
       reasoningEffort: "xhigh",
     });
     expect(
-      resolveAgentAssignment(policy, "gameplay-worker-escalated"),
+      resolveAgentAssignment(policy, "feature-worker-escalated"),
     ).toMatchObject({
       model: "gpt-5.6-sol",
       reasoningEffort: "max",

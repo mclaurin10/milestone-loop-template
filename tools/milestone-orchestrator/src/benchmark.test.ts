@@ -358,7 +358,7 @@ describe("loop benchmark", () => {
       },
       packageJson: tracked,
       lockfile: { ...tracked, path: "pnpm-lock.yaml" },
-      protectedFiles: [{ ...tracked, path: "SKI_TYCOON_GOAL.md" }],
+      protectedFiles: [{ ...tracked, path: "PROJECT_GOAL.md" }],
     } as const;
     expect(assertBenchmarkEnvironmentManifest(environment)).toEqual(
       environment,
@@ -484,7 +484,7 @@ describe("loop benchmark", () => {
       matched: true,
       paths: [
         {
-          path: "SKI_TYCOON_GOAL.md",
+          path: "PROJECT_GOAL.md",
           baselineSha256: "1".repeat(64),
           candidateSha256: "1".repeat(64),
           matches: true,

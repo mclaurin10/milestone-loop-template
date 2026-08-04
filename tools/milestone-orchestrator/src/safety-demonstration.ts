@@ -79,7 +79,7 @@ export async function demonstrateSafety(input: {
       workerThreadLineage: [
         {
           threadId: "mock-worker-thread-persisted",
-          role: "gameplay-worker-initial",
+          role: "feature-worker-initial",
           model: "gpt-5.6-sol",
           reasoningEffort: "xhigh",
           startedAt: now(),
@@ -147,7 +147,7 @@ export async function demonstrateSafety(input: {
     throw new Error("Retry limit did not stop the synthetic milestone.");
 
   const protectedDiff = enforceDiffPolicy(
-    ["SKI_TYCOON_GOAL.md"],
+    [input.config.project.authorityFile],
     proposal,
     input.config.protectedPaths,
   );

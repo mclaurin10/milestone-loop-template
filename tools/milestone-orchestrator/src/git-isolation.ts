@@ -201,7 +201,7 @@ export async function createIsolatedWorkspace(input: {
   runGit(workspacePath, ["remote", "remove", "origin"]);
   runGit(workspacePath, ["config", "core.autocrlf", "false"]);
   runGit(workspacePath, ["config", "core.eol", "lf"]);
-  const branch = `ski-loop/${safeBranchSegment(input.runId)}/${safeBranchSegment(input.milestoneId)}`;
+  const branch = `milestone-loop/${safeBranchSegment(input.runId)}/${safeBranchSegment(input.milestoneId)}`;
   runGit(workspacePath, ["switch", "-c", branch]);
   const userName = runGit(workspacePath, ["config", "user.name"], true).stdout;
   const userEmail = runGit(
@@ -210,7 +210,7 @@ export async function createIsolatedWorkspace(input: {
     true,
   ).stdout;
   if (!userName)
-    runGit(workspacePath, ["config", "user.name", "Ski Tycoon Orchestrator"]);
+    runGit(workspacePath, ["config", "user.name", "Milestone Orchestrator"]);
   if (!userEmail)
     runGit(workspacePath, [
       "config",
@@ -389,9 +389,9 @@ export function currentVerificationProfile(
 ): "bootstrap" | "readiness" {
   const output = runGit(repositoryRoot, ["show", "HEAD:package.json"]);
   const packageJson = JSON.parse(output.stdout) as {
-    skiTycoon?: { verification?: { defaultProfile?: unknown } };
+    milestoneLoop?: { verification?: { defaultProfile?: unknown } };
   };
-  const profile = packageJson.skiTycoon?.verification?.defaultProfile;
+  const profile = packageJson.milestoneLoop?.verification?.defaultProfile;
   if (profile !== "bootstrap" && profile !== "readiness")
     throw new Error("Target package.json has an invalid verification profile.");
   return profile;

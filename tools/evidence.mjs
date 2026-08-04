@@ -424,10 +424,10 @@ function registerManualEvidenceLifecycle(context) {
 }
 
 export async function evidenceContext(defaultStageId, defaultCommandId) {
-  const stageId = process.env.SKI_VERIFY_STAGE_ID ?? defaultStageId;
-  const commandId = process.env.SKI_VERIFY_COMMAND_ID ?? defaultCommandId;
+  const stageId = process.env.LOOP_VERIFY_STAGE_ID ?? defaultStageId;
+  const commandId = process.env.LOOP_VERIFY_COMMAND_ID ?? defaultCommandId;
   const artifactDirectory = resolve(
-    process.env.SKI_VERIFY_COMMAND_ARTIFACT_DIR ??
+    process.env.LOOP_VERIFY_COMMAND_ARTIFACT_DIR ??
       resolve(
         repositoryRoot,
         "artifacts",
@@ -457,7 +457,7 @@ export async function evidenceContext(defaultStageId, defaultCommandId) {
 }
 
 export async function beginDirectTelemetry(context, input = {}) {
-  if (process.env.SKI_TELEMETRY_PARENT_MANAGED === "1") return null;
+  if (process.env.LOOP_TELEMETRY_PARENT_MANAGED === "1") return null;
   const { TelemetryStore } =
     await import("./milestone-orchestrator/src/telemetry-store.ts");
   const identity = commandIdentity();

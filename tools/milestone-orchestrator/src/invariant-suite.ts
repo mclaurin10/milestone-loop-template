@@ -36,29 +36,11 @@ function commandFromArgv(
       args: ["node_modules/vitest/vitest.mjs", ...args.slice(2)],
       parser: "exit-code",
     };
-  if (executable === "pnpm" && args[0] === "lint:architecture")
-    return {
-      id,
-      executable: "node",
-      args: ["tools/verify-architecture.mjs"],
-      parser: "exit-code",
-    };
   if (executable === "pnpm" && args[0] === "verify" && args[1] === "--")
     return {
       id,
       executable: "node",
       args: ["scripts/verify.mjs", ...args.slice(2)],
-      parser: "exit-code",
-    };
-  if (executable === "pnpm" && args[0] === "verify:bootstrap:simulation")
-    return {
-      id,
-      executable: "node",
-      args: [
-        "node_modules/tsx/dist/cli.mjs",
-        "tools/verify-calendar.mjs",
-        "bootstrap-smoke-simulation",
-      ],
       parser: "exit-code",
     };
   if (executable === "pnpm" && args[0] === "typecheck")
@@ -133,9 +115,9 @@ export async function runInvariantSuite(
       timeoutMs: 10 * 60 * 1000,
       trustedControllerCommand: true,
       extraEnvironment: {
-        SKI_VERIFY_STAGE_ID: "invariant-suite",
-        SKI_VERIFY_COMMAND_ID: entry.id,
-        SKI_VERIFY_COMMAND_ARTIFACT_DIR: evidenceDirectory,
+        LOOP_VERIFY_STAGE_ID: "invariant-suite",
+        LOOP_VERIFY_COMMAND_ID: entry.id,
+        LOOP_VERIFY_COMMAND_ARTIFACT_DIR: evidenceDirectory,
       },
     });
     let receipt = null;

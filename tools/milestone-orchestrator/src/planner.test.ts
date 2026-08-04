@@ -36,7 +36,7 @@ describe("planner structured output", () => {
   });
 
   it("normalizes nullable structured-output fields into the domain proposal", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "ski-loop-planner-"));
+    const directory = await mkdtemp(join(tmpdir(), "milestone-loop-planner-"));
     try {
       const proposal = validProposal();
       const gateway: CodexGateway = {

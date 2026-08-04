@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { canaryMilestone, CANARY_MILESTONE_ID } from "./canary.js";
-import { loadConfig } from "./config.js";
+import { DEFAULT_CONFIG_PATH, loadConfig } from "./config.js";
 import { runDoctorDiagnostic } from "./doctor.js";
 import { runLiveModelPolicyCheck } from "./model-policy-check.js";
 import { MilestoneOrchestrator } from "./orchestrator.js";
@@ -105,10 +105,12 @@ export function assertCommandArguments(args: LoopCliArguments): void {
 
 function repositoryRoot(start: string): string {
   let current = resolve(start);
-  while (!existsSync(resolve(current, "SKI_TYCOON_GOAL.md"))) {
+  while (!existsSync(resolve(current, DEFAULT_CONFIG_PATH))) {
     const parent = resolve(current, "..");
     if (parent === current)
-      throw new Error("Could not locate the Ski Tycoon repository root.");
+      throw new Error(
+        `Could not locate the repository root: no ancestor contains ${DEFAULT_CONFIG_PATH}.`,
+      );
     current = parent;
   }
   return current;

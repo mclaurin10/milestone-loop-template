@@ -22,7 +22,7 @@ export function validProposal(
     rationale: "The improvement removes a recurring automation obstacle.",
     dependencies: [],
     permittedPaths: ["tools/milestone-orchestrator/**"],
-    exclusions: ["No gameplay systems.", "No frozen authority changes."],
+    exclusions: ["No feature systems.", "No frozen authority changes."],
     acceptanceCriteria: [
       {
         id: "tooling-behavior",
@@ -53,7 +53,7 @@ export function validProposal(
     hiddenValidation: { requested: false },
     verticalSlice: {
       mode: "not-applicable",
-      playerGoal: null,
+      userGoal: null,
       publicActionKinds: [],
       sharedRuleOwners: [],
       standardCompositionOwner: null,
@@ -66,15 +66,15 @@ export function validProposal(
   };
 }
 
-export function validGameplayProposal(
+export function validFeatureProposal(
   overrides: Partial<MilestoneProposal> = {},
 ): MilestoneProposal {
   return validProposal({
-    id: "gameplay-milestone",
+    id: "feature-milestone",
     title: "Complete one utility footprint",
-    kind: "gameplay",
+    kind: "feature",
     objective:
-      "Let the player complete one utility footprint through normal public actions.",
+      "Let the user complete one utility footprint through normal public actions.",
     rationale:
       "The bounded slice connects one visible decision to deterministic shared rules.",
     permittedPaths: [
@@ -126,7 +126,7 @@ export function validGameplayProposal(
     requiresHeadlessEvaluation: true,
     verticalSlice: {
       mode: "integrated",
-      playerGoal: "Complete one utility footprint for the operations base.",
+      userGoal: "Complete one utility footprint for the operations base.",
       publicActionKinds: ["plan-utility-footprint"],
       sharedRuleOwners: ["packages/simulation/src/utility-footprint.ts"],
       standardCompositionOwner: "apps/web/src/worker/simulation.worker.ts",
@@ -137,7 +137,7 @@ export function validGameplayProposal(
         "Node and production Worker projections remain byte-identical.",
       ],
       inspectableConsequence: {
-        readModelPaths: ["model.resort.utilities.footprints"],
+        readModelPaths: ["model.operations.utilities.footprints"],
         browserEvidenceRequired: true,
         description:
           "The planned footprint appears in the Standard read model and rendered utility overlay.",
@@ -183,11 +183,11 @@ export function validConfig(
       },
       roles: {
         planner: { model: "gpt-5.6-sol", reasoningEffort: "max" },
-        "gameplay-worker-initial": {
+        "feature-worker-initial": {
           model: "gpt-5.6-sol",
           reasoningEffort: "xhigh",
         },
-        "gameplay-worker-escalated": {
+        "feature-worker-escalated": {
           model: "gpt-5.6-sol",
           reasoningEffort: "max",
         },
@@ -220,7 +220,7 @@ export function validConfig(
       maximumEstimatedFiles: 30,
     },
     protectedPaths: [
-      "SKI_TYCOON_GOAL.md",
+      "PROJECT_GOAL.md",
       "evals/ACCEPTANCE.md",
       "evals/acceptance-manifest.json",
       "evals/HIDDEN_VALIDATION_PROTOCOL.md",
@@ -235,7 +235,7 @@ export function validState(repositoryRoot: string): OrchestratorState {
     repositoryRoot: resolve(repositoryRoot),
     targetBranch: "main",
     verifiedCommit: "a".repeat(40),
-    protectedFiles: [{ path: "SKI_TYCOON_GOAL.md", sha256: "b".repeat(64) }],
+    protectedFiles: [{ path: "PROJECT_GOAL.md", sha256: "b".repeat(64) }],
     now: "2026-08-01T00:00:00.000Z",
   });
 }

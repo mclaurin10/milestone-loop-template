@@ -1,14 +1,14 @@
 {
-  "name": "ski-tycoon",
+  "name": "example-project",
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Ski Tycoon deterministic technical bootstrap",
+  "description": "Example Project deterministic technical bootstrap",
   "engines": {
     "node": "24.18.0"
   },
   "packageManager": "pnpm@11.15.1",
-  "skiTycoon": {
+  "milestoneLoop": {
     "verification": {
       "defaultProfile": "readiness"
     }
@@ -75,11 +75,11 @@
     "@babylonjs/core": "9.19.0",
     "@eslint/js": "10.0.1",
     "@playwright/test": "1.62.1",
-    "@ski-tycoon/headless": "workspace:0.0.0",
-    "@ski-tycoon/orchestrator": "workspace:0.0.0",
-    "@ski-tycoon/persistence": "workspace:0.0.0",
-    "@ski-tycoon/protocol": "workspace:0.0.0",
-    "@ski-tycoon/simulation": "workspace:0.0.0",
+    "@example/headless": "workspace:0.0.0",
+    "@milestone-loop/orchestrator": "workspace:0.0.0",
+    "@example/persistence": "workspace:0.0.0",
+    "@example/protocol": "workspace:0.0.0",
+    "@example/simulation": "workspace:0.0.0",
     "@types/node": "24.13.3",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",

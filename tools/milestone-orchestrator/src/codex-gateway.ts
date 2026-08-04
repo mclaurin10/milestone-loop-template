@@ -79,7 +79,7 @@ function threadOptions(
 ): PinnedThreadOptions {
   const assignment = resolveAgentAssignment(config.agentPolicy, role);
   const worker =
-    role === "gameplay-worker-initial" || role === "gameplay-worker-escalated";
+    role === "feature-worker-initial" || role === "feature-worker-escalated";
   return {
     model: assignment.model,
     modelReasoningEffort: assignment.reasoningEffort,
@@ -152,7 +152,7 @@ export class SdkCodexGateway implements CodexGateway {
   async run(invocation: CodexInvocation): Promise<CodexTurnResult> {
     if (!Number.isSafeInteger(invocation.attempt) || invocation.attempt <= 0)
       throw new Error("Codex invocation attempt must be a positive integer.");
-    const escalated = invocation.role === "gameplay-worker-escalated";
+    const escalated = invocation.role === "feature-worker-escalated";
     if (escalated !== (invocation.escalationReason !== null))
       throw new Error(
         "Escalated worker invocations require exactly one recorded escalation reason.",
@@ -175,7 +175,7 @@ export class SdkCodexGateway implements CodexGateway {
   private async runPinnedInvocation(
     invocation: CodexInvocation,
   ): Promise<CodexTurnResult> {
-    const escalated = invocation.role === "gameplay-worker-escalated";
+    const escalated = invocation.role === "feature-worker-escalated";
     const assignment = resolveAgentAssignment(
       this.config.agentPolicy,
       invocation.role,

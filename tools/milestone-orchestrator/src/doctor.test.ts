@@ -26,7 +26,7 @@ async function writeJson(path: string, value: unknown): Promise<void> {
 async function repositoryFixture(
   state: "valid" | "missing" | "invalid" = "valid",
 ): Promise<{ readonly root: string; readonly statePath: string }> {
-  const root = await mkdtemp(join(tmpdir(), "ski-loop-doctor-"));
+  const root = await mkdtemp(join(tmpdir(), "milestone-loop-doctor-"));
   temporaryDirectories.push(root);
   await writeJson(join(root, "package.json"), {
     engines: { node: "24.18.0" },
