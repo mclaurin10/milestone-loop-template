@@ -25,7 +25,7 @@ import {
   safeAgentEnvironment,
 } from "./redaction.js";
 import { atomicWriteJson } from "./state-store.js";
-import type { TelemetryStore } from "./telemetry-store.js";
+import type { TelemetrySpan, TelemetryStore } from "./telemetry-store.js";
 import type {
   TelemetryCandidate,
   TelemetryPhase,
@@ -217,16 +217,26 @@ export class SdkCodexGateway implements CodexGateway {
           : invocation.role === "lightweight-reporting"
             ? "recording"
             : "implementation");
-    const telemetrySpan = invocation.telemetryStore
-      ? await invocation.telemetryStore.beginPhase({
+    const telemetryOperationId =
+      invocation.invocationId ??
+      `agent-${invocation.role}-${invocation.attempt}-${randomUUID()}`;
+    let telemetrySpan: TelemetrySpan | null = null;
+    if (invocation.telemetryStore) {
+      try {
+        telemetrySpan = await invocation.telemetryStore.beginPhase({
           phase: telemetryPhase,
           eventType: `agent-${invocation.role}`,
-          operationId:
-            invocation.invocationId ??
-            `agent-${invocation.role}-${invocation.attempt}-${randomUUID()}`,
+          operationId: telemetryOperationId,
           candidate: invocation.telemetryCandidate ?? null,
-        })
-      : null;
+        });
+      } catch (error) {
+        await recordAgentTelemetryDegradation(
+          invocation,
+          telemetryOperationId,
+          error,
+        );
+      }
+    }
     let telemetryAttempted = false;
     const finishTelemetry = async (input: {
       readonly status: "PASS" | "ERROR" | "TIMEOUT";

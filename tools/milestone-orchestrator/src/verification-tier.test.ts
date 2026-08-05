@@ -14,7 +14,6 @@ import {
   loadVerificationScopePolicy,
 } from "./config.js";
 import { validateVerificationTierResult } from "./schema.js";
-import type { TelemetryStore } from "./telemetry-store.js";
 import {
   coordinateTierOutcome,
   exactNoArgumentVerificationCommand,
@@ -251,7 +250,7 @@ describe("tier focused-command classification", () => {
         tiers: ["candidate"],
         expectedArtifactKinds: ["orchestrator-vitest-report"],
       },
-      telemetry: {} as unknown as TelemetryStore,
+      telemetry: null,
       candidate: {
         baseCommit: "a".repeat(40),
         gitCommit: "b".repeat(40),

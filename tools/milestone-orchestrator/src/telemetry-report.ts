@@ -734,19 +734,31 @@ async function main(): Promise<void> {
         return { path, bytes: contents.byteLength };
       }),
     );
-    await span.finish({
-      status: "PASS",
-      artifacts: {
-        fileCount: sources.length,
-        totalBytes: sources.reduce((sum, entry) => sum + entry.bytes, 0),
-        manifestReferences: [
-          safeRelative(repositoryRoot, result.reportPath),
-          safeRelative(repositoryRoot, result.summaryPath),
-        ],
-        receiptReferences: [],
-      },
-    });
-    await telemetry.complete("PASS");
+    try {
+      await span.finish({
+        status: "PASS",
+        artifacts: {
+          fileCount: sources.length,
+          totalBytes: sources.reduce((sum, entry) => sum + entry.bytes, 0),
+          manifestReferences: [
+            safeRelative(repositoryRoot, result.reportPath),
+            safeRelative(repositoryRoot, result.summaryPath),
+          ],
+          receiptReferences: [],
+        },
+      });
+      await telemetry.complete("PASS");
+    } catch (telemetryError) {
+      // The report files above are the deliverable; finalizing this run's own
+      // telemetry span is non-semantic and must not flip the exit code.
+      process.stderr.write(
+        `[telemetry] non-semantic report finalization failure: ${redactSensitiveText(
+          telemetryError instanceof Error
+            ? telemetryError.message
+            : String(telemetryError),
+        )}\n`,
+      );
+    }
     process.stdout.write(
       `Historical telemetry report: ${safeRelative(repositoryRoot, result.reportPath)}\n`,
     );
@@ -754,8 +766,13 @@ async function main(): Promise<void> {
     const message = redactSensitiveText(
       error instanceof Error ? error.message : String(error),
     );
-    await span.finish({ status: "ERROR", reason: message });
-    await telemetry.complete("ERROR", message);
+    try {
+      await span.finish({ status: "ERROR", reason: message });
+      await telemetry.complete("ERROR", message);
+    } catch {
+      // Preserve the original report error when telemetry is the failing
+      // boundary (span.finish would otherwise mask it).
+    }
     throw error;
   }
 }

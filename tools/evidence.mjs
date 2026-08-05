@@ -458,72 +458,82 @@ export async function evidenceContext(defaultStageId, defaultCommandId) {
 
 export async function beginDirectTelemetry(context, input = {}) {
   if (process.env.LOOP_TELEMETRY_PARENT_MANAGED === "1") return null;
-  const { TelemetryStore } =
-    await import("./milestone-orchestrator/src/telemetry-store.ts");
-  const identity = commandIdentity();
-  const timestamp = new Date().toISOString().replaceAll(/[^0-9]/g, "");
-  const runId =
-    process.env.MILESTONE_LOOP_TELEMETRY_RUN_ID ??
-    `direct-${safeName(context.commandId)}-${timestamp}-${process.pid}-${randomUUID().slice(0, 8)}`;
-  const store = await TelemetryStore.open({
-    repositoryRoot: context.repositoryRoot,
-    directory: resolve(
-      context.repositoryRoot,
-      "artifacts",
-      "loop-telemetry",
-      "direct",
+  try {
+    const { TelemetryStore } =
+      await import("./milestone-orchestrator/src/telemetry-store.ts");
+    const identity = commandIdentity();
+    const timestamp = new Date().toISOString().replaceAll(/[^0-9]/g, "");
+    const runId =
+      process.env.MILESTONE_LOOP_TELEMETRY_RUN_ID ??
+      `direct-${safeName(context.commandId)}-${timestamp}-${process.pid}-${randomUUID().slice(0, 8)}`;
+    const store = await TelemetryStore.open({
+      repositoryRoot: context.repositoryRoot,
+      directory: resolve(
+        context.repositoryRoot,
+        "artifacts",
+        "loop-telemetry",
+        "direct",
+        runId,
+      ),
       runId,
-    ),
-    runId,
-    source: "direct",
-  });
-  const candidate = {
-    baseCommit: null,
-    commit:
-      typeof identity.gitCommit === "string" &&
-      /^[0-9a-f]{40}$/.test(identity.gitCommit)
-        ? identity.gitCommit
-        : null,
-    tree:
-      typeof identity.gitTree === "string" &&
-      /^[0-9a-f]{40}$/.test(identity.gitTree)
-        ? identity.gitTree
-        : null,
-    dirty:
-      typeof identity.gitStatus === "string" && identity.gitStatus.length > 0,
-  };
-  const span = await store.beginPhase({
-    phase: input.phase ?? "verification",
-    eventType: input.eventType ?? "direct-command",
-    candidate,
-  });
-  if (context.manualEvidence) {
-    context.manualEvidence.telemetry = {
-      runId,
-      manifestPath: slash(
-        relative(
-          context.repositoryRoot,
-          resolve(
+      source: "direct",
+    });
+    const candidate = {
+      baseCommit: null,
+      commit:
+        typeof identity.gitCommit === "string" &&
+        /^[0-9a-f]{40}$/.test(identity.gitCommit)
+          ? identity.gitCommit
+          : null,
+      tree:
+        typeof identity.gitTree === "string" &&
+        /^[0-9a-f]{40}$/.test(identity.gitTree)
+          ? identity.gitTree
+          : null,
+      dirty:
+        typeof identity.gitStatus === "string" && identity.gitStatus.length > 0,
+    };
+    const span = await store.beginPhase({
+      phase: input.phase ?? "verification",
+      eventType: input.eventType ?? "direct-command",
+      candidate,
+    });
+    if (context.manualEvidence) {
+      context.manualEvidence.telemetry = {
+        runId,
+        manifestPath: slash(
+          relative(
             context.repositoryRoot,
-            "artifacts",
-            "loop-telemetry",
-            "direct",
-            runId,
-            "manifest.json",
+            resolve(
+              context.repositoryRoot,
+              "artifacts",
+              "loop-telemetry",
+              "direct",
+              runId,
+              "manifest.json",
+            ),
           ),
         ),
-      ),
+      };
+    }
+    return {
+      store,
+      span,
+      context,
+      candidate,
+      commandId: context.commandId,
+      argv: input.argv ?? process.argv,
+      checkSetId: input.checkSetId ?? context.stageId,
     };
+  } catch (error) {
+    // Telemetry availability is non-semantic for evidence commands: the
+    // command outcome is owned by the command itself, so a failed telemetry
+    // begin degrades to "no telemetry" instead of failing the command.
+    process.stderr.write(
+      `Telemetry begin failed (non-semantic): ${error instanceof Error ? error.message : String(error)}\n`,
+    );
+    return null;
   }
-  return {
-    store,
-    span,
-    context,
-    candidate,
-    commandId: context.commandId,
-    argv: input.argv ?? process.argv,
-    checkSetId: input.checkSetId ?? context.stageId,
-  };
 }
 
 export async function finishDirectTelemetry(handle, input) {

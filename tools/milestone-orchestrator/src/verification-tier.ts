@@ -45,6 +45,7 @@ import {
 import { assertVerificationTierResult } from "./schema.js";
 import { atomicWriteJson, StateStore } from "./state-store.js";
 import { TelemetryStore } from "./telemetry-store.js";
+import type { TelemetrySpan } from "./telemetry-store.js";
 import {
   parseAuthoritativeVerification,
   validateCommandReceiptDirectory,
@@ -289,7 +290,7 @@ export async function tierCommandRecord(input: {
   readonly runRoot: string;
   readonly index: number;
   readonly command: PlannedCommand;
-  readonly telemetry: TelemetryStore;
+  readonly telemetry: TelemetryStore | null;
   readonly candidate: TierCandidateIdentity;
   readonly selectedCheckIds: readonly string[];
   readonly actualCheckIds: readonly string[];
@@ -309,19 +310,23 @@ export async function tierCommandRecord(input: {
         LOOP_VERIFY_COMMAND_ID: input.command.id,
         LOOP_VERIFY_COMMAND_ARTIFACT_DIR: evidenceRoot,
       },
-      telemetry: {
-        store: input.telemetry,
-        phase: "verification",
-        candidate: {
-          baseCommit: input.candidate.baseCommit,
-          commit: input.candidate.gitCommit,
-          tree: input.candidate.gitTree,
-          dirty: input.candidate.workingTreeDirty,
-        },
-        checkSetId: `verification-tier-${input.tier}`,
-        selectedCheckIds: input.selectedCheckIds,
-        actualCheckIds: input.actualCheckIds,
-      },
+      ...(input.telemetry
+        ? {
+            telemetry: {
+              store: input.telemetry,
+              phase: "verification" as const,
+              candidate: {
+                baseCommit: input.candidate.baseCommit,
+                commit: input.candidate.gitCommit,
+                tree: input.candidate.gitTree,
+                dirty: input.candidate.workingTreeDirty,
+              },
+              checkSetId: `verification-tier-${input.tier}`,
+              selectedCheckIds: input.selectedCheckIds,
+              actualCheckIds: input.actualCheckIds,
+            },
+          }
+        : {}),
     },
   );
   let validated: ValidatedCommandReceipt | null = null;
@@ -427,7 +432,7 @@ async function runExactVerification(input: {
   readonly runRoot: string;
   readonly commandIndex: number;
   readonly candidate: TierCandidateIdentity;
-  readonly telemetry: TelemetryStore;
+  readonly telemetry: TelemetryStore | null;
   readonly selectedCheckIds: readonly string[];
   readonly actualCheckIds: readonly string[];
 }): Promise<{
@@ -444,19 +449,23 @@ async function runExactVerification(input: {
     workingDirectory: input.repositoryRoot,
     artifactDirectory: resolve(commandRoot, "logs"),
     timeoutMs: DEFAULT_COMMAND_TIMEOUT_MS,
-    telemetry: {
-      store: input.telemetry,
-      phase: "verification",
-      candidate: {
-        baseCommit: input.candidate.baseCommit,
-        commit: input.candidate.gitCommit,
-        tree: input.candidate.gitTree,
-        dirty: input.candidate.workingTreeDirty,
-      },
-      checkSetId: "verification-tier-exact-readiness",
-      selectedCheckIds: input.selectedCheckIds,
-      actualCheckIds: input.actualCheckIds,
-    },
+    ...(input.telemetry
+      ? {
+          telemetry: {
+            store: input.telemetry,
+            phase: "verification" as const,
+            candidate: {
+              baseCommit: input.candidate.baseCommit,
+              commit: input.candidate.gitCommit,
+              tree: input.candidate.gitTree,
+              dirty: input.candidate.workingTreeDirty,
+            },
+            checkSetId: "verification-tier-exact-readiness",
+            selectedCheckIds: input.selectedCheckIds,
+            actualCheckIds: input.actualCheckIds,
+          },
+        }
+      : {}),
   });
   let exact: ExactVerificationIndex | null = null;
   let exactArtifactCount = 0;
@@ -638,6 +647,29 @@ export function coordinateTierOutcome(input: {
   return { status: "PASS", exitCode: 0 };
 }
 
+async function recordTierTelemetryDegradation(
+  runRoot: string,
+  error: unknown,
+): Promise<void> {
+  const message = redactSensitiveText(
+    error instanceof Error ? error.message : String(error),
+  );
+  process.stderr.write(
+    `[telemetry] non-semantic tier telemetry failure: ${message}\n`,
+  );
+  try {
+    await atomicWriteJson(resolve(runRoot, "telemetry-error.json"), {
+      schemaVersion: "1.0.0",
+      status: "ERROR",
+      error: message,
+      recordedAt: new Date().toISOString(),
+    });
+  } catch {
+    // The stderr line above is the only remaining channel; telemetry
+    // availability must not change the tier result.
+  }
+}
+
 export interface RunVerificationTierInput {
   readonly repositoryRoot: string;
   readonly tier: VerificationTier;
@@ -681,18 +713,23 @@ export async function runVerificationTier(
     },
   );
   await mkdir(runRoot, { recursive: false });
-  const telemetry = await TelemetryStore.open({
-    repositoryRoot: input.repositoryRoot,
-    directory: resolve(
-      input.repositoryRoot,
-      "artifacts",
-      "loop-telemetry",
-      "direct",
+  let telemetry: TelemetryStore | null = null;
+  try {
+    telemetry = await TelemetryStore.open({
+      repositoryRoot: input.repositoryRoot,
+      directory: resolve(
+        input.repositoryRoot,
+        "artifacts",
+        "loop-telemetry",
+        "direct",
+        runId,
+      ),
       runId,
-    ),
-    runId,
-    source: "direct",
-  });
+      source: "direct",
+    });
+  } catch (error) {
+    await recordTierTelemetryDegradation(runRoot, error);
+  }
   const plan = await planVerificationTier({
     repositoryRoot: input.repositoryRoot,
     tier: input.tier,
@@ -710,17 +747,24 @@ export async function runVerificationTier(
       ? { focusedCheckIds: input.focusedCheckIds }
       : {}),
   });
-  const telemetrySpan = await telemetry.beginPhase({
-    phase: "verification",
-    eventType: `verification-tier-${input.tier}`,
-    operationId: `${runId}-tier`,
-    candidate: {
-      baseCommit: candidate.baseCommit,
-      commit: candidate.gitCommit,
-      tree: candidate.gitTree,
-      dirty: candidate.workingTreeDirty,
-    },
-  });
+  let telemetrySpan: TelemetrySpan | null = null;
+  if (telemetry) {
+    try {
+      telemetrySpan = await telemetry.beginPhase({
+        phase: "verification",
+        eventType: `verification-tier-${input.tier}`,
+        operationId: `${runId}-tier`,
+        candidate: {
+          baseCommit: candidate.baseCommit,
+          commit: candidate.gitCommit,
+          tree: candidate.gitTree,
+          dirty: candidate.workingTreeDirty,
+        },
+      });
+    } catch (error) {
+      await recordTierTelemetryDegradation(runRoot, error);
+    }
+  }
   try {
     let shadowSelectionPath: string | null = null;
 
@@ -847,7 +891,9 @@ export async function runVerificationTier(
       candidateFinal,
       identityDrift,
       reviewRequired: input.tier === "milestone",
-      telemetryManifestPath: telemetry.repositoryRelativeManifestPath(),
+      telemetryManifestPath: telemetry
+        ? telemetry.repositoryRelativeManifestPath()
+        : null,
       startedAt: startedAt.toISOString(),
       finishedAt: finishedAt.toISOString(),
       durationMs: finishedAt.getTime() - startedAt.getTime(),
@@ -898,55 +944,40 @@ export async function runVerificationTier(
       : null;
     await atomicWriteJson(resolve(runRoot, "tier-result.json"), result);
     try {
-      await telemetrySpan.finish({
-        status: outcome.status,
-        reason: cleanFailure
-          ? "The verification tier requires a clean working tree."
-          : null,
-        candidate: {
-          baseCommit: candidate.baseCommit,
-          commit: candidate.gitCommit,
-          tree: candidate.gitTree,
-          dirty: candidate.workingTreeDirty,
-        },
-        tests: summedCounts,
-        artifacts: {
-          fileCount:
-            commandRecords.reduce(
-              (sum, command) => sum + command.artifactCount,
+      if (telemetrySpan)
+        await telemetrySpan.finish({
+          status: outcome.status,
+          reason: cleanFailure
+            ? "The verification tier requires a clean working tree."
+            : null,
+          candidate: {
+            baseCommit: candidate.baseCommit,
+            commit: candidate.gitCommit,
+            tree: candidate.gitTree,
+            dirty: candidate.workingTreeDirty,
+          },
+          tests: summedCounts,
+          artifacts: {
+            fileCount:
+              commandRecords.reduce(
+                (sum, command) => sum + command.artifactCount,
+                0,
+              ) + (shadowSelectionPath ? 1 : 0),
+            totalBytes: commandRecords.reduce(
+              (sum, command) => sum + command.artifactBytes,
               0,
-            ) + (shadowSelectionPath ? 1 : 0),
-          totalBytes: commandRecords.reduce(
-            (sum, command) => sum + command.artifactBytes,
-            0,
-          ),
-          manifestReferences: shadowSelectionPath ? [shadowSelectionPath] : [],
-          receiptReferences: commandRecords.flatMap((command) =>
-            command.receipt ? [command.receipt.path] : [],
-          ),
-        },
-      });
-      await telemetry.complete(outcome.status);
-    } catch (telemetryError) {
-      const message = redactSensitiveText(
-        telemetryError instanceof Error
-          ? telemetryError.message
-          : String(telemetryError),
-      );
-      process.stderr.write(
-        `[telemetry] non-semantic tier telemetry failure: ${message}\n`,
-      );
-      try {
-        await atomicWriteJson(resolve(runRoot, "telemetry-error.json"), {
-          schemaVersion: "1.0.0",
-          status: "ERROR",
-          error: message,
-          recordedAt: new Date().toISOString(),
+            ),
+            manifestReferences: shadowSelectionPath
+              ? [shadowSelectionPath]
+              : [],
+            receiptReferences: commandRecords.flatMap((command) =>
+              command.receipt ? [command.receipt.path] : [],
+            ),
+          },
         });
-      } catch {
-        // The stderr line above is the only remaining channel; telemetry
-        // availability must not change the tier result.
-      }
+      if (telemetry) await telemetry.complete(outcome.status);
+    } catch (telemetryError) {
+      await recordTierTelemetryDegradation(runRoot, telemetryError);
     }
     process.stdout.write(
       `Verification tier result: ${relativePath(input.repositoryRoot, resolve(runRoot, "tier-result.json"))}\n`,
@@ -957,21 +988,22 @@ export async function runVerificationTier(
       error instanceof Error ? error.message : String(error),
     );
     try {
-      await telemetrySpan.finish({
-        status: "ERROR",
-        reason,
-        candidate: {
-          baseCommit: candidate.baseCommit,
-          commit: candidate.gitCommit,
-          tree: candidate.gitTree,
-          dirty: candidate.workingTreeDirty,
-        },
-      });
+      if (telemetrySpan)
+        await telemetrySpan.finish({
+          status: "ERROR",
+          reason,
+          candidate: {
+            baseCommit: candidate.baseCommit,
+            commit: candidate.gitCommit,
+            tree: candidate.gitTree,
+            dirty: candidate.workingTreeDirty,
+          },
+        });
     } catch {
       // A later write can fail after the successful path has already closed the phase.
     }
     try {
-      await telemetry.complete("ERROR", reason);
+      if (telemetry) await telemetry.complete("ERROR", reason);
     } catch {
       // Preserve the original tier error when telemetry is the failing boundary.
     }

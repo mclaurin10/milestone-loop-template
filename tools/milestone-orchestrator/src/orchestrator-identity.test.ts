@@ -30,7 +30,12 @@ const temporaryDirectories: string[] = [];
 
 afterEach(async () => {
   for (const directory of temporaryDirectories.splice(0))
-    await rm(directory, { recursive: true, force: true });
+    await rm(directory, {
+      recursive: true,
+      force: true,
+      maxRetries: 5,
+      retryDelay: 100,
+    });
 });
 
 function git(repository: string, ...args: string[]): string {
@@ -460,6 +465,100 @@ describe("orchestrator candidate identity fence", () => {
         ) as Record<string, unknown>;
         expect(String(degradation["error"])).toContain(
           "simulated telemetry completion failure",
+        );
+      } finally {
+        await orchestrator.close();
+      }
+    },
+  );
+
+  it(
+    "completes integration and stops even when telemetry begin fails",
+    { timeout: 60_000 },
+    async () => {
+      const fixture = await reviewingFixture();
+      const gateway = approvingGateway(fixture);
+      const beginFailingTelemetryOpen = (async (
+        input: Parameters<typeof TelemetryStore.open>[0],
+      ) => {
+        const store = await TelemetryStore.open(input);
+        Object.defineProperty(store, "beginPhase", {
+          value: async () => {
+            throw new Error("simulated telemetry begin failure");
+          },
+        });
+        return store;
+      }) as typeof TelemetryStore.open;
+      const orchestrator = await MilestoneOrchestrator.open(
+        fixture.root,
+        fixture.configPath,
+        {
+          gateway: gateway as unknown as CodexGateway,
+          now: () => new Date(NOW),
+          telemetryStoreOpen: beginFailingTelemetryOpen,
+        },
+      );
+      try {
+        const outcome = await orchestrator.run({ maximumMilestones: 1 });
+
+        expect(gateway.run).toHaveBeenCalledTimes(1);
+        expect(outcome.state.milestones[0]?.status).toBe("completed");
+        expect(outcome.state.run.status).toBe("stopped");
+        expect(outcome.state.milestones[0]?.attempts).toBe(1);
+        expect(git(fixture.root, "rev-parse", "HEAD")).toBe(
+          fixture.verified.commit,
+        );
+        const degradation = JSON.parse(
+          await readFile(
+            join(fixture.runDirectory, "telemetry-error.json"),
+            "utf8",
+          ),
+        ) as Record<string, unknown>;
+        expect(String(degradation["error"])).toContain(
+          "simulated telemetry begin failure",
+        );
+      } finally {
+        await orchestrator.close();
+      }
+    },
+  );
+
+  it(
+    "completes integration and stops even when the telemetry store cannot open",
+    { timeout: 60_000 },
+    async () => {
+      const fixture = await reviewingFixture();
+      const gateway = approvingGateway(fixture);
+      const rejectingTelemetryOpen = (async () => {
+        throw new Error("simulated telemetry open failure");
+      }) as typeof TelemetryStore.open;
+      const orchestrator = await MilestoneOrchestrator.open(
+        fixture.root,
+        fixture.configPath,
+        {
+          gateway: gateway as unknown as CodexGateway,
+          now: () => new Date(NOW),
+          telemetryStoreOpen: rejectingTelemetryOpen,
+        },
+      );
+      try {
+        const outcome = await orchestrator.run({ maximumMilestones: 1 });
+
+        expect(gateway.run).toHaveBeenCalledTimes(1);
+        expect(outcome.state.milestones[0]?.status).toBe("completed");
+        expect(outcome.state.run.status).toBe("stopped");
+        expect(outcome.state.milestones[0]?.attempts).toBe(1);
+        expect(git(fixture.root, "rev-parse", "HEAD")).toBe(
+          fixture.verified.commit,
+        );
+        const degradation = JSON.parse(
+          await readFile(
+            join(fixture.runDirectory, "telemetry-error.json"),
+            "utf8",
+          ),
+        ) as Record<string, unknown>;
+        expect(String(degradation["error"])).toContain(
+          "simulated telemetry open failure",
         );
       } finally {
         await orchestrator.close();

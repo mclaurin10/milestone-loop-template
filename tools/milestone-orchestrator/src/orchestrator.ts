@@ -110,6 +110,10 @@ import { verifyMilestone } from "./verifier.js";
 import { performWorkspaceCleanup } from "./workspace-cleanup.js";
 import { TelemetryStore } from "./telemetry-store.js";
 import type {
+  BeginTelemetryPhaseInput,
+  TelemetrySpan,
+} from "./telemetry-store.js";
+import type {
   TelemetryCandidate,
   TelemetryStatus,
 } from "./telemetry-contracts.js";
@@ -1237,14 +1241,18 @@ export class MilestoneOrchestrator {
     return store;
   }
 
-  private async recordTelemetryDegradation(error: unknown): Promise<void> {
+  private async recordTelemetryDegradation(
+    error: unknown,
+    directoryOverride?: string,
+  ): Promise<void> {
     const message = redactSensitiveText(
       error instanceof Error ? error.message : String(error),
     );
     process.stderr.write(
       `[telemetry] non-semantic controller telemetry failure: ${message}\n`,
     );
-    const directory = this.stateValue.run.artifactDirectory;
+    const directory =
+      directoryOverride ?? this.stateValue.run.artifactDirectory;
     if (!directory) return;
     try {
       await atomicWriteJson(resolve(directory, "telemetry-error.json"), {
@@ -1260,13 +1268,38 @@ export class MilestoneOrchestrator {
   }
 
   private async finishSpanBestEffort(
-    span: { finish: (input: never) => Promise<unknown> },
+    span: { finish: (input: never) => Promise<unknown> } | null,
     input: unknown,
   ): Promise<void> {
+    if (!span) return;
     try {
       await span.finish(input as never);
     } catch (error) {
       await this.recordTelemetryDegradation(error);
+    }
+  }
+
+  private async telemetryStoreBestEffort(
+    recoverInterrupted = false,
+  ): Promise<TelemetryStore | null> {
+    try {
+      return await this.telemetryStore(recoverInterrupted);
+    } catch (error) {
+      await this.recordTelemetryDegradation(error);
+      return null;
+    }
+  }
+
+  private async beginPhaseBestEffort(
+    telemetry: TelemetryStore | null,
+    input: BeginTelemetryPhaseInput,
+  ): Promise<TelemetrySpan | null> {
+    if (!telemetry) return null;
+    try {
+      return await telemetry.beginPhase(input);
+    } catch (error) {
+      await this.recordTelemetryDegradation(error);
+      return null;
     }
   }
 
@@ -1289,7 +1322,7 @@ export class MilestoneOrchestrator {
       this.stateValue.repository.verifiedCommit,
     );
     if (this.stateValue.run.status === "running") {
-      await this.telemetryStore(true);
+      await this.telemetryStoreBestEffort(true);
       return;
     }
     if (this.stateValue.run.status === "escalated")
@@ -1304,23 +1337,35 @@ export class MilestoneOrchestrator {
     );
     await mkdir(directory, { recursive: true });
     const started = this.now();
-    const telemetry = await this.telemetryStoreOpen({
-      repositoryRoot: this.repositoryRoot,
-      directory: resolve(directory, "telemetry"),
-      runId: id,
-      source: "controller",
-      now: this.now,
-    });
-    const inspectionSpan = await telemetry.beginPhase({
-      phase: "inspection",
-      eventType: "controller-start",
-      operationId: `${id}-inspection`,
-      candidate: telemetryCandidate(
-        this.repositoryRoot,
-        this.stateValue.repository.verifiedCommit,
-      ),
-    });
-    this.telemetryValue = telemetry;
+    let telemetry: TelemetryStore | null = null;
+    try {
+      telemetry = await this.telemetryStoreOpen({
+        repositoryRoot: this.repositoryRoot,
+        directory: resolve(directory, "telemetry"),
+        runId: id,
+        source: "controller",
+        now: this.now,
+      });
+    } catch (error) {
+      await this.recordTelemetryDegradation(error, directory);
+    }
+    let inspectionSpan: TelemetrySpan | null = null;
+    if (telemetry) {
+      try {
+        inspectionSpan = await telemetry.beginPhase({
+          phase: "inspection",
+          eventType: "controller-start",
+          operationId: `${id}-inspection`,
+          candidate: telemetryCandidate(
+            this.repositoryRoot,
+            this.stateValue.repository.verifiedCommit,
+          ),
+        });
+      } catch (error) {
+        await this.recordTelemetryDegradation(error, directory);
+      }
+      this.telemetryValue = telemetry;
+    }
     await atomicWriteJson(
       resolve(directory, "model-policy.json"),
       redactSensitiveValue({
@@ -1469,11 +1514,11 @@ export class MilestoneOrchestrator {
         };
         const originalThreadStarted = invocation.onThreadStarted;
         try {
-          const telemetry = await this.telemetryStore();
+          const telemetry = await this.telemetryStoreBestEffort();
           const result = await this.gateway.run({
             ...invocation,
             invocationId,
-            telemetryStore: telemetry,
+            ...(telemetry ? { telemetryStore: telemetry } : {}),
             telemetryCandidate: telemetryCandidate(
               invocation.workingDirectory,
               this.stateValue.repository.verifiedCommit,
@@ -2073,8 +2118,8 @@ export class MilestoneOrchestrator {
     const milestone = milestoneById(this.stateValue, id);
     if (!milestone.workspace)
       throw new Error("Verification has no isolated workspace.");
-    const telemetry = await this.telemetryStore();
-    const verificationSpan = await telemetry.beginPhase({
+    const telemetry = await this.telemetryStoreBestEffort();
+    const verificationSpan = await this.beginPhaseBestEffort(telemetry, {
       phase: "verification",
       eventType: "milestone-verification",
       operationId: `${this.stateValue.run.id ?? "run"}-${id}-a${milestone.attempts}-verification`,
@@ -2110,7 +2155,7 @@ export class MilestoneOrchestrator {
           this.attemptDirectory(milestone),
           "verification",
         ),
-        telemetry,
+        ...(telemetry ? { telemetry } : {}),
         ...(readinessHistory ? { readinessHistory } : {}),
       });
       const artifactMetadata = await Promise.all(
@@ -2454,8 +2499,8 @@ export class MilestoneOrchestrator {
       headCommit: verified.commit,
       commits,
     });
-    const telemetry = await this.telemetryStore();
-    const integrationSpan = await telemetry.beginPhase({
+    const telemetry = await this.telemetryStoreBestEffort();
+    const integrationSpan = await this.beginPhaseBestEffort(telemetry, {
       phase: "integration",
       eventType: "milestone-fast-forward",
       operationId: `${this.stateValue.run.id ?? "run"}-${id}-integration`,
