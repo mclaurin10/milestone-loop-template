@@ -1802,14 +1802,14 @@ export class MilestoneOrchestrator {
     );
   }
 
-  private async prepareWorkspace(milestone: MilestoneRecord): Promise<void> {
+  private async prepareWorkspace(
+    milestone: MilestoneRecord,
+    stage: "workspace-setup" | "verification-reinstall" = "workspace-setup",
+  ): Promise<void> {
     if (!milestone.workspace)
       throw new Error("Cannot prepare a missing workspace.");
-    const directory = resolve(
-      this.attemptDirectory(milestone),
-      "workspace-setup",
-    );
-    const telemetry = await this.telemetryStore();
+    const directory = resolve(this.attemptDirectory(milestone), stage);
+    const telemetry = await this.telemetryStoreBestEffort();
     const result = await runCommand(
       {
         id: "frozen-install",
@@ -1827,21 +1827,25 @@ export class MilestoneOrchestrator {
         artifactDirectory: directory,
         timeoutMs: this.phaseTimeout(this.config.limits.commandMs),
         trustedControllerCommand: true,
-        telemetry: {
-          store: telemetry,
-          phase: "inspection",
-          candidate: telemetryCandidate(
-            milestone.workspace.path,
-            milestone.workspace.baseCommit,
-          ),
-          checkSetId: "workspace-setup",
-          selectedCheckIds: ["frozen-install"],
-          actualCheckIds: ["frozen-install"],
-          retryAttempt: milestone.attempts,
-        },
+        ...(telemetry
+          ? {
+              telemetry: {
+                store: telemetry,
+                phase: "inspection" as const,
+                candidate: telemetryCandidate(
+                  milestone.workspace.path,
+                  milestone.workspace.baseCommit,
+                ),
+                checkSetId: stage,
+                selectedCheckIds: ["frozen-install"],
+                actualCheckIds: ["frozen-install"],
+                retryAttempt: milestone.attempts,
+              },
+            }
+          : {}),
       },
     );
-    await atomicWriteJson(resolve(directory, "workspace-setup.json"), result);
+    await atomicWriteJson(resolve(directory, `${stage}.json`), result);
     if (result.status !== "PASS")
       throw new Error(`Isolated workspace setup failed: ${result.message}`);
   }
@@ -2118,6 +2122,11 @@ export class MilestoneOrchestrator {
     const milestone = milestoneById(this.stateValue, id);
     if (!milestone.workspace)
       throw new Error("Verification has no isolated workspace.");
+    // Restore lockfile-bound toolchain content between the Worker turn and
+    // verification: gitignored node_modules edits are invisible to every diff
+    // and hash fence, so verification must not run whatever the Worker left
+    // there. Full write-denial belongs to process sandboxing (P1.1).
+    await this.prepareWorkspace(milestone, "verification-reinstall");
     const telemetry = await this.telemetryStoreBestEffort();
     const verificationSpan = await this.beginPhaseBestEffort(telemetry, {
       phase: "verification",

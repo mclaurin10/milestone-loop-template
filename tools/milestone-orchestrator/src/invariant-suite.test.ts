@@ -185,6 +185,30 @@ describe("invariant receipt wrappers", () => {
     expect(existsSync(join(directory, "result.json"))).toBe(false);
   }, 30_000);
 
+  it("refuses invariant-vitest escapes and unsanctioned flags", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "wrapper-fixture-"));
+    temporaryDirectories.push(directory);
+    const escape = runWrapper(
+      ["invariant-vitest", "../outside.test.ts"],
+      directory,
+    );
+    expect(escape.status).not.toBe(0);
+    expect(escape.stderr).toContain("escapes the repository");
+    expect(existsSync(join(directory, "result.json"))).toBe(false);
+
+    const flag = runWrapper(
+      [
+        "invariant-vitest",
+        "--config=rogue.config.ts",
+        "tools/milestone-orchestrator/src/schema.test.ts",
+      ],
+      directory,
+    );
+    expect(flag.status).not.toBe(0);
+    expect(flag.stderr).toContain("unsanctioned vitest flags");
+    expect(existsSync(join(directory, "result.json"))).toBe(false);
+  }, 30_000);
+
   it("refuses focused-verify runs without an exact --stage argument", async () => {
     const directory = await mkdtemp(join(tmpdir(), "wrapper-fixture-"));
     temporaryDirectories.push(directory);

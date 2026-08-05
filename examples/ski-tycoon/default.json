@@ -99,6 +99,8 @@
     ".agent/readiness-profile-activated.json",
     "scripts/verify.mjs",
     "pnpm-lock.yaml",
+    "package.json",
+    "tools/milestone-orchestrator/config/invariant-suite.json",
     "docs/audits/LOOP_EFFECTIVENESS_AND_EFFICIENCY_AUDIT.md"
   ]
 }

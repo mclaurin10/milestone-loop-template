@@ -338,6 +338,9 @@ export function recommendAffectedScope(input: {
   readonly policy: VerificationScopePolicy;
   readonly policySha256: string;
   readonly packageGraph: PackageGraphSnapshot;
+  // The canonical enforced protected set when the caller has it; the
+  // manifest's requiredProtectedPaths (a validated subset) otherwise.
+  readonly protectedAuthorityPaths?: readonly string[];
 }): AffectedScopeRecommendation {
   if (!sha(input.policySha256))
     throw new Error("Affected-scope policy hash is malformed.");
@@ -353,7 +356,7 @@ export function recommendAffectedScope(input: {
     (path) => {
       const triggerClasses = classifyAffectedPath(
         path,
-        input.manifest.requiredProtectedPaths,
+        input.protectedAuthorityPaths ?? input.manifest.requiredProtectedPaths,
         browserHostScriptPatterns,
       );
       const owner = workspaceOwnerForPath(input.packageGraph, path);

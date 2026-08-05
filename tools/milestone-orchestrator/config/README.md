@@ -31,9 +31,17 @@ their contents, guided by the templates.
   touch. Must include `project.authorityFile`, the `evals/` contract files,
   and the mandatory controller trust roots (`AGENTS.md`,
   `.agent/readiness-profile-activated.json`, `scripts/verify.mjs`,
-  `pnpm-lock.yaml`). The loop always enforces the canonical union of these
-  mandatory roots with the configured entries, matched case-insensitively;
-  adopters may add stricter paths but can never remove the floor.
+  `pnpm-lock.yaml`, `package.json`,
+  `tools/milestone-orchestrator/config/invariant-suite.json`). The loop
+  always enforces the canonical union of these mandatory roots with the
+  configured entries, matched case-insensitively; adopters may add stricter
+  paths but can never remove the floor. Beyond file literals, the entire
+  `tools/milestone-orchestrator/` subtree is protected (the controller runs
+  from the target checkout, so its source and config are
+  verifier-equivalent): any changed path under it — including newly created
+  files — is a protected change. A commissioned verification manifest at
+  `.agent/completed/loop-recommissioning-verification.json` joins the
+  enforced set automatically while it exists.
 
 Config schema migrations live in `src/config.ts` (`migrateConfig`); 1.0.0 →
 1.3.0 configs are migrated in memory to 1.4.0 with generic defaults for new

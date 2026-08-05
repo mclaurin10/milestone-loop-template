@@ -23,7 +23,7 @@ export function validProposal(
     objective: "Add one bounded and objectively verified tooling improvement.",
     rationale: "The improvement removes a recurring automation obstacle.",
     dependencies: [],
-    permittedPaths: ["tools/milestone-orchestrator/**"],
+    permittedPaths: ["tools/demo-tooling/**"],
     exclusions: ["No product feature work.", "No frozen authority changes."],
     acceptanceCriteria: [
       {
@@ -281,6 +281,8 @@ export function validConfig(
       ".agent/readiness-profile-activated.json",
       "scripts/verify.mjs",
       "pnpm-lock.yaml",
+      "package.json",
+      "tools/milestone-orchestrator/config/invariant-suite.json",
     ],
     ...overrides,
   };

@@ -34,6 +34,7 @@ import {
   loadVerificationManifest,
   loadVerificationScopePolicy,
 } from "./config.js";
+import { assertManifestProtectedPathsCovered } from "./protected-roots.js";
 import { runCommand } from "./command-runner.js";
 import { parseVitestCounts } from "./invariant-suite.js";
 import { buildPackageGraph } from "./package-graph.js";
@@ -186,6 +187,7 @@ export async function planVerificationTier(input: {
   readonly changedPathSource: ChangedPathSource;
   readonly candidate: ScopeCandidateIdentity;
   readonly focusedCheckIds?: readonly string[];
+  readonly protectedAuthorityPaths?: readonly string[];
 }): Promise<VerificationTierPlan> {
   const [packageGraph] = await Promise.all([
     buildPackageGraph(input.repositoryRoot),
@@ -202,6 +204,9 @@ export async function planVerificationTier(input: {
     policy: input.scopePolicy,
     policySha256: input.scopePolicySha256,
     packageGraph,
+    ...(input.protectedAuthorityPaths
+      ? { protectedAuthorityPaths: input.protectedAuthorityPaths }
+      : {}),
   });
   const classifications = Object.fromEntries(
     scopeRecommendation.classifications.map((entry) => [
@@ -692,6 +697,11 @@ export async function runVerificationTier(
     throw new Error(
       "Verification manifest references a different invariant suite.",
     );
+  // A caller-supplied --manifest must satisfy the same coverage guarantee as
+  // the default manifest: every protected path it requires is one the
+  // controller actually enforces.
+  const config = await loadConfig(input.repositoryRoot);
+  assertManifestProtectedPathsCovered(manifest.value, config.protectedPaths);
   const baseCommit = input.baseCommit ?? manifest.value.d031BaselineCommit;
   const candidate = collectTierCandidateIdentity(
     input.repositoryRoot,
@@ -743,6 +753,7 @@ export async function runVerificationTier(
       headCommit: candidate.gitCommit,
     },
     candidate,
+    protectedAuthorityPaths: config.protectedPaths,
     ...(input.focusedCheckIds
       ? { focusedCheckIds: input.focusedCheckIds }
       : {}),

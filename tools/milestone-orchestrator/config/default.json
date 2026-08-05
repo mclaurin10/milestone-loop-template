@@ -89,6 +89,8 @@
     "evals/immutable-contract-lock.json",
     ".agent/readiness-profile-activated.json",
     "scripts/verify.mjs",
-    "pnpm-lock.yaml"
+    "pnpm-lock.yaml",
+    "package.json",
+    "tools/milestone-orchestrator/config/invariant-suite.json"
   ]
 }

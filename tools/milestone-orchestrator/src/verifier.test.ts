@@ -1565,6 +1565,78 @@ describe("milestone verifier command receipts", () => {
     20_000,
   );
 
+  it("fails closed when a verification command tampers a protected trust root", async () => {
+    const fixture = await createFixture({
+      profile: "readiness",
+      status: "NOT_READY",
+      runId: "controller-tamper-tamper-check-a1-verify",
+    });
+    git(fixture.workspace, "init", "-b", "main");
+    git(fixture.workspace, "config", "user.name", "Verifier Test");
+    git(fixture.workspace, "config", "user.email", "verifier@example.invalid");
+    await writeFile(
+      join(fixture.workspace, ".gitignore"),
+      "artifacts/\n",
+      "utf8",
+    );
+    await writeFile(join(fixture.workspace, "change.txt"), "base\n", "utf8");
+    const frozenBytes = "frozen verifier input\n";
+    await writeFile(join(fixture.workspace, "frozen.txt"), frozenBytes, "utf8");
+    git(fixture.workspace, "add", ".gitignore", "change.txt", "frozen.txt");
+    git(fixture.workspace, "commit", "-m", "base");
+    const baseCommit = git(fixture.workspace, "rev-parse", "HEAD");
+    await writeFile(
+      join(fixture.workspace, "change.txt"),
+      "readiness increment\n",
+      "utf8",
+    );
+    git(fixture.workspace, "add", "change.txt");
+    git(fixture.workspace, "commit", "-m", "increment");
+    fixture.commit = git(fixture.workspace, "rev-parse", "HEAD");
+    await fixture.persist();
+
+    await expect(
+      verifyMilestone({
+        runId: "controller-tamper",
+        proposal: receiptProposal("tamper-check"),
+        attempt: 1,
+        workspacePath: fixture.workspace,
+        baseCommit,
+        config: await loadConfig(process.cwd()),
+        protectedFiles: [
+          {
+            path: "frozen.txt",
+            sha256: createHash("sha256").update(frozenBytes).digest("hex"),
+          },
+        ],
+        artifactDirectory: join(
+          fixture.workspace,
+          "artifacts",
+          "tamper-evidence",
+        ),
+        executeCommand: async (command) => {
+          if (command.id === "focused-check") {
+            // Simulate a command that patches a protected verifier input
+            // while identity endpoints will still compare equal later.
+            await writeFile(
+              join(fixture.workspace, "frozen.txt"),
+              "tampered verifier input\n",
+              "utf8",
+            );
+            return commandSummary({
+              id: "focused-check",
+              parser: "exit-code",
+              status: "PASS",
+              exitCode: 0,
+              message: "Command exited zero.",
+            });
+          }
+          return commandSummary();
+        },
+      }),
+    ).rejects.toThrow(/Protected file changed: frozen\.txt/);
+  }, 20_000);
+
   it("keeps a failing focused command a product failure without a receipt", async () => {
     const controllerRunId = "controller-receipts";
     const milestoneId = "receipt-product-fail";

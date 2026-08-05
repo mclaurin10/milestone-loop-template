@@ -11,6 +11,7 @@ import {
   type OrchestratorConfig,
   type ProjectProfile,
   type OrchestratorState,
+  type ProtectedFileRecord,
   type ReconciliationPhase,
   type ReconciliationRecord,
   type ReconciliationReview,
@@ -36,12 +37,16 @@ import {
 } from "./controller-lease.js";
 import { ensureContainedDirectory } from "./path-safety.js";
 import { createMilestoneRecord } from "./milestone-state.js";
-import { currentVerificationProfile } from "./git-isolation.js";
+import {
+  captureProtectedFiles,
+  currentVerificationProfile,
+} from "./git-isolation.js";
 import { evaluateProposal } from "./policy.js";
 import {
   assertManifestProtectedPathsCovered,
   buildCanonicalProtectedSet,
   casefoldPathKey,
+  enforcementProtectedPatterns,
 } from "./protected-roots.js";
 import {
   reconciliationReviewApproves,
@@ -1098,6 +1103,12 @@ export class ReconciliationController {
     );
     if (migrated.repository.verifiedCommit !== archive.priorVerifiedCommit)
       throw new Error("Migrated state changed the source verified commit.");
+    // The raw source state is archived above; from here the recorded
+    // protected baseline may be completed with any missing canonical trust
+    // roots so every comparison below sees the full fence.
+    const protectedBaseline = await this.canonicalProtectedBaseline(
+      migrated.repository.protectedFiles,
+    );
     const candidate = candidateIdentity(
       this.repositoryRoot,
       invocation.candidate,
@@ -1118,7 +1129,7 @@ export class ReconciliationController {
       candidateCommit: candidate.commit,
       protectedPaths: buildCanonicalProtectedSet(
         this.config,
-        migrated.repository.protectedFiles.map((file) => file.path),
+        protectedBaseline.map((file) => file.path),
       ),
     });
     const rangeReference = await writeJsonArtifact(
@@ -1129,7 +1140,7 @@ export class ReconciliationController {
     const comparison = await protectedComparison({
       repositoryRoot: this.repositoryRoot,
       candidateCommit: candidate.commit,
-      protectedFiles: migrated.repository.protectedFiles,
+      protectedFiles: protectedBaseline,
       commitRange: range,
       outputPath: resolve(directory, "protected-comparison.json"),
     });
@@ -1177,16 +1188,23 @@ export class ReconciliationController {
       failure: null,
     };
     assertCandidateUnchanged(this.repositoryRoot, record);
-    this.stateValue = migrated;
-    await this.persist({
+    const prepared = {
       ...migrated,
+      repository: {
+        ...migrated.repository,
+        protectedFiles: protectedBaseline,
+      },
+    };
+    this.stateValue = prepared;
+    await this.persist({
+      ...prepared,
       controllerHistory: [
-        ...migrated.controllerHistory.filter(
+        ...prepared.controllerHistory.filter(
           (entry) => entry.id !== archive.id,
         ),
         archive,
       ],
-      reconciliation: { ...migrated.reconciliation, active: record },
+      reconciliation: { ...prepared.reconciliation, active: record },
       nextAllowedAction: "reconcile",
     });
     await this.afterPhasePersisted?.("prepared");
@@ -1546,12 +1564,44 @@ export class ReconciliationController {
     await this.afterPhasePersisted?.("completed");
   }
 
+  // Mirror of MilestoneOrchestrator.openLeased's canonical backfill: capture
+  // any canonical trust roots missing from the recorded baseline so hash
+  // comparisons and drift resets see the full protected set. Pure capture -
+  // the caller's next persist carries the completed baseline, so the raw
+  // pre-reconciliation state archive stays byte-faithful.
+  private async canonicalProtectedBaseline(
+    current: readonly ProtectedFileRecord[],
+  ): Promise<readonly ProtectedFileRecord[]> {
+    const canonical = enforcementProtectedPatterns(this.config, current);
+    const known = new Set(current.map((file) => casefoldPathKey(file.path)));
+    const missing = canonical.filter(
+      (path) => !known.has(casefoldPathKey(path)),
+    );
+    if (missing.length === 0) return current;
+    return [
+      ...current,
+      ...(await captureProtectedFiles(this.repositoryRoot, missing)),
+    ];
+  }
+
   private async resetForCandidateDrift(): Promise<void> {
     const record = this.active();
     if (["state-adopted", "queueing-next"].includes(record.phase))
       throw new Error(
         "Candidate drift cannot reset a reconciliation after state adoption.",
       );
+    // A resumed run reaches drift reset without passing through prepare();
+    // complete the recorded baseline so the reset fence is canonical too.
+    // The merge is in-memory only - persistActive below durably carries it.
+    this.stateValue = {
+      ...this.stateValue,
+      repository: {
+        ...this.stateValue.repository,
+        protectedFiles: await this.canonicalProtectedBaseline(
+          this.stateValue.repository.protectedFiles,
+        ),
+      },
+    };
     const candidate = candidateIdentity(
       this.repositoryRoot,
       record.candidateRevision,
@@ -1561,8 +1611,9 @@ export class ReconciliationController {
       reconciliationId: record.id,
       sourceVerifiedCommit: record.sourceVerifiedCommit,
       candidateCommit: candidate.commit,
-      protectedPaths: this.stateValue.repository.protectedFiles.map(
-        (file) => file.path,
+      protectedPaths: buildCanonicalProtectedSet(
+        this.config,
+        this.stateValue.repository.protectedFiles.map((file) => file.path),
       ),
     });
     const directory = resolve(

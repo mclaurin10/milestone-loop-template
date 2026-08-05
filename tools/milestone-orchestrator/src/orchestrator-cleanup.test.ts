@@ -207,6 +207,55 @@ describe("canonical protected trust roots at controller startup", () => {
       );
     },
   );
+
+  it(
+    "captures a commissioned manifest and never opens after it disappears",
+    { timeout: 30_000 },
+    async () => {
+      const fixture = await repositoryFixture();
+      const manifestPath = join(
+        fixture.root,
+        ".agent",
+        "completed",
+        "loop-recommissioning-verification.json",
+      );
+      await mkdir(dirname(manifestPath), { recursive: true });
+      await writeFile(
+        manifestPath,
+        await readFile(
+          join(
+            process.cwd(),
+            ".agent",
+            "completed",
+            "loop-recommissioning-verification.json",
+          ),
+        ),
+      );
+      git(fixture.root, "add", "--all");
+      git(fixture.root, "commit", "-m", "commission the manifest");
+      const first = await MilestoneOrchestrator.open(
+        fixture.root,
+        fixture.configPath,
+        { now: () => new Date(NOW) },
+      );
+      await first.close();
+      expect(
+        first.state.repository.protectedFiles.map((file) => file.path),
+      ).toContain(".agent/completed/loop-recommissioning-verification.json");
+
+      // Deleting the tracked manifest can no longer silently disable the
+      // coverage assertion: the earliest fence (target cleanliness here;
+      // the recorded protected hash is the backstop) refuses the open.
+      await rm(manifestPath);
+      await expect(
+        MilestoneOrchestrator.open(fixture.root, fixture.configPath, {
+          now: () => new Date(NOW),
+        }),
+      ).rejects.toThrow(
+        /working tree is dirty|Protected file was deleted: \.agent\/completed\/loop-recommissioning-verification\.json/,
+      );
+    },
+  );
 });
 
 describe("post-persistence workspace lifecycle", () => {

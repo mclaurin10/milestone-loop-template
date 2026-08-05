@@ -29,10 +29,6 @@ async function repositoryFixture(
 ): Promise<{ readonly root: string; readonly statePath: string }> {
   const root = await mkdtemp(join(tmpdir(), "milestone-loop-doctor-"));
   temporaryDirectories.push(root);
-  await writeJson(join(root, "package.json"), {
-    engines: { node: "24.18.0" },
-    packageManager: "pnpm@11.15.1",
-  });
   await writeJson(
     join(root, "tools/milestone-orchestrator/config/default.json"),
     validConfig(),
@@ -42,6 +38,12 @@ async function repositoryFixture(
     await mkdir(dirname(absolute), { recursive: true });
     await writeFile(absolute, `${path}\n`, "utf8");
   }
+  // package.json is itself a protected trust root; the runtime-pin content
+  // must land after the placeholder loop above.
+  await writeJson(join(root, "package.json"), {
+    engines: { node: "24.18.0" },
+    packageManager: "pnpm@11.15.1",
+  });
   const statePath = join(root, "artifacts/orchestrator/state/state.json");
   if (state === "valid") await writeJson(statePath, validState(root));
   if (state === "invalid")

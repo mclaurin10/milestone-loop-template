@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { CONTROLLER_TRUST_ROOT_SUBTREES } from "./contracts.js";
 import type { MilestoneRecord, OrchestratorConfig } from "./contracts.js";
 import { canaryMilestone } from "./canary.js";
 import {
@@ -181,6 +182,28 @@ export async function demonstrateSafety(input: {
         .join(", ")}].`,
     );
 
+  // A brand-new file under a protected subtree has no literal entry in the
+  // protected set; only the subtree fence can reject it.
+  const subtreeRejections = CONTROLLER_TRUST_ROOT_SUBTREES.map((subtree) => {
+    const probePath = `${subtree}/src/__safety_demo_new_file__.ts`;
+    const outcome = enforceDiffPolicy(
+      [probePath],
+      proposal,
+      canonicalProtectedSet,
+    );
+    return { subtree, probePath, outcome };
+  });
+  const unfencedSubtrees = subtreeRejections.filter(
+    (probe) =>
+      probe.outcome.allowed || probe.outcome.protectedChanges.length !== 1,
+  );
+  if (subtreeRejections.length === 0 || unfencedSubtrees.length > 0)
+    throw new Error(
+      `Protected-subtree injection was not rejected for: [${unfencedSubtrees
+        .map((probe) => probe.probePath)
+        .join(", ")}].`,
+    );
+
   const manifestPath = resolve(
     input.repositoryRoot,
     DEFAULT_VERIFICATION_MANIFEST_PATH,
@@ -241,6 +264,11 @@ export async function demonstrateSafety(input: {
         id: "protected-file-rejection",
         status: "PASS",
         evidence: protectedRejections,
+      },
+      {
+        id: "protected-subtree-rejection",
+        status: "PASS",
+        evidence: subtreeRejections,
       },
       {
         id: "manifest-trust-root-coverage",

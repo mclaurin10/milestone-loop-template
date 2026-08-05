@@ -1,4 +1,5 @@
 import {
+  CONTROLLER_TRUST_ROOT_SUBTREES,
   REQUIRED_PROTECTED_PATHS,
   type OrchestratorConfig,
   type ProtectedFileRecord,
@@ -7,6 +8,15 @@ import {
 
 export function casefoldPathKey(path: string): string {
   return path.replaceAll("\\", "/").replace(/^\.\//, "").toLowerCase();
+}
+
+export function protectedSubtreeContaining(path: string): string | null {
+  const folded = casefoldPathKey(path);
+  for (const subtree of CONTROLLER_TRUST_ROOT_SUBTREES) {
+    const prefix = casefoldPathKey(subtree);
+    if (folded === prefix || folded.startsWith(`${prefix}/`)) return subtree;
+  }
+  return null;
 }
 
 function normalizeProtectedPath(path: string): string {

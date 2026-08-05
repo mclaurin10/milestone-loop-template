@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { isAbsolute } from "node:path";
 
 import {
+  CONTROLLER_TRUST_ROOT_SUBTREES,
   type MilestoneProposal,
   type OrchestratorConfig,
   type OrchestratorState,
@@ -9,6 +10,7 @@ import {
   type PolicyFinding,
   type ProjectProfile,
 } from "./contracts.js";
+import { protectedSubtreeContaining } from "./protected-roots.js";
 import { validateMilestoneProposal } from "./schema.js";
 import { verificationCommandSafetyError } from "./command-policy.js";
 
@@ -247,6 +249,18 @@ export function evaluateProposal(
           findings,
           "PROTECTED_SCOPE",
           `Permitted scope overlaps protected authority ${protectedPath}.`,
+          path,
+        );
+    }
+    for (const subtree of CONTROLLER_TRUST_ROOT_SUBTREES) {
+      if (
+        protectedPatternsOverlap(normalized, subtree) ||
+        protectedPatternsOverlap(normalized, `${subtree}/**`)
+      )
+        addsFinding(
+          findings,
+          "PROTECTED_SCOPE",
+          `Permitted scope overlaps the protected controller subtree ${subtree}/.`,
           path,
         );
     }
@@ -506,8 +520,10 @@ export function enforceDiffPolicy(
   protectedPaths: readonly string[],
 ): DiffPolicyResult {
   const normalizedChanges = changedPaths.map(normalizePath);
-  const protectedChanges = normalizedChanges.filter((path) =>
-    protectedPaths.some((pattern) => protectedPathMatches(pattern, path)),
+  const protectedChanges = normalizedChanges.filter(
+    (path) =>
+      protectedPaths.some((pattern) => protectedPathMatches(pattern, path)) ||
+      protectedSubtreeContaining(path) !== null,
   );
   const outOfScopeChanges = normalizedChanges.filter(
     (path) =>

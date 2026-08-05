@@ -320,8 +320,16 @@ describe("milestone policy", () => {
       validConfig().protectedPaths,
     );
     expect(result.allowed).toBe(false);
-    expect(result.protectedChanges).toEqual(["PROJECT_GOAL.md"]);
-    expect(result.outOfScopeChanges).toEqual(["PROJECT_GOAL.md"]);
+    // The controller source file is protected via the subtree fence even
+    // though no literal protected entry names it.
+    expect(result.protectedChanges).toEqual([
+      "tools/milestone-orchestrator/src/cli.ts",
+      "PROJECT_GOAL.md",
+    ]);
+    expect(result.outOfScopeChanges).toEqual([
+      "tools/milestone-orchestrator/src/cli.ts",
+      "PROJECT_GOAL.md",
+    ]);
     expect(globMatches("tools/**", "tools/a/b.ts")).toBe(true);
   });
 
@@ -339,6 +347,41 @@ describe("milestone policy", () => {
         expect(decision.allowed).toBe(false);
         expect(decision.protectedChanges).toEqual([probe]);
       }
+    }
+  });
+
+  it("rejects new files under the protected controller subtree", () => {
+    for (const probe of [
+      "tools/milestone-orchestrator/src/brand-new-helper.ts",
+      "TOOLS/MILESTONE-ORCHESTRATOR/SRC/BRAND-NEW-HELPER.TS",
+      "tools/milestone-orchestrator/config/new-registry.json",
+    ]) {
+      const decision = enforceDiffPolicy(
+        [probe],
+        validProposal({ permittedPaths: [probe] }),
+        buildCanonicalProtectedSet(validConfig()),
+      );
+      expect(decision.allowed).toBe(false);
+      expect(decision.protectedChanges).toEqual([probe]);
+    }
+  });
+
+  it("rejects proposal scopes overlapping the protected controller subtree", () => {
+    for (const scope of [
+      "tools/milestone-orchestrator/**",
+      "tools/milestone-orchestrator/src/policy.ts",
+      "TOOLS/MILESTONE-ORCHESTRATOR/**",
+    ]) {
+      const decision = evaluateProposal(
+        validProposal({ permittedPaths: [scope] }),
+        validState(process.cwd()),
+        validConfig(),
+        "bootstrap",
+      );
+      expect(decision.status).toBe("rejected");
+      expect(decision.findings.map((finding) => finding.code)).toContain(
+        "PROTECTED_SCOPE",
+      );
     }
   });
 

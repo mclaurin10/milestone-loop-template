@@ -131,7 +131,24 @@ export const CONTROLLER_TRUST_ROOT_PATHS = [
   ".agent/readiness-profile-activated.json",
   "scripts/verify.mjs",
   "pnpm-lock.yaml",
+  "package.json",
+  "tools/milestone-orchestrator/config/invariant-suite.json",
 ] as const;
+
+// Directory subtrees whose entire contents are verifier-equivalent: the
+// controller runs from the target checkout, so a permitted edit anywhere in
+// its source or config is enforced on the next run. Subtrees are enforced at
+// the proposal/diff boundary (any changed path under them is a protected
+// change, including newly created files); the per-file hash baseline covers
+// only literal protected paths.
+export const CONTROLLER_TRUST_ROOT_SUBTREES = [
+  "tools/milestone-orchestrator",
+] as const;
+
+// The verification manifest is protected when commissioned: loadConfig
+// appends DEFAULT_VERIFICATION_MANIFEST_PATH to the enforced protected set
+// whenever the file exists, so editing or deleting a commissioned manifest
+// trips the diff fence and the recorded hash baseline.
 
 export const REQUIRED_PROTECTED_PATHS = [
   "evals/ACCEPTANCE.md",

@@ -89,6 +89,17 @@ if (mode === "invariant-vitest" || mode === "focused-verify") {
     let artifactKind;
     let checkSummary;
     if (mode === "invariant-vitest") {
+      // Registry-supplied arguments are untrusted at this boundary: only the
+      // single sanctioned vitest flag may pass through (anything else - for
+      // example --config= - would redirect vitest away from the pinned
+      // configuration), and every file must stay inside the repository.
+      const allowedFlags = new Set(["--fileParallelism=false"]);
+      for (const argument of modeArguments) {
+        if (argument.startsWith("--") && !allowedFlags.has(argument))
+          throw new Error(
+            `invariant-vitest rejects unsanctioned vitest flags: ${argument}`,
+          );
+      }
       const files = modeArguments.filter(
         (argument) => !argument.startsWith("--"),
       );
@@ -99,6 +110,18 @@ if (mode === "invariant-vitest" || mode === "focused-verify") {
       for (const file of files) {
         if (!file.endsWith(".test.ts"))
           throw new Error(`invariant-vitest only runs .test.ts files: ${file}`);
+        const contained = relative(
+          resolve(context.repositoryRoot),
+          resolve(context.repositoryRoot, file),
+        ).replaceAll("\\", "/");
+        if (
+          contained.length === 0 ||
+          isAbsolute(contained) ||
+          contained.split("/").includes("..")
+        )
+          throw new Error(
+            `invariant-vitest test file escapes the repository: ${file}`,
+          );
         if (!existsSync(resolve(context.repositoryRoot, file)))
           throw new Error(`invariant-vitest test file does not exist: ${file}`);
       }

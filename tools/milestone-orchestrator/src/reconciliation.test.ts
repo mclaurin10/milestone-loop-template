@@ -1,8 +1,9 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
+import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, relative, resolve } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 
 import { afterAll, describe, expect, it } from "vitest";
 
@@ -20,6 +21,7 @@ import {
   ReconciliationInterruption,
   type ReconciliationDependencies,
 } from "./reconciliation.js";
+import { buildCanonicalProtectedSet } from "./protected-roots.js";
 import { createInitialState } from "./state-store.js";
 import { validConfig, validFeatureProposal } from "../test/fixtures.js";
 
@@ -95,6 +97,16 @@ async function fixtureRepository(): Promise<Fixture> {
   );
   const configPath = join(root, "orchestrator-config.json");
   await writeFile(configPath, `${JSON.stringify(validConfig(), null, 2)}\n`);
+  // Every canonical trust root must exist on disk: the leased reconciliation
+  // run backfills their hashes into the protected baseline fail-closed.
+  const canonicalPlaceholders: string[] = [];
+  for (const path of buildCanonicalProtectedSet(validConfig())) {
+    const absolute = join(root, ...path.split("/"));
+    if (existsSync(absolute)) continue;
+    await mkdir(dirname(absolute), { recursive: true });
+    await writeFile(absolute, `${path}\n`, "utf8");
+    canonicalPlaceholders.push(path);
+  }
   git(
     root,
     "add",
@@ -104,6 +116,7 @@ async function fixtureRepository(): Promise<Fixture> {
     "docs/history.md",
     ".agent/completed/loop-recommissioning-verification.json",
     "orchestrator-config.json",
+    ...canonicalPlaceholders,
   );
   git(root, "commit", "-m", "source boundary");
   const sourceCommit = git(root, "rev-parse", "HEAD");

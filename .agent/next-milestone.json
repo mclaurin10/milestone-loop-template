@@ -6,10 +6,11 @@
   "objective": "Add one bounded and objectively verified tooling improvement as the first tracked milestone.",
   "rationale": "A small tooling increment exercises the full plan/implement/verify/review loop before product work begins.",
   "dependencies": [],
-  "permittedPaths": ["tools/milestone-orchestrator/**"],
+  "permittedPaths": ["tools/demo-tooling/**"],
   "exclusions": [
     "No product feature work.",
-    "No frozen authority changes."
+    "No frozen authority changes.",
+    "No milestone-orchestrator changes (protected controller source)."
   ],
   "acceptanceCriteria": [
     {

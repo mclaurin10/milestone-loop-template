@@ -25,7 +25,7 @@ import {
   candidateIdentityFrom,
 } from "./candidate-identity.js";
 import { runCommand } from "./command-runner.js";
-import { inspectAttempt } from "./git-isolation.js";
+import { assertProtectedFiles, inspectAttempt } from "./git-isolation.js";
 import { enforceDiffPolicy } from "./policy.js";
 import { enforcementProtectedPatterns } from "./protected-roots.js";
 import { atomicWriteJson } from "./state-store.js";
@@ -1343,10 +1343,14 @@ export async function verifyMilestone(input: {
           parsedArtifactPath: null,
         };
       }
+      // The authoritative verifier and its dispatch inputs must still be the
+      // recorded trust roots after the command that just ran them.
+      await assertProtectedFiles(input.workspacePath, input.protectedFiles);
     }
     commandResults.push(result);
   }
 
+  await assertProtectedFiles(input.workspacePath, input.protectedFiles);
   const finalInspection = inspectAttempt(input.workspacePath, input.baseCommit);
   const finalIdentity = candidateIdentityFrom(
     input.baseCommit,

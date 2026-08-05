@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { existsSync } from "node:fs";
 import { lstat, readFile, realpath } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
 
@@ -192,11 +193,17 @@ export async function loadConfig(
     sourcePath.length > 0 &&
     !isAbsolute(sourcePath) &&
     !sourcePath.split("/").includes("..");
+  // A commissioned verification manifest is a verifier-equivalent input:
+  // once it exists it joins the enforced protected set, so editing or
+  // deleting it trips the diff fence and the recorded hash baseline.
+  const manifestCommissioned = existsSync(
+    resolve(repositoryRoot, DEFAULT_VERIFICATION_MANIFEST_PATH),
+  );
   return {
     ...config,
-    protectedPaths: buildCanonicalProtectedSet(
-      config,
-      sourceIsInsideRepository ? [sourcePath] : [],
-    ),
+    protectedPaths: buildCanonicalProtectedSet(config, [
+      ...(sourceIsInsideRepository ? [sourcePath] : []),
+      ...(manifestCommissioned ? [DEFAULT_VERIFICATION_MANIFEST_PATH] : []),
+    ]),
   };
 }
