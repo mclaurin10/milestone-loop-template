@@ -6,7 +6,11 @@ import { canaryMilestone, CANARY_MILESTONE_ID } from "./canary.js";
 import { DEFAULT_CONFIG_PATH, loadConfig } from "./config.js";
 import { runDoctorDiagnostic } from "./doctor.js";
 import { runLiveModelPolicyCheck } from "./model-policy-check.js";
-import { MilestoneOrchestrator } from "./orchestrator.js";
+import {
+  MilestoneOrchestrator,
+  stateStatusSummary,
+  type OrchestratorInspection,
+} from "./orchestrator.js";
 import { ReconciliationController } from "./reconciliation.js";
 import { redactSensitiveValue } from "./redaction.js";
 import { demonstrateSafety } from "./safety-demonstration.js";
@@ -213,68 +217,96 @@ async function main(): Promise<void> {
       "An active reconciliation must resume before ordinary loop actions.",
     );
   }
-  const orchestrator = await MilestoneOrchestrator.open(root, args.configPath);
-  switch (args.command) {
-    case "status":
-      output(orchestrator.statusSummary(), args.json);
+  if (args.command === "status" || args.command === "dry-run") {
+    const inspection = await MilestoneOrchestrator.inspect(
+      root,
+      args.configPath,
+    );
+    const status = inspection.state
+      ? stateStatusSummary(root, inspection.state)
+      : { state: "uninitialized" };
+    const readOnlyFacts = {
+      targetHead: inspection.targetHead,
+      targetDrift: inspection.targetDrift,
+      pendingWorkspaceCleanups: inspection.pendingWorkspaceCleanups,
+      protectedIntegrity: inspection.protectedIntegrity,
+      lease: inspection.lease,
+    } satisfies Partial<OrchestratorInspection>;
+    if (args.command === "status") {
+      output({ status, inspection: readOnlyFacts }, args.json);
       return;
-    case "dry-run":
-      output(
-        {
-          mode: "dry-run",
-          codexInvocations: 0,
-          repositoryMutation: false,
-          wouldTakeAction: orchestrator.state.nextAllowedAction,
-          status: orchestrator.statusSummary(),
-        },
-        args.json,
-      );
-      return;
-    case "plan":
-      output(await orchestrator.planOnly(), args.json);
-      return;
-    case "run":
-    case "resume":
-      output(
-        await orchestrator.run({
-          ...(args.one ? { maximumMilestones: 1 } : {}),
-        }),
-        args.json,
-      );
-      return;
-    case "canary": {
-      const completed = orchestrator.state.milestones.find(
-        (milestone) =>
-          milestone.proposal.id === CANARY_MILESTONE_ID &&
-          milestone.status === "completed",
-      );
-      if (completed) {
+    }
+    output(
+      {
+        mode: "dry-run",
+        codexInvocations: 0,
+        repositoryMutation: false,
+        wouldTakeAction: inspection.nextAllowedAction,
+        status,
+        inspection: readOnlyFacts,
+      },
+      args.json,
+    );
+    return;
+  }
+  const orchestrator = await MilestoneOrchestrator.open(root, args.configPath, {
+    leaseOperation:
+      args.command === "canary"
+        ? "canary"
+        : args.command === "plan"
+          ? "plan"
+          : "run",
+  });
+  try {
+    switch (args.command) {
+      case "plan":
+        output(await orchestrator.planOnly(), args.json);
+        return;
+      case "run":
+      case "resume":
         output(
-          {
-            status: "already-completed",
-            milestoneId: CANARY_MILESTONE_ID,
-            commits: completed.commits,
-            state: orchestrator.statusSummary(),
-          },
+          await orchestrator.run({
+            ...(args.one ? { maximumMilestones: 1 } : {}),
+          }),
           args.json,
         );
         return;
-      }
-      const existing = orchestrator.state.milestones.some(
-        (milestone) => milestone.proposal.id === CANARY_MILESTONE_ID,
-      );
-      if (!existing) {
-        const decision = await orchestrator.enqueue(canaryMilestone());
-        if (decision.status !== "accepted")
-          throw new Error(
-            `Built-in canary failed policy: ${decision.findings.map((finding) => finding.message).join(" ")}`,
+      case "canary": {
+        const completed = orchestrator.state.milestones.find(
+          (milestone) =>
+            milestone.proposal.id === CANARY_MILESTONE_ID &&
+            milestone.status === "completed",
+        );
+        if (completed) {
+          output(
+            {
+              status: "already-completed",
+              milestoneId: CANARY_MILESTONE_ID,
+              commits: completed.commits,
+              state: orchestrator.statusSummary(),
+            },
+            args.json,
           );
+          return;
+        }
+        const existing = orchestrator.state.milestones.some(
+          (milestone) => milestone.proposal.id === CANARY_MILESTONE_ID,
+        );
+        if (!existing) {
+          const decision = await orchestrator.enqueue(canaryMilestone());
+          if (decision.status !== "accepted")
+            throw new Error(
+              `Built-in canary failed policy: ${decision.findings.map((finding) => finding.message).join(" ")}`,
+            );
+        }
+        output(await orchestrator.run({ maximumMilestones: 1 }), args.json);
+        return;
       }
-      output(await orchestrator.run({ maximumMilestones: 1 }), args.json);
-      return;
+      default:
+        throw new Error(`Unreachable loop command ${args.command}.`);
     }
-    default:
-      throw new Error(`Unreachable loop command ${args.command}.`);
+  } finally {
+    await orchestrator.close();
   }
 }
 

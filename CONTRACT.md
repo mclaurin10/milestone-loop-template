@@ -179,6 +179,12 @@ rejection of every canonical path including case variants.
   (`pnpm loop:check-model-policy` verifies the live model policy;
   `MILESTONE_LOOP_CONFIG` overrides the config path;
   `MILESTONE_LOOP_TELEMETRY_RUN_ID` scopes direct-telemetry runs).
+- Single-writer mutation: every mutating loop command (including
+  reconciliation) holds the repository-wide lease at
+  `artifacts/orchestrator/state/controller.lease`, state initialization is
+  exclusive-create, and every state save compare-and-swaps the stored
+  revision — a stale writer fails with an actionable error and no merge is
+  attempted. `loop:status`/`loop:dry-run` are read-only and lease-free.
 
 ## Adoption checklist
 

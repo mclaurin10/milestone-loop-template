@@ -91,6 +91,18 @@ report `NOT_READY`, never pass.
    for the autonomous loop, `pnpm loop:status` / `loop:resume` /
    `loop:reconcile` for lifecycle operations.
 
+   Every mutating command (`plan`, `run`, `resume`, `canary`, `reconcile`)
+   holds a single repository-wide mutation lease
+   (`artifacts/orchestrator/state/controller.lease`) for its lifetime, and
+   durable state writes use compare-and-swap on the stored revision, so a
+   concurrent controller fails loudly instead of silently losing updates.
+   `loop:status` and `loop:dry-run` are strictly read-only — they never
+   initialize state, never take the lease, and report the current lease
+   owner. A lease held by a dead process on the same host is recovered
+   automatically; a lease from another host, or a malformed lease file, is
+   never stolen — after confirming the owner is dead, delete the lease
+   file manually.
+
 ## Extension points
 
 - **Agent provider** — `src/codex-gateway.ts` is the single adapter between

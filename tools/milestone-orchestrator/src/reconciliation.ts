@@ -1,14 +1,6 @@
 import { spawnSync } from "node:child_process";
-import { createHash, randomUUID } from "node:crypto";
-import {
-  lstat,
-  mkdir,
-  open,
-  readFile,
-  readdir,
-  realpath,
-  unlink,
-} from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { lstat, open, readFile, readdir, realpath } from "node:fs/promises";
 import { dirname, isAbsolute, relative, resolve } from "node:path";
 
 import {
@@ -38,6 +30,8 @@ import {
 } from "./benchmark.js";
 import type { CodexGateway } from "./codex-gateway.js";
 import { SdkCodexGateway } from "./codex-gateway.js";
+import { ControllerLease } from "./controller-lease.js";
+import { ensureContainedDirectory } from "./path-safety.js";
 import { createMilestoneRecord } from "./milestone-state.js";
 import { currentVerificationProfile } from "./git-isolation.js";
 import { evaluateProposal } from "./policy.js";
@@ -201,25 +195,6 @@ function safeRelative(repositoryRoot: string, path: string): string {
   )
     throw new Error("Reconciliation artifact escapes the repository.");
   return value;
-}
-
-async function ensureContainedDirectory(
-  repositoryRoot: string,
-  path: string,
-): Promise<void> {
-  const absolute = resolve(path);
-  safeRelative(repositoryRoot, absolute);
-  await mkdir(absolute, { recursive: true });
-  const metadata = await lstat(absolute);
-  if (!metadata.isDirectory() || metadata.isSymbolicLink())
-    throw new Error("Reconciliation artifact parent is not a real directory.");
-  const root = await realpath(resolve(repositoryRoot));
-  const resolvedDirectory = await realpath(absolute);
-  const rel = slash(relative(root, resolvedDirectory));
-  if (rel.length === 0 || isAbsolute(rel) || rel.split("/").includes(".."))
-    throw new Error(
-      "Reconciliation artifact parent resolves outside the repository.",
-    );
 }
 
 async function regularContainedFile(
@@ -941,89 +916,6 @@ async function defaultMilestoneTier(input: {
   if (!match?.[1])
     throw new Error("Milestone tier did not report its result path.");
   return match[1];
-}
-
-class ReconciliationLock {
-  private constructor(
-    private readonly path: string,
-    private readonly token: string,
-  ) {}
-
-  static async acquire(repositoryRoot: string): Promise<ReconciliationLock> {
-    const directory = resolve(repositoryRoot, RECONCILIATION_ROOT);
-    await ensureContainedDirectory(repositoryRoot, directory);
-    const path = resolve(directory, "reconciliation.lock");
-    const token = randomUUID();
-    for (let attempt = 0; attempt < 2; attempt += 1) {
-      try {
-        const handle = await open(path, "wx");
-        try {
-          await handle.writeFile(
-            `${JSON.stringify({ schemaVersion: "1.0.0", token, pid: process.pid, createdAt: new Date().toISOString() })}\n`,
-            "utf8",
-          );
-          await handle.sync();
-        } finally {
-          await handle.close();
-        }
-        return new ReconciliationLock(path, token);
-      } catch (error) {
-        if (
-          !(error instanceof Error) ||
-          !("code" in error) ||
-          error.code !== "EEXIST" ||
-          attempt > 0
-        )
-          throw error;
-        const metadata = await lstat(path);
-        if (!metadata.isFile() || metadata.isSymbolicLink())
-          throw new Error("Reconciliation lock is not a regular file.", {
-            cause: error,
-          });
-        const existing = JSON.parse(await readFile(path, "utf8")) as {
-          pid?: unknown;
-        };
-        if (!Number.isSafeInteger(existing.pid))
-          throw new Error("Reconciliation lock is malformed.", {
-            cause: error,
-          });
-        let alive = true;
-        try {
-          process.kill(Number(existing.pid), 0);
-        } catch (probeError) {
-          alive =
-            probeError instanceof Error &&
-            "code" in probeError &&
-            probeError.code === "EPERM";
-        }
-        if (alive)
-          throw new Error("Another reconciliation process owns the lock.", {
-            cause: error,
-          });
-        await unlink(path);
-      }
-    }
-    throw new Error("Cannot acquire reconciliation lock.");
-  }
-
-  async release(): Promise<void> {
-    try {
-      const value = JSON.parse(await readFile(this.path, "utf8")) as {
-        token?: unknown;
-      };
-      if (value.token !== this.token)
-        throw new Error("Reconciliation lock ownership changed.");
-      await unlink(this.path);
-    } catch (error) {
-      if (
-        error instanceof Error &&
-        "code" in error &&
-        (error as NodeJS.ErrnoException).code === "ENOENT"
-      )
-        return;
-      throw error;
-    }
-  }
 }
 
 export class ReconciliationController {
@@ -1780,8 +1672,18 @@ export class ReconciliationController {
   async run(
     invocation?: ReconciliationInvocation,
   ): Promise<ReconciliationStatusSummary> {
-    const lock = await ReconciliationLock.acquire(this.repositoryRoot);
+    const lock = await ControllerLease.acquire({
+      repositoryRoot: this.repositoryRoot,
+      statePath: this.config.statePath,
+      operation: "reconcile",
+    });
     try {
+      const fresh = await this.store.load();
+      if (!fresh)
+        throw new Error(
+          "Durable controller state disappeared before reconciliation could start.",
+        );
+      this.stateValue = fresh;
       if (invocation && !this.stateValue.reconciliation.active) {
         const proposalPath = safeRelative(
           this.repositoryRoot,

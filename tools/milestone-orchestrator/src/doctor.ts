@@ -10,6 +10,10 @@ import {
   loadConfig,
   loadVerificationManifest,
 } from "./config.js";
+import {
+  ControllerLease,
+  type ControllerLeaseInspection,
+} from "./controller-lease.js";
 import type { OrchestratorConfig } from "./contracts.js";
 import {
   assertManifestProtectedPathsCovered,
@@ -83,6 +87,12 @@ export interface DoctorDiagnostic {
         readonly present: boolean;
       }[];
       readonly manifestCovered: boolean | null;
+    };
+    readonly controllerLease: {
+      readonly status: CheckStatus;
+      readonly present: boolean;
+      readonly malformed: boolean;
+      readonly owner: ControllerLeaseInspection["owner"];
     };
   };
 }
@@ -246,6 +256,29 @@ async function protectedTrustRootsCheck(
   };
 }
 
+async function controllerLeaseCheck(
+  repositoryRoot: string,
+  config: OrchestratorConfig | null,
+): Promise<DoctorDiagnostic["checks"]["controllerLease"]> {
+  if (!config)
+    return {
+      status: "attention",
+      present: false,
+      malformed: false,
+      owner: null,
+    };
+  const inspection = await ControllerLease.inspect(
+    repositoryRoot,
+    config.statePath,
+  );
+  return {
+    status: inspection.present || inspection.malformed ? "attention" : "pass",
+    present: inspection.present,
+    malformed: inspection.malformed,
+    owner: inspection.owner,
+  };
+}
+
 export async function runDoctorDiagnostic(
   input: {
     readonly repositoryRoot: string;
@@ -310,6 +343,7 @@ export async function runDoctorDiagnostic(
     repositoryRoot,
     config,
   );
+  const controllerLease = await controllerLeaseCheck(repositoryRoot, config);
   const checks = {
     runtimePins,
     gitCleanliness,
@@ -317,6 +351,7 @@ export async function runDoctorDiagnostic(
     state,
     codexAuthentication,
     protectedTrustRoots,
+    controllerLease,
   } as const;
   const ready = Object.values(checks).every((check) => check.status === "pass");
 

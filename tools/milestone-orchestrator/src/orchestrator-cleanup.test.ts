@@ -124,6 +124,7 @@ describe("canonical protected trust roots at controller startup", () => {
         fixture.configPath,
         { now: () => new Date(NOW) },
       );
+      await first.close();
       const paths = first.state.repository.protectedFiles.map(
         (file) => file.path,
       );
@@ -143,6 +144,7 @@ describe("canonical protected trust roots at controller startup", () => {
         fixture.configPath,
         { now: () => new Date(NOW) },
       );
+      await second.close();
       expect(second.state.repository.protectedFiles).toHaveLength(paths.length);
       expect(second.state.revision).toBe(first.state.revision);
     },
@@ -326,6 +328,7 @@ describe("post-persistence workspace lifecycle", () => {
         fixture.configPath,
         { workspaceCleanup: cleanup, now: () => new Date(NOW) },
       );
+      await beforeAdvance.close();
       expect(beforeAdvance.state.milestones[0]?.status).toBe("reviewing");
       expect(cleanupCalls).toBe(0);
       expect(await exists(workspace.path)).toBe(true);
@@ -343,6 +346,7 @@ describe("post-persistence workspace lifecycle", () => {
         fixture.configPath,
         { workspaceCleanup: cleanup, now: () => new Date(NOW) },
       );
+      await recovered.close();
 
       expect(cleanupCalls).toBe(1);
       expect(recovered.state.repository.verifiedCommit).toBe(headCommit);

@@ -4,7 +4,7 @@ import { join } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { atomicWriteJson, StateStore } from "./state-store.js";
+import { atomicWriteJson, StaleStateError, StateStore } from "./state-store.js";
 import { createMilestoneRecord } from "./milestone-state.js";
 import { validProposal, validState } from "../test/fixtures.js";
 
@@ -34,6 +34,84 @@ describe("atomic state persistence", () => {
     const saved = await store.save(initial);
     expect(saved.revision).toBe(1);
     await expect(store.load()).resolves.toEqual(saved);
+  });
+
+  it("rejects a stale concurrent writer and keeps the first update durable", async () => {
+    const directory = await temporaryDirectory();
+    const relativePath = "artifacts/orchestrator/state/state.json";
+    const first = new StateStore(
+      directory,
+      relativePath,
+      () => "2026-08-05T00:00:01.000Z",
+    );
+    const second = new StateStore(
+      directory,
+      relativePath,
+      () => "2026-08-05T00:00:02.000Z",
+    );
+    await first.initialize(validState(directory));
+    const loadedByFirst = await first.load();
+    const loadedBySecond = await second.load();
+    if (!loadedByFirst || !loadedBySecond)
+      throw new Error("Both writers must load the initialized state.");
+
+    const firstSaved = await first.save({
+      ...loadedByFirst,
+      nextAllowedAction: "start-milestone",
+    });
+    expect(firstSaved.revision).toBe(1);
+
+    await expect(
+      second.save({ ...loadedBySecond, nextAllowedAction: "stop" }),
+    ).rejects.toThrow(StaleStateError);
+    await expect(
+      second.save({ ...loadedBySecond, nextAllowedAction: "stop" }),
+    ).rejects.toThrow(/No merge was attempted/);
+
+    const durable = await first.load();
+    expect(durable?.revision).toBe(1);
+    expect(durable?.nextAllowedAction).toBe("start-milestone");
+
+    const refreshed = await second.load();
+    if (!refreshed) throw new Error("Durable state must reload.");
+    const secondSaved = await second.save({
+      ...refreshed,
+      nextAllowedAction: "stop",
+    });
+    expect(secondSaved.revision).toBe(2);
+  });
+
+  it("rejects saving over missing durable state", async () => {
+    const directory = await temporaryDirectory();
+    const store = new StateStore(directory, "state.json");
+    await expect(store.save(validState(directory))).rejects.toThrow(
+      /mutations must go through initialization/,
+    );
+  });
+
+  it("initializes exclusively and returns the existing durable state on contention", async () => {
+    const directory = await temporaryDirectory();
+    const relativePath = "state.json";
+    const winner = new StateStore(directory, relativePath);
+    const loser = new StateStore(directory, relativePath);
+    const winnerState = validState(directory);
+    const initialized = await winner.initialize(winnerState);
+    expect(initialized.revision).toBe(0);
+
+    const loserState = {
+      ...validState(directory),
+      nextAllowedAction: "stop" as const,
+    };
+    const observed = await loser.initialize(loserState);
+    expect(observed.nextAllowedAction).toBe(winnerState.nextAllowedAction);
+    expect(JSON.parse(await readFile(winner.path, "utf8"))).toMatchObject({
+      nextAllowedAction: winnerState.nextAllowedAction,
+    });
+
+    await writeFile(winner.path, '{"schemaVersion":"0.0.0"}\n', "utf8");
+    await expect(loser.initialize(loserState)).rejects.toThrow(
+      /Invalid orchestrator state/,
+    );
   });
 
   it("leaves the prior durable file intact when replacement is interrupted", async () => {

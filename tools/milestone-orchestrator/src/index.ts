@@ -7,6 +7,7 @@ export * from "./codex-gateway.js";
 export * from "./command-policy.js";
 export * from "./config.js";
 export * from "./contracts.js";
+export * from "./controller-lease.js";
 export * from "./doctor.js";
 export * from "./git-isolation.js";
 export * from "./invariant-suite.js";

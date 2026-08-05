@@ -113,6 +113,12 @@ describe("read-only orchestrator doctor", () => {
           ]).map((path) => ({ path, present: true })),
           manifestCovered: null,
         },
+        controllerLease: {
+          status: "pass",
+          present: false,
+          malformed: false,
+          owner: null,
+        },
       },
     });
     const serialized = JSON.stringify(diagnostic);

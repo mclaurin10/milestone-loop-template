@@ -16,6 +16,28 @@ export interface AtomicWriteHooks {
   ) => void | Promise<void>;
 }
 
+export class StaleStateError extends Error {
+  readonly path: string;
+  readonly expectedRevision: number;
+  readonly actualRevision: number | null;
+
+  constructor(
+    path: string,
+    expectedRevision: number,
+    actualRevision: number | null,
+  ) {
+    super(
+      actualRevision === null
+        ? `Durable controller state is missing at ${path}; mutations must go through initialization.`
+        : `Durable controller state advanced under this process (disk revision ${actualRevision}, in-memory ${expectedRevision}) at ${path}. Another controller likely ran; re-run the command to load the durable state. No merge was attempted.`,
+    );
+    this.name = "StaleStateError";
+    this.path = path;
+    this.expectedRevision = expectedRevision;
+    this.actualRevision = actualRevision;
+  }
+}
+
 export async function atomicWriteJson(
   targetPath: string,
   value: unknown,
@@ -352,15 +374,58 @@ export class StateStore {
   }
 
   async initialize(state: OrchestratorState): Promise<OrchestratorState> {
-    const existing = await this.load();
-    if (existing) return existing;
     assertOrchestratorState(state);
-    await atomicWriteJson(this.path, state);
+    await mkdir(dirname(this.path), { recursive: true });
+    let handle;
+    try {
+      handle = await open(this.path, "wx");
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        "code" in error &&
+        (error as NodeJS.ErrnoException).code === "EEXIST"
+      ) {
+        const existing = await this.load();
+        if (existing) return existing;
+        throw new Error(
+          `Durable controller state at ${this.path} vanished during exclusive initialization.`,
+          { cause: error },
+        );
+      }
+      throw error;
+    }
+    try {
+      await handle.writeFile(`${JSON.stringify(state, null, 2)}\n`, "utf8");
+      await handle.sync();
+    } finally {
+      await handle.close();
+    }
     return state;
   }
 
   async save(state: OrchestratorState): Promise<OrchestratorState> {
     assertOrchestratorState(state);
+    let diskRevision: number;
+    try {
+      const parsed = JSON.parse(await readFile(this.path, "utf8")) as {
+        revision?: unknown;
+      };
+      if (!Number.isSafeInteger(parsed.revision))
+        throw new Error(
+          `Durable controller state at ${this.path} has no readable revision; refusing to replace it.`,
+        );
+      diskRevision = Number(parsed.revision);
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        "code" in error &&
+        (error as NodeJS.ErrnoException).code === "ENOENT"
+      )
+        throw new StaleStateError(this.path, state.revision, null);
+      throw error;
+    }
+    if (diskRevision !== state.revision)
+      throw new StaleStateError(this.path, state.revision, diskRevision);
     const saved: OrchestratorState = {
       ...state,
       revision: state.revision + 1,

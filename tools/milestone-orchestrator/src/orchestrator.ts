@@ -35,6 +35,11 @@ import {
   differingIdentityFields,
 } from "./candidate-identity.js";
 import {
+  ControllerLease,
+  type ControllerLeaseInspection,
+  type ControllerLeaseOperation,
+} from "./controller-lease.js";
+import {
   type CodexGateway,
   type CodexInvocation,
   SdkCodexGateway,
@@ -117,6 +122,21 @@ export interface OrchestratorDependencies {
   readonly evidencePruner?: typeof pruneManagedEvidenceRuns;
   readonly evidenceDiscovery?: typeof discoverManagedEvidenceRuns;
   readonly telemetryStoreOpen?: typeof TelemetryStore.open;
+  readonly leaseOperation?: ControllerLeaseOperation;
+}
+
+export interface OrchestratorInspection {
+  readonly state: OrchestratorState | null;
+  readonly targetHead: string;
+  readonly targetDrift: {
+    readonly storedVerifiedCommit: string;
+    readonly actualHead: string;
+  } | null;
+  readonly pendingWorkspaceCleanups: number;
+  readonly protectedIntegrity:
+    "verified" | "uninitialized" | { readonly driftedPaths: readonly string[] };
+  readonly lease: ControllerLeaseInspection;
+  readonly nextAllowedAction: OrchestratorState["nextAllowedAction"];
 }
 
 export interface RunOptions {
@@ -570,6 +590,7 @@ export class MilestoneOrchestrator {
   private readonly evidencePruner: typeof pruneManagedEvidenceRuns;
   private readonly evidenceDiscovery: typeof discoverManagedEvidenceRuns;
   private readonly telemetryStoreOpen: typeof TelemetryStore.open;
+  private readonly lease: ControllerLease;
   private telemetryValue: TelemetryStore | null = null;
 
   private constructor(input: {
@@ -584,6 +605,7 @@ export class MilestoneOrchestrator {
     evidencePruner: typeof pruneManagedEvidenceRuns;
     evidenceDiscovery: typeof discoverManagedEvidenceRuns;
     telemetryStoreOpen: typeof TelemetryStore.open;
+    lease: ControllerLease;
   }) {
     this.repositoryRoot = input.repositoryRoot;
     this.config = input.config;
@@ -596,6 +618,7 @@ export class MilestoneOrchestrator {
     this.evidencePruner = input.evidencePruner;
     this.evidenceDiscovery = input.evidenceDiscovery;
     this.telemetryStoreOpen = input.telemetryStoreOpen;
+    this.lease = input.lease;
   }
 
   static async open(
@@ -612,6 +635,30 @@ export class MilestoneOrchestrator {
         buildCanonicalProtectedSet(config),
       );
     }
+    const lease = await ControllerLease.acquire({
+      repositoryRoot: root,
+      statePath: config.statePath,
+      operation: dependencies.leaseOperation ?? "run",
+    });
+    try {
+      return await MilestoneOrchestrator.openLeased(
+        root,
+        config,
+        lease,
+        dependencies,
+      );
+    } catch (error) {
+      await lease.release().catch(() => undefined);
+      throw error;
+    }
+  }
+
+  private static async openLeased(
+    root: string,
+    config: OrchestratorConfig,
+    lease: ControllerLease,
+    dependencies: OrchestratorDependencies,
+  ): Promise<MilestoneOrchestrator> {
     const now = dependencies.now ?? (() => new Date());
     const store = new StateStore(root, config.statePath, () => iso(now));
     let state = await store.load();
@@ -687,6 +734,7 @@ export class MilestoneOrchestrator {
         dependencies.evidenceDiscovery ?? discoverManagedEvidenceRuns,
       telemetryStoreOpen:
         dependencies.telemetryStoreOpen ?? TelemetryStore.open,
+      lease,
     });
     instance.assertStoredPaths();
     instance.assertStoredAgentPolicies();
@@ -702,6 +750,65 @@ export class MilestoneOrchestrator {
 
   get state(): OrchestratorState {
     return this.stateValue;
+  }
+
+  async close(): Promise<void> {
+    await this.lease.release();
+  }
+
+  static async inspect(
+    repositoryRoot: string,
+    configPath?: string,
+  ): Promise<OrchestratorInspection> {
+    const root = resolve(repositoryRoot);
+    const config = await loadConfig(root, configPath);
+    const store = new StateStore(root, config.statePath);
+    const state = await store.load();
+    const targetHead = gitHead(root);
+    const lease = await ControllerLease.inspect(root, config.statePath);
+    if (!state)
+      return {
+        state: null,
+        targetHead,
+        targetDrift: null,
+        pendingWorkspaceCleanups: 0,
+        protectedIntegrity: "uninitialized",
+        lease,
+        nextAllowedAction: "plan",
+      };
+    const driftedPaths: string[] = [];
+    for (const file of state.repository.protectedFiles) {
+      const absolute = resolve(root, file.path);
+      if (!existsSync(absolute)) {
+        driftedPaths.push(file.path);
+        continue;
+      }
+      const actual = createHash("sha256")
+        .update(await readFile(absolute))
+        .digest("hex");
+      if (actual !== file.sha256) driftedPaths.push(file.path);
+    }
+    return {
+      state,
+      targetHead,
+      targetDrift:
+        targetHead === state.repository.verifiedCommit
+          ? null
+          : {
+              storedVerifiedCommit: state.repository.verifiedCommit,
+              actualHead: targetHead,
+            },
+      pendingWorkspaceCleanups: state.milestones.filter(
+        (milestone) =>
+          milestone.workspace !== null &&
+          (milestone.workspace.cleanup.status === "pending" ||
+            milestone.workspace.cleanup.status === "failed"),
+      ).length,
+      protectedIntegrity:
+        driftedPaths.length === 0 ? "verified" : { driftedPaths },
+      lease,
+      nextAllowedAction: state.nextAllowedAction,
+    };
   }
 
   private assertStoredPaths(): void {
@@ -2739,36 +2846,42 @@ export class MilestoneOrchestrator {
   }
 
   statusSummary(): unknown {
-    return {
-      schemaVersion: this.stateValue.schemaVersion,
-      revision: this.stateValue.revision,
-      repository: this.stateValue.repository,
-      run: this.stateValue.run,
-      queue: this.stateValue.queue,
-      activeMilestoneId: this.stateValue.activeMilestoneId,
-      requiredNextVerticalConsumer:
-        this.stateValue.requiredNextVerticalConsumer,
-      evidenceRetention: this.stateValue.evidenceRetention,
-      milestones: this.stateValue.milestones.map((milestone) => ({
-        id: milestone.proposal.id,
-        title: milestone.proposal.title,
-        status: milestone.status,
-        attempts: milestone.attempts,
-        workerThreadId: milestone.workerThreadId,
-        workerPolicy: milestone.workerPolicy,
-        workerThreadLineage: milestone.workerThreadLineage,
-        nextAllowedAction: milestone.nextAllowedAction,
-        workspace:
-          milestone.workspace === null
-            ? null
-            : relative(
-                this.repositoryRoot,
-                milestone.workspace.path,
-              ).replaceAll("\\", "/"),
-        workspacePreserved: milestone.workspace?.preserved ?? null,
-        workspaceCleanup: milestone.workspace?.cleanup ?? null,
-      })),
-      nextAllowedAction: this.stateValue.nextAllowedAction,
-    };
+    return stateStatusSummary(this.repositoryRoot, this.stateValue);
   }
+}
+
+export function stateStatusSummary(
+  repositoryRoot: string,
+  state: OrchestratorState,
+): unknown {
+  return {
+    schemaVersion: state.schemaVersion,
+    revision: state.revision,
+    repository: state.repository,
+    run: state.run,
+    queue: state.queue,
+    activeMilestoneId: state.activeMilestoneId,
+    requiredNextVerticalConsumer: state.requiredNextVerticalConsumer,
+    evidenceRetention: state.evidenceRetention,
+    milestones: state.milestones.map((milestone) => ({
+      id: milestone.proposal.id,
+      title: milestone.proposal.title,
+      status: milestone.status,
+      attempts: milestone.attempts,
+      workerThreadId: milestone.workerThreadId,
+      workerPolicy: milestone.workerPolicy,
+      workerThreadLineage: milestone.workerThreadLineage,
+      nextAllowedAction: milestone.nextAllowedAction,
+      workspace:
+        milestone.workspace === null
+          ? null
+          : relative(repositoryRoot, milestone.workspace.path).replaceAll(
+              "\\",
+              "/",
+            ),
+      workspacePreserved: milestone.workspace?.preserved ?? null,
+      workspaceCleanup: milestone.workspace?.cleanup ?? null,
+    })),
+    nextAllowedAction: state.nextAllowedAction,
+  };
 }

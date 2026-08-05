@@ -1,4 +1,4 @@
-import { lstat, readdir, realpath, rm } from "node:fs/promises";
+import { lstat, mkdir, readdir, realpath, rm } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
 
 function missing(error: unknown): boolean {
@@ -12,6 +12,26 @@ function missing(error: unknown): boolean {
 export function strictlyContained(root: string, candidate: string): boolean {
   const path = relative(resolve(root), resolve(candidate));
   return path !== "" && !path.startsWith("..") && !isAbsolute(path);
+}
+
+export async function ensureContainedDirectory(
+  repositoryRoot: string,
+  path: string,
+): Promise<void> {
+  const absoluteRoot = resolve(repositoryRoot);
+  const absolute = resolve(path);
+  if (!strictlyContained(absoluteRoot, absolute))
+    throw new Error(`Contained directory escapes the repository: ${absolute}.`);
+  await mkdir(absolute, { recursive: true });
+  const metadata = await lstat(absolute);
+  if (!metadata.isDirectory() || metadata.isSymbolicLink())
+    throw new Error(`Contained path is not a real directory: ${absolute}.`);
+  const realRoot = await realpath(absoluteRoot);
+  const realDirectory = await realpath(absolute);
+  if (!strictlyContained(realRoot, realDirectory))
+    throw new Error(
+      `Contained directory resolves outside the repository: ${absolute}.`,
+    );
 }
 
 export interface ArtifactRootInspection {
