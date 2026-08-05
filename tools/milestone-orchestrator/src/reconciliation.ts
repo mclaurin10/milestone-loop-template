@@ -30,7 +30,10 @@ import {
 } from "./benchmark.js";
 import type { CodexGateway } from "./codex-gateway.js";
 import { SdkCodexGateway } from "./codex-gateway.js";
-import { ControllerLease } from "./controller-lease.js";
+import {
+  ControllerLease,
+  releaseLeaseWithoutMasking,
+} from "./controller-lease.js";
 import { ensureContainedDirectory } from "./path-safety.js";
 import { createMilestoneRecord } from "./milestone-state.js";
 import { currentVerificationProfile } from "./git-isolation.js";
@@ -1677,6 +1680,7 @@ export class ReconciliationController {
       statePath: this.config.statePath,
       operation: "reconcile",
     });
+    let reconciliationFailed = false;
     try {
       const fresh = await this.store.load();
       if (!fresh)
@@ -1733,6 +1737,7 @@ export class ReconciliationController {
       }
       return this.status();
     } catch (error) {
+      reconciliationFailed = true;
       if (error instanceof ReconciliationInterruption) throw error;
       if (error instanceof CandidateDriftError) {
         await this.resetForCandidateDrift();
@@ -1747,7 +1752,10 @@ export class ReconciliationController {
       await this.fail(error, classification);
       throw error;
     } finally {
-      await lock.release();
+      await releaseLeaseWithoutMasking(
+        () => lock.release(),
+        reconciliationFailed,
+      );
     }
   }
 }

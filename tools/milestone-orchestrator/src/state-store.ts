@@ -1,4 +1,5 @@
-import { mkdir, open, readFile, rename, unlink } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import { link, mkdir, open, readFile, rename, unlink } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 
 import {
@@ -58,6 +59,41 @@ export async function atomicWriteJson(
     if (!closed) await handle.close().catch(() => undefined);
     await unlink(temporaryPath).catch(() => undefined);
     throw error;
+  }
+}
+
+export async function exclusiveWriteSerialized(
+  targetPath: string,
+  serialized: string,
+  hooks: AtomicWriteHooks = {},
+): Promise<"created" | "exists"> {
+  await mkdir(dirname(targetPath), { recursive: true });
+  const temporaryPath = `${targetPath}.tmp-${process.pid}-${randomUUID()}`;
+  const handle = await open(temporaryPath, "wx");
+  let closed = false;
+  try {
+    await handle.writeFile(serialized, "utf8");
+    await handle.sync();
+    await handle.close();
+    closed = true;
+    await hooks.beforeRename?.(temporaryPath, targetPath);
+    // link keeps wx-exclusive semantics (EEXIST when the target exists) while
+    // publishing fully written, fsynced bytes - no reader can observe a
+    // partially written target.
+    await link(temporaryPath, targetPath);
+    return "created";
+  } catch (error) {
+    if (!closed) await handle.close().catch(() => undefined);
+    if (
+      closed &&
+      error instanceof Error &&
+      "code" in error &&
+      (error as NodeJS.ErrnoException).code === "EEXIST"
+    )
+      return "exists";
+    throw error;
+  } finally {
+    await unlink(temporaryPath).catch(() => undefined);
   }
 }
 
@@ -373,32 +409,22 @@ export class StateStore {
     }
   }
 
-  async initialize(state: OrchestratorState): Promise<OrchestratorState> {
+  async initialize(
+    state: OrchestratorState,
+    hooks: AtomicWriteHooks = {},
+  ): Promise<OrchestratorState> {
     assertOrchestratorState(state);
-    await mkdir(dirname(this.path), { recursive: true });
-    let handle;
-    try {
-      handle = await open(this.path, "wx");
-    } catch (error) {
-      if (
-        error instanceof Error &&
-        "code" in error &&
-        (error as NodeJS.ErrnoException).code === "EEXIST"
-      ) {
-        const existing = await this.load();
-        if (existing) return existing;
-        throw new Error(
-          `Durable controller state at ${this.path} vanished during exclusive initialization.`,
-          { cause: error },
-        );
-      }
-      throw error;
-    }
-    try {
-      await handle.writeFile(`${JSON.stringify(state, null, 2)}\n`, "utf8");
-      await handle.sync();
-    } finally {
-      await handle.close();
+    const outcome = await exclusiveWriteSerialized(
+      this.path,
+      `${JSON.stringify(state, null, 2)}\n`,
+      hooks,
+    );
+    if (outcome === "exists") {
+      const existing = await this.load();
+      if (existing) return existing;
+      throw new Error(
+        `Durable controller state at ${this.path} vanished during exclusive initialization.`,
+      );
     }
     return state;
   }

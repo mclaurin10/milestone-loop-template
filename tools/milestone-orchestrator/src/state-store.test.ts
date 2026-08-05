@@ -114,6 +114,21 @@ describe("atomic state persistence", () => {
     );
   });
 
+  it("leaves nothing behind when exclusive initialization is interrupted", async () => {
+    const directory = await temporaryDirectory();
+    const store = new StateStore(directory, "state.json");
+    await expect(
+      store.initialize(validState(directory), {
+        beforeRename() {
+          throw new Error("injected interruption");
+        },
+      }),
+    ).rejects.toThrow(/injected interruption/);
+    expect(await readdir(directory)).toEqual([]);
+    const recovered = await store.initialize(validState(directory));
+    expect(recovered.revision).toBe(0);
+  });
+
   it("leaves the prior durable file intact when replacement is interrupted", async () => {
     const directory = await temporaryDirectory();
     const target = join(directory, "state.json");

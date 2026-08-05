@@ -1,21 +1,58 @@
 import { randomUUID } from "node:crypto";
-import { lstat, open, readFile, unlink } from "node:fs/promises";
-import { hostname } from "node:os";
-import { dirname, resolve } from "node:path";
+import { lstat, readFile, rename, unlink } from "node:fs/promises";
+import { hostname, tmpdir } from "node:os";
+import { dirname, join, resolve } from "node:path";
 
 import { ensureContainedDirectory } from "./path-safety.js";
+import { exclusiveWriteSerialized } from "./state-store.js";
 
 export type ControllerLeaseOperation =
   "run" | "plan" | "canary" | "reconcile" | "retention-apply";
 
 interface ControllerLeaseOwner {
-  readonly schemaVersion: "1.0.0";
+  readonly schemaVersion: "1.1.0";
   readonly token: string;
   readonly pid: number;
   readonly hostname: string;
+  readonly hostInstanceId: string | null;
   readonly processStartedAt: string;
   readonly createdAt: string;
   readonly operation: ControllerLeaseOperation;
+}
+
+// processStartedAt is derived from process.uptime(), which drifts by a few
+// milliseconds between reads; anything inside this window is the same process
+// incarnation, anything outside it is a reused pid.
+const PROCESS_START_TOLERANCE_MS = 10_000;
+
+async function machineInstanceId(): Promise<string | null> {
+  const path = join(tmpdir(), "milestone-loop-host-instance.json");
+  try {
+    const parsed = JSON.parse(await readFile(path, "utf8")) as {
+      instanceId?: unknown;
+    };
+    if (typeof parsed.instanceId === "string" && parsed.instanceId.length > 0)
+      return parsed.instanceId;
+    return null;
+  } catch (error) {
+    if (errorCode(error) !== "ENOENT") return null;
+  }
+  const candidate = randomUUID();
+  try {
+    const outcome = await exclusiveWriteSerialized(
+      path,
+      `${JSON.stringify({ schemaVersion: "1.0.0", instanceId: candidate })}\n`,
+    );
+    if (outcome === "created") return candidate;
+    const parsed = JSON.parse(await readFile(path, "utf8")) as {
+      instanceId?: unknown;
+    };
+    return typeof parsed.instanceId === "string" && parsed.instanceId.length > 0
+      ? parsed.instanceId
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 export interface ControllerLeaseInspection {
@@ -38,6 +75,20 @@ function errorCode(error: unknown): string | null {
 
 function manualRemedy(path: string): string {
   return `If that controller is dead, delete ${path} manually.`;
+}
+
+export async function releaseLeaseWithoutMasking(
+  release: () => Promise<void>,
+  operationFailed: boolean,
+): Promise<void> {
+  try {
+    await release();
+  } catch (releaseError) {
+    if (!operationFailed) throw releaseError;
+    process.stderr.write(
+      `Controller lease release failed after an operation error: ${releaseError instanceof Error ? releaseError.message : String(releaseError)}\n`,
+    );
+  }
 }
 
 export class ControllerLease {
@@ -63,73 +114,112 @@ export class ControllerLease {
     const path = resolve(directory, "controller.lease");
     const token = randomUUID();
     const owner: ControllerLeaseOwner = {
-      schemaVersion: "1.0.0",
+      schemaVersion: "1.1.0",
       token,
       pid: process.pid,
       hostname: hostname(),
+      hostInstanceId: await machineInstanceId(),
       processStartedAt: new Date(
         Date.now() - process.uptime() * 1000,
       ).toISOString(),
       createdAt: new Date().toISOString(),
       operation: input.operation,
     };
-    for (let attempt = 0; attempt < 2; attempt += 1) {
+    const serialized = `${JSON.stringify(owner)}\n`;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const published = await exclusiveWriteSerialized(path, serialized);
+      if (published === "created") return new ControllerLease(path, token);
+      let raw: string;
       try {
-        const handle = await open(path, "wx");
-        try {
-          await handle.writeFile(`${JSON.stringify(owner)}\n`, "utf8");
-          await handle.sync();
-        } finally {
-          await handle.close();
-        }
-        return new ControllerLease(path, token);
-      } catch (error) {
-        if (errorCode(error) !== "EEXIST" || attempt > 0) throw error;
         const metadata = await lstat(path);
         if (!metadata.isFile() || metadata.isSymbolicLink())
-          throw new Error("The controller lease is not a regular file.", {
-            cause: error,
-          });
-        let existing: Partial<ControllerLeaseOwner>;
-        try {
-          existing = JSON.parse(
-            await readFile(path, "utf8"),
-          ) as Partial<ControllerLeaseOwner>;
-        } catch (parseError) {
-          throw new Error(
-            `The controller lease file is malformed: ${path}. Verify no controller is running, then delete it manually.`,
-            { cause: parseError },
-          );
-        }
-        if (
-          !Number.isSafeInteger(existing.pid) ||
-          typeof existing.hostname !== "string"
-        )
-          throw new Error(
-            `The controller lease file is malformed: ${path}. Verify no controller is running, then delete it manually.`,
-            { cause: error },
-          );
-        const describeOwner = `pid ${existing.pid} on ${existing.hostname} (operation ${existing.operation ?? "unknown"}, created ${existing.createdAt ?? "unknown"}, process started ${existing.processStartedAt ?? "unknown"})`;
-        if (existing.hostname !== hostname())
-          throw new Error(
-            `A controller on a different host holds the mutation lease: ${describeOwner}. Cross-host liveness cannot be verified. ${manualRemedy(path)}`,
-            { cause: error },
-          );
-        let alive = true;
-        try {
-          process.kill(Number(existing.pid), 0);
-        } catch (probeError) {
-          alive = errorCode(probeError) === "EPERM";
-        }
-        if (alive)
-          throw new Error(
-            `Another controller holds the mutation lease: ${describeOwner}. Wait for it to finish. ${manualRemedy(path)}`,
-            { cause: error },
-          );
-        await unlink(path);
+          throw new Error("The controller lease is not a regular file.");
+        raw = await readFile(path, "utf8");
+      } catch (error) {
+        // The holder released (or a racing recovery finished) between our
+        // publish attempt and this inspection; retry the exclusive publish.
+        if (errorCode(error) === "ENOENT") continue;
+        throw error;
       }
+      let existing: Partial<ControllerLeaseOwner>;
+      try {
+        existing = JSON.parse(raw) as Partial<ControllerLeaseOwner>;
+      } catch (parseError) {
+        throw new Error(
+          `The controller lease file is malformed: ${path}. Verify no controller is running, then delete it manually.`,
+          { cause: parseError },
+        );
+      }
+      if (
+        !Number.isSafeInteger(existing.pid) ||
+        typeof existing.hostname !== "string"
+      )
+        throw new Error(
+          `The controller lease file is malformed: ${path}. Verify no controller is running, then delete it manually.`,
+        );
+      const describeOwner = `pid ${existing.pid} on ${existing.hostname} (operation ${existing.operation ?? "unknown"}, created ${existing.createdAt ?? "unknown"}, process started ${existing.processStartedAt ?? "unknown"})`;
+      const sameHost =
+        typeof existing.hostInstanceId === "string" &&
+        owner.hostInstanceId !== null
+          ? existing.hostInstanceId === owner.hostInstanceId
+          : existing.hostname === hostname();
+      if (!sameHost)
+        throw new Error(
+          `A controller on a different host holds the mutation lease: ${describeOwner}. Cross-host liveness cannot be verified. ${manualRemedy(path)}`,
+        );
+      let alive = true;
+      try {
+        process.kill(Number(existing.pid), 0);
+      } catch (probeError) {
+        alive = errorCode(probeError) === "EPERM";
+      }
+      if (alive && Number(existing.pid) === process.pid) {
+        // Our own pid under a foreign token means the recorded owner died and
+        // the OS reused its pid for this process; the recorded process start
+        // time is the discriminator.
+        const recorded = Date.parse(existing.processStartedAt ?? "");
+        const ours = Date.parse(owner.processStartedAt);
+        if (
+          !Number.isFinite(recorded) ||
+          Math.abs(ours - recorded) > PROCESS_START_TOLERANCE_MS
+        )
+          alive = false;
+      }
+      if (alive)
+        throw new Error(
+          `Another controller holds the mutation lease: ${describeOwner}. Wait for it to finish. ${manualRemedy(path)}`,
+        );
+      // Atomic takeover: exactly one recovering controller wins this rename;
+      // losers observe ENOENT and retry the exclusive publish above.
+      const quarantinePath = resolve(
+        directory,
+        `controller.lease.stale-${randomUUID()}`,
+      );
+      try {
+        await rename(path, quarantinePath);
+      } catch (renameError) {
+        if (errorCode(renameError) === "ENOENT") continue;
+        throw renameError;
+      }
+      let quarantined: string | null = null;
+      try {
+        quarantined = await readFile(quarantinePath, "utf8");
+      } catch {
+        // Unreadable quarantined bytes count as a mismatch below.
+      }
+      if (quarantined !== raw)
+        // The lease changed between our read and our rename: a racing
+        // controller recovered the stale lease and published a fresh one,
+        // which this rename then captured. Renaming it back cannot be done
+        // safely, so fail loudly and preserve the bytes for the operator.
+        throw new Error(
+          `The controller lease changed while a stale lease was being recovered; the captured lease is preserved at ${quarantinePath}. Verify no controller is running, then delete it manually.`,
+        );
+      await unlink(quarantinePath).catch(() => undefined);
     }
-    throw new Error("Cannot acquire the controller mutation lease.");
+    throw new Error(
+      `Cannot acquire the controller mutation lease at ${path}; racing controllers kept replacing it. Re-run the command.`,
+    );
   }
 
   async release(): Promise<void> {

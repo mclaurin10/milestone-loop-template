@@ -6,7 +6,10 @@ import { fileURLToPath } from "node:url";
 
 import { canaryMilestone, CANARY_MILESTONE_ID } from "./canary.js";
 import { DEFAULT_CONFIG_PATH, loadConfig } from "./config.js";
-import { ControllerLease } from "./controller-lease.js";
+import {
+  ControllerLease,
+  releaseLeaseWithoutMasking,
+} from "./controller-lease.js";
 import { runDoctorDiagnostic } from "./doctor.js";
 import {
   applyEvidenceRetentionPlan,
@@ -248,6 +251,7 @@ async function main(): Promise<void> {
       statePath: config.statePath,
       operation: "retention-apply",
     });
+    let retentionFailed = false;
     try {
       const state = await new StateStore(root, config.statePath).load();
       if (!state)
@@ -265,8 +269,11 @@ async function main(): Promise<void> {
         }),
         args.json,
       );
+    } catch (error) {
+      retentionFailed = true;
+      throw error;
     } finally {
-      await lease.release();
+      await releaseLeaseWithoutMasking(() => lease.release(), retentionFailed);
     }
     return;
   }
@@ -363,6 +370,7 @@ async function main(): Promise<void> {
           ? "plan"
           : "run",
   });
+  let commandFailed = false;
   try {
     switch (args.command) {
       case "plan":
@@ -411,8 +419,11 @@ async function main(): Promise<void> {
       default:
         throw new Error(`Unreachable loop command ${args.command}.`);
     }
+  } catch (error) {
+    commandFailed = true;
+    throw error;
   } finally {
-    await orchestrator.close();
+    await releaseLeaseWithoutMasking(() => orchestrator.close(), commandFailed);
   }
 }
 

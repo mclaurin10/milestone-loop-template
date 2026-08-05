@@ -198,9 +198,13 @@ rejection of every canonical path including case variants.
 - Single-writer mutation: every mutating loop command (including
   reconciliation) holds the repository-wide lease at
   `artifacts/orchestrator/state/controller.lease`, state initialization is
-  exclusive-create, and every state save compare-and-swaps the stored
-  revision — a stale writer fails with an actionable error and no merge is
-  attempted. `loop:status`/`loop:dry-run` are read-only and lease-free.
+  exclusive-create *and* crash-atomic (fully written bytes are published
+  via hard link, so an interrupted initialization leaves nothing behind),
+  and every state save compare-and-swaps the stored revision — a stale
+  writer fails with an actionable error and no merge is attempted.
+  Stale-lease recovery is an atomic quarantine-rename with byte
+  verification: concurrent recoveries have exactly one winner.
+  `loop:status`/`loop:dry-run` are read-only and lease-free.
 - Approval-bound evidence retention: `loop:run` never deletes evidence —
   controller startup only writes a retention *plan*
   (`evidence-retention.json` in the run directory). Deletion requires

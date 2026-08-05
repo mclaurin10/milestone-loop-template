@@ -101,10 +101,13 @@ report `NOT_READY`, never pass.
    concurrent controller fails loudly instead of silently losing updates.
    `loop:status` and `loop:dry-run` are strictly read-only — they never
    initialize state, never take the lease, and report the current lease
-   owner. A lease held by a dead process on the same host is recovered
-   automatically; a lease from another host, or a malformed lease file, is
-   never stolen — after confirming the owner is dead, delete the lease
-   file manually.
+   owner. Lease files are published atomically (no reader can observe a
+   partially written lease), and a lease held by a dead process on the
+   same host is recovered automatically via an atomic quarantine-rename,
+   so two controllers racing the same dead lease cannot both win. A lease
+   from another host (host identity includes a per-machine instance id,
+   not just the hostname), or a malformed lease file, is never stolen —
+   after confirming the owner is dead, delete the lease file manually.
 
    **Nothing is deleted by `loop:run`.** Controller startup only *plans*
    evidence retention (the run's `evidence-retention.json` lists what a
