@@ -45,7 +45,6 @@ import {
   SdkCodexGateway,
 } from "./codex-gateway.js";
 import { measurableTokenUnits } from "./budget.js";
-import { readArtifactInventoryRetentionGuard } from "./artifact-inventory.js";
 import {
   DEFAULT_VERIFICATION_MANIFEST_PATH,
   loadConfig,
@@ -59,8 +58,9 @@ import {
 } from "./protected-roots.js";
 import { runCommand } from "./command-runner.js";
 import {
+  buildEvidenceRetentionPlan,
   discoverManagedEvidenceRuns,
-  pruneManagedEvidenceRuns,
+  planManagedEvidenceRuns,
 } from "./evidence-retention.js";
 import {
   assertProtectedFiles,
@@ -119,7 +119,7 @@ export interface OrchestratorDependencies {
   readonly now?: () => Date;
   readonly createRunId?: () => string;
   readonly workspaceCleanup?: typeof performWorkspaceCleanup;
-  readonly evidencePruner?: typeof pruneManagedEvidenceRuns;
+  readonly evidencePlanner?: typeof planManagedEvidenceRuns;
   readonly evidenceDiscovery?: typeof discoverManagedEvidenceRuns;
   readonly telemetryStoreOpen?: typeof TelemetryStore.open;
   readonly leaseOperation?: ControllerLeaseOperation;
@@ -587,7 +587,7 @@ export class MilestoneOrchestrator {
   private readonly now: () => Date;
   private readonly createRunId: () => string;
   private readonly workspaceCleanup: typeof performWorkspaceCleanup;
-  private readonly evidencePruner: typeof pruneManagedEvidenceRuns;
+  private readonly evidencePlanner: typeof planManagedEvidenceRuns;
   private readonly evidenceDiscovery: typeof discoverManagedEvidenceRuns;
   private readonly telemetryStoreOpen: typeof TelemetryStore.open;
   private readonly lease: ControllerLease;
@@ -602,7 +602,7 @@ export class MilestoneOrchestrator {
     now: () => Date;
     createRunId: () => string;
     workspaceCleanup: typeof performWorkspaceCleanup;
-    evidencePruner: typeof pruneManagedEvidenceRuns;
+    evidencePlanner: typeof planManagedEvidenceRuns;
     evidenceDiscovery: typeof discoverManagedEvidenceRuns;
     telemetryStoreOpen: typeof TelemetryStore.open;
     lease: ControllerLease;
@@ -615,7 +615,7 @@ export class MilestoneOrchestrator {
     this.now = input.now;
     this.createRunId = input.createRunId;
     this.workspaceCleanup = input.workspaceCleanup;
-    this.evidencePruner = input.evidencePruner;
+    this.evidencePlanner = input.evidencePlanner;
     this.evidenceDiscovery = input.evidenceDiscovery;
     this.telemetryStoreOpen = input.telemetryStoreOpen;
     this.lease = input.lease;
@@ -729,7 +729,7 @@ export class MilestoneOrchestrator {
       createRunId: dependencies.createRunId ?? (() => safeRunId(now())),
       workspaceCleanup:
         dependencies.workspaceCleanup ?? performWorkspaceCleanup,
-      evidencePruner: dependencies.evidencePruner ?? pruneManagedEvidenceRuns,
+      evidencePlanner: dependencies.evidencePlanner ?? planManagedEvidenceRuns,
       evidenceDiscovery:
         dependencies.evidenceDiscovery ?? discoverManagedEvidenceRuns,
       telemetryStoreOpen:
@@ -1119,51 +1119,23 @@ export class MilestoneOrchestrator {
     }
   }
 
-  private async pruneEvidence(): Promise<void> {
+  // Startup never deletes evidence: it writes an approval-ready plan.
+  // Deletion happens only through the hash-approved loop:retention:apply
+  // command under its own controller lease.
+  private async planEvidenceRetention(): Promise<void> {
     const generatedAt = iso(this.now);
-    const candidateCommit = gitHead(this.repositoryRoot);
-    const inventoryGuard = await readArtifactInventoryRetentionGuard(
-      this.repositoryRoot,
-      candidateCommit,
-    );
-    const common = {
+    const plan = await buildEvidenceRetentionPlan({
       repositoryRoot: this.repositoryRoot,
-      keepRecentRuns: this.config.evidenceRetention.keepRecentRuns,
-      legacyRunIds: this.stateValue.evidenceRetention.legacyRunIds,
-      durableState: this.stateValue,
-      safety: {
-        candidateCommit,
-        activeReconciliation: inventoryGuard.activeReconciliation,
-        inventoryHasUnknownReferences:
-          inventoryGuard.inventoryHasUnknownReferences,
-      },
+      config: this.config,
+      state: this.stateValue,
       now: generatedAt,
-    } as const;
-    const [verificationRuns, controllerRuns] = await Promise.all([
-      this.evidencePruner({
-        ...common,
-        artifactRoot: resolve(
-          this.repositoryRoot,
-          this.config.evidenceRetention.artifactRoot,
-        ),
-      }),
-      this.evidencePruner({
-        ...common,
-        artifactRoot: resolve(this.repositoryRoot, this.config.artifactRoot),
-        manifestKind: "controller-run-summary",
-      }),
-    ]);
-    const report = {
-      schemaVersion: "1.0.0",
-      generatedAt,
-      verificationRuns,
-      controllerRuns,
-    } as const;
+      planner: this.evidencePlanner,
+    });
     const reportPath = resolve(
       this.runArtifactDirectory(),
       "evidence-retention.json",
     );
-    await atomicWriteJson(reportPath, report);
+    await atomicWriteJson(reportPath, plan);
     await this.persist({
       ...this.stateValue,
       evidenceRetention: {
@@ -1372,7 +1344,7 @@ export class MilestoneOrchestrator {
       run: activeRun(id, directory, started, this.config.limits.wallClockMs),
     });
     try {
-      await this.pruneEvidence();
+      await this.planEvidenceRetention();
       await this.finishSpanBestEffort(inspectionSpan, { status: "PASS" });
     } catch (error) {
       const message = redactSensitiveText(

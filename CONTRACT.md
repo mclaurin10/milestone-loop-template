@@ -201,6 +201,16 @@ rejection of every canonical path including case variants.
   exclusive-create, and every state save compare-and-swaps the stored
   revision — a stale writer fails with an actionable error and no merge is
   attempted. `loop:status`/`loop:dry-run` are read-only and lease-free.
+- Approval-bound evidence retention: `loop:run` never deletes evidence —
+  controller startup only writes a retention *plan*
+  (`evidence-retention.json` in the run directory). Deletion requires
+  `loop:retention:plan` (standalone plan + sha256 approval token) followed
+  by `loop:retention:apply -- --plan <path> --sha256 <hex>`, which runs
+  under the controller lease, re-verifies the candidate, configuration,
+  roots, citations, and suspensions against a fresh plan, refuses the
+  whole plan on any divergence, and journals every deletion for
+  interruption-safe resumption. Terminal milestone workspace cleanup is a
+  separate automatic temporary-workspace policy (§ workspaces above).
 
 ## Adoption checklist
 

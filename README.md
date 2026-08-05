@@ -25,7 +25,7 @@ full configuration ships as a worked example in
 | Shadow scope selection | `src/affected-scope.ts`, `config/verification-scope-policy.json` | Observational affected-scope recommendation (never suppresses closure) with graduation criteria |
 | Paired benchmark | `src/benchmark.ts`, `config/benchmark-matrix.json` | Commissioned before/after benchmark of the scope selector against the historical check workload |
 | Telemetry | `src/telemetry-*.ts` | Non-semantic run telemetry and reporting |
-| Artifacts | `src/artifact-inventory.ts`, `src/evidence-retention.ts`, `src/retention-plan.ts` | Non-destructive inventory and retention planning |
+| Artifacts | `src/artifact-inventory.ts`, `src/evidence-retention.ts`, `src/retention-plan.ts` | Non-destructive inventory and retention planning; deletion only via hash-approved `loop:retention:apply` |
 | Reconciliation | `src/reconciliation.ts` | Resumable controller-boundary reconciliation when work advanced outside the tracked loop, with a fresh independent review |
 | Repo contract | `CONTRACT.md`, `PROJECT_GOAL.md`, `evals/`, `.agent/`, `AGENTS.md` | Everything an adopting repository must provide |
 
@@ -105,6 +105,19 @@ report `NOT_READY`, never pass.
    automatically; a lease from another host, or a malformed lease file, is
    never stolen — after confirming the owner is dead, delete the lease
    file manually.
+
+   **Nothing is deleted by `loop:run`.** Controller startup only *plans*
+   evidence retention (the run's `evidence-retention.json` lists what a
+   deletion would remove and why, or why it is suspended). To actually
+   delete: `pnpm loop:retention:plan` writes a standalone plan under
+   `artifacts/orchestrator/retention/plans/` and prints its sha256;
+   `pnpm loop:retention:apply -- --plan <path> --sha256 <hex>` verifies the
+   hash, takes the controller lease, re-checks the candidate, configuration,
+   citations, and suspensions against a fresh plan, refuses the whole plan
+   on any divergence, and deletes with a resumable journal under
+   `artifacts/orchestrator/retention/apply/`. Terminal milestone *workspace*
+   cleanup (`src/workspace-cleanup.ts`) is a separate automatic
+   temporary-workspace policy and is unchanged.
 
 ## Extension points
 

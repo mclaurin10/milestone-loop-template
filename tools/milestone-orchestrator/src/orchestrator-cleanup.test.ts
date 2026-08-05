@@ -615,3 +615,106 @@ describe("post-persistence workspace lifecycle", () => {
     },
   );
 });
+
+describe("evidence retention at run start", () => {
+  it(
+    "writes a retention plan and never deletes historical evidence",
+    { timeout: 30_000 },
+    async () => {
+      const config = validConfig({
+        evidenceRetention: { artifactRoot: "artifacts", keepRecentRuns: 0 },
+      });
+      const fixture = await repositoryFixture(config);
+      const verificationRoot = join(fixture.root, "artifacts");
+      const controllerRoot = join(
+        fixture.root,
+        "artifacts",
+        "orchestrator",
+        "runs",
+      );
+      await mkdir(join(verificationRoot, "old-verify-run"), {
+        recursive: true,
+      });
+      await writeFile(
+        join(verificationRoot, "old-verify-run", "result.json"),
+        `${JSON.stringify({ runId: "old-verify-run", finishedAt: "2026-08-01T00:00:00.000Z" })}\n`,
+      );
+      await mkdir(join(controllerRoot, "old-controller-run"), {
+        recursive: true,
+      });
+      await writeFile(
+        join(controllerRoot, "old-controller-run", "run-summary.json"),
+        `${JSON.stringify({ run: { id: "old-controller-run", finishedAt: "2026-08-01T00:00:00.000Z" } })}\n`,
+      );
+
+      const store = new StateStore(fixture.root, config.statePath, () => NOW);
+      await store.initialize(
+        createInitialState({
+          repositoryRoot: fixture.root,
+          targetBranch: config.targetBranch,
+          verifiedCommit: fixture.baseCommit,
+          protectedFiles: await captureProtectedFiles(fixture.root, [
+            ...config.protectedPaths,
+            fixture.configPath,
+          ]),
+          now: NOW,
+        }),
+      );
+
+      const orchestrator = await MilestoneOrchestrator.open(
+        fixture.root,
+        fixture.configPath,
+        {
+          now: () => new Date(NOW),
+          gateway: {
+            run: () => Promise.reject(new Error("planner halted by fixture")),
+          },
+          leaseOperation: "plan",
+        },
+      );
+      try {
+        await orchestrator.planOnly().catch(() => undefined);
+      } finally {
+        await orchestrator.close();
+      }
+
+      expect(await exists(join(verificationRoot, "old-verify-run"))).toBe(true);
+      expect(await exists(join(controllerRoot, "old-controller-run"))).toBe(
+        true,
+      );
+
+      const state = JSON.parse(
+        await readFile(join(fixture.root, config.statePath), "utf8"),
+      ) as {
+        evidenceRetention: {
+          lastPrunedAt: string | null;
+          lastReportPath: string | null;
+        };
+      };
+      expect(state.evidenceRetention.lastPrunedAt).toBe(NOW);
+      const reportPath = state.evidenceRetention.lastReportPath;
+      if (!reportPath) throw new Error("Retention plan path was not stored.");
+      const plan = JSON.parse(await readFile(reportPath, "utf8")) as Record<
+        string,
+        unknown
+      >;
+      expect(plan).toMatchObject({
+        schemaVersion: "1.1.0",
+        mode: "plan",
+        verificationRuns: {
+          mode: "plan",
+          // No artifact inventory exists in the fixture, so destructive
+          // eligibility stays suspended — and even an eligible run would
+          // only be listed, never deleted, at startup.
+          suspended: true,
+          plannedDeletions: [],
+        },
+        controllerRuns: { mode: "plan", plannedDeletions: [] },
+      });
+      expect(
+        (plan["verificationRuns"] as { eligibleRunIds: string[] })
+          .eligibleRunIds,
+      ).toContain("old-verify-run");
+    },
+  );
+});

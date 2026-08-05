@@ -1,10 +1,17 @@
+import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { canaryMilestone, CANARY_MILESTONE_ID } from "./canary.js";
 import { DEFAULT_CONFIG_PATH, loadConfig } from "./config.js";
+import { ControllerLease } from "./controller-lease.js";
 import { runDoctorDiagnostic } from "./doctor.js";
+import {
+  applyEvidenceRetentionPlan,
+  buildEvidenceRetentionPlan,
+} from "./evidence-retention.js";
 import { runLiveModelPolicyCheck } from "./model-policy-check.js";
 import {
   MilestoneOrchestrator,
@@ -14,6 +21,7 @@ import {
 import { ReconciliationController } from "./reconciliation.js";
 import { redactSensitiveValue } from "./redaction.js";
 import { demonstrateSafety } from "./safety-demonstration.js";
+import { atomicWriteJson, StateStore } from "./state-store.js";
 
 export interface LoopCliArguments {
   readonly command: string;
@@ -23,6 +31,8 @@ export interface LoopCliArguments {
   readonly candidate?: string;
   readonly nextProposalPath?: string;
   readonly reason?: string;
+  readonly plan?: string;
+  readonly sha256?: string;
 }
 
 export function parseArguments(values: readonly string[]): LoopCliArguments {
@@ -34,6 +44,8 @@ export function parseArguments(values: readonly string[]): LoopCliArguments {
   let candidate: string | undefined;
   let nextProposalPath: string | undefined;
   let reason: string | undefined;
+  let plan: string | undefined;
+  let sha256: string | undefined;
   for (let index = 1; index < values.length; index += 1) {
     const value = values[index];
     if (value === "--one") one = true;
@@ -58,6 +70,16 @@ export function parseArguments(values: readonly string[]): LoopCliArguments {
       if (!requested) throw new Error("--reason requires a value.");
       reason = requested;
       index += 1;
+    } else if (value === "--plan") {
+      const requested = values[index + 1];
+      if (!requested) throw new Error("--plan requires a path.");
+      plan = requested;
+      index += 1;
+    } else if (value === "--sha256") {
+      const requested = values[index + 1];
+      if (!requested) throw new Error("--sha256 requires a hash.");
+      sha256 = requested;
+      index += 1;
     } else if (value !== "--") {
       throw new Error(`Unknown loop argument: ${value}.`);
     }
@@ -70,6 +92,8 @@ export function parseArguments(values: readonly string[]): LoopCliArguments {
     ...(candidate ? { candidate } : {}),
     ...(nextProposalPath ? { nextProposalPath } : {}),
     ...(reason ? { reason } : {}),
+    ...(plan ? { plan } : {}),
+    ...(sha256 ? { sha256 } : {}),
   };
 }
 
@@ -86,6 +110,8 @@ export function assertCommandArguments(args: LoopCliArguments): void {
     "dry-run",
     "canary",
     "demo-safety",
+    "retention-plan",
+    "retention-apply",
   ];
   if (!commands.includes(args.command))
     throw new Error(
@@ -105,6 +131,14 @@ export function assertCommandArguments(args: LoopCliArguments): void {
     throw new Error(
       "reconcile requires --candidate, --next-proposal, and --reason.",
     );
+  if (args.command !== "retention-apply" && Boolean(args.plan || args.sha256))
+    throw new Error(`${args.command} does not accept --plan or --sha256.`);
+  if (args.command === "retention-apply") {
+    if (!args.plan || !args.sha256)
+      throw new Error("retention-apply requires --plan and --sha256.");
+    if (!/^[0-9a-f]{64}$/i.test(args.sha256))
+      throw new Error("--sha256 must be a 64-character hex digest.");
+  }
 }
 
 function repositoryRoot(start: string): string {
@@ -162,6 +196,78 @@ async function main(): Promise<void> {
       }),
       args.json,
     );
+    return;
+  }
+  // Retention commands never open the orchestrator (open initializes state,
+  // tops up protected files, and cleans workspaces). Planning is lease-free
+  // and mutates no state; apply takes its own lease and re-checks the world.
+  if (args.command === "retention-plan") {
+    const config = await loadConfig(root, args.configPath);
+    const state = await new StateStore(root, config.statePath).load();
+    if (!state)
+      throw new Error(
+        "Retention planning requires initialized controller state.",
+      );
+    const now = new Date().toISOString();
+    const plan = await buildEvidenceRetentionPlan({
+      repositoryRoot: root,
+      config,
+      state,
+      now,
+    });
+    const planPath = resolve(
+      root,
+      "artifacts",
+      "orchestrator",
+      "retention",
+      "plans",
+      `${now.replaceAll(/[^0-9]/g, "").slice(0, 14)}-${process.pid}`,
+      "plan.json",
+    );
+    await atomicWriteJson(planPath, plan);
+    const sha256 = createHash("sha256")
+      .update(await readFile(planPath))
+      .digest("hex");
+    output(
+      {
+        planPath,
+        sha256,
+        plannedDeletionCount:
+          plan.verificationRuns.plannedDeletions.length +
+          plan.controllerRuns.plannedDeletions.length,
+        approveWith: `pnpm loop:retention:apply -- --plan ${planPath} --sha256 ${sha256}`,
+      },
+      args.json,
+    );
+    return;
+  }
+  if (args.command === "retention-apply") {
+    const config = await loadConfig(root, args.configPath);
+    const lease = await ControllerLease.acquire({
+      repositoryRoot: root,
+      statePath: config.statePath,
+      operation: "retention-apply",
+    });
+    try {
+      const state = await new StateStore(root, config.statePath).load();
+      if (!state)
+        throw new Error(
+          "Retention apply requires initialized controller state.",
+        );
+      output(
+        await applyEvidenceRetentionPlan({
+          repositoryRoot: root,
+          planPath: resolve(root, args.plan!),
+          expectedSha256: args.sha256!,
+          config,
+          state,
+          now: new Date().toISOString(),
+        }),
+        args.json,
+      );
+    } finally {
+      await lease.release();
+    }
     return;
   }
   const reconciliation = await ReconciliationController.openIfPresent(
