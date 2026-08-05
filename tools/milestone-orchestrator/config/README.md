@@ -41,6 +41,12 @@ sections, and the migration additively unions the mandatory protected trust
 roots into `protectedPaths` (protections are only ever strengthened).
 The environment variable `MILESTONE_LOOP_CONFIG` overrides the config path.
 
+Telemetry is non-semantic everywhere: a telemetry open/write/finalize
+failure degrades telemetry claims only — the underlying command, agent,
+verification, review, and run outcomes are preserved, and a
+`telemetry-error.json` (or `agent-telemetry-error.json`) diagnostic plus a
+stderr line record the degradation.
+
 ## verification-scope-policy.json (`VerificationScopePolicy`)
 
 Shadow-mode affected-scope selection policy (observational only — it never

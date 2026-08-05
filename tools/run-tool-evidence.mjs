@@ -154,24 +154,30 @@ if (!definition) {
         },
       };
     }
-    await finishDirectTelemetry(telemetry, {
-      status: "PASS",
-      exitCode: 0,
-      tests,
-      artifacts: {
-        fileCount: 2,
-        totalBytes: reportContents.byteLength + receiptContents.byteLength,
-        manifestReferences: [
-          relative(context.repositoryRoot, reportPath).replaceAll("\\", "/"),
-        ],
-        receiptReferences: [
-          relative(
-            context.repositoryRoot,
-            resolve(context.artifactDirectory, "result.json"),
-          ).replaceAll("\\", "/"),
-        ],
-      },
-    });
+    try {
+      await finishDirectTelemetry(telemetry, {
+        status: "PASS",
+        exitCode: 0,
+        tests,
+        artifacts: {
+          fileCount: 2,
+          totalBytes: reportContents.byteLength + receiptContents.byteLength,
+          manifestReferences: [
+            relative(context.repositoryRoot, reportPath).replaceAll("\\", "/"),
+          ],
+          receiptReferences: [
+            relative(
+              context.repositoryRoot,
+              resolve(context.artifactDirectory, "result.json"),
+            ).replaceAll("\\", "/"),
+          ],
+        },
+      });
+    } catch (telemetryError) {
+      process.stderr.write(
+        `Telemetry finalization failed (non-semantic): ${telemetryError instanceof Error ? telemetryError.message : String(telemetryError)}\n`,
+      );
+    }
     process.stdout.write(`${mode} evidence: ${reportPath}\n`);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

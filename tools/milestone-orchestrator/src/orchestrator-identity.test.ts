@@ -22,6 +22,7 @@ import {
 import { createMilestoneRecord } from "./milestone-state.js";
 import { MilestoneOrchestrator } from "./orchestrator.js";
 import { StateStore, createInitialState } from "./state-store.js";
+import { TelemetryStore } from "./telemetry-store.js";
 import { validConfig, validProposal } from "../test/fixtures.js";
 
 const NOW = "2026-08-02T18:00:00.000Z";
@@ -404,6 +405,65 @@ describe("orchestrator candidate identity fence", () => {
         "predates the candidate identity fence",
       );
       expect(git(fixture.root, "rev-parse", "HEAD")).toBe(fixture.baseCommit);
+    },
+  );
+
+  it(
+    "completes integration and stops even when telemetry finalization fails",
+    { timeout: 60_000 },
+    async () => {
+      const fixture = await reviewingFixture();
+      const gateway = approvingGateway(fixture);
+      const failingTelemetryOpen = (async (
+        input: Parameters<typeof TelemetryStore.open>[0],
+      ) => {
+        const store = await TelemetryStore.open(input);
+        Object.defineProperty(store, "beginPhase", {
+          value: async () => ({
+            operationId: `failing-span-${Math.random()}`,
+            finish: async () => {
+              throw new Error("simulated telemetry span failure");
+            },
+          }),
+        });
+        Object.defineProperty(store, "complete", {
+          value: async () => {
+            throw new Error("simulated telemetry completion failure");
+          },
+        });
+        return store;
+      }) as typeof TelemetryStore.open;
+      const orchestrator = await MilestoneOrchestrator.open(
+        fixture.root,
+        fixture.configPath,
+        {
+          gateway: gateway as unknown as CodexGateway,
+          now: () => new Date(NOW),
+          telemetryStoreOpen: failingTelemetryOpen,
+        },
+      );
+      try {
+        const outcome = await orchestrator.run({ maximumMilestones: 1 });
+
+        expect(gateway.run).toHaveBeenCalledTimes(1);
+        expect(outcome.state.milestones[0]?.status).toBe("completed");
+        expect(outcome.state.run.status).toBe("stopped");
+        expect(outcome.state.milestones[0]?.attempts).toBe(1);
+        expect(git(fixture.root, "rev-parse", "HEAD")).toBe(
+          fixture.verified.commit,
+        );
+        const degradation = JSON.parse(
+          await readFile(
+            join(fixture.runDirectory, "telemetry-error.json"),
+            "utf8",
+          ),
+        ) as Record<string, unknown>;
+        expect(String(degradation["error"])).toContain(
+          "simulated telemetry completion failure",
+        );
+      } finally {
+        await orchestrator.close();
+      }
     },
   );
 

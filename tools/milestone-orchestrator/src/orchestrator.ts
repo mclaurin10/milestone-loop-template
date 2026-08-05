@@ -1265,6 +1265,39 @@ export class MilestoneOrchestrator {
     return store;
   }
 
+  private async recordTelemetryDegradation(error: unknown): Promise<void> {
+    const message = redactSensitiveText(
+      error instanceof Error ? error.message : String(error),
+    );
+    process.stderr.write(
+      `[telemetry] non-semantic controller telemetry failure: ${message}\n`,
+    );
+    const directory = this.stateValue.run.artifactDirectory;
+    if (!directory) return;
+    try {
+      await atomicWriteJson(resolve(directory, "telemetry-error.json"), {
+        schemaVersion: "1.0.0",
+        status: "ERROR",
+        error: message,
+        recordedAt: iso(this.now),
+      });
+    } catch {
+      // The stderr line above is the only remaining channel when even the
+      // diagnostic write fails; telemetry availability must stay non-semantic.
+    }
+  }
+
+  private async finishSpanBestEffort(
+    span: { finish: (input: never) => Promise<unknown> },
+    input: unknown,
+  ): Promise<void> {
+    try {
+      await span.finish(input as never);
+    } catch (error) {
+      await this.recordTelemetryDegradation(error);
+    }
+  }
+
   private async completeTelemetry(
     status: TelemetryStatus,
     reason: string | null,
@@ -1273,31 +1306,7 @@ export class MilestoneOrchestrator {
       const telemetry = await this.telemetryStore();
       await telemetry.complete(status, reason);
     } catch (error) {
-      const message = redactSensitiveText(
-        error instanceof Error ? error.message : String(error),
-      );
-      const directory = this.stateValue.run.artifactDirectory;
-      if (directory)
-        await atomicWriteJson(resolve(directory, "telemetry-error.json"), {
-          schemaVersion: "1.0.0",
-          status: "ERROR",
-          error: message,
-          recordedAt: iso(this.now),
-        });
-      if (this.stateValue.run.status !== "escalated")
-        await this.persist({
-          ...this.stateValue,
-          run: {
-            ...this.stateValue.run,
-            status: "escalated",
-            finishedAt: iso(this.now),
-            stopReason: `Telemetry finalization failed: ${message}`,
-          },
-          nextAllowedAction: "stop",
-        });
-      throw new Error(`Telemetry finalization failed: ${message}`, {
-        cause: error,
-      });
+      await this.recordTelemetryDegradation(error);
     }
   }
 
@@ -1364,7 +1373,7 @@ export class MilestoneOrchestrator {
     });
     try {
       await this.pruneEvidence();
-      await inspectionSpan.finish({ status: "PASS" });
+      await this.finishSpanBestEffort(inspectionSpan, { status: "PASS" });
     } catch (error) {
       const message = redactSensitiveText(
         error instanceof Error ? error.message : String(error),
@@ -1388,7 +1397,10 @@ export class MilestoneOrchestrator {
           recordedAt: stoppedAt,
         },
       );
-      await inspectionSpan.finish({ status: "ERROR", reason: message });
+      await this.finishSpanBestEffort(inspectionSpan, {
+        status: "ERROR",
+        reason: message,
+      });
       await this.writeRunSummary();
       await this.completeTelemetry("ERROR", message);
       throw new Error(`Evidence retention failed: ${message}`, {
@@ -2132,7 +2144,7 @@ export class MilestoneOrchestrator {
       const artifactMetadata = await Promise.all(
         summary.artifactPaths.map((path) => stat(path)),
       );
-      await verificationSpan.finish({
+      await this.finishSpanBestEffort(verificationSpan, {
         status: summary.status,
         reason: summary.status === "PASS" ? null : summary.summary,
         candidate: telemetryCandidate(
@@ -2159,7 +2171,10 @@ export class MilestoneOrchestrator {
       const message = redactSensitiveText(
         error instanceof Error ? error.message : String(error),
       );
-      await verificationSpan.finish({ status: "ERROR", reason: message });
+      await this.finishSpanBestEffort(verificationSpan, {
+        status: "ERROR",
+        reason: message,
+      });
       throw error;
     }
     await this.persist(
@@ -2487,7 +2502,7 @@ export class MilestoneOrchestrator {
         headCommit: verified.commit,
         expectedTree: verified.tree,
       });
-      await integrationSpan.finish({
+      await this.finishSpanBestEffort(integrationSpan, {
         status: "PASS",
         candidate: telemetryCandidate(
           this.repositoryRoot,
@@ -2498,7 +2513,10 @@ export class MilestoneOrchestrator {
       const message = redactSensitiveText(
         error instanceof Error ? error.message : String(error),
       );
-      await integrationSpan.finish({ status: "ERROR", reason: message });
+      await this.finishSpanBestEffort(integrationSpan, {
+        status: "ERROR",
+        reason: message,
+      });
       throw error;
     }
     let completed = replaceMilestone(this.stateValue, id, (record) => ({

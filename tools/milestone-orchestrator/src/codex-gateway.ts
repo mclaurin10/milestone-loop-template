@@ -72,6 +72,34 @@ export interface CodexGateway {
   run(invocation: CodexInvocation): Promise<CodexTurnResult>;
 }
 
+async function recordAgentTelemetryDegradation(
+  invocation: { readonly role: string; readonly eventLogPath: string },
+  invocationId: string,
+  error: unknown,
+): Promise<void> {
+  const message = redactSensitiveText(
+    error instanceof Error ? error.message : String(error),
+  );
+  process.stderr.write(
+    `[telemetry] non-semantic failure for agent-${invocation.role}: ${message}\n`,
+  );
+  try {
+    await atomicWriteJson(
+      resolve(dirname(invocation.eventLogPath), "agent-telemetry-error.json"),
+      {
+        schemaVersion: "1.0.0",
+        invocationId,
+        role: invocation.role,
+        error: message,
+        recordedAt: new Date().toISOString(),
+      },
+    );
+  } catch {
+    // The stderr line above is the only remaining channel when even the
+    // sidecar diagnostic write fails; telemetry must stay non-semantic.
+  }
+}
+
 function threadOptions(
   role: AgentRole,
   workingDirectory: string,
@@ -334,12 +362,20 @@ export class SdkCodexGateway implements CodexGateway {
         invocationPath,
         redactSensitiveValue(invocationRecord),
       );
-      await finishTelemetry({
-        status: "PASS",
-        reason: null,
-        threadId,
-        usage,
-      });
+      try {
+        await finishTelemetry({
+          status: "PASS",
+          reason: null,
+          threadId,
+          usage,
+        });
+      } catch (telemetryError) {
+        await recordAgentTelemetryDegradation(
+          invocation,
+          invocationRecord.id,
+          telemetryError,
+        );
+      }
       return {
         threadId,
         finalResponse: redactSensitiveText(finalResponse),
@@ -347,7 +383,7 @@ export class SdkCodexGateway implements CodexGateway {
         itemCount,
       };
     } catch (error) {
-      let message = redactSensitiveText(
+      const message = redactSensitiveText(
         error instanceof Error ? error.message : String(error),
       );
       if (!telemetryAttempted) {
@@ -359,11 +395,11 @@ export class SdkCodexGateway implements CodexGateway {
             usage,
           });
         } catch (telemetryError) {
-          message = `Telemetry write failed: ${redactSensitiveText(
-            telemetryError instanceof Error
-              ? telemetryError.message
-              : String(telemetryError),
-          )}`;
+          await recordAgentTelemetryDegradation(
+            invocation,
+            invocationRecord.id,
+            telemetryError,
+          );
         }
       }
       invocationRecord = {

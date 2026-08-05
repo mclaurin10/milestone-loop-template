@@ -402,4 +402,101 @@ describe("Codex SDK gateway", () => {
       error: "requested model is unavailable",
     });
   });
+
+  it("returns a completed turn even when telemetry finalization fails", async () => {
+    const root = await mkdtemp(join(tmpdir(), "milestone-loop-sdk-telemetry-"));
+    temporaryDirectories.push(root);
+    const client: CodexClientLike = {
+      startThread: vi.fn(() => ({
+        runStreamed: async () => ({ events: events() }),
+      })),
+      resumeThread: vi.fn(),
+    };
+    const gateway = new SdkCodexGateway(validConfig(), client);
+    const failingStore = {
+      beginPhase: async () => ({
+        operationId: "span-1",
+        finish: async () => {
+          throw new Error("simulated telemetry finish failure");
+        },
+      }),
+    } as unknown as TelemetryStore;
+
+    const result = await gateway.run({
+      role: "planner",
+      prompt: "Plan read-only.",
+      workingDirectory: root,
+      threadId: null,
+      eventLogPath: join(root, "events.jsonl"),
+      timeoutMs: 10_000,
+      attempt: 1,
+      escalationReason: null,
+      telemetryPhase: "planning",
+      telemetryStore: failingStore,
+    });
+
+    expect(result.threadId).toBe("thread-123");
+    expect(result.finalResponse).toBe("completed");
+    expect(
+      JSON.parse(await readFile(join(root, "agent-invocation.json"), "utf8")),
+    ).toMatchObject({ status: "completed", threadId: "thread-123" });
+    expect(
+      JSON.parse(
+        await readFile(join(root, "agent-telemetry-error.json"), "utf8"),
+      ),
+    ).toMatchObject({
+      role: "planner",
+      error: expect.stringContaining("simulated telemetry finish failure"),
+    });
+  });
+
+  it("keeps the real agent error when failure-path telemetry also fails", async () => {
+    const root = await mkdtemp(join(tmpdir(), "milestone-loop-sdk-telemetry-"));
+    temporaryDirectories.push(root);
+    const failingEvents =
+      (async function* generate(): AsyncGenerator<ThreadEvent> {
+        yield { type: "thread.started", thread_id: "thread-err" };
+        yield { type: "turn.failed", error: { message: "real agent failure" } };
+      })();
+    const client: CodexClientLike = {
+      startThread: vi.fn(() => ({
+        runStreamed: async () => ({ events: failingEvents }),
+      })),
+      resumeThread: vi.fn(),
+    };
+    const gateway = new SdkCodexGateway(validConfig(), client);
+    const failingStore = {
+      beginPhase: async () => ({
+        operationId: "span-2",
+        finish: async () => {
+          throw new Error("simulated telemetry finish failure");
+        },
+      }),
+    } as unknown as TelemetryStore;
+
+    await expect(
+      gateway.run({
+        role: "planner",
+        prompt: "Plan read-only.",
+        workingDirectory: root,
+        threadId: null,
+        eventLogPath: join(root, "events.jsonl"),
+        timeoutMs: 10_000,
+        attempt: 1,
+        escalationReason: null,
+        telemetryPhase: "planning",
+        telemetryStore: failingStore,
+      }),
+    ).rejects.toThrow(/real agent failure/);
+    expect(
+      JSON.parse(await readFile(join(root, "agent-invocation.json"), "utf8")),
+    ).toMatchObject({ status: "failed", error: "real agent failure" });
+    expect(
+      JSON.parse(
+        await readFile(join(root, "agent-telemetry-error.json"), "utf8"),
+      ),
+    ).toMatchObject({
+      error: expect.stringContaining("simulated telemetry finish failure"),
+    });
+  });
 });

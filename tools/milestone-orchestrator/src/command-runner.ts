@@ -115,10 +115,12 @@ async function recordTelemetry(
     const message = redactSensitiveText(
       error instanceof Error ? error.message : String(error),
     );
+    process.stderr.write(
+      `[telemetry] non-semantic failure for ${command.id}: ${message}\n`,
+    );
     return {
       ...summary,
-      status: "ERROR",
-      message: `Telemetry write failed for ${command.id}: ${message}`,
+      telemetryError: `Telemetry write failed for ${command.id}: ${message}`,
     };
   }
 }

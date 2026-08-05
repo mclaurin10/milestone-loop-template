@@ -892,36 +892,58 @@ export async function runVerificationTier(
           },
         }
       : null;
-    await telemetrySpan.finish({
-      status: outcome.status,
-      reason: cleanFailure
-        ? "The verification tier requires a clean working tree."
-        : null,
-      candidate: {
-        baseCommit: candidate.baseCommit,
-        commit: candidate.gitCommit,
-        tree: candidate.gitTree,
-        dirty: candidate.workingTreeDirty,
-      },
-      tests: summedCounts,
-      artifacts: {
-        fileCount:
-          commandRecords.reduce(
-            (sum, command) => sum + command.artifactCount,
-            0,
-          ) + (shadowSelectionPath ? 1 : 0),
-        totalBytes: commandRecords.reduce(
-          (sum, command) => sum + command.artifactBytes,
-          0,
-        ),
-        manifestReferences: shadowSelectionPath ? [shadowSelectionPath] : [],
-        receiptReferences: commandRecords.flatMap((command) =>
-          command.receipt ? [command.receipt.path] : [],
-        ),
-      },
-    });
-    await telemetry.complete(outcome.status);
     await atomicWriteJson(resolve(runRoot, "tier-result.json"), result);
+    try {
+      await telemetrySpan.finish({
+        status: outcome.status,
+        reason: cleanFailure
+          ? "The verification tier requires a clean working tree."
+          : null,
+        candidate: {
+          baseCommit: candidate.baseCommit,
+          commit: candidate.gitCommit,
+          tree: candidate.gitTree,
+          dirty: candidate.workingTreeDirty,
+        },
+        tests: summedCounts,
+        artifacts: {
+          fileCount:
+            commandRecords.reduce(
+              (sum, command) => sum + command.artifactCount,
+              0,
+            ) + (shadowSelectionPath ? 1 : 0),
+          totalBytes: commandRecords.reduce(
+            (sum, command) => sum + command.artifactBytes,
+            0,
+          ),
+          manifestReferences: shadowSelectionPath ? [shadowSelectionPath] : [],
+          receiptReferences: commandRecords.flatMap((command) =>
+            command.receipt ? [command.receipt.path] : [],
+          ),
+        },
+      });
+      await telemetry.complete(outcome.status);
+    } catch (telemetryError) {
+      const message = redactSensitiveText(
+        telemetryError instanceof Error
+          ? telemetryError.message
+          : String(telemetryError),
+      );
+      process.stderr.write(
+        `[telemetry] non-semantic tier telemetry failure: ${message}\n`,
+      );
+      try {
+        await atomicWriteJson(resolve(runRoot, "telemetry-error.json"), {
+          schemaVersion: "1.0.0",
+          status: "ERROR",
+          error: message,
+          recordedAt: new Date().toISOString(),
+        });
+      } catch {
+        // The stderr line above is the only remaining channel; telemetry
+        // availability must not change the tier result.
+      }
+    }
     process.stdout.write(
       `Verification tier result: ${relativePath(input.repositoryRoot, resolve(runRoot, "tier-result.json"))}\n`,
     );

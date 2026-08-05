@@ -505,6 +505,7 @@ export interface CommandExecutionSummary {
   readonly parser: VerificationParser;
   readonly parsedArtifactPath: string | null;
   readonly message: string;
+  readonly telemetryError?: string;
 }
 
 export type AuthoritativeVerificationDisposition =
