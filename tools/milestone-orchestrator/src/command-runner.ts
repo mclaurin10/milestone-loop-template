@@ -206,56 +206,93 @@ export async function runCommand(
     }, command.timeoutMs ?? options.timeoutMs);
     child.once("close", async (exitCode, signal) => {
       clearTimeout(timeout);
-      const finishedAt = new Date();
-      const stdoutText = redactSensitiveText(
-        Buffer.concat(stdout).toString("utf8"),
-      );
-      const stderrText = redactSensitiveText(
-        Buffer.concat(stderr).toString("utf8"),
-      );
-      await writeFile(stdoutPath, stdoutText, "utf8");
-      await writeFile(stderrPath, stderrText, "utf8");
-      const status = spawnError
-        ? "ERROR"
-        : timedOut
-          ? "TIMEOUT"
-          : exitCode === 0
-            ? "PASS"
-            : "FAIL";
-      const summary: CommandExecutionSummary = {
-        id: command.id,
-        displayCommand: `${command.executable} ${command.args.join(" ")}`,
-        status,
-        exitCode,
-        signal,
-        startedAt: startedAt.toISOString(),
-        finishedAt: finishedAt.toISOString(),
-        durationMs: finishedAt.getTime() - startedAt.getTime(),
-        stdoutPath,
-        stderrPath,
-        stdoutSha256: hash(stdoutText),
-        stderrSha256: hash(stderrText),
-        parser: command.parser,
-        parsedArtifactPath: null,
-        message: spawnError
-          ? `Could not start command: ${spawnError.message}`
+      try {
+        const finishedAt = new Date();
+        const stdoutText = redactSensitiveText(
+          Buffer.concat(stdout).toString("utf8"),
+        );
+        const stderrText = redactSensitiveText(
+          Buffer.concat(stderr).toString("utf8"),
+        );
+        await writeFile(stdoutPath, stdoutText, "utf8");
+        await writeFile(stderrPath, stderrText, "utf8");
+        const status = spawnError
+          ? "ERROR"
           : timedOut
-            ? `Command timed out after ${command.timeoutMs ?? options.timeoutMs} ms.`
+            ? "TIMEOUT"
             : exitCode === 0
-              ? "Command exited zero."
-              : `Command exited ${exitCode}${signal ? ` with signal ${signal}` : ""}.`,
-        receipt: null,
-        receiptAbsenceReason: RUNNER_RECEIPT_ABSENCE_REASON,
-      };
-      resolveResult(
-        await recordTelemetry(
-          command,
-          options,
-          summary,
-          startedMonotonic,
-          process.hrtime.bigint(),
-        ),
-      );
+              ? "PASS"
+              : "FAIL";
+        const summary: CommandExecutionSummary = {
+          id: command.id,
+          displayCommand: `${command.executable} ${command.args.join(" ")}`,
+          status,
+          exitCode,
+          signal,
+          startedAt: startedAt.toISOString(),
+          finishedAt: finishedAt.toISOString(),
+          durationMs: finishedAt.getTime() - startedAt.getTime(),
+          stdoutPath,
+          stderrPath,
+          stdoutSha256: hash(stdoutText),
+          stderrSha256: hash(stderrText),
+          parser: command.parser,
+          parsedArtifactPath: null,
+          message: spawnError
+            ? `Could not start command: ${spawnError.message}`
+            : timedOut
+              ? `Command timed out after ${command.timeoutMs ?? options.timeoutMs} ms.`
+              : exitCode === 0
+                ? "Command exited zero."
+                : `Command exited ${exitCode}${signal ? ` with signal ${signal}` : ""}.`,
+          receipt: null,
+          receiptAbsenceReason: RUNNER_RECEIPT_ABSENCE_REASON,
+        };
+        resolveResult(
+          await recordTelemetry(
+            command,
+            options,
+            summary,
+            startedMonotonic,
+            process.hrtime.bigint(),
+          ),
+        );
+      } catch (error) {
+        // Fail closed: a lost artifact must never crash the controller or
+        // leave the command promise unsettled.
+        const message = redactSensitiveText(
+          error instanceof Error ? error.message : String(error),
+        );
+        const failedAt = new Date();
+        const summary: CommandExecutionSummary = {
+          id: command.id,
+          displayCommand: `${command.executable} ${command.args.join(" ")}`,
+          status: "ERROR",
+          exitCode,
+          signal,
+          startedAt: startedAt.toISOString(),
+          finishedAt: failedAt.toISOString(),
+          durationMs: failedAt.getTime() - startedAt.getTime(),
+          stdoutPath,
+          stderrPath,
+          stdoutSha256: hash(""),
+          stderrSha256: hash(""),
+          parser: command.parser,
+          parsedArtifactPath: null,
+          message: `Command artifacts could not be persisted: ${message}`,
+          receipt: null,
+          receiptAbsenceReason: RUNNER_RECEIPT_ABSENCE_REASON,
+        };
+        resolveResult(
+          await recordTelemetry(
+            command,
+            options,
+            summary,
+            startedMonotonic,
+            process.hrtime.bigint(),
+          ),
+        );
+      }
     });
   });
 }

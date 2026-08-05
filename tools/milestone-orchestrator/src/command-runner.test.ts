@@ -115,3 +115,48 @@ describe("command telemetry", () => {
     );
   });
 });
+
+describe("command artifact persistence", () => {
+  it("settles with a fail-closed ERROR summary when artifact writes fail", async () => {
+    const directory = await mkdtemp(
+      join(tmpdir(), "milestone-loop-command-artifacts-"),
+    );
+    temporaryDirectories.push(directory);
+    const artifactDirectory = join(directory, "evidence");
+    // A directory squatting on the stdout log path makes the close-handler
+    // writeFile fail after the child has already exited zero.
+    await mkdir(join(artifactDirectory, "artifact-crash.stdout.log"), {
+      recursive: true,
+    });
+    const recordCommand = vi.fn(async () => undefined as never);
+    const result = await runCommand(
+      {
+        id: "artifact-crash",
+        executable: "node",
+        args: ["-e", "process.exit(0)"],
+        parser: "exit-code",
+      },
+      {
+        workingDirectory: directory,
+        artifactDirectory,
+        timeoutMs: 10_000,
+        trustedControllerCommand: true,
+        telemetry: { store: { recordCommand } },
+      },
+    );
+    expect(result).toMatchObject({
+      status: "ERROR",
+      exitCode: 0,
+      message: expect.stringContaining(
+        "Command artifacts could not be persisted:",
+      ),
+    });
+    expect(recordCommand).toHaveBeenCalledWith(
+      expect.objectContaining({
+        commandId: "artifact-crash",
+        status: "ERROR",
+        failureClassification: "infrastructure",
+      }),
+    );
+  }, 20_000);
+});
