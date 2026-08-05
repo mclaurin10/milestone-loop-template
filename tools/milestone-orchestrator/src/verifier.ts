@@ -5,6 +5,7 @@ import { dirname, isAbsolute, relative, resolve } from "node:path";
 
 import {
   BOOTSTRAP_VERIFICATION_STAGE_IDS,
+  MILESTONE_SCHEMA_VERSION,
   READINESS_VERIFICATION_STAGE_IDS,
   VERIFICATION_SUMMARY_SCHEMA_VERSION,
 } from "./contracts.js";
@@ -1094,6 +1095,26 @@ export async function verifyMilestone(input: {
   const artifacts = [
     resolve(input.artifactDirectory, "verification-summary.json"),
   ];
+  if (input.proposal.schemaVersion !== MILESTONE_SCHEMA_VERSION) {
+    const summary: VerificationSummary = {
+      schemaVersion: VERIFICATION_SUMMARY_SCHEMA_VERSION,
+      attempt: input.attempt,
+      status: "FAIL",
+      disposition: "rejected",
+      failureKind: "policy",
+      summary: `Milestone proposal uses schema ${input.proposal.schemaVersion}; verification requires ${MILESTONE_SCHEMA_VERSION}. Re-plan the milestone — legacy proposals are never auto-migrated.`,
+      startedAt: startedAt.toISOString(),
+      finishedAt: new Date().toISOString(),
+      commands: [],
+      authoritative: null,
+      candidate: startIdentity,
+      authoritativeResultSha256: null,
+      changedPaths: inspection.changedPaths,
+      artifactPaths: artifacts,
+    };
+    await atomicWriteJson(artifacts[0] ?? "", summary);
+    return summary;
+  }
   if (!inspection.clean || inspection.commits.length === 0) {
     const summary: VerificationSummary = {
       schemaVersion: VERIFICATION_SUMMARY_SCHEMA_VERSION,
@@ -1146,12 +1167,25 @@ export async function verifyMilestone(input: {
   let authoritative: AuthoritativeVerificationSummary | null = null;
   let authoritativeResultSha256: string | null = null;
   let parseError: string | null = null;
-  for (const command of input.proposal.verificationCommands) {
-    const verifyId = verificationRunId(
-      input.runId,
-      input.proposal.id,
-      input.attempt,
+  const verifyId = verificationRunId(
+    input.runId,
+    input.proposal.id,
+    input.attempt,
+  );
+  // Binds every command receipt to run × milestone × attempt × verified
+  // candidate; a receipt from any other stage or candidate cannot validate.
+  const stageId = `milestone-verify-${verifyId}-${startIdentity.commit.slice(0, 12)}`;
+  for (const [
+    commandIndex,
+    command,
+  ] of input.proposal.verificationCommands.entries()) {
+    const directoryName = `${String(commandIndex + 1).padStart(2, "0")}-${command.id.replaceAll(/[^A-Za-z0-9._-]/g, "-")}`;
+    const commandRoot = resolve(
+      input.artifactDirectory,
+      "commands",
+      directoryName,
     );
+    const evidenceRoot = resolve(commandRoot, "evidence");
     const effectiveCommand: VerificationCommand =
       command.parser === "pnpm-verify"
         ? {
@@ -1161,8 +1195,20 @@ export async function verifyMilestone(input: {
         : command;
     let result = await (input.executeCommand ?? runCommand)(effectiveCommand, {
       workingDirectory: input.workspacePath,
-      artifactDirectory: resolve(input.artifactDirectory, "commands"),
+      artifactDirectory: resolve(commandRoot, "logs"),
       timeoutMs: input.config.limits.commandMs,
+      // pnpm-verify commands are deliberately not env-injected: the aggregate
+      // owns its children's evidence environment, and its receipt is the
+      // independently parsed authoritative result tree.
+      ...(command.parser === "exit-code"
+        ? {
+            extraEnvironment: {
+              LOOP_VERIFY_STAGE_ID: stageId,
+              LOOP_VERIFY_COMMAND_ID: command.id,
+              LOOP_VERIFY_COMMAND_ARTIFACT_DIR: evidenceRoot,
+            },
+          }
+        : {}),
       ...(input.telemetry
         ? {
             telemetry: {
@@ -1186,6 +1232,63 @@ export async function verifyMilestone(input: {
           }
         : {}),
     });
+    if (command.parser === "exit-code") {
+      if (existsSync(resolve(evidenceRoot, "result.json"))) {
+        try {
+          const validated = await validateCommandReceiptDirectory({
+            directory: evidenceRoot,
+            expectedStageId: stageId,
+            expectedCommandId: command.id,
+            requiredKinds: command.expectedArtifactKinds ?? [],
+          });
+          result = {
+            ...result,
+            receipt: {
+              path: relative(
+                input.artifactDirectory,
+                validated.receiptPath,
+              ).replaceAll("\\", "/"),
+              sha256: validated.receiptSha256,
+              bytes: validated.receiptBytes,
+            },
+            receiptAbsenceReason: null,
+          };
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : String(error);
+          result = {
+            ...result,
+            status: "ERROR",
+            message,
+            receipt: null,
+            receiptAbsenceReason: message,
+          };
+        }
+      } else if (result.status === "PASS") {
+        const message = `Passing check ${command.id} did not write its required command-owned receipt.`;
+        result = {
+          ...result,
+          status: "ERROR",
+          message,
+          receipt: null,
+          receiptAbsenceReason: message,
+        };
+      } else {
+        result = {
+          ...result,
+          receipt: null,
+          receiptAbsenceReason:
+            "The command did not pass; failing commands retain no receipt.",
+        };
+      }
+    } else {
+      result = {
+        ...result,
+        receipt: null,
+        receiptAbsenceReason:
+          "Authoritative pnpm verify evidence is the independently parsed result tree.",
+      };
+    }
     if (
       command.parser === "pnpm-verify" &&
       result.signal === null &&
@@ -1262,14 +1365,26 @@ export async function verifyMilestone(input: {
         authoritative?.disposition === "incremental-readiness"
       ),
   );
+  // Belt check behind the per-command gate: a passing focused command whose
+  // receipt was never validated can never yield a passing summary.
+  const passWithoutReceipt = commandResults.find(
+    (command) =>
+      command.parser === "exit-code" &&
+      command.status === "PASS" &&
+      command.receipt === null,
+  );
   const status =
-    !commandFailure && !changedDuringVerification && authoritative
+    !commandFailure &&
+    !passWithoutReceipt &&
+    !changedDuringVerification &&
+    authoritative
       ? "PASS"
       : "FAIL";
   const failureKind =
     status === "PASS"
       ? null
       : parseError ||
+          passWithoutReceipt ||
           commandFailure?.status === "ERROR" ||
           commandFailure?.status === "TIMEOUT"
         ? "infrastructure"
@@ -1290,7 +1405,9 @@ export async function verifyMilestone(input: {
         : (parseError ??
           (changedDuringVerification
             ? "Verification changed tracked attempt state or HEAD."
-            : (commandFailure?.message ?? "Verification failed."))),
+            : passWithoutReceipt
+              ? `Command ${passWithoutReceipt.id} passed without a validated command-owned receipt.`
+              : (commandFailure?.message ?? "Verification failed."))),
     startedAt: startedAt.toISOString(),
     finishedAt: new Date().toISOString(),
     commands: commandResults,

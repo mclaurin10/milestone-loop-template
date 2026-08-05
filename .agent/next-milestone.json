@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.1.0",
+  "schemaVersion": "1.2.0",
   "id": "example-first-milestone",
   "title": "Example queued milestone (placeholder)",
   "kind": "tooling",
@@ -24,16 +24,17 @@
       "id": "orchestrator-tests",
       "executable": "pnpm",
       "args": ["test:orchestrator"],
-      "parser": "exit-code"
+      "parser": "exit-code",
+      "expectedArtifactKinds": ["orchestrator-vitest-report"]
     },
     {
       "id": "authoritative-verification",
       "executable": "pnpm",
       "args": ["verify"],
-      "parser": "pnpm-verify"
+      "parser": "pnpm-verify",
+      "expectedArtifactKinds": []
     }
   ],
-  "expectedArtifacts": ["verification-summary.json"],
   "terminalConditions": ["All commands and independent review pass."],
   "estimatedFileCount": 4,
   "requiresBrowserInspection": false,

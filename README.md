@@ -45,7 +45,10 @@ Verification cost scales with how much a change claims:
    that detect drift between milestones.
 
 Tier plans are derived from the manifest's check catalogue; the shadow scope
-selector only *observes* which checks it would have chosen. `pnpm verify`
+selector only *observes* which checks it would have chosen. Every focused
+command — in tier plans, invariant entries, and milestone proposals alike —
+must produce a validated command-owned receipt covering its declared
+`expectedArtifactKinds`; a zero exit status alone never passes. `pnpm verify`
 itself is profile-based (`bootstrap` → `readiness`, a one-way transition
 enforced by marker-file history) and fail-closed: a command that exits 0
 without a valid evidence receipt is a failure, and missing stage scripts

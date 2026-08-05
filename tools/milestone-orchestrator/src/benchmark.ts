@@ -2274,18 +2274,13 @@ async function executeCheck(input: {
       bytes: validated.receiptBytes,
     };
     testCounts = await countsFromReceiptArtifacts(validated.artifacts);
-  } else if (
-    input.worktree.side === "after" &&
-    input.definition.expectedArtifactKinds.length > 0
-  ) {
+  } else if (input.worktree.side === "after") {
     throw new Error(
       `After benchmark check ${input.definition.id} omitted its required receipt.`,
     );
   } else {
     receiptAbsenceReason =
-      input.worktree.side === "before"
-        ? "The pre-D032 command did not own a benchmark-compatible receipt."
-        : "The command contract declares no required command-owned artifact kind.";
+      "The pre-D032 command did not own a benchmark-compatible receipt.";
   }
   const stdout = await retainedFileReference(
     input.mainRepositoryRoot,

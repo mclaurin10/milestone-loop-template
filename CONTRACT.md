@@ -39,7 +39,10 @@ change once, at `CAL-1` close, under the rules in `AGENTS.md`.
   `loop:*` / `artifacts:*` commands.
 - One `verify:<check>` script per focused command in the verification
   manifest (§5). The template ships nine `verify:domain-*` placeholders that
-  exit 1 with instructions; replace them.
+  exit 1 with instructions; replace them. A replacement must produce the
+  command's declared `expectedArtifactKinds` (the placeholders declare
+  `<id>-report`) through a command-owned receipt (§4) — a bare exit 0 never
+  passes.
 
 The pnpm workspace (`pnpm-workspace.yaml`) must include
 `tools/milestone-orchestrator`; `tools/workspace-typecheck.mjs` lists every
@@ -122,6 +125,14 @@ valid receipt is a failure. Stages additionally declare
 `requiredArtifactKinds`; the union of receipt artifact kinds must cover
 them.
 
+The milestone verifier enforces the same contract on every focused
+(`exit-code`) verification command a proposal declares: the command runs
+with `LOOP_VERIFY_STAGE_ID` bound to the run × milestone × attempt ×
+candidate, and a passing exit status without a validated receipt covering
+the command's `expectedArtifactKinds` is an infrastructure error, never a
+pass. `pnpm-verify` commands are exempt because their evidence is the
+independently parsed authoritative result tree.
+
 ## 5. Verification manifest
 
 `.agent/completed/loop-recommissioning-verification.json` is the check
@@ -130,7 +141,12 @@ catalogue everything else references:
 - `focusedCommands[]`: `{ id, argv, tiers, expectedArtifactKinds }` for
   every focused check. `argv` must start with `pnpm`, `node`, or `git`.
   `tiers` places each check into `iteration` / `candidate` / `milestone` /
-  `periodic` plans. Three auxiliary ids are always available:
+  `periodic` plans. `expectedArtifactKinds` must be nonempty for every
+  focused command (and for every invariant-registry entry) — an empty list
+  no longer disables receipt validation anywhere. Milestone proposals carry
+  the same per-command field at schema `1.2.0` (nonempty for `exit-code`,
+  exactly `[]` for `pnpm-verify`); the proposal-level `expectedArtifacts`
+  list was removed at `1.2.0`. Three auxiliary ids are always available:
   `dependencies`, `test-unit`, `exact-readiness`.
 - Check-id consistency is enforced at load time: every id used by
   `verification-scope-policy.json` (`mandatoryChecks`, `workspaceChecks`)
@@ -148,7 +164,7 @@ catalogue everything else references:
 | --- | --- |
 | `.agent/PLANS.md` | The executable-plan standard (shape, maintenance, completion rules). |
 | `.agent/current-exec-plan.md` | The single living plan for the active increment, using the required headings. |
-| `.agent/next-milestone.json` | The queued next proposal in milestone schema `1.1.0`; written by reconciliation, consumed by the planner policy. |
+| `.agent/next-milestone.json` | The queued next proposal in milestone schema `1.2.0`; written by reconciliation, consumed by the planner policy. |
 | `.agent/readiness-profile-activated.json` | Permanent one-way lifecycle marker (`{schemaVersion, state:"readiness", previousState:"bootstrap", activatedDate, reason}`). |
 | `.agent/completed/` | Durable milestone records, including the verification manifest (§5). |
 

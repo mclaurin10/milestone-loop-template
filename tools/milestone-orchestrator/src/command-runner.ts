@@ -56,6 +56,9 @@ function hash(value: string): string {
   return createHash("sha256").update(value).digest("hex");
 }
 
+export const RUNNER_RECEIPT_ABSENCE_REASON =
+  "Receipt validation is owned by the verification caller.";
+
 export interface CommandRunnerOptions {
   readonly workingDirectory: string;
   readonly artifactDirectory: string;
@@ -166,6 +169,8 @@ export async function runCommand(
       parser: command.parser,
       parsedArtifactPath: null,
       message: redactSensitiveText(message),
+      receipt: null,
+      receiptAbsenceReason: RUNNER_RECEIPT_ABSENCE_REASON,
     };
     return recordTelemetry(
       command,
@@ -239,6 +244,8 @@ export async function runCommand(
             : exitCode === 0
               ? "Command exited zero."
               : `Command exited ${exitCode}${signal ? ` with signal ${signal}` : ""}.`,
+        receipt: null,
+        receiptAbsenceReason: RUNNER_RECEIPT_ABSENCE_REASON,
       };
       resolveResult(
         await recordTelemetry(

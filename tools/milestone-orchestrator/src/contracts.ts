@@ -1,5 +1,6 @@
 export const LEGACY_MILESTONE_SCHEMA_VERSION = "1.0.0" as const;
-export const MILESTONE_SCHEMA_VERSION = "1.1.0" as const;
+export const PREVIOUS_MILESTONE_SCHEMA_VERSION = "1.1.0" as const;
+export const MILESTONE_SCHEMA_VERSION = "1.2.0" as const;
 export const STATE_SCHEMA_VERSION = "1.4.0" as const;
 export const CONFIG_SCHEMA_VERSION = "1.4.0" as const;
 export const REVIEW_LEGACY_SCHEMA_VERSION = "1.0.0" as const;
@@ -182,6 +183,9 @@ export interface VerificationCommand {
   readonly executable: "pnpm" | "node" | "git";
   readonly args: readonly string[];
   readonly parser: VerificationParser;
+  // Required at milestone schema 1.2.0 (nonempty for exit-code, exactly []
+  // for pnpm-verify); absent only on persisted legacy proposals.
+  readonly expectedArtifactKinds?: readonly string[];
   readonly timeoutMs?: number;
 }
 
@@ -432,7 +436,9 @@ export interface VerticalSliceContract {
 
 export interface MilestoneProposal {
   readonly schemaVersion:
-    typeof LEGACY_MILESTONE_SCHEMA_VERSION | typeof MILESTONE_SCHEMA_VERSION;
+    | typeof LEGACY_MILESTONE_SCHEMA_VERSION
+    | typeof PREVIOUS_MILESTONE_SCHEMA_VERSION
+    | typeof MILESTONE_SCHEMA_VERSION;
   readonly id: string;
   readonly title: string;
   readonly kind: MilestoneKind;
@@ -444,7 +450,9 @@ export interface MilestoneProposal {
   readonly acceptanceCriteria: readonly AcceptanceCriterion[];
   readonly requiredTests: readonly string[];
   readonly verificationCommands: readonly VerificationCommand[];
-  readonly expectedArtifacts: readonly string[];
+  // Required on legacy proposals (1.0.0 / 1.1.0); removed at 1.2.0 — its
+  // values named controller-produced files a command could never prove.
+  readonly expectedArtifacts?: readonly string[];
   readonly terminalConditions: readonly string[];
   readonly estimatedFileCount: number;
   readonly requiresBrowserInspection: boolean;
@@ -505,6 +513,8 @@ export interface CommandExecutionSummary {
   readonly parser: VerificationParser;
   readonly parsedArtifactPath: string | null;
   readonly message: string;
+  readonly receipt: VerificationReceiptReference | null;
+  readonly receiptAbsenceReason: string | null;
   readonly telemetryError?: string;
 }
 

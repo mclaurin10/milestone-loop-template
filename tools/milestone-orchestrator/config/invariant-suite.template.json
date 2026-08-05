@@ -19,7 +19,7 @@
         "scripts/verify.mjs"
       ],
       "argv": ["pnpm", "verify", "--", "--stage", "contract-integrity"],
-      "expectedArtifactKinds": []
+      "expectedArtifactKinds": ["focused-verify-result"]
     },
     {
       "id": "<YOUR_CORE_INVARIANT_ID>",
@@ -35,7 +35,7 @@
         "<OPTIONAL_EXACT_TEST_FILE>.test.ts",
         "--fileParallelism=false"
       ],
-      "expectedArtifactKinds": []
+      "expectedArtifactKinds": ["invariant-vitest-report"]
     }
   ]
 }

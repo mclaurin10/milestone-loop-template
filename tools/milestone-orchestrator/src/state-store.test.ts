@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { atomicWriteJson, StaleStateError, StateStore } from "./state-store.js";
 import { createMilestoneRecord } from "./milestone-state.js";
-import { validProposal, validState } from "../test/fixtures.js";
+import { legacyProposal, validProposal, validState } from "../test/fixtures.js";
 
 const temporaryDirectories: string[] = [];
 
@@ -150,17 +150,11 @@ describe("atomic state persistence", () => {
       unknown
     >;
     const milestone = createMilestoneRecord(
-      validProposal(),
+      legacyProposal("1.0.0"),
       "2026-08-01T00:00:00.000Z",
     );
     const historicalMilestone = { ...milestone } as Record<string, unknown>;
     delete historicalMilestone["proposalProvenance"];
-    const historicalProposal: Record<string, unknown> = {
-      ...(historicalMilestone["proposal"] as Record<string, unknown>),
-      schemaVersion: "1.0.0",
-    };
-    delete historicalProposal["verticalSlice"];
-    historicalMilestone["proposal"] = historicalProposal;
     legacy["milestones"] = [
       {
         ...historicalMilestone,
@@ -219,17 +213,11 @@ describe("atomic state persistence", () => {
       unknown
     >;
     const milestone = createMilestoneRecord(
-      validProposal(),
+      legacyProposal("1.0.0"),
       "2026-08-01T00:00:00.000Z",
     );
     const historicalMilestone = { ...milestone } as Record<string, unknown>;
     delete historicalMilestone["proposalProvenance"];
-    const historicalProposal: Record<string, unknown> = {
-      ...(historicalMilestone["proposal"] as Record<string, unknown>),
-      schemaVersion: "1.0.0",
-    };
-    delete historicalProposal["verticalSlice"];
-    historicalMilestone["proposal"] = historicalProposal;
     legacy["schemaVersion"] = "1.1.0";
     delete legacy["evidenceRetention"];
     legacy["milestones"] = [

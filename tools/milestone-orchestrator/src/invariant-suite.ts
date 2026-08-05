@@ -19,7 +19,7 @@ function slash(path: string): string {
 
 export class VerificationCheckFailure extends Error {}
 
-function commandFromArgv(
+export function commandFromArgv(
   id: string,
   argv: readonly string[],
 ): VerificationCommand {
@@ -29,20 +29,40 @@ function commandFromArgv(
     args.length === 0
   )
     throw new Error(`Invariant ${id} has unsafe or incomplete argv.`);
-  if (executable === "pnpm" && args[0] === "exec" && args[1] === "vitest")
+  if (executable === "pnpm" && args[0] === "exec" && args[1] === "vitest") {
+    if (args[2] !== "run" || args.length < 4)
+      throw new Error(
+        `Invariant ${id} must use "pnpm exec vitest run <file…>" so its receipt wrapper can run it.`,
+      );
     return {
       id,
       executable: "node",
-      args: ["node_modules/vitest/vitest.mjs", ...args.slice(2)],
+      args: [
+        "node_modules/tsx/dist/cli.mjs",
+        "tools/run-tool-evidence.mjs",
+        "invariant-vitest",
+        ...args.slice(3),
+      ],
       parser: "exit-code",
     };
-  if (executable === "pnpm" && args[0] === "verify" && args[1] === "--")
+  }
+  if (executable === "pnpm" && args[0] === "verify" && args[1] === "--") {
+    if (args[2] !== "--stage" || !args[3] || args.length !== 4)
+      throw new Error(
+        `Invariant ${id} must use "pnpm verify -- --stage <id>" so its receipt wrapper can run it.`,
+      );
     return {
       id,
       executable: "node",
-      args: ["scripts/verify.mjs", ...args.slice(2)],
+      args: [
+        "node_modules/tsx/dist/cli.mjs",
+        "tools/run-tool-evidence.mjs",
+        "focused-verify",
+        ...args.slice(2),
+      ],
       parser: "exit-code",
     };
+  }
   if (executable === "pnpm" && args[0] === "typecheck")
     return {
       id,
@@ -130,13 +150,10 @@ export async function runInvariantSuite(
           expectedCommandId: entry.id,
           requiredKinds: entry.expectedArtifactKinds,
         });
-      } else if (entry.expectedArtifactKinds.length > 0) {
+      } else {
         throw new Error(
           `Invariant ${entry.id} did not write its required command-owned receipt.`,
         );
-      } else {
-        receiptAbsenceReason =
-          "Invariant command contract declares no command-owned artifact kinds.";
       }
     } catch (error) {
       failed = true;

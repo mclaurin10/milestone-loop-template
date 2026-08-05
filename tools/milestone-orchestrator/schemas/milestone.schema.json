@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://milestone-loop.local/schemas/orchestrator-milestone-1.1.0.json",
+  "$id": "https://milestone-loop.local/schemas/orchestrator-milestone-1.2.0.json",
   "title": "Example Project Orchestrator Milestone",
   "type": "object",
   "additionalProperties": false,
@@ -17,7 +17,6 @@
     "acceptanceCriteria",
     "requiredTests",
     "verificationCommands",
-    "expectedArtifacts",
     "terminalConditions",
     "estimatedFileCount",
     "requiresBrowserInspection",
@@ -25,7 +24,7 @@
     "hiddenValidation"
   ],
   "properties": {
-    "schemaVersion": { "enum": ["1.0.0", "1.1.0"] },
+    "schemaVersion": { "enum": ["1.0.0", "1.1.0", "1.2.0"] },
     "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]{2,63}$" },
     "title": { "type": "string", "minLength": 3, "maxLength": 120 },
     "kind": {
@@ -88,8 +87,23 @@
           "executable": { "enum": ["pnpm", "node", "git"] },
           "args": { "type": "array", "items": { "type": "string" } },
           "parser": { "enum": ["exit-code", "pnpm-verify"] },
+          "expectedArtifactKinds": { "$ref": "#/$defs/stringArray" },
           "timeoutMs": { "type": "integer", "minimum": 1000 }
-        }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": { "parser": { "const": "pnpm-verify" } },
+              "required": ["parser"]
+            },
+            "then": {
+              "properties": { "expectedArtifactKinds": { "maxItems": 0 } }
+            },
+            "else": {
+              "properties": { "expectedArtifactKinds": { "minItems": 1 } }
+            }
+          }
+        ]
       }
     },
     "expectedArtifacts": {
@@ -201,11 +215,33 @@
   "allOf": [
     {
       "if": {
-        "properties": { "schemaVersion": { "const": "1.1.0" } },
+        "properties": { "schemaVersion": { "enum": ["1.1.0", "1.2.0"] } },
         "required": ["schemaVersion"]
       },
       "then": { "required": ["verticalSlice"] },
       "else": { "not": { "required": ["verticalSlice"] } }
+    },
+    {
+      "if": {
+        "properties": { "schemaVersion": { "const": "1.2.0" } },
+        "required": ["schemaVersion"]
+      },
+      "then": {
+        "not": { "required": ["expectedArtifacts"] },
+        "properties": {
+          "verificationCommands": {
+            "items": { "required": ["expectedArtifactKinds"] }
+          }
+        }
+      },
+      "else": {
+        "required": ["expectedArtifacts"],
+        "properties": {
+          "verificationCommands": {
+            "items": { "not": { "required": ["expectedArtifactKinds"] } }
+          }
+        }
+      }
     }
   ]
 }

@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { unlinkSync, writeFileSync } from "node:fs";
 import { mkdir, readFile, stat, unlink, writeFile } from "node:fs/promises";
-import { basename, relative, resolve } from "node:path";
+import { basename, isAbsolute, relative, resolve } from "node:path";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
 
@@ -613,6 +613,45 @@ export async function artifactDeclaration(artifactDirectory, path, kind) {
 }
 
 export async function writeReceipt(context, checks, artifactInputs) {
+  if (!Array.isArray(checks) || checks.length === 0)
+    throw new Error("Receipts must declare at least one passing check.");
+  const checkIds = new Set();
+  for (const check of checks) {
+    if (!check || typeof check.id !== "string" || check.id.trim() === "")
+      throw new Error("Every receipt check needs a nonempty id.");
+    if (checkIds.has(check.id))
+      throw new Error(`Receipt check ids must be unique: ${check.id}.`);
+    checkIds.add(check.id);
+    if (typeof check.summary !== "string" || check.summary.trim() === "")
+      throw new Error(`Receipt check ${check.id} needs a nonempty summary.`);
+  }
+  if (!Array.isArray(artifactInputs) || artifactInputs.length === 0)
+    throw new Error(
+      "Receipts must declare at least one command-owned artifact.",
+    );
+  const declaredPaths = new Set();
+  for (const input of artifactInputs) {
+    if (!input || typeof input.path !== "string" || input.path.trim() === "")
+      throw new Error("Every receipt artifact needs a nonempty path.");
+    if (typeof input.kind !== "string" || input.kind.trim() === "")
+      throw new Error(`Receipt artifact ${input.path} needs a nonempty kind.`);
+    const contained = relative(
+      context.artifactDirectory,
+      resolve(context.artifactDirectory, input.path),
+    );
+    if (!contained || contained.startsWith("..") || isAbsolute(contained))
+      throw new Error(
+        `Receipt artifact escapes the artifact directory: ${input.path}.`,
+      );
+    const normalized = slash(contained);
+    if (normalized === "result.json")
+      throw new Error(
+        "Receipt artifacts cannot claim the receipt file result.json.",
+      );
+    if (declaredPaths.has(normalized))
+      throw new Error(`Receipt artifact paths must be unique: ${input.path}.`);
+    declaredPaths.add(normalized);
+  }
   const artifacts = [];
   for (const input of artifactInputs) {
     artifacts.push(

@@ -335,12 +335,9 @@ async function tierCommandRecord(input: {
       evidenceFailure = error instanceof Error ? error.message : String(error);
       receiptAbsenceReason = evidenceFailure;
     }
-  } else if (input.command.expectedArtifactKinds.length > 0) {
+  } else {
     evidenceFailure = `Passing check ${input.command.id} did not write its required command-owned receipt.`;
     receiptAbsenceReason = evidenceFailure;
-  } else {
-    receiptAbsenceReason =
-      "The focused command contract declares no command-owned receipt.";
   }
   const failureClass =
     evidenceFailure !== null ||

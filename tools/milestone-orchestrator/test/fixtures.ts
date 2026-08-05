@@ -2,7 +2,9 @@ import { resolve } from "node:path";
 
 import {
   CONFIG_SCHEMA_VERSION,
+  LEGACY_MILESTONE_SCHEMA_VERSION,
   MILESTONE_SCHEMA_VERSION,
+  PREVIOUS_MILESTONE_SCHEMA_VERSION,
   type MilestoneProposal,
   type OrchestratorConfig,
   type OrchestratorState,
@@ -37,15 +39,16 @@ export function validProposal(
         executable: "pnpm",
         args: ["test:orchestrator"],
         parser: "exit-code",
+        expectedArtifactKinds: ["orchestrator-vitest-report"],
       },
       {
         id: "authoritative-verification",
         executable: "pnpm",
         args: ["verify"],
         parser: "pnpm-verify",
+        expectedArtifactKinds: [],
       },
     ],
-    expectedArtifacts: ["verification-summary.json"],
     terminalConditions: ["All commands and independent review pass."],
     estimatedFileCount: 4,
     requiresBrowserInspection: false,
@@ -64,6 +67,33 @@ export function validProposal(
     },
     ...overrides,
   };
+}
+
+// A faithful historical proposal: legacy versions required expectedArtifacts
+// and their commands never carried expectedArtifactKinds; 1.0.0 additionally
+// predates verticalSlice.
+export function legacyProposal(
+  version:
+    | typeof LEGACY_MILESTONE_SCHEMA_VERSION
+    | typeof PREVIOUS_MILESTONE_SCHEMA_VERSION = LEGACY_MILESTONE_SCHEMA_VERSION,
+  overrides: Partial<MilestoneProposal> = {},
+): MilestoneProposal {
+  const current = validProposal();
+  const proposal: MilestoneProposal = {
+    ...current,
+    schemaVersion: version,
+    verificationCommands: current.verificationCommands.map(
+      ({ expectedArtifactKinds: _kinds, ...command }) => command,
+    ),
+    expectedArtifacts: ["verification-summary.json"],
+    ...overrides,
+  };
+  if (version === LEGACY_MILESTONE_SCHEMA_VERSION) {
+    const { verticalSlice, ...withoutSlice } = proposal;
+    void verticalSlice;
+    return withoutSlice;
+  }
+  return proposal;
 }
 
 export function validFeatureProposal(
@@ -96,30 +126,35 @@ export function validFeatureProposal(
         executable: "pnpm",
         args: ["verify:domain-planning"],
         parser: "exit-code",
+        expectedArtifactKinds: ["domain-planning-report"],
       },
       {
         id: "browser-utility",
         executable: "pnpm",
         args: ["verify:domain-browser"],
         parser: "exit-code",
+        expectedArtifactKinds: ["domain-browser-report"],
       },
       {
         id: "node-worker-simulation",
         executable: "pnpm",
         args: ["verify:domain-simulation"],
         parser: "exit-code",
+        expectedArtifactKinds: ["domain-simulation-report"],
       },
       {
         id: "authoritative-verification",
         executable: "pnpm",
         args: ["verify"],
         parser: "pnpm-verify",
+        expectedArtifactKinds: [],
       },
       {
         id: "orchestrator-tests",
         executable: "pnpm",
         args: ["test:orchestrator"],
         parser: "exit-code",
+        expectedArtifactKinds: ["orchestrator-vitest-report"],
       },
     ],
     requiresBrowserInspection: true,

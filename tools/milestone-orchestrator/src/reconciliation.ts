@@ -829,8 +829,8 @@ async function trackedNextProposal(input: {
   const proposal = assertMilestoneProposal(
     JSON.parse(contents.toString("utf8")) as unknown,
   );
-  if (proposal.schemaVersion !== "1.1.0")
-    throw new Error("Next reconciliation proposal must use schema 1.1.0.");
+  if (proposal.schemaVersion !== "1.2.0")
+    throw new Error("Next reconciliation proposal must use schema 1.2.0.");
   return {
     proposal,
     reference: {

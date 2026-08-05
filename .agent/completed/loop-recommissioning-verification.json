@@ -87,49 +87,49 @@
       "id": "domain-resources",
       "argv": ["pnpm", "verify:domain-resources"],
       "tiers": ["milestone"],
-      "expectedArtifactKinds": []
+      "expectedArtifactKinds": ["domain-resources-report"]
     },
     {
       "id": "domain-networks",
       "argv": ["pnpm", "verify:domain-networks"],
       "tiers": ["milestone"],
-      "expectedArtifactKinds": []
+      "expectedArtifactKinds": ["domain-networks-report"]
     },
     {
       "id": "domain-planning",
       "argv": ["pnpm", "verify:domain-planning"],
       "tiers": ["milestone"],
-      "expectedArtifactKinds": []
+      "expectedArtifactKinds": ["domain-planning-report"]
     },
     {
       "id": "domain-entitlement",
       "argv": ["pnpm", "verify:domain-entitlement"],
       "tiers": ["milestone"],
-      "expectedArtifactKinds": []
+      "expectedArtifactKinds": ["domain-entitlement-report"]
     },
     {
       "id": "domain-entitlement-standard",
       "argv": ["pnpm", "verify:domain-entitlement-standard"],
       "tiers": ["milestone"],
-      "expectedArtifactKinds": []
+      "expectedArtifactKinds": ["domain-entitlement-standard-report"]
     },
     {
       "id": "domain-development",
       "argv": ["pnpm", "verify:domain-development"],
       "tiers": ["milestone"],
-      "expectedArtifactKinds": []
+      "expectedArtifactKinds": ["domain-development-report"]
     },
     {
       "id": "domain-simulation",
       "argv": ["pnpm", "verify:domain-simulation"],
       "tiers": ["milestone"],
-      "expectedArtifactKinds": []
+      "expectedArtifactKinds": ["domain-simulation-report"]
     },
     {
       "id": "domain-browser",
       "argv": ["pnpm", "verify:domain-browser"],
       "tiers": ["milestone"],
-      "expectedArtifactKinds": []
+      "expectedArtifactKinds": ["domain-browser-report"]
     }
   ],
   "requiredProtectedPaths": [

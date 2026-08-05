@@ -9,6 +9,7 @@ import {
   EVIDENCE_RETENTION_SCHEMA_VERSION,
   LEGACY_MILESTONE_SCHEMA_VERSION,
   MILESTONE_SCHEMA_VERSION,
+  PREVIOUS_MILESTONE_SCHEMA_VERSION,
   MILESTONE_STATUSES,
   NEXT_ACTIONS,
   RECONCILIATION_PHASES,
@@ -434,27 +435,30 @@ export function validateMilestoneProposal(
     "acceptanceCriteria",
     "requiredTests",
     "verificationCommands",
-    "expectedArtifacts",
     "terminalConditions",
     "estimatedFileCount",
     "requiresBrowserInspection",
     "requiresHeadlessEvaluation",
     "hiddenValidation",
   ] as const;
-  const legacy = value["schemaVersion"] === LEGACY_MILESTONE_SCHEMA_VERSION;
-  const requiredKeys = legacy ? baseKeys : [...baseKeys, "verticalSlice"];
+  const version = value["schemaVersion"];
+  const isOriginalLegacy = version === LEGACY_MILESTONE_SCHEMA_VERSION;
+  const legacy =
+    isOriginalLegacy || version === PREVIOUS_MILESTONE_SCHEMA_VERSION;
+  const requiredKeys = [
+    ...baseKeys,
+    ...(legacy ? (["expectedArtifacts"] as const) : []),
+    ...(isOriginalLegacy ? [] : (["verticalSlice"] as const)),
+  ];
   if (!hasOnlyKeys(value, requiredKeys))
     errors.push("Milestone has unknown fields.");
-  if (
-    value["schemaVersion"] !== MILESTONE_SCHEMA_VERSION &&
-    value["schemaVersion"] !== LEGACY_MILESTONE_SCHEMA_VERSION
-  )
+  if (version !== MILESTONE_SCHEMA_VERSION && !legacy)
     errors.push(
-      `Milestone schemaVersion must be ${MILESTONE_SCHEMA_VERSION}${options.allowLegacy ? ` or historical ${LEGACY_MILESTONE_SCHEMA_VERSION}` : ""}.`,
+      `Milestone schemaVersion must be ${MILESTONE_SCHEMA_VERSION}${options.allowLegacy ? ` or historical ${LEGACY_MILESTONE_SCHEMA_VERSION}/${PREVIOUS_MILESTONE_SCHEMA_VERSION}` : ""}.`,
     );
   else if (legacy && !options.allowLegacy)
     errors.push(
-      `New milestone proposals must use schemaVersion ${MILESTONE_SCHEMA_VERSION}; ${LEGACY_MILESTONE_SCHEMA_VERSION} is historical-state-only.`,
+      `New milestone proposals must use schemaVersion ${MILESTONE_SCHEMA_VERSION}; ${String(version)} is historical-state-only.`,
     );
   if (
     typeof value["id"] !== "string" ||
@@ -485,8 +489,16 @@ export function validateMilestoneProposal(
     errors.push("Milestone needs at least two explicit exclusions.");
   if (!stringArray(value["requiredTests"], 1))
     errors.push("Milestone requiredTests must be nonempty unique strings.");
-  if (!stringArray(value["expectedArtifacts"], 1))
-    errors.push("Milestone expectedArtifacts must be nonempty unique strings.");
+  if (legacy) {
+    if (!stringArray(value["expectedArtifacts"], 1))
+      errors.push(
+        "Milestone expectedArtifacts must be nonempty unique strings.",
+      );
+  } else if (value["expectedArtifacts"] !== undefined) {
+    errors.push(
+      `Milestone expectedArtifacts was removed at schema ${MILESTONE_SCHEMA_VERSION}; declare per-command expectedArtifactKinds instead.`,
+    );
+  }
   if (!stringArray(value["terminalConditions"], 1))
     errors.push(
       "Milestone terminalConditions must be nonempty unique strings.",
@@ -526,17 +538,21 @@ export function validateMilestoneProposal(
   if (!Array.isArray(commands) || commands.length === 0) {
     errors.push("Milestone verificationCommands must be nonempty.");
   } else {
-    const ids: string[] = [];
-    for (const command of commands) {
-      if (
-        !isRecord(command) ||
-        !hasOnlyKeys(command, [
+    const commandKeys = legacy
+      ? ["id", "executable", "args", "parser", "timeoutMs"]
+      : [
           "id",
           "executable",
           "args",
           "parser",
+          "expectedArtifactKinds",
           "timeoutMs",
-        ]) ||
+        ];
+    const ids: string[] = [];
+    for (const command of commands) {
+      if (
+        !isRecord(command) ||
+        !hasOnlyKeys(command, commandKeys) ||
         !nonEmptyString(command["id"]) ||
         !["pnpm", "node", "git"].includes(String(command["executable"])) ||
         !Array.isArray(command["args"]) ||
@@ -547,6 +563,16 @@ export function validateMilestoneProposal(
       ) {
         errors.push(
           "Each verification command must use the versioned argv schema.",
+        );
+      } else if (
+        !legacy &&
+        !(command["parser"] === "pnpm-verify"
+          ? Array.isArray(command["expectedArtifactKinds"]) &&
+            command["expectedArtifactKinds"].length === 0
+          : stringArray(command["expectedArtifactKinds"], 1))
+      ) {
+        errors.push(
+          "Each verification command must declare expectedArtifactKinds: nonempty unique kinds for exit-code commands and exactly [] for pnpm-verify.",
         );
       } else {
         ids.push(command["id"]);
@@ -569,7 +595,7 @@ export function validateMilestoneProposal(
     );
   }
 
-  if (!legacy) {
+  if (!isOriginalLegacy) {
     const vertical = value["verticalSlice"];
     if (
       !isRecord(vertical) ||
@@ -1801,7 +1827,7 @@ export function validateVerificationManifest(
           (tier) =>
             tier === "periodic" || !VERIFICATION_TIERS.includes(tier as never),
         ) ||
-        !stringArray(command["expectedArtifactKinds"])
+        !stringArray(command["expectedArtifactKinds"], 1)
       ) {
         errors.push("Manifest contains an invalid focused command.");
         continue;
@@ -1901,7 +1927,7 @@ export function validateInvariantSuiteRegistry(
       entry["triggerPaths"].some((path) => !safeRelativePath(path)) ||
       !stringArray(entry["argv"], 2) ||
       !["pnpm", "node", "git"].includes(String(entry["argv"]?.[0])) ||
-      !stringArray(entry["expectedArtifactKinds"]) ||
+      !stringArray(entry["expectedArtifactKinds"], 1) ||
       (entry["testFile"] === undefined) !==
         (entry["testTitle"] === undefined) ||
       (entry["testFile"] !== undefined &&
