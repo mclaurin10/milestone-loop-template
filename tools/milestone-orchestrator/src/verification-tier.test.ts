@@ -15,6 +15,7 @@ import {
   coordinateTierOutcome,
   exactNoArgumentVerificationCommand,
   planVerificationTier,
+  tierIdentityDrift,
 } from "./verification-tier.js";
 
 const repositoryRoot = resolve(import.meta.dirname, "../../..");
@@ -185,5 +186,95 @@ describe("non-authoritative tier outcomes", () => {
         exactFailureClass: "infrastructure",
       }),
     ).toEqual({ status: "ERROR", exitCode: 3 });
+  });
+});
+
+describe("tier end-of-run identity", () => {
+  const start = {
+    gitCommit: "b".repeat(40),
+    gitTree: "c".repeat(40),
+    workingTreeDirty: false,
+  };
+
+  it("detects commit, tree, and cleanliness drift with exact fields", () => {
+    expect(tierIdentityDrift(start, { ...start })).toEqual({
+      detected: false,
+      fields: [],
+    });
+    expect(
+      tierIdentityDrift(start, { ...start, gitCommit: "f".repeat(40) }),
+    ).toEqual({ detected: true, fields: ["gitCommit"] });
+    expect(
+      tierIdentityDrift(start, {
+        gitCommit: "f".repeat(40),
+        gitTree: "e".repeat(40),
+        workingTreeDirty: true,
+      }),
+    ).toEqual({
+      detected: true,
+      fields: ["gitCommit", "gitTree", "workingTreeDirty"],
+    });
+  });
+
+  it("requires detected drift to report ERROR exit 3 and equality otherwise", () => {
+    const candidate = {
+      baseCommit: "a".repeat(40),
+      gitCommit: "b".repeat(40),
+      gitTree: "c".repeat(40),
+      workingTreeDirty: false,
+    };
+    const base = {
+      schemaVersion: "1.1.0",
+      runId: "candidate-fixture",
+      tier: "candidate" as const,
+      status: "PASS" as const,
+      exitCode: 0 as const,
+      authoritative: false,
+      candidate,
+      changedPaths: [],
+      invariantSuiteId: "fixture",
+      invariantSuiteSha256: "d".repeat(64),
+      scopePolicySha256: "e".repeat(64),
+      shadowSelectionPath: null,
+      selectedCheckIds: [],
+      actualCheckIds: [],
+      fullClosureCheckIds: [],
+      commands: [],
+      exactVerification: null,
+      candidateFinal: candidate,
+      identityDrift: { detected: false, fields: [] },
+      reviewRequired: false,
+      telemetryManifestPath: null,
+      startedAt: "2026-08-03T00:00:00.000Z",
+      finishedAt: "2026-08-03T00:00:01.000Z",
+      durationMs: 1000,
+    };
+    expect(validateVerificationTierResult(base).valid).toBe(true);
+
+    const driftedWithoutError = {
+      ...base,
+      identityDrift: { detected: true, fields: ["gitCommit"] },
+      candidateFinal: { ...candidate, gitCommit: "f".repeat(40) },
+    };
+    const driftValidation = validateVerificationTierResult(driftedWithoutError);
+    expect(driftValidation.valid).toBe(false);
+    expect(driftValidation.errors.join(" ")).toMatch(/ERROR exit 3/);
+
+    const driftedError = {
+      ...driftedWithoutError,
+      status: "ERROR" as const,
+      exitCode: 3 as const,
+    };
+    expect(validateVerificationTierResult(driftedError).valid).toBe(true);
+
+    const silentDrift = {
+      ...base,
+      candidateFinal: { ...candidate, gitTree: "f".repeat(40) },
+    };
+    const silentValidation = validateVerificationTierResult(silentDrift);
+    expect(silentValidation.valid).toBe(false);
+    expect(silentValidation.errors.join(" ")).toMatch(
+      /candidateFinal must equal candidate/,
+    );
   });
 });

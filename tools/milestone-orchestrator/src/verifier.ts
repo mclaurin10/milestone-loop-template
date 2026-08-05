@@ -6,6 +6,7 @@ import { dirname, isAbsolute, relative, resolve } from "node:path";
 import {
   BOOTSTRAP_VERIFICATION_STAGE_IDS,
   READINESS_VERIFICATION_STAGE_IDS,
+  VERIFICATION_SUMMARY_SCHEMA_VERSION,
 } from "./contracts.js";
 import type {
   AuthoritativeVerificationSummary,
@@ -18,6 +19,10 @@ import type {
   VerificationSummary,
   VerificationTierResult,
 } from "./contracts.js";
+import {
+  candidateIdentitiesEqual,
+  candidateIdentityFrom,
+} from "./candidate-identity.js";
 import { runCommand } from "./command-runner.js";
 import { inspectAttempt } from "./git-isolation.js";
 import { enforceDiffPolicy } from "./policy.js";
@@ -100,6 +105,10 @@ export async function validateReconciliationMilestoneTier(input: {
     result.candidate.gitCommit !== input.candidateCommit ||
     result.candidate.gitTree !== input.candidateTree ||
     result.candidate.workingTreeDirty ||
+    result.identityDrift.detected ||
+    result.candidateFinal.gitCommit !== input.candidateCommit ||
+    result.candidateFinal.gitTree !== input.candidateTree ||
+    result.candidateFinal.workingTreeDirty ||
     !result.exactVerification ||
     result.exactVerification.status !== "NOT_READY" ||
     result.exactVerification.exitCode !== 2 ||
@@ -188,6 +197,10 @@ export async function validateReconciliationMilestoneTier(input: {
   const completion = exact["completion"] as Record<string, unknown> | undefined;
   const candidate = exact["candidate"] as Record<string, unknown> | undefined;
   const invocation = exact["invocation"];
+  const exactCandidateFinal = exact["candidateFinal"] as
+    Record<string, unknown> | undefined;
+  const exactIdentityDrift = exact["identityDrift"] as
+    Record<string, unknown> | undefined;
   const exactPassCount = stages.filter(
     (stage) => stage["status"] === "PASS",
   ).length;
@@ -195,7 +208,7 @@ export async function validateReconciliationMilestoneTier(input: {
     (stage) => stage["status"] === "NOT_READY",
   ).length;
   if (
-    exact["schemaVersion"] !== "2.0.0" ||
+    exact["schemaVersion"] !== "2.1.0" ||
     typeof exact["runId"] !== "string" ||
     exact["runId"].length === 0 ||
     exact["status"] !== "NOT_READY" ||
@@ -212,6 +225,10 @@ export async function validateReconciliationMilestoneTier(input: {
     candidate?.["gitCommit"] !== input.candidateCommit ||
     candidate["gitTree"] !== input.candidateTree ||
     candidate["workingTreeDirty"] !== false ||
+    exactCandidateFinal?.["gitCommit"] !== input.candidateCommit ||
+    exactCandidateFinal["gitTree"] !== input.candidateTree ||
+    exactCandidateFinal["workingTreeDirty"] !== false ||
+    exactIdentityDrift?.["detected"] !== false ||
     stages.length !== READINESS_VERIFICATION_STAGE_IDS.length ||
     stages.some(
       (stage, index) =>
@@ -793,8 +810,10 @@ export async function parseAuthoritativeVerification(input: {
     status === "PASS" ? [] : ["verification_status_not_pass"];
   const reasons = completion["reasons"];
   const profileAutonomousReadinessEquivalent = profile === "readiness";
+  const candidateFinal = parsed["candidateFinal"];
+  const identityDrift = parsed["identityDrift"];
   if (
-    parsed["schemaVersion"] !== "2.0.0" ||
+    parsed["schemaVersion"] !== "2.1.0" ||
     parsed["runId"] !== input.expectedRunId ||
     parsed["exitCode"] !== expectedExitCode ||
     input.observedExitCode !== expectedExitCode ||
@@ -810,6 +829,15 @@ export async function parseAuthoritativeVerification(input: {
     (input.expectedTree !== undefined &&
       candidate["gitTree"] !== input.expectedTree) ||
     candidate["workingTreeDirty"] !== false ||
+    !isRecord(candidateFinal) ||
+    candidateFinal["gitCommit"] !== input.expectedCommit ||
+    candidateFinal["gitCommit"] !== candidate["gitCommit"] ||
+    candidateFinal["gitTree"] !== candidate["gitTree"] ||
+    (input.expectedTree !== undefined &&
+      candidateFinal["gitTree"] !== input.expectedTree) ||
+    candidateFinal["workingTreeDirty"] !== false ||
+    !isRecord(identityDrift) ||
+    identityDrift["detected"] !== false ||
     (status === "NOT_READY" && profile !== "readiness")
   )
     throw malformed();
@@ -1066,12 +1094,13 @@ export async function verifyMilestone(input: {
   const startedAt = new Date();
   await mkdir(input.artifactDirectory, { recursive: true });
   const inspection = inspectAttempt(input.workspacePath, input.baseCommit);
+  const startIdentity = candidateIdentityFrom(input.baseCommit, inspection);
   const artifacts = [
     resolve(input.artifactDirectory, "verification-summary.json"),
   ];
   if (!inspection.clean || inspection.commits.length === 0) {
     const summary: VerificationSummary = {
-      schemaVersion: "1.0.0",
+      schemaVersion: VERIFICATION_SUMMARY_SCHEMA_VERSION,
       attempt: input.attempt,
       status: "FAIL",
       disposition: "rejected",
@@ -1083,6 +1112,8 @@ export async function verifyMilestone(input: {
       finishedAt: new Date().toISOString(),
       commands: [],
       authoritative: null,
+      candidate: startIdentity,
+      authoritativeResultSha256: null,
       changedPaths: inspection.changedPaths,
       artifactPaths: artifacts,
     };
@@ -1096,7 +1127,7 @@ export async function verifyMilestone(input: {
   );
   if (!diffPolicy.allowed) {
     const summary: VerificationSummary = {
-      schemaVersion: "1.0.0",
+      schemaVersion: VERIFICATION_SUMMARY_SCHEMA_VERSION,
       attempt: input.attempt,
       status: "FAIL",
       disposition: "rejected",
@@ -1106,6 +1137,8 @@ export async function verifyMilestone(input: {
       finishedAt: new Date().toISOString(),
       commands: [],
       authoritative: null,
+      candidate: startIdentity,
+      authoritativeResultSha256: null,
       changedPaths: inspection.changedPaths,
       artifactPaths: artifacts,
     };
@@ -1115,6 +1148,7 @@ export async function verifyMilestone(input: {
 
   const commandResults: CommandExecutionSummary[] = [];
   let authoritative: AuthoritativeVerificationSummary | null = null;
+  let authoritativeResultSha256: string | null = null;
   let parseError: string | null = null;
   for (const command of input.proposal.verificationCommands) {
     const verifyId = verificationRunId(
@@ -1141,7 +1175,7 @@ export async function verifyMilestone(input: {
               candidate: {
                 baseCommit: input.baseCommit,
                 commit: inspection.headCommit,
-                tree: null,
+                tree: inspection.tree,
                 dirty: !inspection.clean,
               },
               checkSetId: input.proposal.id,
@@ -1176,6 +1210,7 @@ export async function verifyMilestone(input: {
         authoritative = await parseAuthoritativeVerification({
           workspacePath: input.workspacePath,
           expectedCommit: inspection.headCommit,
+          expectedTree: inspection.tree,
           expectedRunId: verifyId,
           observedExitCode: result.exitCode,
           resultPath: source,
@@ -1184,6 +1219,9 @@ export async function verifyMilestone(input: {
             ? { readinessHistory: input.readinessHistory }
             : {}),
         });
+        authoritativeResultSha256 = createHash("sha256")
+          .update(await readFile(copied))
+          .digest("hex");
         result = {
           ...result,
           status:
@@ -1211,9 +1249,14 @@ export async function verifyMilestone(input: {
   }
 
   const finalInspection = inspectAttempt(input.workspacePath, input.baseCommit);
-  const changedDuringVerification =
-    !finalInspection.clean ||
-    finalInspection.headCommit !== inspection.headCommit;
+  const finalIdentity = candidateIdentityFrom(
+    input.baseCommit,
+    finalInspection,
+  );
+  const changedDuringVerification = !candidateIdentitiesEqual(
+    startIdentity,
+    finalIdentity,
+  );
   const commandFailure = commandResults.find(
     (command) =>
       command.status !== "PASS" &&
@@ -1238,7 +1281,7 @@ export async function verifyMilestone(input: {
           ? "policy"
           : "product";
   const summary: VerificationSummary = {
-    schemaVersion: "1.0.0",
+    schemaVersion: VERIFICATION_SUMMARY_SCHEMA_VERSION,
     attempt: input.attempt,
     status,
     disposition: authoritative?.disposition ?? "rejected",
@@ -1256,6 +1299,8 @@ export async function verifyMilestone(input: {
     finishedAt: new Date().toISOString(),
     commands: commandResults,
     authoritative,
+    candidate: finalIdentity,
+    authoritativeResultSha256,
     changedPaths: inspection.changedPaths,
     artifactPaths: artifacts,
   };

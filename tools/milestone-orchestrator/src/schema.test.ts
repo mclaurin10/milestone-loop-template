@@ -109,22 +109,73 @@ describe("versioned orchestrator schemas", () => {
     expect(validateOrchestratorState(validState(process.cwd()))).toMatchObject({
       valid: true,
     });
+    const reviewerChecks = {
+      acceptanceEvidence: true,
+      architectureCompliance: true,
+      testQuality: true,
+      noSuspiciousShortcuts: true,
+      noScopeReduction: true,
+      regressionsHandled: true,
+    };
+    expect(
+      validateReviewerReport({
+        schemaVersion: "1.1.0",
+        decision: "approve",
+        summary: "The bounded diff and evidence pass review.",
+        findings: [],
+        checks: reviewerChecks,
+        verifiedBaseCommit: "a".repeat(40),
+        verifiedHeadCommit: "b".repeat(40),
+        verifiedTree: "c".repeat(40),
+        verificationResultSha256: "d".repeat(64),
+      }),
+    ).toMatchObject({ valid: true });
+    expect(
+      validateReviewerReport({
+        schemaVersion: "1.1.0",
+        decision: "approve",
+        summary: "Fresh reviews must echo the verified candidate identity.",
+        findings: [],
+        checks: reviewerChecks,
+      }),
+    ).toMatchObject({ valid: false });
+    expect(
+      validateReviewerReport(
+        {
+          schemaVersion: "1.0.0",
+          decision: "approve",
+          summary: "Persisted legacy reviews stay loadable.",
+          findings: [],
+          checks: reviewerChecks,
+        },
+        { allowLegacy: true },
+      ),
+    ).toMatchObject({ valid: true });
     expect(
       validateReviewerReport({
         schemaVersion: "1.0.0",
         decision: "approve",
-        summary: "The bounded diff and evidence pass review.",
+        summary: "Legacy reviews are rejected outside persisted state.",
         findings: [],
-        checks: {
-          acceptanceEvidence: true,
-          architectureCompliance: true,
-          testQuality: true,
-          noSuspiciousShortcuts: true,
-          noScopeReduction: true,
-          regressionsHandled: true,
-        },
+        checks: reviewerChecks,
       }),
-    ).toMatchObject({ valid: true });
+    ).toMatchObject({ valid: false });
+    expect(
+      validateReviewerReport(
+        {
+          schemaVersion: "1.0.0",
+          decision: "approve",
+          summary: "Legacy reviews cannot carry identity fields.",
+          findings: [],
+          checks: reviewerChecks,
+          verifiedBaseCommit: "a".repeat(40),
+          verifiedHeadCommit: "b".repeat(40),
+          verifiedTree: "c".repeat(40),
+          verificationResultSha256: "d".repeat(64),
+        },
+        { allowLegacy: true },
+      ),
+    ).toMatchObject({ valid: false });
     expect(
       validateOrchestratorState({
         ...validState(process.cwd()),
@@ -305,8 +356,8 @@ describe("versioned orchestrator schemas", () => {
       expect(schema.$schema).toContain("2020-12");
       expect(schema.$id).toContain(
         file === "state.schema.json"
-          ? "1.3.0"
-          : file === "milestone.schema.json"
+          ? "1.4.0"
+          : file === "milestone.schema.json" || file === "review.schema.json"
             ? "1.1.0"
             : "1.0.0",
       );

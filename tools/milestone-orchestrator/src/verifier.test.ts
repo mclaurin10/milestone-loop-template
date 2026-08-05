@@ -95,6 +95,12 @@ interface FixtureResult {
     reasons: string[];
   };
   candidate: { gitCommit: string; gitTree: string; workingTreeDirty: boolean };
+  candidateFinal: {
+    gitCommit: string;
+    gitTree: string;
+    workingTreeDirty: boolean;
+  };
+  identityDrift: { detected: boolean; fields: string[] };
   summary: {
     requiredStageCount: number;
     stageCounts: Record<FixtureStatus, number>;
@@ -484,7 +490,7 @@ async function createFixture(input: {
   }
   const commit = "a".repeat(40);
   const result: FixtureResult = {
-    schemaVersion: "2.0.0",
+    schemaVersion: "2.1.0",
     runId,
     status: input.status,
     exitCode: input.status === "PASS" ? 0 : 2,
@@ -508,6 +514,12 @@ async function createFixture(input: {
       gitTree: "c".repeat(40),
       workingTreeDirty: false,
     },
+    candidateFinal: {
+      gitCommit: commit,
+      gitTree: "c".repeat(40),
+      workingTreeDirty: false,
+    },
+    identityDrift: { detected: false, fields: [] },
     summary: {
       requiredStageCount: stages.length,
       stageCounts: counts(stages),
@@ -680,8 +692,12 @@ async function prepareCommittedFixture(
   git(fixture.workspace, "add", "change.txt");
   git(fixture.workspace, "commit", "-m", "increment");
   const candidateCommit = git(fixture.workspace, "rev-parse", "HEAD");
+  const candidateTree = git(fixture.workspace, "rev-parse", "HEAD^{tree}");
   fixture.commit = candidateCommit;
   fixture.result.candidate.gitCommit = candidateCommit;
+  fixture.result.candidate.gitTree = candidateTree;
+  fixture.result.candidateFinal.gitCommit = candidateCommit;
+  fixture.result.candidateFinal.gitTree = candidateTree;
   await fixture.persist();
   return { baseCommit, candidateCommit };
 }
@@ -811,7 +827,23 @@ describe("authoritative verifier result parsing", () => {
         readinessHistoryMode: "durable-records",
         previouslyPassingStageIds: ["unit-domain"],
       },
+      candidate: {
+        baseCommit,
+        commit: git(fixture.workspace, "rev-parse", "HEAD"),
+        tree: git(fixture.workspace, "rev-parse", "HEAD^{tree}"),
+        clean: true,
+      },
     });
+    expect(summary.candidate?.changedEntriesDigest).toMatch(/^[a-f0-9]{64}$/);
+    expect(summary.authoritativeResultSha256).toBe(
+      createHash("sha256")
+        .update(
+          await readFile(
+            join(artifactDirectory, "authoritative-verify-result.json"),
+          ),
+        )
+        .digest("hex"),
+    );
     const persisted = JSON.parse(
       await readFile(
         join(artifactDirectory, "verification-summary.json"),
@@ -830,6 +862,63 @@ describe("authoritative verifier result parsing", () => {
       },
     });
   }, 15_000);
+
+  it.each([
+    {
+      name: "a clean commit",
+      mutate: async (workspace: string) => {
+        await writeFile(join(workspace, "drift.txt"), "external\n", "utf8");
+        git(workspace, "add", "drift.txt");
+        git(workspace, "commit", "-m", "external drift");
+      },
+    },
+    {
+      name: "a dirty edit",
+      mutate: async (workspace: string) => {
+        await writeFile(join(workspace, "drift.txt"), "dirty\n", "utf8");
+      },
+    },
+  ])(
+    "fails closed when verification introduces $name into the attempt",
+    async ({ mutate }) => {
+      const controllerRunId = "controller-drift";
+      const milestoneId = "drift-fixture";
+      const fixture = await createFixture({
+        profile: "readiness",
+        status: "NOT_READY",
+        runId: `${controllerRunId}-${milestoneId}-a1-verify`,
+      });
+      const { baseCommit } = await prepareCommittedFixture(fixture);
+      const summary = await verifyMilestone({
+        runId: controllerRunId,
+        proposal: milestoneProposal(milestoneId),
+        attempt: 1,
+        workspacePath: fixture.workspace,
+        baseCommit,
+        config: await loadConfig(process.cwd()),
+        protectedFiles: [],
+        artifactDirectory: join(
+          fixture.workspace,
+          "artifacts",
+          "drift-evidence",
+        ),
+        readinessHistory: {
+          mode: "durable-records",
+          previouslyPassingStageIds: ["unit-domain"],
+        },
+        executeCommand: async () => {
+          await mutate(fixture.workspace);
+          return commandSummary();
+        },
+      });
+      expect(summary).toMatchObject({
+        status: "FAIL",
+        failureKind: "policy",
+        summary: "Verification changed tracked attempt state or HEAD.",
+      });
+    },
+    20_000,
+  );
 
   it("preserves a raw TIMEOUT even when exit 2 and result.json are present", async () => {
     const controllerRunId = "controller-timeout";
@@ -918,6 +1007,53 @@ describe("authoritative verifier result parsing", () => {
       name: "malformed schema",
       mutate: (fixture) => {
         fixture.result.schemaVersion = "1.0.0";
+      },
+    },
+    {
+      name: "prior result schema without end identity",
+      mutate: (fixture) => {
+        fixture.result.schemaVersion = "2.0.0";
+        delete (fixture.result as unknown as Record<string, unknown>)[
+          "candidateFinal"
+        ];
+        delete (fixture.result as unknown as Record<string, unknown>)[
+          "identityDrift"
+        ];
+      },
+    },
+    {
+      name: "missing candidateFinal",
+      mutate: (fixture) => {
+        delete (fixture.result as unknown as Record<string, unknown>)[
+          "candidateFinal"
+        ];
+      },
+    },
+    {
+      name: "drifted candidateFinal commit",
+      mutate: (fixture) => {
+        fixture.result.candidateFinal.gitCommit = "b".repeat(40);
+      },
+    },
+    {
+      name: "drifted candidateFinal tree",
+      mutate: (fixture) => {
+        fixture.result.candidateFinal.gitTree = "e".repeat(40);
+      },
+    },
+    {
+      name: "dirty candidateFinal",
+      mutate: (fixture) => {
+        fixture.result.candidateFinal.workingTreeDirty = true;
+      },
+    },
+    {
+      name: "detected identity drift",
+      mutate: (fixture) => {
+        fixture.result.identityDrift = {
+          detected: true,
+          fields: ["gitCommit"],
+        };
       },
     },
     {

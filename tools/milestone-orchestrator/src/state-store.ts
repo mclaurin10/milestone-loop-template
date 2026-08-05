@@ -235,7 +235,7 @@ export function migrateOrchestratorState(value: unknown): unknown {
       : migrated["milestones"];
     migrated = {
       ...migrated,
-      schemaVersion: STATE_SCHEMA_VERSION,
+      schemaVersion: "1.3.0",
       milestones,
       requiredNextVerticalConsumer:
         "requiredNextVerticalConsumer" in migrated
@@ -243,6 +243,39 @@ export function migrateOrchestratorState(value: unknown): unknown {
           : null,
       controllerHistory: [],
       reconciliation: { active: null, history: [] },
+    };
+  }
+  if (migrated["schemaVersion"] === "1.3.0") {
+    const milestones = Array.isArray(migrated["milestones"])
+      ? migrated["milestones"].map((entry) => {
+          if (
+            typeof entry !== "object" ||
+            entry === null ||
+            Array.isArray(entry)
+          )
+            return entry;
+          const milestone = entry as Record<string, unknown>;
+          const summaries = Array.isArray(milestone["verificationSummaries"])
+            ? milestone["verificationSummaries"].map((summary) =>
+                typeof summary === "object" &&
+                summary !== null &&
+                !Array.isArray(summary)
+                  ? {
+                      ...(summary as Record<string, unknown>),
+                      schemaVersion: "1.1.0",
+                      candidate: null,
+                      authoritativeResultSha256: null,
+                    }
+                  : summary,
+              )
+            : milestone["verificationSummaries"];
+          return { ...milestone, verificationSummaries: summaries };
+        })
+      : migrated["milestones"];
+    migrated = {
+      ...migrated,
+      schemaVersion: STATE_SCHEMA_VERSION,
+      milestones,
     };
   }
   return migrated;

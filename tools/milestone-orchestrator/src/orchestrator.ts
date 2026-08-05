@@ -12,6 +12,7 @@ import type {
   AgentInvocationRecord,
   AuthoritativeVerificationSummary,
   BlockerRecord,
+  CandidateIdentity,
   CodexTurnResult,
   MilestoneProposal,
   MilestoneRecord,
@@ -27,6 +28,11 @@ import type {
   WorkerFailureRecord,
   WorkspaceCleanupReason,
 } from "./contracts.js";
+import {
+  candidateIdentitiesEqual,
+  candidateIdentityFrom,
+  differingIdentityFields,
+} from "./candidate-identity.js";
 import {
   type CodexGateway,
   type CodexInvocation,
@@ -1049,6 +1055,18 @@ export class MilestoneOrchestrator {
       throw new Error(
         "Target and approved isolated attempt do not match during recovery.",
       );
+    const pinned = milestone.verificationSummaries.at(-1);
+    if (
+      pinned?.status === "PASS" &&
+      pinned.candidate !== null &&
+      !candidateIdentitiesEqual(
+        pinned.candidate,
+        candidateIdentityFrom(milestone.workspace.baseCommit, attempt),
+      )
+    )
+      throw new Error(
+        "Target advanced but the workspace no longer matches the pinned verified candidate.",
+      );
     await assertProtectedFiles(
       this.repositoryRoot,
       this.stateValue.repository.protectedFiles,
@@ -2029,14 +2047,15 @@ export class MilestoneOrchestrator {
       );
       return;
     }
-    const inspection = inspectAttempt(
-      milestone.workspace.path,
-      milestone.workspace.baseCommit,
-    );
+    const verified = summary.candidate;
+    if (!verified || !verified.clean)
+      throw new Error(
+        "PASS verification summary lacks a clean pinned candidate identity.",
+      );
     let updated = replaceMilestone(this.stateValue, id, (record) => ({
       ...record,
       workspace: record.workspace
-        ? { ...record.workspace, headCommit: inspection.headCommit }
+        ? { ...record.workspace, headCommit: verified.commit }
         : null,
     }));
     updated = transitionMilestone(updated, id, "reviewing", iso(this.now));
@@ -2050,23 +2069,86 @@ export class MilestoneOrchestrator {
     });
   }
 
+  private async escalateCandidateIdentityDrift(
+    id: string,
+    boundary: "review-entry" | "post-review" | "pre-integration",
+    expected: CandidateIdentity | null,
+    observed: CandidateIdentity | null,
+    messageOverride?: string,
+  ): Promise<void> {
+    const milestone = milestoneById(this.stateValue, id);
+    const reportPath = resolve(
+      this.attemptDirectory(milestone),
+      `candidate-identity-drift-${boundary}.json`,
+    );
+    await atomicWriteJson(reportPath, {
+      schemaVersion: "1.0.0",
+      milestoneId: id,
+      boundary,
+      expected,
+      observed,
+      recordedAt: iso(this.now),
+    });
+    const fields =
+      expected && observed ? differingIdentityFields(expected, observed) : [];
+    const message =
+      messageOverride ??
+      `Candidate identity changed at ${boundary}: [${fields.join(", ")}] differ from the machine-verified candidate. Nothing was integrated.`;
+    await this.escalate("CANDIDATE_IDENTITY_DRIFT", message, [reportPath], id);
+  }
+
   private async review(id: string): Promise<void> {
     const milestone = milestoneById(this.stateValue, id);
     const verification = milestone.verificationSummaries.at(-1);
     if (!milestone.workspace || !verification || verification.status !== "PASS")
       throw new Error("Review requires a verified isolated attempt.");
-    const attempt = inspectAttempt(
-      milestone.workspace.path,
+    const verified = verification.candidate;
+    const resultSha256 = verification.authoritativeResultSha256;
+    const copiedResultPath = verification.authoritative?.copiedResultPath;
+    if (!verified || !resultSha256 || !copiedResultPath) {
+      await this.escalateCandidateIdentityDrift(
+        id,
+        "review-entry",
+        verified,
+        null,
+        "Persisted verification predates the candidate identity fence; re-verification is required before review.",
+      );
+      return;
+    }
+    const entryIdentity = candidateIdentityFrom(
       milestone.workspace.baseCommit,
+      inspectAttempt(milestone.workspace.path, milestone.workspace.baseCommit),
     );
+    if (!candidateIdentitiesEqual(verified, entryIdentity)) {
+      await this.escalateCandidateIdentityDrift(
+        id,
+        "review-entry",
+        verified,
+        entryIdentity,
+      );
+      return;
+    }
+    const observedResultSha256 = createHash("sha256")
+      .update(await readFile(copiedResultPath))
+      .digest("hex");
+    if (observedResultSha256 !== resultSha256) {
+      await this.escalateCandidateIdentityDrift(
+        id,
+        "review-entry",
+        verified,
+        entryIdentity,
+        "The copied authoritative verification result no longer matches its recorded hash.",
+      );
+      return;
+    }
     const report = await requestReview({
       gateway: this.accountingGateway(),
       project: this.config.project,
       proposal: milestone.proposal,
       verification,
       workspacePath: milestone.workspace.path,
-      baseCommit: milestone.workspace.baseCommit,
-      headCommit: attempt.headCommit,
+      verifiedCandidate: verified,
+      verificationResultSha256: resultSha256,
       attempt: milestone.attempts,
       artifactDirectory: resolve(this.attemptDirectory(milestone), "review"),
       timeoutMs: this.phaseTimeout(this.config.limits.codexTurnMs),
@@ -2101,7 +2183,24 @@ export class MilestoneOrchestrator {
       );
       return;
     }
-    await this.integrate(id, attempt.headCommit, attempt.commits);
+    const postReviewInspection = inspectAttempt(
+      milestone.workspace.path,
+      milestone.workspace.baseCommit,
+    );
+    const postReviewIdentity = candidateIdentityFrom(
+      milestone.workspace.baseCommit,
+      postReviewInspection,
+    );
+    if (!candidateIdentitiesEqual(verified, postReviewIdentity)) {
+      await this.escalateCandidateIdentityDrift(
+        id,
+        "post-review",
+        verified,
+        postReviewIdentity,
+      );
+      return;
+    }
+    await this.integrate(id, verified, postReviewInspection.commits);
   }
 
   private async retryOrEscalate(
@@ -2187,12 +2286,25 @@ export class MilestoneOrchestrator {
 
   private async integrate(
     id: string,
-    headCommit: string,
+    verified: CandidateIdentity,
     commits: readonly string[],
   ): Promise<void> {
     const milestone = milestoneById(this.stateValue, id);
     if (!milestone.workspace)
       throw new Error("Integration has no isolated workspace.");
+    const preIntegrationIdentity = candidateIdentityFrom(
+      milestone.workspace.baseCommit,
+      inspectAttempt(milestone.workspace.path, milestone.workspace.baseCommit),
+    );
+    if (!candidateIdentitiesEqual(verified, preIntegrationIdentity)) {
+      await this.escalateCandidateIdentityDrift(
+        id,
+        "pre-integration",
+        verified,
+        preIntegrationIdentity,
+      );
+      return;
+    }
     await assertProtectedFiles(
       milestone.workspace.path,
       this.stateValue.repository.protectedFiles,
@@ -2209,7 +2321,7 @@ export class MilestoneOrchestrator {
       schemaVersion: "1.0.0",
       status: "pending",
       baseCommit: milestone.workspace.baseCommit,
-      headCommit,
+      headCommit: verified.commit,
       commits,
     });
     const telemetry = await this.telemetryStore();
@@ -2229,7 +2341,8 @@ export class MilestoneOrchestrator {
         targetBranch: this.config.targetBranch,
         expectedBaseCommit: this.stateValue.repository.verifiedCommit,
         workspacePath: milestone.workspace.path,
-        headCommit,
+        headCommit: verified.commit,
+        expectedTree: verified.tree,
       });
       await integrationSpan.finish({
         status: "PASS",

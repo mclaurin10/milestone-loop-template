@@ -65,9 +65,14 @@ tsconfig the `typecheck` evidence covers.
   file.
 - **Run identity**: `--run-id <id>` (the orchestrator appends it); results
   are written under `artifacts/<run-id>/`: `run-manifest.json`,
-  `result.json` (schema `2.0.0`: status, exit code, profile, completion
+  `result.json` (schema `2.1.0`: status, exit code, profile, completion
   eligibility with reasons, candidate identity incl. git commit/tree and
-  authority hashes, per-stage checks/commands), and `summary.md`.
+  authority hashes, per-stage checks/commands), and `summary.md`. The
+  candidate identity is captured again after the stage loop
+  (`candidateFinal` plus `identityDrift`); any tracked or ref drift
+  between the two captures forces `FAIL` with completion reason
+  `candidate_identity_drift`, and completion eligibility reads the final
+  cleanliness, never the starting snapshot.
 - **Focused runs**: `--stage <id>` always bundles `environment` and
   `contract-integrity`, and is marked completion-ineligible.
 - **contract-integrity stage**: validates the immutable lock hash, the lock

@@ -245,9 +245,48 @@ export async function createIsolatedWorkspace(input: {
 
 export interface AttemptInspection {
   readonly headCommit: string;
+  readonly tree: string;
   readonly commits: readonly string[];
   readonly changedPaths: readonly string[];
+  readonly changedEntries: readonly string[];
   readonly clean: boolean;
+}
+
+export function rawDiffEntries(
+  repository: string,
+  rangeArgs: readonly string[],
+): readonly string[] {
+  const result = spawnSync(
+    "git",
+    [
+      "-C",
+      repository,
+      "diff",
+      "--raw",
+      "-z",
+      "--no-renames",
+      "--diff-filter=ACDMRTUXB",
+      ...rangeArgs,
+    ],
+    { encoding: "utf8", maxBuffer: 64 * 1024 * 1024, windowsHide: true },
+  );
+  if (result.error) throw result.error;
+  if ((result.status ?? 1) !== 0)
+    throw new Error(
+      `Git command failed (diff --raw): ${result.stderr || result.stdout}`,
+    );
+  const tokens = result.stdout.split("\0").filter((token) => token.length > 0);
+  if (tokens.length % 2 !== 0)
+    throw new Error("Raw Git diff output has unexpected framing.");
+  const entries: string[] = [];
+  for (let index = 0; index < tokens.length; index += 2) {
+    const meta = tokens[index] ?? "";
+    const path = (tokens[index + 1] ?? "").replaceAll("\\", "/");
+    if (!meta.startsWith(":"))
+      throw new Error(`Raw Git diff record is malformed: ${meta}`);
+    entries.push(`${meta} ${path}`);
+  }
+  return entries;
 }
 
 export function workingChangedPaths(workspacePath: string): readonly string[] {
@@ -305,6 +344,7 @@ export function inspectAttempt(
     "--untracked-files=all",
   ]).stdout;
   const headCommit = runGit(workspacePath, ["rev-parse", "HEAD"]).stdout;
+  const tree = runGit(workspacePath, ["rev-parse", "HEAD^{tree}"]).stdout;
   const ancestor = runGit(
     workspacePath,
     ["merge-base", "--is-ancestor", baseCommit, headCommit],
@@ -325,10 +365,15 @@ export function inspectAttempt(
     "--diff-filter=ACDMRTUXB",
     `${baseCommit}..${headCommit}`,
   ]);
+  const changedEntries = rawDiffEntries(workspacePath, [
+    `${baseCommit}..${headCommit}`,
+  ]);
   return {
     headCommit,
+    tree,
     commits: commitsText ? commitsText.split(/\r?\n/) : [],
     changedPaths,
+    changedEntries,
     clean: status.length === 0,
   };
 }
@@ -339,6 +384,7 @@ export function integrateFastForward(input: {
   readonly expectedBaseCommit: string;
   readonly workspacePath: string;
   readonly headCommit: string;
+  readonly expectedTree: string;
 }): string {
   inspectTarget(
     input.repositoryRoot,
@@ -346,7 +392,11 @@ export function integrateFastForward(input: {
     input.expectedBaseCommit,
   );
   const attempt = inspectAttempt(input.workspacePath, input.expectedBaseCommit);
-  if (!attempt.clean || attempt.headCommit !== input.headCommit)
+  if (
+    !attempt.clean ||
+    attempt.headCommit !== input.headCommit ||
+    attempt.tree !== input.expectedTree
+  )
     throw new Error("Attempt changed after approval or is not clean.");
   runGit(input.repositoryRoot, [
     "fetch",

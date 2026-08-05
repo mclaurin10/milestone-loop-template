@@ -101,7 +101,7 @@ describe("atomic state persistence", () => {
     delete (legacy["run"] as Record<string, unknown>)["agentInvocations"];
     await writeFile(store.path, `${JSON.stringify(legacy)}\n`, "utf8");
     await expect(store.load()).resolves.toMatchObject({
-      schemaVersion: "1.3.0",
+      schemaVersion: "1.4.0",
       run: { agentInvocations: [] },
       evidenceRetention: {
         schemaVersion: "1.0.0",
@@ -177,7 +177,7 @@ describe("atomic state persistence", () => {
     await writeFile(store.path, `${JSON.stringify(legacy)}\n`, "utf8");
 
     await expect(store.load()).resolves.toMatchObject({
-      schemaVersion: "1.3.0",
+      schemaVersion: "1.4.0",
       evidenceRetention: {
         initializedAt: null,
         legacyRunIds: [],
@@ -224,7 +224,7 @@ describe("atomic state persistence", () => {
     await writeFile(store.path, `${JSON.stringify(legacy)}\n`, "utf8");
 
     await expect(store.load()).resolves.toMatchObject({
-      schemaVersion: "1.3.0",
+      schemaVersion: "1.4.0",
       revision: current.revision,
       repository: current.repository,
       queue: current.queue,
@@ -236,6 +236,56 @@ describe("atomic state persistence", () => {
       },
       controllerHistory: [],
       reconciliation: { active: null, history: [] },
+    });
+  });
+
+  it("migrates 1.3 state by marking prior verification summaries as unpinned", async () => {
+    const directory = await temporaryDirectory();
+    const store = new StateStore(directory, "state.json");
+    const current = validState(directory);
+    const milestone = JSON.parse(
+      JSON.stringify(
+        createMilestoneRecord(validProposal(), "2026-08-01T00:00:00.000Z"),
+      ),
+    ) as Record<string, unknown>;
+    const legacySummary = {
+      schemaVersion: "1.0.0",
+      attempt: 1,
+      status: "PASS",
+      disposition: "incremental-readiness",
+      failureKind: null,
+      summary: "Pre-fence verification evidence.",
+      startedAt: "2026-08-01T00:00:00.000Z",
+      finishedAt: "2026-08-01T00:00:01.000Z",
+      commands: [],
+      authoritative: null,
+      changedPaths: ["tools/example.ts"],
+      artifactPaths: ["verification/verification-summary.json"],
+    };
+    milestone["verificationSummaries"] = [legacySummary];
+    const legacy = JSON.parse(JSON.stringify(current)) as Record<
+      string,
+      unknown
+    >;
+    legacy["schemaVersion"] = "1.3.0";
+    legacy["milestones"] = [milestone];
+    legacy["queue"] = [
+      (milestone["proposal"] as Record<string, unknown>)["id"],
+    ];
+    await writeFile(store.path, `${JSON.stringify(legacy)}\n`, "utf8");
+
+    const migrated = await store.load();
+    expect(migrated).toMatchObject({ schemaVersion: "1.4.0" });
+    const summaries = migrated?.milestones[0]?.verificationSummaries;
+    expect(summaries).toHaveLength(1);
+    expect(summaries?.[0]).toMatchObject({
+      schemaVersion: "1.1.0",
+      attempt: 1,
+      status: "PASS",
+      summary: "Pre-fence verification evidence.",
+      candidate: null,
+      authoritativeResultSha256: null,
+      changedPaths: ["tools/example.ts"],
     });
   });
 });

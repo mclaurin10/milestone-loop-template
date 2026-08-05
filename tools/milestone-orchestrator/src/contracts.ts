@@ -1,8 +1,10 @@
 export const LEGACY_MILESTONE_SCHEMA_VERSION = "1.0.0" as const;
 export const MILESTONE_SCHEMA_VERSION = "1.1.0" as const;
-export const STATE_SCHEMA_VERSION = "1.3.0" as const;
+export const STATE_SCHEMA_VERSION = "1.4.0" as const;
 export const CONFIG_SCHEMA_VERSION = "1.3.0" as const;
-export const REVIEW_SCHEMA_VERSION = "1.0.0" as const;
+export const REVIEW_LEGACY_SCHEMA_VERSION = "1.0.0" as const;
+export const REVIEW_SCHEMA_VERSION = "1.1.0" as const;
+export const VERIFICATION_SUMMARY_SCHEMA_VERSION = "1.1.0" as const;
 export const RECONCILIATION_SCHEMA_VERSION = "1.0.0" as const;
 export const RECONCILIATION_REVIEW_SCHEMA_VERSION = "1.0.0" as const;
 export const CONTROLLER_ARCHIVE_SCHEMA_VERSION = "1.0.0" as const;
@@ -10,7 +12,7 @@ export const AGENT_POLICY_SCHEMA_VERSION = "1.0.0" as const;
 export const AGENT_INVOCATION_SCHEMA_VERSION = "1.0.0" as const;
 export const WORKSPACE_CLEANUP_SCHEMA_VERSION = "1.0.0" as const;
 export const EVIDENCE_RETENTION_SCHEMA_VERSION = "1.0.0" as const;
-export const VERIFICATION_TIER_SCHEMA_VERSION = "1.0.0" as const;
+export const VERIFICATION_TIER_SCHEMA_VERSION = "1.1.0" as const;
 export const VERIFICATION_MANIFEST_SCHEMA_VERSION =
   "verification-manifest.v1" as const;
 
@@ -373,6 +375,16 @@ export interface VerificationTierResult {
   readonly fullClosureCheckIds: readonly string[];
   readonly commands: readonly VerificationTierCommandRecord[];
   readonly exactVerification: ExactVerificationIndex | null;
+  readonly candidateFinal: {
+    readonly baseCommit: string;
+    readonly gitCommit: string;
+    readonly gitTree: string;
+    readonly workingTreeDirty: boolean;
+  };
+  readonly identityDrift: {
+    readonly detected: boolean;
+    readonly fields: readonly string[];
+  };
   readonly reviewRequired: boolean;
   readonly telemetryManifestPath: string | null;
   readonly startedAt: string;
@@ -528,8 +540,16 @@ export interface AuthoritativeVerificationSummary {
 export type VerificationDisposition =
   AuthoritativeVerificationDisposition | "rejected";
 
+export interface CandidateIdentity {
+  readonly baseCommit: string;
+  readonly commit: string;
+  readonly tree: string;
+  readonly clean: boolean;
+  readonly changedEntriesDigest: string;
+}
+
 export interface VerificationSummary {
-  readonly schemaVersion: "1.0.0";
+  readonly schemaVersion: typeof VERIFICATION_SUMMARY_SCHEMA_VERSION;
   readonly attempt: number;
   readonly status: "PASS" | "FAIL" | "ERROR";
   readonly disposition: VerificationDisposition;
@@ -539,6 +559,8 @@ export interface VerificationSummary {
   readonly finishedAt: string;
   readonly commands: readonly CommandExecutionSummary[];
   readonly authoritative: AuthoritativeVerificationSummary | null;
+  readonly candidate: CandidateIdentity | null;
+  readonly authoritativeResultSha256: string | null;
   readonly changedPaths: readonly string[];
   readonly artifactPaths: readonly string[];
 }
@@ -560,11 +582,16 @@ export interface ReviewerChecks {
 }
 
 export interface ReviewerReport {
-  readonly schemaVersion: typeof REVIEW_SCHEMA_VERSION;
+  readonly schemaVersion:
+    typeof REVIEW_LEGACY_SCHEMA_VERSION | typeof REVIEW_SCHEMA_VERSION;
   readonly decision: "approve" | "reject" | "escalate";
   readonly summary: string;
   readonly findings: readonly ReviewFinding[];
   readonly checks: ReviewerChecks;
+  readonly verifiedBaseCommit?: string;
+  readonly verifiedHeadCommit?: string;
+  readonly verifiedTree?: string;
+  readonly verificationResultSha256?: string;
   readonly attempt?: number;
   readonly threadId?: string;
   readonly reviewedAt?: string;

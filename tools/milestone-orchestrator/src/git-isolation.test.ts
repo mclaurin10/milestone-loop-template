@@ -79,10 +79,93 @@ describe("Git isolation", () => {
       expectedBaseCommit: base,
       workspacePath: workspace.path,
       headCommit: attempt.headCommit,
+      expectedTree: attempt.tree,
     });
     expect(integrated).toBe(attempt.headCommit);
     expect(await readFile(join(repository, "base.txt"), "utf8")).toBe(
       "attempt\n",
     );
+  }, 30_000);
+
+  it("refuses integration when the approved candidate identity drifted", async () => {
+    const parent = await mkdtemp(join(tmpdir(), "milestone-loop-git-"));
+    temporaryDirectories.push(parent);
+    const repository = join(parent, "source");
+    await import("node:fs/promises").then(({ mkdir }) => mkdir(repository));
+    git(repository, "init", "-b", "main");
+    git(repository, "config", "user.name", "Test User");
+    git(repository, "config", "user.email", "test@example.invalid");
+    await writeFile(join(repository, ".gitignore"), "artifacts/\n", "utf8");
+    await writeFile(join(repository, "base.txt"), "verified\n", "utf8");
+    git(repository, "add", ".gitignore", "base.txt");
+    git(repository, "commit", "-m", "base");
+    const base = git(repository, "rev-parse", "HEAD");
+
+    const workspace = await createIsolatedWorkspace({
+      repositoryRoot: repository,
+      workspaceRoot: "artifacts/orchestrator/workspaces",
+      targetBranch: "main",
+      baseCommit: base,
+      runId: "test-run",
+      milestoneId: "identity-drift",
+      now: "2026-08-01T00:00:00.000Z",
+    });
+    await writeFile(join(workspace.path, "base.txt"), "attempt\n", "utf8");
+    commitWorkingChanges(workspace.path, "Controller checkpoint: attempt");
+    const approved = inspectAttempt(workspace.path, base);
+    expect(approved.tree).toBe(git(workspace.path, "rev-parse", "HEAD^{tree}"));
+
+    expect(() =>
+      integrateFastForward({
+        repositoryRoot: repository,
+        targetBranch: "main",
+        expectedBaseCommit: base,
+        workspacePath: workspace.path,
+        headCommit: approved.headCommit,
+        expectedTree: "0".repeat(40),
+      }),
+    ).toThrow("Attempt changed after approval or is not clean.");
+
+    await writeFile(join(workspace.path, "late.txt"), "late\n", "utf8");
+    git(workspace.path, "add", "late.txt");
+    git(workspace.path, "commit", "-m", "clean commit after approval");
+    expect(() =>
+      integrateFastForward({
+        repositoryRoot: repository,
+        targetBranch: "main",
+        expectedBaseCommit: base,
+        workspacePath: workspace.path,
+        headCommit: approved.headCommit,
+        expectedTree: approved.tree,
+      }),
+    ).toThrow("Attempt changed after approval or is not clean.");
+    expect(git(repository, "rev-parse", "HEAD")).toBe(base);
+    expect(await readFile(join(repository, "base.txt"), "utf8")).toBe(
+      "verified\n",
+    );
+  }, 30_000);
+
+  it("records both sides of a rename in changed entries", async () => {
+    const parent = await mkdtemp(join(tmpdir(), "milestone-loop-git-"));
+    temporaryDirectories.push(parent);
+    const repository = join(parent, "source");
+    await import("node:fs/promises").then(({ mkdir }) => mkdir(repository));
+    git(repository, "init", "-b", "main");
+    git(repository, "config", "user.name", "Test User");
+    git(repository, "config", "user.email", "test@example.invalid");
+    await writeFile(join(repository, "original.txt"), "content\n", "utf8");
+    git(repository, "add", "original.txt");
+    git(repository, "commit", "-m", "base");
+    const base = git(repository, "rev-parse", "HEAD");
+    git(repository, "mv", "original.txt", "renamed.txt");
+    git(repository, "commit", "-m", "rename");
+
+    const attempt = inspectAttempt(repository, base);
+    expect(
+      attempt.changedEntries.some((entry) => entry.endsWith(" original.txt")),
+    ).toBe(true);
+    expect(
+      attempt.changedEntries.some((entry) => entry.endsWith(" renamed.txt")),
+    ).toBe(true);
   }, 30_000);
 });

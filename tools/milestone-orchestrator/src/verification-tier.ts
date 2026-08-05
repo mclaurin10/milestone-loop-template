@@ -4,6 +4,7 @@ import { existsSync } from "node:fs";
 import { mkdir, readFile } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
 
+import { VERIFICATION_TIER_SCHEMA_VERSION } from "./contracts.js";
 import type {
   ExactVerificationIndex,
   VerificationCommand,
@@ -136,6 +137,22 @@ export function collectTierCandidateIdentity(
     workingTreeDirty: status.length > 0,
     changedPaths: [...changed].sort(),
   };
+}
+
+export function tierIdentityDrift(
+  start: Pick<
+    TierCandidateIdentity,
+    "gitCommit" | "gitTree" | "workingTreeDirty"
+  >,
+  end: Pick<
+    TierCandidateIdentity,
+    "gitCommit" | "gitTree" | "workingTreeDirty"
+  >,
+): { readonly detected: boolean; readonly fields: readonly string[] } {
+  const fields = (["gitCommit", "gitTree", "workingTreeDirty"] as const).filter(
+    (field) => start[field] !== end[field],
+  );
+  return { detected: fields.length > 0, fields };
 }
 
 export function classifyVerificationPath(
@@ -749,7 +766,32 @@ export async function runVerificationTier(
       exact = exactRun.exact;
       exactFailureClass = exactRun.failureClass;
     }
-    const outcome = cleanFailure
+    let candidateFinal = {
+      baseCommit: candidate.baseCommit,
+      gitCommit: candidate.gitCommit,
+      gitTree: candidate.gitTree,
+      workingTreeDirty: candidate.workingTreeDirty,
+    };
+    let identityDrift: {
+      readonly detected: boolean;
+      readonly fields: readonly string[];
+    };
+    try {
+      const finalIdentity = collectTierCandidateIdentity(
+        input.repositoryRoot,
+        baseCommit,
+      );
+      candidateFinal = {
+        baseCommit: finalIdentity.baseCommit,
+        gitCommit: finalIdentity.gitCommit,
+        gitTree: finalIdentity.gitTree,
+        workingTreeDirty: finalIdentity.workingTreeDirty,
+      };
+      identityDrift = tierIdentityDrift(candidate, finalIdentity);
+    } catch {
+      identityDrift = { detected: true, fields: ["ancestry"] };
+    }
+    const commandOutcome = cleanFailure
       ? ({ status: "FAIL", exitCode: 1 } as const)
       : coordinateTierOutcome({
           tier: input.tier,
@@ -759,6 +801,9 @@ export async function runVerificationTier(
           exactVerification: exact,
           exactFailureClass,
         });
+    const outcome = identityDrift.detected
+      ? ({ status: "ERROR", exitCode: 3 } as const)
+      : commandOutcome;
     if (input.tier !== "periodic") {
       const path = resolve(runRoot, "shadow-selection.json");
       const selection = finalizeScopeSelection(plan.scopeRecommendation, {
@@ -773,7 +818,7 @@ export async function runVerificationTier(
     }
     const finishedAt = new Date();
     const result: VerificationTierResult = {
-      schemaVersion: "1.0.0",
+      schemaVersion: VERIFICATION_TIER_SCHEMA_VERSION,
       runId,
       tier: input.tier,
       status: outcome.status,
@@ -795,6 +840,8 @@ export async function runVerificationTier(
       fullClosureCheckIds: plan.fullClosureCheckIds,
       commands: commandRecords,
       exactVerification: exact,
+      candidateFinal,
+      identityDrift,
       reviewRequired: input.tier === "milestone",
       telemetryManifestPath: telemetry.repositoryRelativeManifestPath(),
       startedAt: startedAt.toISOString(),

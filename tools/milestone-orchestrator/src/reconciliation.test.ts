@@ -296,8 +296,13 @@ async function writeMilestoneTier(fixture: Fixture): Promise<string> {
     id,
     status: index < 5 ? "PASS" : "NOT_READY",
   }));
+  const exactCandidate = {
+    gitCommit: git(fixture.root, "rev-parse", "HEAD"),
+    gitTree: git(fixture.root, "rev-parse", "HEAD^{tree}"),
+    workingTreeDirty: false,
+  };
   const exact = {
-    schemaVersion: "2.0.0",
+    schemaVersion: "2.1.0",
     runId,
     status: "NOT_READY",
     exitCode: 2,
@@ -312,11 +317,9 @@ async function writeMilestoneTier(fixture: Fixture): Promise<string> {
       eligible: false,
       reasons: ["verification_status_not_pass"],
     },
-    candidate: {
-      gitCommit: git(fixture.root, "rev-parse", "HEAD"),
-      gitTree: git(fixture.root, "rev-parse", "HEAD^{tree}"),
-      workingTreeDirty: false,
-    },
+    candidate: exactCandidate,
+    candidateFinal: exactCandidate,
+    identityDrift: { detected: false, fields: [] },
     summary: {
       stageCounts: { PASS: 5, NOT_READY: 10, FAIL: 0, ERROR: 0 },
       requiredStageCount: 15,
@@ -360,19 +363,20 @@ async function writeMilestoneTier(fixture: Fixture): Promise<string> {
   const commandRecords = [];
   for (const [index, command] of requiredCommands.entries())
     commandRecords.push(await focusedCommandRecord(fixture, command, index));
+  const tierCandidate = {
+    baseCommit: fixture.sourceCommit,
+    gitCommit: exact.candidate.gitCommit,
+    gitTree: exact.candidate.gitTree,
+    workingTreeDirty: false,
+  };
   const tier = {
-    schemaVersion: "1.0.0",
+    schemaVersion: "1.1.0",
     runId: "verification-tier-milestone-fixture",
     tier: "milestone",
     status: "NOT_READY",
     exitCode: 2,
     authoritative: false,
-    candidate: {
-      baseCommit: fixture.sourceCommit,
-      gitCommit: exact.candidate.gitCommit,
-      gitTree: exact.candidate.gitTree,
-      workingTreeDirty: false,
-    },
+    candidate: tierCandidate,
     changedPaths: ["external-work.txt"],
     invariantSuiteId: "fixture-invariants",
     invariantSuiteSha256: "a".repeat(64),
@@ -394,6 +398,8 @@ async function writeMilestoneTier(fixture: Fixture): Promise<string> {
       candidateCommit: exact.candidate.gitCommit,
       candidateTree: exact.candidate.gitTree,
     },
+    candidateFinal: tierCandidate,
+    identityDrift: { detected: false, fields: [] },
     reviewRequired: true,
     telemetryManifestPath: null,
     startedAt: "2026-08-04T00:00:00.000Z",
@@ -670,7 +676,7 @@ function failureRecoveryScenario() {
   return failureRecoveryPromise;
 }
 
-describe("controller-boundary reconciliation", { timeout: 30_000 }, () => {
+describe("controller-boundary reconciliation", { timeout: 60_000 }, () => {
   it("records the complete continuous external commit range with exact metadata and citations", async () => {
     const { fixture, manifest } = await happyLifecycleScenario();
 
@@ -694,7 +700,7 @@ describe("controller-boundary reconciliation", { timeout: 30_000 }, () => {
 
     expect(repeatedStatus.active).toBeNull();
     expect(finalState).toMatchObject({
-      schemaVersion: "1.3.0",
+      schemaVersion: "1.4.0",
       repository: { verifiedCommit: fixture.candidateCommit },
       queue: ["complete-operations-base-utilities"],
       activeMilestoneId: null,

@@ -120,7 +120,7 @@ function verification(
   evidence: AuthoritativeVerificationSummary,
 ): VerificationSummary {
   return {
-    schemaVersion: "1.0.0",
+    schemaVersion: "1.1.0",
     attempt: 1,
     status: "PASS",
     disposition: evidence.disposition,
@@ -130,6 +130,14 @@ function verification(
     finishedAt: NOW,
     commands: [],
     authoritative: evidence,
+    candidate: {
+      baseCommit: "b".repeat(40),
+      commit: evidence.candidateCommit,
+      tree: "d".repeat(40),
+      clean: true,
+      changedEntriesDigest: "e".repeat(64),
+    },
+    authoritativeResultSha256: "f".repeat(64),
     changedPaths: ["tools/example.ts"],
     artifactPaths: ["verification/verification-summary.json"],
   };

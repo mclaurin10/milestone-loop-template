@@ -192,11 +192,25 @@ export const MILESTONE_OUTPUT_SCHEMA = {
 export const REVIEW_OUTPUT_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["schemaVersion", "decision", "summary", "findings", "checks"],
+  required: [
+    "schemaVersion",
+    "decision",
+    "summary",
+    "findings",
+    "checks",
+    "verifiedBaseCommit",
+    "verifiedHeadCommit",
+    "verifiedTree",
+    "verificationResultSha256",
+  ],
   properties: {
-    schemaVersion: { type: "string", enum: ["1.0.0"] },
+    schemaVersion: { type: "string", enum: ["1.1.0"] },
     decision: { type: "string", enum: ["approve", "reject", "escalate"] },
     summary: { type: "string" },
+    verifiedBaseCommit: { type: "string", pattern: "^[a-f0-9]{40}$" },
+    verifiedHeadCommit: { type: "string", pattern: "^[a-f0-9]{40}$" },
+    verifiedTree: { type: "string", pattern: "^[a-f0-9]{40}$" },
+    verificationResultSha256: { type: "string", pattern: "^[a-f0-9]{64}$" },
     findings: {
       type: "array",
       items: {

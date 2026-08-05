@@ -225,6 +225,7 @@ describe("post-persistence workspace lifecycle", () => {
         expectedBaseCommit: fixture.baseCommit,
         workspacePath: workspace.path,
         headCommit,
+        expectedTree: git(workspace.path, "rev-parse", `${headCommit}^{tree}`),
       });
       const recovered = await MilestoneOrchestrator.open(
         fixture.root,
