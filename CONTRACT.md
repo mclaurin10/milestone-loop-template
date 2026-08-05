@@ -158,9 +158,17 @@ All five config files under `tools/milestone-orchestrator/config/` must
 validate at load time; see
 [`config/README.md`](tools/milestone-orchestrator/config/README.md) and the
 `*.template.json` skeletons. `protectedPaths` must include the authority
-file and the `evals/` contract files; the loop's diff policy rejects any
-worker change touching them, and `pnpm loop:demo-safety` demonstrates that
-rejection.
+file, the `evals/` contract files, and the mandatory controller trust
+roots (`AGENTS.md`, `.agent/readiness-profile-activated.json`,
+`scripts/verify.mjs`, `pnpm-lock.yaml`); the loop unions these with the
+configured entries into one canonical protected set enforced (with
+case-fold matching and both rename sides) at proposal, worker diff,
+verification, review, integration, and reconciliation boundaries.
+Symlink and gitlink change types are rejected outright. A commissioned
+verification manifest may not require a protected path outside this
+canonical set — controller startup, reconciliation, and doctor all
+validate the coverage — and `pnpm loop:demo-safety` demonstrates the
+rejection of every canonical path including case variants.
 
 ## 8. Environment
 

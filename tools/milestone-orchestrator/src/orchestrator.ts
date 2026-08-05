@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
+import { existsSync } from "node:fs";
 import { mkdir, readFile, stat } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
 
@@ -40,7 +41,17 @@ import {
 } from "./codex-gateway.js";
 import { measurableTokenUnits } from "./budget.js";
 import { readArtifactInventoryRetentionGuard } from "./artifact-inventory.js";
-import { loadConfig } from "./config.js";
+import {
+  DEFAULT_VERIFICATION_MANIFEST_PATH,
+  loadConfig,
+  loadVerificationManifest,
+} from "./config.js";
+import {
+  assertManifestProtectedPathsCovered,
+  buildCanonicalProtectedSet,
+  casefoldPathKey,
+  enforcementProtectedPatterns,
+} from "./protected-roots.js";
 import { runCommand } from "./command-runner.js";
 import {
   discoverManagedEvidenceRuns,
@@ -594,6 +605,13 @@ export class MilestoneOrchestrator {
   ): Promise<MilestoneOrchestrator> {
     const root = resolve(repositoryRoot);
     const config = await loadConfig(root, configPath);
+    if (existsSync(resolve(root, DEFAULT_VERIFICATION_MANIFEST_PATH))) {
+      const manifest = await loadVerificationManifest(root);
+      assertManifestProtectedPathsCovered(
+        manifest.value,
+        buildCanonicalProtectedSet(config),
+      );
+    }
     const now = dependencies.now ?? (() => new Date());
     const store = new StateStore(root, config.statePath, () => iso(now));
     let state = await store.load();
@@ -634,6 +652,26 @@ export class MilestoneOrchestrator {
       throw new Error(
         "Active controller reconciliation must resume before ordinary orchestration.",
       );
+    const canonical = enforcementProtectedPatterns(
+      config,
+      state.repository.protectedFiles,
+    );
+    const known = new Set(
+      state.repository.protectedFiles.map((file) => casefoldPathKey(file.path)),
+    );
+    const missingProtectedPaths = canonical.filter(
+      (path) => !known.has(casefoldPathKey(path)),
+    );
+    if (missingProtectedPaths.length > 0) {
+      const added = await captureProtectedFiles(root, missingProtectedPaths);
+      state = await store.save({
+        ...state,
+        repository: {
+          ...state.repository,
+          protectedFiles: [...state.repository.protectedFiles, ...added],
+        },
+      });
+    }
     const instance = new MilestoneOrchestrator({
       repositoryRoot: root,
       config,
@@ -1673,12 +1711,10 @@ export class MilestoneOrchestrator {
   }
 
   private protectedPatterns(): readonly string[] {
-    return [
-      ...new Set([
-        ...this.config.protectedPaths,
-        ...this.stateValue.repository.protectedFiles.map((file) => file.path),
-      ]),
-    ];
+    return enforcementProtectedPatterns(
+      this.config,
+      this.stateValue.repository.protectedFiles,
+    );
   }
 
   private async finalizeWorkerAttempt(id: string): Promise<boolean> {

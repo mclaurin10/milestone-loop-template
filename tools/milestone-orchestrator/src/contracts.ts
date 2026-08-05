@@ -1,7 +1,7 @@
 export const LEGACY_MILESTONE_SCHEMA_VERSION = "1.0.0" as const;
 export const MILESTONE_SCHEMA_VERSION = "1.1.0" as const;
 export const STATE_SCHEMA_VERSION = "1.4.0" as const;
-export const CONFIG_SCHEMA_VERSION = "1.3.0" as const;
+export const CONFIG_SCHEMA_VERSION = "1.4.0" as const;
 export const REVIEW_LEGACY_SCHEMA_VERSION = "1.0.0" as const;
 export const REVIEW_SCHEMA_VERSION = "1.1.0" as const;
 export const VERIFICATION_SUMMARY_SCHEMA_VERSION = "1.1.0" as const;
@@ -125,11 +125,19 @@ export const READINESS_VERIFICATION_STAGE_IDS = [
   "contract-integrity",
 ] as const;
 
+export const CONTROLLER_TRUST_ROOT_PATHS = [
+  "AGENTS.md",
+  ".agent/readiness-profile-activated.json",
+  "scripts/verify.mjs",
+  "pnpm-lock.yaml",
+] as const;
+
 export const REQUIRED_PROTECTED_PATHS = [
   "evals/ACCEPTANCE.md",
   "evals/acceptance-manifest.json",
   "evals/HIDDEN_VALIDATION_PROTOCOL.md",
   "evals/immutable-contract-lock.json",
+  ...CONTROLLER_TRUST_ROOT_PATHS,
 ] as const;
 
 export const MILESTONE_STATUSES = [

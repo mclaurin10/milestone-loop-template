@@ -1,10 +1,20 @@
 import { spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import { open, readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 
-import { DEFAULT_CONFIG_PATH, loadConfig } from "./config.js";
+import {
+  DEFAULT_CONFIG_PATH,
+  DEFAULT_VERIFICATION_MANIFEST_PATH,
+  loadConfig,
+  loadVerificationManifest,
+} from "./config.js";
 import type { OrchestratorConfig } from "./contracts.js";
+import {
+  assertManifestProtectedPathsCovered,
+  buildCanonicalProtectedSet,
+} from "./protected-roots.js";
 import { StateStore } from "./state-store.js";
 
 export const DOCTOR_SCHEMA_VERSION = "1.0.0" as const;
@@ -65,6 +75,14 @@ export interface DoctorDiagnostic {
       readonly status: CheckStatus;
       readonly available: boolean;
       readonly source: "environment" | "local-login" | "none";
+    };
+    readonly protectedTrustRoots: {
+      readonly status: CheckStatus;
+      readonly roots: readonly {
+        readonly path: string;
+        readonly present: boolean;
+      }[];
+      readonly manifestCovered: boolean | null;
     };
   };
 }
@@ -191,6 +209,43 @@ async function authenticationCheck(
   return { status: "attention", available: false, source: "none" };
 }
 
+async function protectedTrustRootsCheck(
+  repositoryRoot: string,
+  config: OrchestratorConfig | null,
+): Promise<DoctorDiagnostic["checks"]["protectedTrustRoots"]> {
+  if (!config) return { status: "attention", roots: [], manifestCovered: null };
+  let roots: { path: string; present: boolean }[];
+  try {
+    roots = buildCanonicalProtectedSet(config).map((path) => ({
+      path,
+      present: existsSync(resolve(repositoryRoot, path)),
+    }));
+  } catch {
+    return { status: "attention", roots: [], manifestCovered: null };
+  }
+  let manifestCovered: boolean | null = null;
+  if (existsSync(resolve(repositoryRoot, DEFAULT_VERIFICATION_MANIFEST_PATH))) {
+    try {
+      const manifest = await loadVerificationManifest(repositoryRoot);
+      assertManifestProtectedPathsCovered(
+        manifest.value,
+        buildCanonicalProtectedSet(config),
+      );
+      manifestCovered = true;
+    } catch {
+      manifestCovered = false;
+    }
+  }
+  return {
+    status:
+      roots.every((root) => root.present) && manifestCovered !== false
+        ? "pass"
+        : "attention",
+    roots,
+    manifestCovered,
+  };
+}
+
 export async function runDoctorDiagnostic(
   input: {
     readonly repositoryRoot: string;
@@ -251,12 +306,17 @@ export async function runDoctorDiagnostic(
     environment,
     dependencies.homeDirectory ?? homedir(),
   );
+  const protectedTrustRoots = await protectedTrustRootsCheck(
+    repositoryRoot,
+    config,
+  );
   const checks = {
     runtimePins,
     gitCleanliness,
     configuration,
     state,
     codexAuthentication,
+    protectedTrustRoots,
   } as const;
   const ready = Object.values(checks).every((check) => check.status === "pass");
 

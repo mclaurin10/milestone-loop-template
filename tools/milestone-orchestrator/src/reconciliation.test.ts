@@ -93,6 +93,8 @@ async function fixtureRepository(): Promise<Fixture> {
       resolve(".agent", "completed", "loop-recommissioning-verification.json"),
     ),
   );
+  const configPath = join(root, "orchestrator-config.json");
+  await writeFile(configPath, `${JSON.stringify(validConfig(), null, 2)}\n`);
   git(
     root,
     "add",
@@ -101,6 +103,7 @@ async function fixtureRepository(): Promise<Fixture> {
     "PROJECT_GOAL.md",
     "docs/history.md",
     ".agent/completed/loop-recommissioning-verification.json",
+    "orchestrator-config.json",
   );
   git(root, "commit", "-m", "source boundary");
   const sourceCommit = git(root, "rev-parse", "HEAD");
@@ -129,8 +132,6 @@ async function fixtureRepository(): Promise<Fixture> {
   const rawState = Buffer.from(`${JSON.stringify(legacy, null, 2)}\n`);
   await writeFile(statePath, rawState);
 
-  const configPath = join(root, "orchestrator-config.json");
-  await writeFile(configPath, `${JSON.stringify(validConfig(), null, 2)}\n`);
   const proposal = validFeatureProposal({
     id: "complete-operations-base-utilities",
     title: "Complete the operations base utility foothold",
@@ -140,13 +141,7 @@ async function fixtureRepository(): Promise<Fixture> {
     `${JSON.stringify(proposal, null, 2)}\n`,
   );
   await writeFile(join(root, "external-work.txt"), "direct work one\n");
-  git(
-    root,
-    "add",
-    "orchestrator-config.json",
-    ".agent/next-milestone.json",
-    "external-work.txt",
-  );
+  git(root, "add", ".agent/next-milestone.json", "external-work.txt");
   git(root, "commit", "-m", "external direct work one");
   const firstExternalCommit = git(root, "rev-parse", "HEAD");
   await writeFile(

@@ -145,6 +145,35 @@ describe("Git isolation", () => {
     );
   }, 30_000);
 
+  it("rejects committed symlink and gitlink change types", async () => {
+    const parent = await mkdtemp(join(tmpdir(), "milestone-loop-git-"));
+    temporaryDirectories.push(parent);
+    const repository = join(parent, "source");
+    await import("node:fs/promises").then(({ mkdir }) => mkdir(repository));
+    git(repository, "init", "-b", "main");
+    git(repository, "config", "user.name", "Test User");
+    git(repository, "config", "user.email", "test@example.invalid");
+    await writeFile(join(repository, "base.txt"), "base\n", "utf8");
+    git(repository, "add", "base.txt");
+    git(repository, "commit", "-m", "base");
+    const base = git(repository, "rev-parse", "HEAD");
+
+    await writeFile(join(repository, "link-target.txt"), "target\n", "utf8");
+    const blob = git(repository, "hash-object", "-w", "link-target.txt");
+    git(
+      repository,
+      "update-index",
+      "--add",
+      "--cacheinfo",
+      `120000,${blob},injected-symlink`,
+    );
+    git(repository, "commit", "-m", "symlink entry");
+
+    expect(() => inspectAttempt(repository, base)).toThrow(
+      /symlink and gitlink changes are rejected/,
+    );
+  }, 30_000);
+
   it("records both sides of a rename in changed entries", async () => {
     const parent = await mkdtemp(join(tmpdir(), "milestone-loop-git-"));
     temporaryDirectories.push(parent);

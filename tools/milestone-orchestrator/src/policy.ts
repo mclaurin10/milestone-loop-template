@@ -45,6 +45,20 @@ function patternsOverlap(left: string, right: string): boolean {
   return globMatches(left, right) || globMatches(right, left);
 }
 
+export function protectedPathMatches(
+  protectedPath: string,
+  candidate: string,
+): boolean {
+  return globMatches(protectedPath.toLowerCase(), candidate.toLowerCase());
+}
+
+function protectedPatternsOverlap(
+  scope: string,
+  protectedPath: string,
+): boolean {
+  return patternsOverlap(scope.toLowerCase(), protectedPath.toLowerCase());
+}
+
 function normalizedObjective(value: string): string {
   return value
     .toLowerCase()
@@ -228,7 +242,7 @@ export function evaluateProposal(
         path,
       );
     for (const protectedPath of config.protectedPaths) {
-      if (patternsOverlap(normalized, protectedPath))
+      if (protectedPatternsOverlap(normalized, protectedPath))
         addsFinding(
           findings,
           "PROTECTED_SCOPE",
@@ -237,7 +251,7 @@ export function evaluateProposal(
         );
     }
     for (const protectedFile of state.repository.protectedFiles) {
-      if (patternsOverlap(normalized, protectedFile.path))
+      if (protectedPatternsOverlap(normalized, protectedFile.path))
         addsFinding(
           findings,
           "PROTECTED_BASELINE_SCOPE",
@@ -493,7 +507,7 @@ export function enforceDiffPolicy(
 ): DiffPolicyResult {
   const normalizedChanges = changedPaths.map(normalizePath);
   const protectedChanges = normalizedChanges.filter((path) =>
-    protectedPaths.some((pattern) => globMatches(pattern, path)),
+    protectedPaths.some((pattern) => protectedPathMatches(pattern, path)),
   );
   const outOfScopeChanges = normalizedChanges.filter(
     (path) =>

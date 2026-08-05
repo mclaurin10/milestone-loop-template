@@ -10,6 +10,7 @@ import {
   requiredVerticalConsumerAfterCompletion,
 } from "./milestone-state.js";
 import { evaluateProposal, enforceDiffPolicy, globMatches } from "./policy.js";
+import { buildCanonicalProtectedSet } from "./protected-roots.js";
 import { assertMilestoneProposal } from "./schema.js";
 import {
   validConfig,
@@ -322,6 +323,64 @@ describe("milestone policy", () => {
     expect(result.protectedChanges).toEqual(["PROJECT_GOAL.md"]);
     expect(result.outOfScopeChanges).toEqual(["PROJECT_GOAL.md"]);
     expect(globMatches("tools/**", "tools/a/b.ts")).toBe(true);
+  });
+
+  it("rejects every canonical controller trust root, including case variants", () => {
+    const canonical = buildCanonicalProtectedSet(validConfig());
+    for (const path of canonical) {
+      const caseVariant =
+        path.toUpperCase() === path ? path.toLowerCase() : path.toUpperCase();
+      for (const probe of [path, caseVariant]) {
+        const decision = enforceDiffPolicy(
+          [probe],
+          validProposal({ permittedPaths: [probe] }),
+          canonical,
+        );
+        expect(decision.allowed).toBe(false);
+        expect(decision.protectedChanges).toEqual([probe]);
+      }
+    }
+  });
+
+  it("rejects a compromised-verifier proposal before any command execution", () => {
+    const verifierProposal = validProposal({
+      permittedPaths: ["scripts/verify.mjs"],
+    });
+    const decision = evaluateProposal(
+      verifierProposal,
+      validState(process.cwd()),
+      validConfig(),
+      "bootstrap",
+    );
+    expect(decision.status).toBe("rejected");
+    expect(decision.findings.map((finding) => finding.code)).toContain(
+      "PROTECTED_SCOPE",
+    );
+
+    const diff = enforceDiffPolicy(
+      ["scripts/verify.mjs"],
+      verifierProposal,
+      buildCanonicalProtectedSet(validConfig()),
+    );
+    expect(diff.allowed).toBe(false);
+    expect(diff.protectedChanges).toEqual(["scripts/verify.mjs"]);
+
+    const agents = evaluateProposal(
+      validProposal({ permittedPaths: ["AGENTS.md"] }),
+      validState(process.cwd()),
+      validConfig(),
+      "bootstrap",
+    );
+    expect(agents.status).toBe("rejected");
+    const caseOverlap = evaluateProposal(
+      validProposal({ permittedPaths: ["agents.MD"] }),
+      validState(process.cwd()),
+      validConfig(),
+      "bootstrap",
+    );
+    expect(caseOverlap.findings.map((finding) => finding.code)).toContain(
+      "PROTECTED_SCOPE",
+    );
   });
 
   it("rejects traversal scope and unsafe verifier argv", () => {

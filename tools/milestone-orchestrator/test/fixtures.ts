@@ -238,10 +238,14 @@ export function validConfig(
     },
     protectedPaths: [
       "PROJECT_GOAL.md",
+      "AGENTS.md",
       "evals/ACCEPTANCE.md",
       "evals/acceptance-manifest.json",
       "evals/HIDDEN_VALIDATION_PROTOCOL.md",
       "evals/immutable-contract-lock.json",
+      ".agent/readiness-profile-activated.json",
+      "scripts/verify.mjs",
+      "pnpm-lock.yaml",
     ],
     ...overrides,
   };

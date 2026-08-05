@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.3.0",
+  "schemaVersion": "1.4.0",
   "project": {
     "name": "<YOUR_PROJECT_NAME>",
     "authorityFile": "<YOUR_AUTHORITY_FILE>.md",
@@ -81,9 +81,13 @@
   },
   "protectedPaths": [
     "<YOUR_AUTHORITY_FILE>.md",
+    "AGENTS.md",
     "evals/ACCEPTANCE.md",
     "evals/acceptance-manifest.json",
     "evals/HIDDEN_VALIDATION_PROTOCOL.md",
-    "evals/immutable-contract-lock.json"
+    "evals/immutable-contract-lock.json",
+    ".agent/readiness-profile-activated.json",
+    "scripts/verify.mjs",
+    "pnpm-lock.yaml"
   ]
 }

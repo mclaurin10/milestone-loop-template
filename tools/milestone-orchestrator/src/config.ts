@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { lstat, readFile, realpath } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
 
+import { REQUIRED_PROTECTED_PATHS } from "./contracts.js";
 import type {
   InvariantSuiteRegistry,
   OrchestratorConfig,
@@ -10,6 +11,7 @@ import type {
   VerificationScopePolicy,
 } from "./contracts.js";
 import { assertInstalledSdkCompatibility } from "./model-policy.js";
+import { buildCanonicalProtectedSet } from "./protected-roots.js";
 import {
   assertInvariantSuiteRegistry,
   assertOrchestratorConfig,
@@ -132,15 +134,20 @@ function migrateConfig(value: unknown): unknown {
     typeof value !== "object" ||
     value === null ||
     Array.isArray(value) ||
-    !["1.0.0", "1.1.0", "1.2.0"].includes(
+    !["1.0.0", "1.1.0", "1.2.0", "1.3.0"].includes(
       String((value as Record<string, unknown>)["schemaVersion"]),
     )
   )
     return value;
   const legacy = value as Record<string, unknown>;
+  const legacyProtectedPaths = Array.isArray(legacy["protectedPaths"])
+    ? legacy["protectedPaths"].filter(
+        (path): path is string => typeof path === "string",
+      )
+    : [];
   return {
     ...legacy,
-    schemaVersion: "1.3.0",
+    schemaVersion: "1.4.0",
     evidenceRetention:
       legacy["schemaVersion"] === "1.0.0"
         ? {
@@ -156,6 +163,9 @@ function migrateConfig(value: unknown): unknown {
         categoryPatterns: [],
       },
     },
+    protectedPaths: [
+      ...new Set([...legacyProtectedPaths, ...REQUIRED_PROTECTED_PATHS]),
+    ],
   };
 }
 
@@ -182,10 +192,11 @@ export async function loadConfig(
     sourcePath.length > 0 &&
     !isAbsolute(sourcePath) &&
     !sourcePath.split("/").includes("..");
-  return sourceIsInsideRepository
-    ? {
-        ...config,
-        protectedPaths: [...new Set([...config.protectedPaths, sourcePath])],
-      }
-    : config;
+  return {
+    ...config,
+    protectedPaths: buildCanonicalProtectedSet(
+      config,
+      sourceIsInsideRepository ? [sourcePath] : [],
+    ),
+  };
 }

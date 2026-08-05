@@ -42,6 +42,11 @@ import { createMilestoneRecord } from "./milestone-state.js";
 import { currentVerificationProfile } from "./git-isolation.js";
 import { evaluateProposal } from "./policy.js";
 import {
+  assertManifestProtectedPathsCovered,
+  buildCanonicalProtectedSet,
+  casefoldPathKey,
+} from "./protected-roots.js";
+import {
   reconciliationReviewApproves,
   requestReconciliationReview,
 } from "./reconciliation-reviewer.js";
@@ -414,10 +419,11 @@ function overlapsProtectedPath(
   path: string,
   protectedPaths: readonly string[],
 ): boolean {
-  return protectedPaths.some(
-    (protectedPath) =>
-      path === protectedPath || path.startsWith(`${protectedPath}/`),
-  );
+  const candidate = casefoldPathKey(path);
+  return protectedPaths.some((protectedPath) => {
+    const folded = casefoldPathKey(protectedPath);
+    return candidate === folded || candidate.startsWith(`${folded}/`);
+  });
 }
 
 export function createCommitRangeManifest(input: {
@@ -1170,6 +1176,10 @@ export class ReconciliationController {
       throw new Error(
         "Reconciliation next proposal does not match the tracked recommissioning manifest.",
       );
+    assertManifestProtectedPathsCovered(
+      verificationManifest.value,
+      buildCanonicalProtectedSet(this.config),
+    );
     const rawContents = await regularContainedFile(
       this.repositoryRoot,
       this.store.path,
@@ -1211,8 +1221,9 @@ export class ReconciliationController {
       reconciliationId: id,
       sourceVerifiedCommit: archive.priorVerifiedCommit,
       candidateCommit: candidate.commit,
-      protectedPaths: migrated.repository.protectedFiles.map(
-        (file) => file.path,
+      protectedPaths: buildCanonicalProtectedSet(
+        this.config,
+        migrated.repository.protectedFiles.map((file) => file.path),
       ),
     });
     const rangeReference = await writeJsonArtifact(

@@ -1,4 +1,5 @@
 export * from "./canary.js";
+export * from "./candidate-identity.js";
 export * from "./budget.js";
 export * from "./benchmark.js";
 export * from "./affected-scope.js";
@@ -15,6 +16,7 @@ export * from "./model-policy-check.js";
 export * from "./orchestrator.js";
 export * from "./package-graph.js";
 export * from "./policy.js";
+export * from "./protected-roots.js";
 export * from "./redaction.js";
 export * from "./retry-policy.js";
 export * from "./reasoning-escalation.js";

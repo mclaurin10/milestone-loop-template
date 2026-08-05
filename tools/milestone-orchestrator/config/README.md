@@ -28,10 +28,17 @@ their contents, guided by the templates.
   worker-escalation policy.
 - `limits` — hard loop budgets (attempts, wall clock, invocations, tokens).
 - `protectedPaths` — frozen files the diff policy refuses to let a worker
-  touch. Must include `project.authorityFile` and the `evals/` contract files.
+  touch. Must include `project.authorityFile`, the `evals/` contract files,
+  and the mandatory controller trust roots (`AGENTS.md`,
+  `.agent/readiness-profile-activated.json`, `scripts/verify.mjs`,
+  `pnpm-lock.yaml`). The loop always enforces the canonical union of these
+  mandatory roots with the configured entries, matched case-insensitively;
+  adopters may add stricter paths but can never remove the floor.
 
 Config schema migrations live in `src/config.ts` (`migrateConfig`); 1.0.0 →
-1.3.0 configs are migrated in memory with generic defaults for new sections.
+1.3.0 configs are migrated in memory to 1.4.0 with generic defaults for new
+sections, and the migration additively unions the mandatory protected trust
+roots into `protectedPaths` (protections are only ever strengthened).
 The environment variable `MILESTONE_LOOP_CONFIG` overrides the config path.
 
 ## verification-scope-policy.json (`VerificationScopePolicy`)

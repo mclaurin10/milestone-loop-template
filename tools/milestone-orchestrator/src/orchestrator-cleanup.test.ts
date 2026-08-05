@@ -69,15 +69,10 @@ async function repositoryFixture(config = validConfig()): Promise<{
   git(root, "init", "-b", "main");
   git(root, "config", "user.name", "Recovery Cleanup Test");
   git(root, "config", "user.email", "recovery@example.invalid");
-  await mkdir(join(root, "evals"), { recursive: true });
-  for (const path of [
-    "PROJECT_GOAL.md",
-    "evals/ACCEPTANCE.md",
-    "evals/acceptance-manifest.json",
-    "evals/HIDDEN_VALIDATION_PROTOCOL.md",
-    "evals/immutable-contract-lock.json",
-  ])
+  for (const path of config.protectedPaths) {
+    await mkdir(dirname(join(root, path)), { recursive: true });
     await writeFile(join(root, path), `${path}\n`);
+  }
   await writeFile(
     join(root, "package.json"),
     `${JSON.stringify({ milestoneLoop: { verification: { defaultProfile: "readiness" } } })}\n`,
@@ -95,6 +90,122 @@ async function repositoryFixture(config = validConfig()): Promise<{
     baseCommit: git(root, "rev-parse", "HEAD"),
   };
 }
+
+describe("canonical protected trust roots at controller startup", () => {
+  it(
+    "tops up missing trust-root hashes idempotently at open",
+    { timeout: 30_000 },
+    async () => {
+      const fixture = await repositoryFixture();
+      const legacyFive = [
+        "PROJECT_GOAL.md",
+        "evals/ACCEPTANCE.md",
+        "evals/acceptance-manifest.json",
+        "evals/HIDDEN_VALIDATION_PROTOCOL.md",
+        "evals/immutable-contract-lock.json",
+      ];
+      const store = new StateStore(
+        fixture.root,
+        fixture.config.statePath,
+        () => NOW,
+      );
+      await store.initialize(
+        createInitialState({
+          repositoryRoot: fixture.root,
+          targetBranch: fixture.config.targetBranch,
+          verifiedCommit: fixture.baseCommit,
+          protectedFiles: await captureProtectedFiles(fixture.root, legacyFive),
+          now: NOW,
+        }),
+      );
+
+      const first = await MilestoneOrchestrator.open(
+        fixture.root,
+        fixture.configPath,
+        { now: () => new Date(NOW) },
+      );
+      const paths = first.state.repository.protectedFiles.map(
+        (file) => file.path,
+      );
+      expect(paths).toEqual(
+        expect.arrayContaining([
+          "AGENTS.md",
+          ".agent/readiness-profile-activated.json",
+          "scripts/verify.mjs",
+          "pnpm-lock.yaml",
+          fixture.configPath,
+        ]),
+      );
+      expect(new Set(paths).size).toBe(paths.length);
+
+      const second = await MilestoneOrchestrator.open(
+        fixture.root,
+        fixture.configPath,
+        { now: () => new Date(NOW) },
+      );
+      expect(second.state.repository.protectedFiles).toHaveLength(paths.length);
+      expect(second.state.revision).toBe(first.state.revision);
+    },
+  );
+
+  it(
+    "fails closed when a canonical trust root is missing from disk",
+    { timeout: 30_000 },
+    async () => {
+      const fixture = await repositoryFixture();
+      await rm(join(fixture.root, "AGENTS.md"));
+      git(fixture.root, "add", "--all");
+      git(fixture.root, "commit", "-m", "drop a controller trust root");
+      await expect(
+        MilestoneOrchestrator.open(fixture.root, fixture.configPath, {
+          now: () => new Date(NOW),
+        }),
+      ).rejects.toThrow(/Protected file is missing: AGENTS\.md/);
+    },
+  );
+
+  it(
+    "rejects a manifest requiring an unenforceable protected path before any state write",
+    { timeout: 30_000 },
+    async () => {
+      const fixture = await repositoryFixture();
+      const manifest = JSON.parse(
+        await readFile(
+          join(
+            process.cwd(),
+            ".agent",
+            "completed",
+            "loop-recommissioning-verification.json",
+          ),
+          "utf8",
+        ),
+      ) as { requiredProtectedPaths: string[] };
+      manifest.requiredProtectedPaths = [
+        ...manifest.requiredProtectedPaths,
+        "docs/never-configured-protection.md",
+      ];
+      const manifestPath = join(
+        fixture.root,
+        ".agent",
+        "completed",
+        "loop-recommissioning-verification.json",
+      );
+      await mkdir(dirname(manifestPath), { recursive: true });
+      await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+
+      await expect(
+        MilestoneOrchestrator.open(fixture.root, fixture.configPath, {
+          now: () => new Date(NOW),
+        }),
+      ).rejects.toThrow(
+        /cannot enforce.*docs\/never-configured-protection\.md/,
+      );
+      expect(await exists(join(fixture.root, fixture.config.statePath))).toBe(
+        false,
+      );
+    },
+  );
+});
 
 describe("post-persistence workspace lifecycle", () => {
   it(

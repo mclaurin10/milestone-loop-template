@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -98,15 +98,10 @@ async function reviewingFixture(options?: {
   git(root, "config", "user.name", "Identity Fence Test");
   git(root, "config", "user.email", "identity@example.invalid");
   const config = validConfig();
-  await mkdir(join(root, "evals"), { recursive: true });
-  for (const path of [
-    "PROJECT_GOAL.md",
-    "evals/ACCEPTANCE.md",
-    "evals/acceptance-manifest.json",
-    "evals/HIDDEN_VALIDATION_PROTOCOL.md",
-    "evals/immutable-contract-lock.json",
-  ])
+  for (const path of config.protectedPaths) {
+    await mkdir(dirname(join(root, path)), { recursive: true });
     await writeFile(join(root, path), `${path}\n`);
+  }
   await writeFile(
     join(root, "package.json"),
     `${JSON.stringify({ milestoneLoop: { verification: { defaultProfile: "readiness" } } })}\n`,

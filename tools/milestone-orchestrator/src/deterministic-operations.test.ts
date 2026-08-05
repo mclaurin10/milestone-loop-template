@@ -31,14 +31,7 @@ describe("deterministic controller operations", () => {
     const root = await mkdtemp(join(tmpdir(), "milestone-loop-deterministic-"));
     directories.push(root);
     const config = validConfig();
-    const files = [
-      "PROJECT_GOAL.md",
-      "evals/ACCEPTANCE.md",
-      "evals/acceptance-manifest.json",
-      "evals/HIDDEN_VALIDATION_PROTOCOL.md",
-      "evals/immutable-contract-lock.json",
-    ];
-    for (const file of files) {
+    for (const file of config.protectedPaths) {
       const path = join(root, file);
       await mkdir(dirname(path), { recursive: true });
       await writeFile(path, `${file}\n`, "utf8");

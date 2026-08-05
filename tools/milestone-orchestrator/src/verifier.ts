@@ -26,6 +26,7 @@ import {
 import { runCommand } from "./command-runner.js";
 import { inspectAttempt } from "./git-isolation.js";
 import { enforceDiffPolicy } from "./policy.js";
+import { enforcementProtectedPatterns } from "./protected-roots.js";
 import { atomicWriteJson } from "./state-store.js";
 import { assertVerificationTierResult } from "./schema.js";
 import type { TelemetryStore } from "./telemetry-store.js";
@@ -1070,12 +1071,7 @@ function protectedPatterns(
   config: OrchestratorConfig,
   protectedFiles: readonly ProtectedFileRecord[],
 ): readonly string[] {
-  return [
-    ...new Set([
-      ...config.protectedPaths,
-      ...protectedFiles.map((file) => file.path),
-    ]),
-  ];
+  return enforcementProtectedPatterns(config, protectedFiles);
 }
 
 export async function verifyMilestone(input: {

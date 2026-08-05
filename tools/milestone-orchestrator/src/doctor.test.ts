@@ -5,6 +5,7 @@ import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { runDoctorDiagnostic } from "./doctor.js";
+import { buildCanonicalProtectedSet } from "./protected-roots.js";
 import {
   validConfig,
   validReconciliationRecord,
@@ -36,6 +37,11 @@ async function repositoryFixture(
     join(root, "tools/milestone-orchestrator/config/default.json"),
     validConfig(),
   );
+  for (const path of buildCanonicalProtectedSet(validConfig())) {
+    const absolute = join(root, path);
+    await mkdir(dirname(absolute), { recursive: true });
+    await writeFile(absolute, `${path}\n`, "utf8");
+  }
   const statePath = join(root, "artifacts/orchestrator/state/state.json");
   if (state === "valid") await writeJson(statePath, validState(root));
   if (state === "invalid")
@@ -100,6 +106,13 @@ describe("read-only orchestrator doctor", () => {
           available: true,
           source: "local-login",
         },
+        protectedTrustRoots: {
+          status: "pass",
+          roots: buildCanonicalProtectedSet(validConfig(), [
+            "tools/milestone-orchestrator/config/default.json",
+          ]).map((path) => ({ path, present: true })),
+          manifestCovered: null,
+        },
       },
     });
     const serialized = JSON.stringify(diagnostic);
@@ -142,6 +155,29 @@ describe("read-only orchestrator doctor", () => {
     await expect(readFile(fixture.statePath, "utf8")).rejects.toMatchObject({
       code: "ENOENT",
     });
+  });
+
+  it("reports a missing controller trust root as attention", async () => {
+    const fixture = await repositoryFixture();
+    await rm(join(fixture.root, "scripts", "verify.mjs"));
+
+    const diagnostic = await runDoctorDiagnostic(
+      { repositoryRoot: fixture.root },
+      {
+        environment: { ...pinnedEnvironment, CODEX_API_KEY: "private" },
+        nodeVersion: "24.18.0",
+        gitProbe: () => ({ clean: true }),
+        headProbe: () => storedHead,
+      },
+    );
+
+    expect(diagnostic.status).toBe("attention");
+    expect(diagnostic.checks.protectedTrustRoots.status).toBe("attention");
+    expect(
+      diagnostic.checks.protectedTrustRoots.roots.find(
+        (root) => root.path === "scripts/verify.mjs",
+      ),
+    ).toEqual({ path: "scripts/verify.mjs", present: false });
   });
 
   it("reports dirty Git, runtime drift, invalid state, and unavailable authentication without leaking details", async () => {

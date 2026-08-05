@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync } from "node:fs";
+import { existsSync, lstatSync } from "node:fs";
 import { mkdir, readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 
@@ -252,10 +252,18 @@ export interface AttemptInspection {
   readonly clean: boolean;
 }
 
-export function rawDiffEntries(
+export interface RawDiffRecord {
+  readonly srcMode: string;
+  readonly dstMode: string;
+  readonly status: string;
+  readonly path: string;
+  readonly entry: string;
+}
+
+export function rawDiffRecords(
   repository: string,
   rangeArgs: readonly string[],
-): readonly string[] {
+): readonly RawDiffRecord[] {
   const result = spawnSync(
     "git",
     [
@@ -278,36 +286,65 @@ export function rawDiffEntries(
   const tokens = result.stdout.split("\0").filter((token) => token.length > 0);
   if (tokens.length % 2 !== 0)
     throw new Error("Raw Git diff output has unexpected framing.");
-  const entries: string[] = [];
+  const records: RawDiffRecord[] = [];
   for (let index = 0; index < tokens.length; index += 2) {
     const meta = tokens[index] ?? "";
     const path = (tokens[index + 1] ?? "").replaceAll("\\", "/");
     if (!meta.startsWith(":"))
       throw new Error(`Raw Git diff record is malformed: ${meta}`);
-    entries.push(`${meta} ${path}`);
+    const fields = meta.slice(1).split(" ");
+    const [srcMode, dstMode, , , status] = fields;
+    if (fields.length < 5 || !srcMode || !dstMode || !status)
+      throw new Error(`Raw Git diff record is malformed: ${meta}`);
+    records.push({ srcMode, dstMode, status, path, entry: `${meta} ${path}` });
   }
-  return entries;
+  return records;
+}
+
+export function rawDiffEntries(
+  repository: string,
+  rangeArgs: readonly string[],
+): readonly string[] {
+  return rawDiffRecords(repository, rangeArgs).map((record) => record.entry);
+}
+
+const SYMLINK_MODE = "120000";
+const GITLINK_MODE = "160000";
+
+function assertSupportedChangeTypes(records: readonly RawDiffRecord[]): void {
+  for (const record of records) {
+    if (
+      [record.srcMode, record.dstMode].some(
+        (mode) => mode === SYMLINK_MODE || mode === GITLINK_MODE,
+      )
+    )
+      throw new Error(
+        `Unsupported change type for ${record.path}: symlink and gitlink changes are rejected.`,
+      );
+  }
 }
 
 export function workingChangedPaths(workspacePath: string): readonly string[] {
+  const worktree = rawDiffRecords(workspacePath, []);
+  const staged = rawDiffRecords(workspacePath, ["--cached"]);
+  assertSupportedChangeTypes([...worktree, ...staged]);
+  const untracked = runGitPathList(workspacePath, [
+    "ls-files",
+    "--others",
+    "--exclude-standard",
+  ]);
+  for (const path of untracked) {
+    const absolute = resolve(workspacePath, path);
+    if (existsSync(absolute) && lstatSync(absolute).isSymbolicLink())
+      throw new Error(
+        `Unsupported change type for ${path}: symlink and gitlink changes are rejected.`,
+      );
+  }
   return [
     ...new Set([
-      ...runGitPathList(workspacePath, [
-        "diff",
-        "--name-only",
-        "--diff-filter=ACDMRTUXB",
-      ]),
-      ...runGitPathList(workspacePath, [
-        "diff",
-        "--cached",
-        "--name-only",
-        "--diff-filter=ACDMRTUXB",
-      ]),
-      ...runGitPathList(workspacePath, [
-        "ls-files",
-        "--others",
-        "--exclude-standard",
-      ]),
+      ...worktree.map((record) => record.path),
+      ...staged.map((record) => record.path),
+      ...untracked,
     ]),
   ].sort();
 }
@@ -359,21 +396,16 @@ export function inspectAttempt(
     "--reverse",
     `${baseCommit}..${headCommit}`,
   ]).stdout;
-  const changedPaths = runGitPathList(workspacePath, [
-    "diff",
-    "--name-only",
-    "--diff-filter=ACDMRTUXB",
+  const records = rawDiffRecords(workspacePath, [
     `${baseCommit}..${headCommit}`,
   ]);
-  const changedEntries = rawDiffEntries(workspacePath, [
-    `${baseCommit}..${headCommit}`,
-  ]);
+  assertSupportedChangeTypes(records);
   return {
     headCommit,
     tree,
     commits: commitsText ? commitsText.split(/\r?\n/) : [],
-    changedPaths,
-    changedEntries,
+    changedPaths: [...new Set(records.map((record) => record.path))].sort(),
+    changedEntries: records.map((record) => record.entry),
     clean: status.length === 0,
   };
 }
