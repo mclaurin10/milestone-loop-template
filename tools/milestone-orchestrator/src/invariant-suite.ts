@@ -4,6 +4,7 @@ import { relative, resolve } from "node:path";
 
 import { evidenceContext, writeJson, writeReceipt } from "../../evidence.mjs";
 import type {
+  CommandExecutionSummary,
   InvariantSuiteRegistry,
   UnitTestPartition,
   VerificationCommand,
@@ -114,6 +115,50 @@ export interface InvariantSuiteRunResult {
   readonly commandCount: number;
 }
 
+export async function invariantEntryReceipt(input: {
+  readonly evidenceDirectory: string;
+  readonly entryId: string;
+  readonly expectedArtifactKinds: readonly string[];
+  readonly commandStatus: CommandExecutionSummary["status"];
+}): Promise<{
+  readonly receipt: Awaited<
+    ReturnType<typeof validateCommandReceiptDirectory>
+  > | null;
+  readonly receiptAbsenceReason: string | null;
+  readonly receiptFailure: boolean;
+}> {
+  try {
+    if (existsSync(resolve(input.evidenceDirectory, "result.json")))
+      return {
+        receipt: await validateCommandReceiptDirectory({
+          directory: input.evidenceDirectory,
+          expectedStageId: "invariant-suite",
+          expectedCommandId: input.entryId,
+          requiredKinds: input.expectedArtifactKinds,
+        }),
+        receiptAbsenceReason: null,
+        receiptFailure: false,
+      };
+    if (input.commandStatus === "PASS")
+      throw new Error(
+        `Invariant ${input.entryId} did not write its required command-owned receipt.`,
+      );
+    return {
+      receipt: null,
+      receiptAbsenceReason:
+        "The command did not pass; failing commands retain no receipt.",
+      receiptFailure: false,
+    };
+  } catch (error) {
+    return {
+      receipt: null,
+      receiptAbsenceReason:
+        error instanceof Error ? error.message : String(error),
+      receiptFailure: true,
+    };
+  }
+}
+
 export async function runInvariantSuite(
   repositoryRoot: string,
 ): Promise<InvariantSuiteRunResult> {
@@ -140,26 +185,13 @@ export async function runInvariantSuite(
         LOOP_VERIFY_COMMAND_ARTIFACT_DIR: evidenceDirectory,
       },
     });
-    let receipt = null;
-    let receiptAbsenceReason: string | null = null;
-    try {
-      if (existsSync(resolve(evidenceDirectory, "result.json"))) {
-        receipt = await validateCommandReceiptDirectory({
-          directory: evidenceDirectory,
-          expectedStageId: "invariant-suite",
-          expectedCommandId: entry.id,
-          requiredKinds: entry.expectedArtifactKinds,
-        });
-      } else {
-        throw new Error(
-          `Invariant ${entry.id} did not write its required command-owned receipt.`,
-        );
-      }
-    } catch (error) {
-      failed = true;
-      receiptAbsenceReason =
-        error instanceof Error ? error.message : String(error);
-    }
+    const receiptOutcome = await invariantEntryReceipt({
+      evidenceDirectory,
+      entryId: entry.id,
+      expectedArtifactKinds: entry.expectedArtifactKinds,
+      commandStatus: command.status,
+    });
+    if (receiptOutcome.receiptFailure) failed = true;
     if (command.status !== "PASS") failed = true;
     commands.push({
       id: entry.id,
@@ -172,8 +204,8 @@ export async function runInvariantSuite(
       durationMs: command.durationMs,
       stdoutPath: command.stdoutPath,
       stderrPath: command.stderrPath,
-      receipt,
-      receiptAbsenceReason,
+      receipt: receiptOutcome.receipt,
+      receiptAbsenceReason: receiptOutcome.receiptAbsenceReason,
       message: command.message,
     });
     if (failed) break;

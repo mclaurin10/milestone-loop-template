@@ -11,6 +11,7 @@ import { loadInvariantSuiteRegistry, loadSlowSuiteRegistry } from "./config.js";
 import {
   buildUnitTestPartition,
   commandFromArgv,
+  invariantEntryReceipt,
   validateInvariantRegistryOwnership,
 } from "./invariant-suite.js";
 import { validateInvariantSuiteRegistry } from "./schema.js";
@@ -192,6 +193,55 @@ describe("invariant receipt wrappers", () => {
     expect(result.stderr).toContain("--stage <id>");
     expect(existsSync(join(directory, "result.json"))).toBe(false);
   }, 30_000);
+});
+
+describe("invariant receipt classification", () => {
+  const temporaryDirectories: string[] = [];
+  afterEach(async () => {
+    await Promise.all(
+      temporaryDirectories
+        .splice(0)
+        .map((directory) => rm(directory, { recursive: true, force: true })),
+    );
+  });
+
+  async function evidenceDirectory(): Promise<string> {
+    const directory = await mkdtemp(join(tmpdir(), "invariant-receipt-"));
+    temporaryDirectories.push(directory);
+    return directory;
+  }
+
+  it("keeps a failing invariant a product failure, not a receipt violation", async () => {
+    expect(
+      await invariantEntryReceipt({
+        evidenceDirectory: await evidenceDirectory(),
+        entryId: "fixture-invariant",
+        expectedArtifactKinds: ["orchestrator-vitest-report"],
+        commandStatus: "FAIL",
+      }),
+    ).toEqual({
+      receipt: null,
+      receiptAbsenceReason:
+        "The command did not pass; failing commands retain no receipt.",
+      receiptFailure: false,
+    });
+  });
+
+  it("still fails a passing invariant that wrote no receipt", async () => {
+    expect(
+      await invariantEntryReceipt({
+        evidenceDirectory: await evidenceDirectory(),
+        entryId: "fixture-invariant",
+        expectedArtifactKinds: ["orchestrator-vitest-report"],
+        commandStatus: "PASS",
+      }),
+    ).toEqual({
+      receipt: null,
+      receiptAbsenceReason:
+        "Invariant fixture-invariant did not write its required command-owned receipt.",
+      receiptFailure: true,
+    });
+  });
 });
 
 describe("unit-suite partition", () => {

@@ -283,7 +283,7 @@ async function countsFromReceipt(
   return null;
 }
 
-async function tierCommandRecord(input: {
+export async function tierCommandRecord(input: {
   readonly repositoryRoot: string;
   readonly tier: VerificationTier;
   readonly runRoot: string;
@@ -293,33 +293,37 @@ async function tierCommandRecord(input: {
   readonly candidate: TierCandidateIdentity;
   readonly selectedCheckIds: readonly string[];
   readonly actualCheckIds: readonly string[];
+  readonly executeCommand?: typeof runCommand;
 }): Promise<VerificationTierCommandRecord> {
   const directoryName = `${String(input.index + 1).padStart(2, "0")}-${input.command.id.replaceAll(/[^A-Za-z0-9._-]/g, "-")}`;
   const commandRoot = resolve(input.runRoot, "commands", directoryName);
   const evidenceRoot = resolve(commandRoot, "evidence");
-  const execution = await runCommand(commandFromPlan(input.command), {
-    workingDirectory: input.repositoryRoot,
-    artifactDirectory: resolve(commandRoot, "logs"),
-    timeoutMs: DEFAULT_COMMAND_TIMEOUT_MS,
-    extraEnvironment: {
-      LOOP_VERIFY_STAGE_ID: `verification-tier-${input.tier}`,
-      LOOP_VERIFY_COMMAND_ID: input.command.id,
-      LOOP_VERIFY_COMMAND_ARTIFACT_DIR: evidenceRoot,
-    },
-    telemetry: {
-      store: input.telemetry,
-      phase: "verification",
-      candidate: {
-        baseCommit: input.candidate.baseCommit,
-        commit: input.candidate.gitCommit,
-        tree: input.candidate.gitTree,
-        dirty: input.candidate.workingTreeDirty,
+  const execution = await (input.executeCommand ?? runCommand)(
+    commandFromPlan(input.command),
+    {
+      workingDirectory: input.repositoryRoot,
+      artifactDirectory: resolve(commandRoot, "logs"),
+      timeoutMs: DEFAULT_COMMAND_TIMEOUT_MS,
+      extraEnvironment: {
+        LOOP_VERIFY_STAGE_ID: `verification-tier-${input.tier}`,
+        LOOP_VERIFY_COMMAND_ID: input.command.id,
+        LOOP_VERIFY_COMMAND_ARTIFACT_DIR: evidenceRoot,
       },
-      checkSetId: `verification-tier-${input.tier}`,
-      selectedCheckIds: input.selectedCheckIds,
-      actualCheckIds: input.actualCheckIds,
+      telemetry: {
+        store: input.telemetry,
+        phase: "verification",
+        candidate: {
+          baseCommit: input.candidate.baseCommit,
+          commit: input.candidate.gitCommit,
+          tree: input.candidate.gitTree,
+          dirty: input.candidate.workingTreeDirty,
+        },
+        checkSetId: `verification-tier-${input.tier}`,
+        selectedCheckIds: input.selectedCheckIds,
+        actualCheckIds: input.actualCheckIds,
+      },
     },
-  });
+  );
   let validated: ValidatedCommandReceipt | null = null;
   let receiptAbsenceReason: string | null = null;
   let evidenceFailure: string | null = null;
@@ -335,9 +339,12 @@ async function tierCommandRecord(input: {
       evidenceFailure = error instanceof Error ? error.message : String(error);
       receiptAbsenceReason = evidenceFailure;
     }
-  } else {
+  } else if (execution.status === "PASS") {
     evidenceFailure = `Passing check ${input.command.id} did not write its required command-owned receipt.`;
     receiptAbsenceReason = evidenceFailure;
+  } else {
+    receiptAbsenceReason =
+      "The command did not pass; failing commands retain no receipt.";
   }
   const failureClass =
     evidenceFailure !== null ||
