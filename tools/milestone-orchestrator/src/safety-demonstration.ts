@@ -1,6 +1,7 @@
+import { spawnSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
-import { readFile } from "node:fs/promises";
+import { mkdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -103,15 +104,31 @@ export async function demonstrateSafety(input: {
     })),
     nextAllowedAction: "resume-worker",
   };
-  const interruptedRelative = `${input.config.artifactRoot.replaceAll("\\", "/")}/safety-demonstration/interrupted-state-${artifactSuffix}.json`;
+  // The demonstration must exercise the real fixed-ref StateStore without
+  // ever publishing synthetic state into the controller repository itself.
+  const stateRepository = resolve(
+    input.artifactDirectory,
+    `state-repository-${artifactSuffix}`,
+  );
+  await mkdir(stateRepository, { recursive: true });
+  const initialized = spawnSync(
+    "git",
+    ["-C", stateRepository, "init", "--initial-branch=safety"],
+    { encoding: "utf8", windowsHide: true },
+  );
+  if (initialized.status !== 0)
+    throw new Error(
+      `Could not initialize isolated safety state repository: ${initialized.stderr}`,
+    );
+  const interruptedRelative = `interrupted-state-${artifactSuffix}.json`;
   const interruptedStore = new StateStore(
-    input.repositoryRoot,
+    stateRepository,
     interruptedRelative,
     now,
   );
   await interruptedStore.initialize(state);
   const restarted = await new StateStore(
-    input.repositoryRoot,
+    stateRepository,
     interruptedRelative,
     now,
   ).load();

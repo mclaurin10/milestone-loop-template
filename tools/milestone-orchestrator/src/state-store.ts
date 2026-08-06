@@ -1,5 +1,14 @@
 import { randomUUID } from "node:crypto";
-import { link, mkdir, open, readFile, rename, unlink } from "node:fs/promises";
+import {
+  link,
+  lstat,
+  mkdir,
+  open,
+  readFile,
+  realpath,
+  rename,
+  unlink,
+} from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 
@@ -9,7 +18,13 @@ import {
   type ProtectedFileRecord,
   type RunState,
 } from "./contracts.js";
+import { ensureContainedDirectory, strictlyContained } from "./path-safety.js";
+import { STATE_REF } from "./private-ref-store.js";
 import { assertOrchestratorState } from "./schema.js";
+import {
+  GitStateGenerationStore,
+  type StateGeneration,
+} from "./state-generation-store.js";
 
 export interface AtomicWriteHooks {
   readonly beforeRename?: (
@@ -21,6 +36,37 @@ export interface AtomicWriteHooks {
     targetPath: string,
   ) => void | Promise<void>;
   readonly waitBeforeReplaceRetry?: (delayMs: number) => void | Promise<void>;
+}
+
+export interface StateStoreHooks extends AtomicWriteHooks {
+  readonly afterObservedGeneration?: (observation: {
+    readonly objectId: string | null;
+    readonly revision: number;
+  }) => Promise<void> | void;
+  readonly beforeObjectCreation?: () => Promise<void> | void;
+  readonly afterObjectCreated?: (generation: {
+    readonly objectId: string;
+    readonly revision: number;
+  }) => Promise<void> | void;
+  readonly afterReferenceUpdated?: (generation: {
+    readonly objectId: string;
+    readonly revision: number;
+  }) => Promise<void> | void;
+  readonly beforeMirrorWrite?: (
+    state: OrchestratorState,
+  ) => Promise<void> | void;
+  readonly afterMirrorWrite?: (
+    state: OrchestratorState,
+  ) => Promise<void> | void;
+}
+
+export interface StateStoreInspection {
+  readonly reference: typeof STATE_REF;
+  readonly canonicalGeneration: string | null;
+  readonly revision: number | null;
+  readonly source: "canonical" | "legacy" | "absent";
+  readonly mirror:
+    "current" | "legacy" | "missing" | "stale-or-malformed" | "unsafe";
 }
 
 const MAX_REPLACE_RETRIES = 8;
@@ -65,21 +111,27 @@ export class StaleStateError extends Error {
   readonly path: string;
   readonly expectedRevision: number;
   readonly actualRevision: number | null;
+  readonly expectedGeneration: string | null;
+  readonly actualGeneration: string | null;
 
   constructor(
     path: string,
     expectedRevision: number,
     actualRevision: number | null,
+    expectedGeneration: string | null = null,
+    actualGeneration: string | null = null,
   ) {
     super(
       actualRevision === null
-        ? `Durable controller state is missing at ${path}; mutations must go through initialization.`
-        : `Durable controller state advanced under this process (disk revision ${actualRevision}, in-memory ${expectedRevision}) at ${path}. Another controller likely ran; re-run the command to load the durable state. No merge was attempted.`,
+        ? `Canonical controller state is missing at ${STATE_REF}; mutations must go through initialization.`
+        : `Canonical controller state advanced under this process (generation ${actualGeneration ?? "unknown"}, revision ${actualRevision}; loaded generation ${expectedGeneration ?? "none"}, revision ${expectedRevision}). Another controller likely ran; re-run the command to load durable state. No merge was attempted.`,
     );
     this.name = "StaleStateError";
     this.path = path;
     this.expectedRevision = expectedRevision;
     this.actualRevision = actualRevision;
+    this.expectedGeneration = expectedGeneration;
+    this.actualGeneration = actualGeneration;
   }
 }
 
@@ -89,7 +141,7 @@ export async function atomicWriteJson(
   hooks: AtomicWriteHooks = {},
 ): Promise<void> {
   await mkdir(dirname(targetPath), { recursive: true });
-  const temporaryPath = `${targetPath}.tmp-${process.pid}-${Date.now()}`;
+  const temporaryPath = `${targetPath}.tmp-${process.pid}-${randomUUID()}`;
   const handle = await open(temporaryPath, "wx");
   let closed = false;
   try {
@@ -425,23 +477,98 @@ export function createInitialState(input: {
 }
 
 export class StateStore {
+  readonly repositoryRoot: string;
   readonly path: string;
+  readonly reference = STATE_REF;
+  private readonly generations: GitStateGenerationStore;
+  private loadedGeneration: StateGeneration | null = null;
+  private legacySourceJson: string | null = null;
+  private loadedSource:
+    "unloaded" | "absent" | "legacy" | "read-only-canonical" | "canonical" =
+    "unloaded";
 
   constructor(
     repositoryRoot: string,
     relativePath: string,
     private readonly now: () => string = () => new Date().toISOString(),
   ) {
-    this.path = resolve(repositoryRoot, relativePath);
+    this.repositoryRoot = resolve(repositoryRoot);
+    this.path = resolve(this.repositoryRoot, relativePath);
+    if (!strictlyContained(this.repositoryRoot, this.path))
+      throw new Error(
+        `Controller state mirror escapes the repository: ${this.path}.`,
+      );
+    this.generations = new GitStateGenerationStore(this.repositoryRoot);
   }
 
-  async load(): Promise<OrchestratorState | null> {
+  private rememberGeneration(generation: StateGeneration): OrchestratorState {
+    this.loadedGeneration = generation;
+    this.legacySourceJson = null;
+    this.loadedSource = "canonical";
+    return generation.state;
+  }
+
+  private async mirrorDirectoryStatus(): Promise<
+    "present" | "missing" | "unsafe"
+  > {
+    const directory = dirname(this.path);
     try {
-      return assertOrchestratorState(
-        migrateOrchestratorState(
-          JSON.parse(await readFile(this.path, "utf8")) as unknown,
-        ),
+      const [rootMetadata, directoryMetadata] = await Promise.all([
+        lstat(this.repositoryRoot),
+        directory === this.repositoryRoot
+          ? lstat(this.repositoryRoot)
+          : lstat(directory),
+      ]);
+      if (
+        !rootMetadata.isDirectory() ||
+        rootMetadata.isSymbolicLink() ||
+        !directoryMetadata.isDirectory() ||
+        directoryMetadata.isSymbolicLink()
+      )
+        return "unsafe";
+      const [resolvedRoot, resolvedDirectory] = await Promise.all([
+        realpath(this.repositoryRoot),
+        realpath(directory),
+      ]);
+      return resolvedDirectory === resolvedRoot ||
+        strictlyContained(resolvedRoot, resolvedDirectory)
+        ? "present"
+        : "unsafe";
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        "code" in error &&
+        (error as NodeJS.ErrnoException).code === "ENOENT"
+      )
+        return "missing";
+      throw error;
+    }
+  }
+
+  private unsafeMirrorError(): Error {
+    return new Error(
+      `Controller state mirror at ${this.path} traverses or names an unsafe linked path.`,
+    );
+  }
+
+  private async readLegacyMirror(): Promise<{
+    readonly state: OrchestratorState;
+    readonly raw: string;
+  } | null> {
+    const directoryStatus = await this.mirrorDirectoryStatus();
+    if (directoryStatus === "missing") return null;
+    if (directoryStatus === "unsafe") throw this.unsafeMirrorError();
+    try {
+      const metadata = await lstat(this.path);
+      if (!metadata.isFile() || metadata.isSymbolicLink())
+        throw new Error(
+          `Legacy controller state at ${this.path} is not a regular file; refusing to import it.`,
+        );
+      const raw = await readFile(this.path, "utf8");
+      const state = assertOrchestratorState(
+        migrateOrchestratorState(JSON.parse(raw) as unknown),
       );
+      return { state, raw };
     } catch (error) {
       if (
         error instanceof Error &&
@@ -453,56 +580,263 @@ export class StateStore {
     }
   }
 
-  async initialize(
-    state: OrchestratorState,
-    hooks: AtomicWriteHooks = {},
-  ): Promise<OrchestratorState> {
-    assertOrchestratorState(state);
-    const outcome = await exclusiveWriteSerialized(
-      this.path,
-      `${JSON.stringify(state, null, 2)}\n`,
-      hooks,
-    );
-    if (outcome === "exists") {
-      const existing = await this.load();
-      if (existing) return existing;
-      throw new Error(
-        `Durable controller state at ${this.path} vanished during exclusive initialization.`,
-      );
-    }
-    return state;
-  }
-
-  async save(state: OrchestratorState): Promise<OrchestratorState> {
-    assertOrchestratorState(state);
-    let diskRevision: number;
+  private async mirrorMatches(state: OrchestratorState): Promise<boolean> {
+    const directoryStatus = await this.mirrorDirectoryStatus();
+    if (directoryStatus === "missing") return false;
+    if (directoryStatus === "unsafe") throw this.unsafeMirrorError();
     try {
-      const parsed = JSON.parse(await readFile(this.path, "utf8")) as {
-        revision?: unknown;
-      };
-      if (!Number.isSafeInteger(parsed.revision))
-        throw new Error(
-          `Durable controller state at ${this.path} has no readable revision; refusing to replace it.`,
-        );
-      diskRevision = Number(parsed.revision);
+      const metadata = await lstat(this.path);
+      if (!metadata.isFile() || metadata.isSymbolicLink())
+        throw this.unsafeMirrorError();
+      return (
+        (await readFile(this.path, "utf8")) ===
+        `${JSON.stringify(state, null, 2)}\n`
+      );
     } catch (error) {
       if (
         error instanceof Error &&
         "code" in error &&
         (error as NodeJS.ErrnoException).code === "ENOENT"
       )
-        throw new StaleStateError(this.path, state.revision, null);
+        return false;
       throw error;
     }
-    if (diskRevision !== state.revision)
-      throw new StaleStateError(this.path, state.revision, diskRevision);
+  }
+
+  private async mirrorStatus(
+    state: OrchestratorState,
+  ): Promise<StateStoreInspection["mirror"]> {
+    const directoryStatus = await this.mirrorDirectoryStatus();
+    if (directoryStatus === "missing") return "missing";
+    if (directoryStatus === "unsafe") return "unsafe";
+    try {
+      const metadata = await lstat(this.path);
+      if (!metadata.isFile() || metadata.isSymbolicLink()) return "unsafe";
+      return (await readFile(this.path, "utf8")) ===
+        `${JSON.stringify(state, null, 2)}\n`
+        ? "current"
+        : "stale-or-malformed";
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        "code" in error &&
+        (error as NodeJS.ErrnoException).code === "ENOENT"
+      )
+        return "missing";
+      throw error;
+    }
+  }
+
+  private async writeMirror(
+    state: OrchestratorState,
+    hooks: StateStoreHooks,
+  ): Promise<void> {
+    if (await this.mirrorMatches(state)) return;
+    const directory = dirname(this.path);
+    if (directory === this.repositoryRoot) {
+      const rootMetadata = await lstat(this.repositoryRoot);
+      if (!rootMetadata.isDirectory() || rootMetadata.isSymbolicLink())
+        throw new Error(
+          `Controller repository root is not a real directory: ${this.repositoryRoot}.`,
+        );
+    } else await ensureContainedDirectory(this.repositoryRoot, directory);
+    await hooks.beforeMirrorWrite?.(state);
+    await atomicWriteJson(this.path, state, hooks);
+    await hooks.afterMirrorWrite?.(state);
+  }
+
+  private staleError(
+    expectedRevision: number,
+    expectedGeneration: string | null,
+  ): StaleStateError {
+    const actual = this.generations.readCurrent();
+    return new StaleStateError(
+      this.path,
+      expectedRevision,
+      actual?.state.revision ?? null,
+      expectedGeneration,
+      actual?.objectId ?? null,
+    );
+  }
+
+  private async publishInitial(
+    state: OrchestratorState,
+    hooks: StateStoreHooks,
+    legacySourceJson: string | null = null,
+    repairMirror = true,
+  ): Promise<OrchestratorState> {
+    await hooks.afterObservedGeneration?.({
+      objectId: null,
+      revision: state.revision,
+    });
+    await hooks.beforeObjectCreation?.();
+    const candidate = this.generations.createGeneration(
+      state,
+      null,
+      legacySourceJson,
+    );
+    await hooks.afterObjectCreated?.({
+      objectId: candidate.objectId,
+      revision: state.revision,
+    });
+    if (!this.generations.publish(null, candidate.objectId)) {
+      const winner = this.generations.readCurrent();
+      if (!winner)
+        throw new Error(
+          `Canonical controller state at ${STATE_REF} changed during initialization and then disappeared.`,
+        );
+      const winnerState = this.rememberGeneration(winner);
+      if (repairMirror) await this.writeMirror(winnerState, hooks);
+      return winnerState;
+    }
+    this.rememberGeneration(candidate);
+    await hooks.afterReferenceUpdated?.({
+      objectId: candidate.objectId,
+      revision: state.revision,
+    });
+    if (repairMirror) await this.writeMirror(state, hooks);
+    return state;
+  }
+
+  async load(): Promise<OrchestratorState | null> {
+    const canonical = this.generations.readCurrent();
+    if (canonical) {
+      this.loadedGeneration = null;
+      this.legacySourceJson = null;
+      this.loadedSource = "read-only-canonical";
+      return canonical.state;
+    }
+    const legacy = await this.readLegacyMirror();
+    this.loadedGeneration = null;
+    this.legacySourceJson = legacy?.raw ?? null;
+    this.loadedSource = legacy ? "legacy" : "absent";
+    return legacy?.state ?? null;
+  }
+
+  async inspect(): Promise<StateStoreInspection> {
+    const canonical = this.generations.readCurrent();
+    if (canonical)
+      return {
+        reference: STATE_REF,
+        canonicalGeneration: canonical.objectId,
+        revision: canonical.state.revision,
+        source: "canonical",
+        mirror: await this.mirrorStatus(canonical.state),
+      };
+    const legacy = await this.readLegacyMirror();
+    return legacy
+      ? {
+          reference: STATE_REF,
+          canonicalGeneration: null,
+          revision: legacy.state.revision,
+          source: "legacy",
+          mirror: "legacy",
+        }
+      : {
+          reference: STATE_REF,
+          canonicalGeneration: null,
+          revision: null,
+          source: "absent",
+          mirror: "missing",
+        };
+  }
+
+  async loadForMutation(
+    hooks: StateStoreHooks = {},
+  ): Promise<OrchestratorState | null> {
+    const canonical = this.generations.readCurrent();
+    if (canonical) {
+      const state = this.rememberGeneration(canonical);
+      await this.writeMirror(state, hooks);
+      return state;
+    }
+    const legacy = await this.readLegacyMirror();
+    if (!legacy) {
+      this.loadedGeneration = null;
+      this.legacySourceJson = null;
+      this.loadedSource = "absent";
+      return null;
+    }
+    return this.publishInitial(legacy.state, hooks, legacy.raw, false);
+  }
+
+  async initialize(
+    state: OrchestratorState,
+    hooks: StateStoreHooks = {},
+  ): Promise<OrchestratorState> {
+    assertOrchestratorState(state);
+    const canonical = this.generations.readCurrent();
+    if (canonical) {
+      const existing = this.rememberGeneration(canonical);
+      await this.writeMirror(existing, hooks);
+      return existing;
+    }
+    const legacy = await this.readLegacyMirror();
+    return this.publishInitial(
+      legacy?.state ?? state,
+      hooks,
+      legacy?.raw ?? null,
+      legacy === null,
+    );
+  }
+
+  sourceStateBytes(): Buffer {
+    if (this.loadedSource === "canonical" && this.loadedGeneration)
+      return Buffer.from(
+        this.loadedGeneration.legacySourceJson ??
+          this.loadedGeneration.stateJson,
+        "utf8",
+      );
+    if (this.loadedSource === "legacy" && this.legacySourceJson !== null)
+      return Buffer.from(this.legacySourceJson, "utf8");
+    throw new Error("Controller source state has not been loaded.");
+  }
+
+  async save(
+    state: OrchestratorState,
+    hooks: StateStoreHooks = {},
+  ): Promise<OrchestratorState> {
+    assertOrchestratorState(state);
+    const expected = this.loadedGeneration;
+    if (this.loadedSource !== "canonical" || !expected) {
+      const actual = this.generations.readCurrent();
+      if (!actual) throw this.staleError(state.revision, null);
+      throw new Error(
+        "Controller state publication requires initialize() or loadForMutation(); read-only load() never authorizes a write.",
+      );
+    }
+    if (expected.state.revision !== state.revision)
+      throw this.staleError(state.revision, expected?.objectId ?? null);
+    const observedObjectId = this.generations.readReference();
+    if (observedObjectId !== expected.objectId)
+      throw this.staleError(state.revision, expected.objectId);
+    await hooks.afterObservedGeneration?.({
+      objectId: expected.objectId,
+      revision: expected.state.revision,
+    });
     const saved: OrchestratorState = {
       ...state,
       revision: state.revision + 1,
       updatedAt: this.now(),
     };
     assertOrchestratorState(saved);
-    await atomicWriteJson(this.path, saved);
+    await hooks.beforeObjectCreation?.();
+    const candidate = this.generations.createGeneration(
+      saved,
+      expected.objectId,
+    );
+    await hooks.afterObjectCreated?.({
+      objectId: candidate.objectId,
+      revision: saved.revision,
+    });
+    if (!this.generations.publish(expected.objectId, candidate.objectId))
+      throw this.staleError(state.revision, expected.objectId);
+    this.rememberGeneration(candidate);
+    await hooks.afterReferenceUpdated?.({
+      objectId: candidate.objectId,
+      revision: saved.revision,
+    });
+    await this.writeMirror(saved, hooks);
     return saved;
   }
 }

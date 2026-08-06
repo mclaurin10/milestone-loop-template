@@ -1,6 +1,6 @@
 # Current Execution Plan
 
-**Status:** WP1b inspection and proof design in progress
+**Status:** WP1b implementation verified; cohesive commit pending
 **Updated:** 2026-08-05
 **Owner:** autonomous loop
 
@@ -47,28 +47,28 @@ remain WP2 and must not be mixed into this state-storage increment.
 
 ## Steps
 
-1. [ ] Inventory every read, initialization, save, migration, status, doctor,
+1. [x] Inventory every read, initialization, save, migration, status, doctor,
    retention, reconciliation, benchmark, and safety-demonstration call site;
    add a barrier test that reproduces two same-generation writers succeeding.
-2. [ ] Define strict state-generation metadata and Git commit validation:
+2. [x] Define strict state-generation metadata and Git commit validation:
    exact state JSON hash/revision, exact parent, exact tree entries, and fixed
    controller author identity.
-3. [ ] Publish initialization and saves through
+3. [x] Publish initialization and saves through
    `refs/milestone-loop/state` using the exact loaded generation as expected
    old; keep prior commits reachable through parent ancestry.
-4. [ ] Split read-only load from leased mutation load. Import a valid legacy
+4. [x] Split read-only load from leased mutation load. Import a valid legacy
    mirror exactly once only on the latter, and fail closed on malformed legacy
    or canonical data.
-5. [ ] Regenerate the JSON mirror only after canonical publication and repair
+5. [x] Regenerate the JSON mirror only after canonical publication and repair
    it on the next leased open after missing, stale, malformed, modified, or
    interrupted mirror writes.
-6. [ ] Isolate safety/demo fixtures from the production state ref and update
+6. [x] Isolate safety/demo fixtures from the production state ref and update
    all state-using fixtures to real Git repositories without weakening their
    assertions.
-7. [ ] Add crash-boundary, corruption, unexpected-ref-change, history,
+7. [x] Add crash-boundary, corruption, unexpected-ref-change, history,
    read-only, migration-semantic, and normal-push tests; update status, doctor,
    README, and contract.
-8. [ ] Run repeated forced races, focused and broad exact-runtime checks, then
+8. [x] Run repeated forced races, focused and broad exact-runtime checks, then
    record and commit the cohesive WP1b result.
 
 ## Acceptance Criteria
@@ -124,9 +124,24 @@ remain WP2 and must not be mixed into this state-storage increment.
 - 2026-08-05: StateStore call-site inspection confirmed that mutating and
   read-only loads currently share one API and that the safety demonstration's
   custom main-repository path must be isolated before adopting a fixed ref.
+- 2026-08-05: The canonical state ref, strict commit/tree/metadata validation,
+  exact-generation CAS, previous-generation validation, mutation-capability
+  split, legacy import, mirror repair, diagnostics, and isolated safety fixture
+  are implemented. The synchronized multiprocess same-generation race passed
+  five consecutive runs retained at
+  `artifacts/manual/wp1b-state-races/run-{1..5}.json`.
+- 2026-08-05: Under Node `24.18.0` and pnpm `11.15.1`, receipt-owning
+  typecheck, lint, and format passed at `artifacts/manual/typecheck-7476/`,
+  `artifacts/manual/lint-21564/`, and
+  `artifacts/manual/format-check-22368/`. The complete orchestrator suite
+  passed 349/349 at `artifacts/manual/test-orchestrator-20856/result.json` and
+  the repository unit aggregate passed 362/362 at
+  `artifacts/manual/test-unit-24764/result.json`. The live safety demonstration
+  passed at
+  `artifacts/orchestrator/runs/safety-demonstration/safety-demonstration-20260806045354446-4e64d4e5.json`.
 
 ## Next Action
 
-Add deterministic state-generation hooks and the failing simultaneous-writer
-test, then implement strict Git commit construction/validation behind the
-fixed state ref before changing production call sites.
+Review the exact diff and immutable-lock status, commit the cohesive WP1b
+implementation, rerun the clean committed unit aggregate, then record the
+commit identity and replace this plan with the first bounded WP2 intent slice.

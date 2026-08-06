@@ -1080,10 +1080,7 @@ export class ReconciliationController {
       verificationManifest.value,
       buildCanonicalProtectedSet(this.config),
     );
-    const rawContents = await regularContainedFile(
-      this.repositoryRoot,
-      this.store.path,
-    );
+    const rawContents = this.store.sourceStateBytes();
     const rawState = JSON.parse(rawContents.toString("utf8")) as unknown;
     if (
       typeof rawState !== "object" ||
@@ -1733,7 +1730,7 @@ export class ReconciliationController {
     });
     let reconciliationFailed = false;
     try {
-      const fresh = await this.store.load();
+      const fresh = await this.store.loadForMutation();
       if (!fresh)
         throw new Error(
           "Durable controller state disappeared before reconciliation could start.",

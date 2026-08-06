@@ -19,9 +19,10 @@ import {
   assertManifestProtectedPathsCovered,
   buildCanonicalProtectedSet,
 } from "./protected-roots.js";
-import { StateStore } from "./state-store.js";
+import { STATE_REF } from "./private-ref-store.js";
+import { StateStore, type StateStoreInspection } from "./state-store.js";
 
-export const DOCTOR_SCHEMA_VERSION = "1.1.0" as const;
+export const DOCTOR_SCHEMA_VERSION = "1.2.0" as const;
 
 type CheckStatus = "pass" | "attention";
 
@@ -67,6 +68,12 @@ export interface DoctorDiagnostic {
     };
     readonly state: {
       readonly status: CheckStatus;
+      readonly reference: typeof STATE_REF;
+      readonly canonicalGeneration: string | null;
+      readonly source:
+        StateStoreInspection["source"] | "invalid" | "not-checked";
+      readonly mirror:
+        StateStoreInspection["mirror"] | "invalid" | "not-checked";
       readonly outcome:
         | "valid"
         | "missing"
@@ -178,19 +185,50 @@ async function stateOutcome(
   config: OrchestratorConfig | null,
   head: string | null,
 ): Promise<DoctorDiagnostic["checks"]["state"]> {
-  if (!config) return { status: "attention", outcome: "not-checked" };
+  if (!config)
+    return {
+      status: "attention",
+      reference: STATE_REF,
+      canonicalGeneration: null,
+      source: "not-checked",
+      mirror: "not-checked",
+      outcome: "not-checked",
+    };
   try {
-    const state = await new StateStore(repositoryRoot, config.statePath).load();
+    const store = new StateStore(repositoryRoot, config.statePath);
+    const [state, storage] = await Promise.all([store.load(), store.inspect()]);
+    const details = {
+      reference: storage.reference,
+      canonicalGeneration: storage.canonicalGeneration,
+      source: storage.source,
+      mirror: storage.mirror,
+    } as const;
     if (state?.reconciliation.active)
-      return { status: "attention", outcome: "reconciliation-active" };
+      return {
+        status: "attention",
+        ...details,
+        outcome: "reconciliation-active",
+      };
     if (state && head !== state.repository.verifiedCommit)
-      return { status: "attention", outcome: "reconciliation-required" };
+      return {
+        status: "attention",
+        ...details,
+        outcome: "reconciliation-required",
+      };
     return {
       status: "pass",
+      ...details,
       outcome: state ? "valid" : "missing",
     };
   } catch {
-    return { status: "attention", outcome: "invalid-or-unreadable" };
+    return {
+      status: "attention",
+      reference: STATE_REF,
+      canonicalGeneration: null,
+      source: "invalid",
+      mirror: "invalid",
+      outcome: "invalid-or-unreadable",
+    };
   }
 }
 

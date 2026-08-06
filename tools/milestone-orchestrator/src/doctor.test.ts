@@ -91,7 +91,7 @@ describe("read-only orchestrator doctor", () => {
     );
 
     expect(diagnostic).toEqual({
-      schemaVersion: "1.1.0",
+      schemaVersion: "1.2.0",
       diagnostic: "orchestrator-doctor",
       status: "ready",
       readOnly: true,
@@ -112,7 +112,14 @@ describe("read-only orchestrator doctor", () => {
         },
         gitCleanliness: { status: "pass", clean: true },
         configuration: { status: "pass", valid: true },
-        state: { status: "pass", outcome: "valid" },
+        state: {
+          status: "pass",
+          reference: "refs/milestone-loop/state",
+          canonicalGeneration: null,
+          source: "legacy",
+          mirror: "legacy",
+          outcome: "valid",
+        },
         codexAuthentication: {
           status: "pass",
           available: true,
@@ -164,6 +171,10 @@ describe("read-only orchestrator doctor", () => {
     expect(diagnostic.status).toBe("ready");
     expect(diagnostic.checks.state).toEqual({
       status: "pass",
+      reference: "refs/milestone-loop/state",
+      canonicalGeneration: null,
+      source: "absent",
+      mirror: "missing",
       outcome: "missing",
     });
     expect(diagnostic.checks.codexAuthentication).toEqual({
@@ -232,6 +243,10 @@ describe("read-only orchestrator doctor", () => {
     });
     expect(diagnostic.checks.state).toEqual({
       status: "attention",
+      reference: "refs/milestone-loop/state",
+      canonicalGeneration: null,
+      source: "invalid",
+      mirror: "invalid",
       outcome: "invalid-or-unreadable",
     });
     expect(diagnostic.checks.codexAuthentication).toEqual({
@@ -273,6 +288,10 @@ describe("read-only orchestrator doctor", () => {
     });
     expect(diagnostic.checks.state).toEqual({
       status: "attention",
+      reference: "refs/milestone-loop/state",
+      canonicalGeneration: null,
+      source: "not-checked",
+      mirror: "not-checked",
       outcome: "not-checked",
     });
     expect(JSON.stringify(diagnostic)).not.toContain(
@@ -297,6 +316,10 @@ describe("read-only orchestrator doctor", () => {
     );
     expect(gap.checks.state).toEqual({
       status: "attention",
+      reference: "refs/milestone-loop/state",
+      canonicalGeneration: null,
+      source: "legacy",
+      mirror: "legacy",
       outcome: "reconciliation-required",
     });
 
@@ -330,6 +353,10 @@ describe("read-only orchestrator doctor", () => {
     );
     expect(active.checks.state).toEqual({
       status: "attention",
+      reference: "refs/milestone-loop/state",
+      canonicalGeneration: null,
+      source: "legacy",
+      mirror: "legacy",
       outcome: "reconciliation-active",
     });
   });

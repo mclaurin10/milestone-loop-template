@@ -253,7 +253,10 @@ async function main(): Promise<void> {
     });
     let retentionFailed = false;
     try {
-      const state = await new StateStore(root, config.statePath).load();
+      const state = await new StateStore(
+        root,
+        config.statePath,
+      ).loadForMutation();
       if (!state)
         throw new Error(
           "Retention apply requires initialized controller state.",
@@ -340,6 +343,7 @@ async function main(): Promise<void> {
       : { state: "uninitialized" };
     const readOnlyFacts = {
       targetHead: inspection.targetHead,
+      stateStorage: inspection.stateStorage,
       targetDrift: inspection.targetDrift,
       pendingWorkspaceCleanups: inspection.pendingWorkspaceCleanups,
       protectedIntegrity: inspection.protectedIntegrity,

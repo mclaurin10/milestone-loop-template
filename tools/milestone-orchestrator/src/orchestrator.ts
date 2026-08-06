@@ -105,6 +105,7 @@ import {
   StateStore,
   atomicWriteJson,
   createInitialState,
+  type StateStoreInspection,
 } from "./state-store.js";
 import { verifyMilestone } from "./verifier.js";
 import { performWorkspaceCleanup } from "./workspace-cleanup.js";
@@ -131,6 +132,7 @@ export interface OrchestratorDependencies {
 
 export interface OrchestratorInspection {
   readonly state: OrchestratorState | null;
+  readonly stateStorage: StateStoreInspection;
   readonly targetHead: string;
   readonly targetDrift: {
     readonly storedVerifiedCommit: string;
@@ -665,7 +667,7 @@ export class MilestoneOrchestrator {
   ): Promise<MilestoneOrchestrator> {
     const now = dependencies.now ?? (() => new Date());
     const store = new StateStore(root, config.statePath, () => iso(now));
-    let state = await store.load();
+    let state = await store.loadForMutation();
     const target = inspectTarget(root, config.targetBranch);
     if (!state) {
       const discover =
@@ -767,12 +769,16 @@ export class MilestoneOrchestrator {
     const root = resolve(repositoryRoot);
     const config = await loadConfig(root, configPath);
     const store = new StateStore(root, config.statePath);
-    const state = await store.load();
+    const [state, stateStorage] = await Promise.all([
+      store.load(),
+      store.inspect(),
+    ]);
     const targetHead = gitHead(root);
     const lease = await ControllerLease.inspect(root, config.statePath);
     if (!state)
       return {
         state: null,
+        stateStorage,
         targetHead,
         targetDrift: null,
         pendingWorkspaceCleanups: 0,
@@ -794,6 +800,7 @@ export class MilestoneOrchestrator {
     }
     return {
       state,
+      stateStorage,
       targetHead,
       targetDrift:
         targetHead === state.repository.verifiedCommit

@@ -6,7 +6,8 @@ a time with a read-only Planner agent, implements it with a Worker agent in an
 isolated git clone, machine-verifies it with receipt-owning evidence, has an
 independent Reviewer agent judge the actual diff, and integrates only what
 survives all three gates. The controller is durable and resumable: every
-state transition is a validated, schema-versioned atomic write.
+state transition is a validated, schema-versioned Git generation published by
+an expected-generation atomic ref update.
 
 Extracted from a battle-tested production loop (source repository pinned at
 commit `8928aecc19e8d3ade663063e0ed41740483774e3`); behavior is preserved,
@@ -18,7 +19,7 @@ full configuration ships as a worked example in
 
 | Area | Where | What it does |
 | --- | --- | --- |
-| Orchestrator | `tools/milestone-orchestrator/` | Planner/Worker/Reviewer loop over the Codex SDK, durable state store with schema migrations, retry/escalation policy, git isolation, protected-path diff policy, safety demonstration, canary milestone, doctor diagnostics |
+| Orchestrator | `tools/milestone-orchestrator/` | Planner/Worker/Reviewer loop over the Codex SDK, ref-rooted CAS state generations with schema migrations, retry/escalation policy, git isolation, protected-path diff policy, safety demonstration, canary milestone, doctor diagnostics |
 | Verification tiers | `src/verification-tier.ts`, `src/verification-cli.ts` | `iteration`, `candidate`, `milestone`, and `periodic` tiers planned from the verification manifest |
 | Invariant suite | `src/invariant-suite.ts`, `config/invariant-suite.json` | Always-run, serial invariants with pinned owner files; fast/migration unit partition |
 | Evidence | `scripts/verify.mjs`, `tools/evidence.mjs`, `tools/run-tool-evidence.mjs` | The authoritative `pnpm verify` aggregate, command-owned receipts with hashed artifacts, fail-closed receipt validation |
@@ -114,27 +115,36 @@ report `NOT_READY`, never pass.
    for the autonomous loop, `pnpm loop:status` / `loop:resume` /
    `loop:reconcile` for lifecycle operations.
 
-   Every mutating command (`plan`, `run`, `resume`, `canary`, `reconcile`)
-   holds the repository-private Git ref
+   Every mutating command (`plan`, `run`, `resume`, `canary`, `reconcile`, and
+   retention apply) holds the repository-private Git ref
    `refs/milestone-loop/controller-lease` for its lifetime. The ref points to
    a strict owner JSON blob and is acquired, taken over, and released only by
    an atomic expected-owner `git update-ref` operation. A permanent
    `artifacts/orchestrator/state/controller.lease` guard prevents an older
    file-lease implementation from running concurrently with the ref protocol.
    `loop:status` and `loop:dry-run` are strictly read-only — they never
-   initialize state, never take the lease, and report the current lease owner
-   and canonical ref. A dead same-host owner is recovered by replacing exactly
-   the object ID that was inspected, so a losing recoverer cannot disturb a
-   newer winner. A lease from another host (host identity includes a
-   per-machine instance id, not just the hostname), a malformed owner object,
-   or a conflicting legacy lease is never stolen. After independently
-   confirming a reported owner is dead, an operator can delete only its exact
-   object with the diagnostic's `git update-ref -d` command.
+   initialize state, repair a mirror, take the lease, or authorize a later
+   state write, and they report the current lease and state refs. A dead
+   same-host owner is recovered by replacing exactly the object ID that was
+   inspected, so a losing recoverer cannot disturb a newer winner. A lease
+   from another host (host identity includes a per-machine instance id, not
+   just the hostname), a malformed owner object, or a conflicting legacy lease
+   is never stolen. After independently confirming a reported owner is dead,
+   an operator can delete only its exact object with the diagnostic's
+   `git update-ref -d` command.
 
-   State saves currently retain a revision stale-writer check and atomic file
-   replacement, but the revision comparison is not yet an atomic publication
-   primitive. The lease is therefore the active single-writer boundary until
-   the canonical private-ref state-generation migration is completed.
+   Canonical controller state lives at `refs/milestone-loop/state`. Each target
+   is a strict Git commit containing the complete validated state JSON and
+   hash/revision metadata, with its parent fixed to the previous generation.
+   State commits use a fixed controller identity and canonical message, and a
+   save publishes only if the ref still names the exact generation loaded by
+   the mutating path. The current and immediately previous generations are
+   validated on read. The configured `state.json` is only a human-readable
+   mirror: a leased mutating open repairs it after missing, stale, malformed,
+   or interrupted writes, while canonical reads never fall back to it. A valid
+   legacy mirror is imported exactly once when no state ref exists; malformed
+   or linked legacy paths fail closed without publication. Normal branch
+   pushes do not include either private ref.
 
    **Nothing is deleted by `loop:run`.** Controller startup only *plans*
    evidence retention (the run's `evidence-retention.json` lists what a

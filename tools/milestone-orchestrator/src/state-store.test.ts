@@ -1,13 +1,23 @@
 import {
+  spawn,
+  spawnSync,
+  type ChildProcessWithoutNullStreams,
+} from "node:child_process";
+import {
+  access,
+  mkdir,
   mkdtemp,
   readFile,
   readdir,
   rename,
   rm,
+  symlink,
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
+import { setTimeout as delay } from "node:timers/promises";
+import { pathToFileURL } from "node:url";
 
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -16,6 +26,8 @@ import { createMilestoneRecord } from "./milestone-state.js";
 import { legacyProposal, validProposal, validState } from "../test/fixtures.js";
 
 const temporaryDirectories: string[] = [];
+const STATE_REF = "refs/milestone-loop/state";
+const repositoryRoot = resolve(import.meta.dirname, "../../..");
 
 afterEach(async () => {
   for (const directory of temporaryDirectories.splice(0))
@@ -25,7 +37,56 @@ afterEach(async () => {
 async function temporaryDirectory(): Promise<string> {
   const directory = await mkdtemp(join(tmpdir(), "milestone-loop-state-"));
   temporaryDirectories.push(directory);
+  const initialized = spawnSync(
+    "git",
+    ["-C", directory, "init", "--initial-branch=fixture"],
+    { encoding: "utf8", windowsHide: true },
+  );
+  if (initialized.status !== 0)
+    throw new Error(
+      `Could not initialize state fixture: ${initialized.stderr}`,
+    );
   return directory;
+}
+
+function stateRef(directory: string): string | null {
+  const result = spawnSync(
+    "git",
+    ["-C", directory, "rev-parse", "--verify", "--quiet", STATE_REF],
+    { encoding: "utf8", windowsHide: true },
+  );
+  if (result.status === 1) return null;
+  if (result.status !== 0)
+    throw new Error(`Could not read state ref: ${result.stderr}`);
+  return result.stdout.trim();
+}
+
+function firstLine(child: ChildProcessWithoutNullStreams): Promise<string> {
+  return new Promise((resolveLine, rejectLine) => {
+    let buffered = "";
+    child.stdout.on("data", (chunk: Buffer) => {
+      buffered += chunk.toString("utf8");
+      const newline = buffered.indexOf("\n");
+      if (newline !== -1) resolveLine(buffered.slice(0, newline));
+    });
+    child.once("error", rejectLine);
+    child.once("exit", () => {
+      const newline = buffered.indexOf("\n");
+      resolveLine(newline === -1 ? buffered : buffered.slice(0, newline));
+    });
+  });
+}
+
+async function waitForPath(path: string): Promise<void> {
+  for (let attempt = 0; attempt < 400; attempt += 1) {
+    try {
+      await access(path);
+      return;
+    } catch {
+      await delay(25);
+    }
+  }
+  throw new Error(`Timed out waiting for ${path}.`);
 }
 
 describe("atomic state persistence", () => {
@@ -57,8 +118,8 @@ describe("atomic state persistence", () => {
       () => "2026-08-05T00:00:02.000Z",
     );
     await first.initialize(validState(directory));
-    const loadedByFirst = await first.load();
-    const loadedBySecond = await second.load();
+    const loadedByFirst = await first.loadForMutation();
+    const loadedBySecond = await second.loadForMutation();
     if (!loadedByFirst || !loadedBySecond)
       throw new Error("Both writers must load the initialized state.");
 
@@ -79,13 +140,327 @@ describe("atomic state persistence", () => {
     expect(durable?.revision).toBe(1);
     expect(durable?.nextAllowedAction).toBe("start-milestone");
 
-    const refreshed = await second.load();
+    const refreshed = await second.loadForMutation();
     if (!refreshed) throw new Error("Durable state must reload.");
     const secondSaved = await second.save({
       ...refreshed,
       nextAllowedAction: "stop",
     });
     expect(secondSaved.revision).toBe(2);
+  }, 20_000);
+
+  it("allows exactly one writer released after the same generation observation", async () => {
+    const directory = await temporaryDirectory();
+    const relativePath = "artifacts/orchestrator/state/state.json";
+    const first = new StateStore(directory, relativePath);
+    const second = new StateStore(directory, relativePath);
+    await first.initialize(validState(directory));
+    const firstState = await first.loadForMutation();
+    const secondState = await second.loadForMutation();
+    if (!firstState || !secondState)
+      throw new Error("Both writers must observe the initial generation.");
+
+    let observedCount = 0;
+    let releaseWriters!: () => void;
+    const writersReleased = new Promise<void>((resolveWriters) => {
+      releaseWriters = resolveWriters;
+    });
+    const afterObservedGeneration = async () => {
+      observedCount += 1;
+      if (observedCount === 2) releaseWriters();
+      await writersReleased;
+    };
+    const outcomes = await Promise.allSettled([
+      first.save(
+        { ...firstState, nextAllowedAction: "start-milestone" },
+        { afterObservedGeneration },
+      ),
+      second.save(
+        { ...secondState, nextAllowedAction: "stop" },
+        { afterObservedGeneration },
+      ),
+    ]);
+    expect(
+      outcomes.filter((outcome) => outcome.status === "fulfilled"),
+    ).toHaveLength(1);
+    expect(
+      outcomes.filter((outcome) => outcome.status === "rejected"),
+    ).toHaveLength(1);
+  });
+
+  it("allows exactly one barrier-synchronized multiprocess writer", async () => {
+    const directory = await temporaryDirectory();
+    const relativePath = "artifacts/orchestrator/state/state.json";
+    await new StateStore(directory, relativePath).initialize(
+      validState(directory),
+    );
+    const barrier = join(directory, "barrier");
+    await mkdir(barrier);
+    const scriptPath = join(directory, "state-race-child.mjs");
+    const moduleUrl = pathToFileURL(
+      resolve(import.meta.dirname, "state-store.ts"),
+    ).href;
+    await writeFile(
+      scriptPath,
+      [
+        `import { access, writeFile } from "node:fs/promises";`,
+        `import { join } from "node:path";`,
+        `import { setTimeout as delay } from "node:timers/promises";`,
+        `import { StateStore } from ${JSON.stringify(moduleUrl)};`,
+        `const [root, relativePath, barrier, identity] = process.argv.slice(2);`,
+        `async function wait(path) {`,
+        `  for (;;) {`,
+        `    try { await access(path); return; } catch { await delay(10); }`,
+        `  }`,
+        `}`,
+        `try {`,
+        `  const store = new StateStore(root, relativePath, () => "2026-08-05T00:00:01.000Z");`,
+        `  const state = await store.loadForMutation();`,
+        `  if (!state) throw new Error("missing state");`,
+        `  await store.save({ ...state, nextAllowedAction: identity === "a" ? "stop" : "start-milestone" }, {`,
+        `    afterObservedGeneration: async () => {`,
+        `      await writeFile(join(barrier, \`observed-\${identity}\`), "observed\\n", { flag: "a" });`,
+        `      await wait(join(barrier, "release"));`,
+        `    },`,
+        `  });`,
+        `  process.stdout.write("SAVED\\n");`,
+        `} catch (error) {`,
+        "  process.stdout.write(`REFUSED:${error instanceof Error ? error.message : String(error)}\\n`);",
+        `}`,
+        ``,
+      ].join("\n"),
+      "utf8",
+    );
+    const children = ["a", "b"].map((identity) =>
+      spawn(
+        process.execPath,
+        [
+          "node_modules/tsx/dist/cli.mjs",
+          scriptPath,
+          directory,
+          relativePath,
+          barrier,
+          identity,
+        ],
+        { cwd: repositoryRoot, windowsHide: true },
+      ),
+    );
+    const lines = children.map(firstLine);
+    await Promise.all(
+      ["a", "b"].map((identity) =>
+        waitForPath(join(barrier, `observed-${identity}`)),
+      ),
+    );
+    await writeFile(join(barrier, "release"), "release\n", "utf8");
+    const outcomes = await Promise.all(lines);
+    expect(outcomes.filter((line) => line === "SAVED")).toHaveLength(1);
+    const refused = outcomes.filter((line) => line.startsWith("REFUSED:"));
+    expect(refused).toHaveLength(1);
+    expect(refused[0]).toMatch(/Canonical controller state advanced/);
+    await Promise.all(
+      children.map(
+        (child) =>
+          new Promise<void>((resolveExit) => {
+            if (child.exitCode !== null || child.signalCode !== null) {
+              resolveExit();
+              return;
+            }
+            child.once("close", () => resolveExit());
+          }),
+      ),
+    );
+    await expect(
+      new StateStore(directory, relativePath).load(),
+    ).resolves.toMatchObject({ revision: 1 });
+  }, 60_000);
+
+  it("keeps canonical state across save crash boundaries and repairs its mirror", async () => {
+    const directory = await temporaryDirectory();
+    const store = new StateStore(directory, "state.json");
+    const initial = await store.initialize(validState(directory));
+    const initialRef = stateRef(directory);
+    const initialMirror = await readFile(store.path, "utf8");
+
+    await expect(
+      store.save(
+        { ...initial, nextAllowedAction: "start-milestone" },
+        {
+          afterObjectCreated() {
+            throw new Error("crash before ref");
+          },
+        },
+      ),
+    ).rejects.toThrow(/crash before ref/);
+    expect(stateRef(directory)).toBe(initialRef);
+    expect(await readFile(store.path, "utf8")).toBe(initialMirror);
+
+    await expect(
+      store.save(
+        { ...initial, nextAllowedAction: "start-milestone" },
+        {
+          afterReferenceUpdated() {
+            throw new Error("crash after ref");
+          },
+        },
+      ),
+    ).rejects.toThrow(/crash after ref/);
+    expect(stateRef(directory)).not.toBe(initialRef);
+    expect(await readFile(store.path, "utf8")).toBe(initialMirror);
+
+    const restarted = new StateStore(directory, "state.json");
+    await expect(restarted.load()).resolves.toMatchObject({
+      revision: 1,
+      nextAllowedAction: "start-milestone",
+    });
+    expect(await readFile(store.path, "utf8")).toBe(initialMirror);
+    await restarted.loadForMutation();
+    expect(JSON.parse(await readFile(store.path, "utf8"))).toMatchObject({
+      revision: 1,
+      nextAllowedAction: "start-milestone",
+    });
+  });
+
+  it("imports valid legacy bytes once and never lets a mirror override the ref", async () => {
+    const directory = await temporaryDirectory();
+    const store = new StateStore(directory, "state.json");
+    const legacyState = validState(directory);
+    const legacyBytes = `  ${JSON.stringify(legacyState)}\n`;
+    await writeFile(store.path, legacyBytes, "utf8");
+
+    await expect(store.load()).resolves.toEqual(legacyState);
+    expect(stateRef(directory)).toBeNull();
+    expect(await readFile(store.path, "utf8")).toBe(legacyBytes);
+    await expect(store.loadForMutation()).resolves.toEqual(legacyState);
+    const importedRef = stateRef(directory);
+    expect(importedRef).toMatch(/^[0-9a-f]{40,64}$/u);
+    expect(store.sourceStateBytes().toString("utf8")).toBe(legacyBytes);
+
+    const falseMirror = {
+      ...legacyState,
+      nextAllowedAction: "stop" as const,
+    };
+    await writeFile(store.path, `${JSON.stringify(falseMirror)}\n`, "utf8");
+    const restarted = new StateStore(directory, "state.json");
+    await expect(restarted.load()).resolves.toEqual(legacyState);
+    expect(stateRef(directory)).toBe(importedRef);
+    expect(JSON.parse(await readFile(store.path, "utf8"))).toMatchObject({
+      nextAllowedAction: "stop",
+    });
+    await restarted.loadForMutation();
+    expect(stateRef(directory)).toBe(importedRef);
+    expect(JSON.parse(await readFile(store.path, "utf8"))).toMatchObject({
+      nextAllowedAction: legacyState.nextAllowedAction,
+    });
+    expect(restarted.sourceStateBytes().toString("utf8")).toBe(legacyBytes);
+  });
+
+  it("keeps read-only loads mutation-free for missing and malformed mirrors", async () => {
+    const directory = await temporaryDirectory();
+    const store = new StateStore(directory, "state.json");
+    const canonical = await store.initialize(validState(directory));
+    const canonicalRef = stateRef(directory);
+
+    await rm(store.path);
+    const missingMirrorReader = new StateStore(directory, "state.json");
+    await expect(missingMirrorReader.load()).resolves.toEqual(canonical);
+    await expect(readFile(store.path, "utf8")).rejects.toMatchObject({
+      code: "ENOENT",
+    });
+    expect(stateRef(directory)).toBe(canonicalRef);
+    await missingMirrorReader.loadForMutation();
+    expect(JSON.parse(await readFile(store.path, "utf8"))).toEqual(canonical);
+
+    await writeFile(store.path, "{", "utf8");
+    const malformedMirrorReader = new StateStore(directory, "state.json");
+    await expect(malformedMirrorReader.load()).resolves.toEqual(canonical);
+    expect(await readFile(store.path, "utf8")).toBe("{");
+    expect(stateRef(directory)).toBe(canonicalRef);
+    await malformedMirrorReader.loadForMutation();
+    expect(JSON.parse(await readFile(store.path, "utf8"))).toEqual(canonical);
+  });
+
+  it("never authorizes state publication through the read-only load API", async () => {
+    const directory = await temporaryDirectory();
+    const initial = await new StateStore(directory, "state.json").initialize(
+      validState(directory),
+    );
+    const canonicalRef = stateRef(directory);
+    const mirrorBytes = await readFile(join(directory, "state.json"), "utf8");
+    const reader = new StateStore(directory, "state.json");
+    const observed = await reader.load();
+    if (!observed) throw new Error("Canonical state must be readable.");
+
+    await expect(
+      reader.save({ ...observed, nextAllowedAction: "stop" }),
+    ).rejects.toThrow(/read-only load\(\) never authorizes a write/);
+    expect(stateRef(directory)).toBe(canonicalRef);
+    expect(await readFile(join(directory, "state.json"), "utf8")).toBe(
+      mirrorBytes,
+    );
+    await expect(
+      new StateStore(directory, "state.json").load(),
+    ).resolves.toEqual(initial);
+  });
+
+  it("rejects linked mirror paths without reading or repairing outside the repository", async () => {
+    const directory = await temporaryDirectory();
+    const outside = await mkdtemp(join(tmpdir(), "milestone-loop-outside-"));
+    temporaryDirectories.push(outside);
+    const outsideStatePath = join(outside, "state.json");
+    const outsideBytes = `${JSON.stringify(validState(directory))}\n`;
+    await writeFile(outsideStatePath, outsideBytes, "utf8");
+    await symlink(outside, join(directory, "linked"), "junction");
+
+    const linkedLegacy = new StateStore(directory, "linked/state.json");
+    await expect(linkedLegacy.load()).rejects.toThrow(/unsafe linked path/);
+    expect(stateRef(directory)).toBeNull();
+    expect(await readFile(outsideStatePath, "utf8")).toBe(outsideBytes);
+
+    const canonical = await new StateStore(directory, "state.json").initialize(
+      validState(directory),
+    );
+    const linkedCanonical = new StateStore(directory, "linked/state.json");
+    await expect(linkedCanonical.load()).resolves.toEqual(canonical);
+    await expect(linkedCanonical.inspect()).resolves.toMatchObject({
+      source: "canonical",
+      mirror: "unsafe",
+    });
+    await expect(linkedCanonical.loadForMutation()).rejects.toThrow(
+      /unsafe linked path/,
+    );
+    expect(await readFile(outsideStatePath, "utf8")).toBe(outsideBytes);
+  });
+
+  it("rejects a mirror path that lexically escapes the repository", async () => {
+    const directory = await temporaryDirectory();
+    expect(() => new StateStore(directory, "../state.json")).toThrow(
+      /mirror escapes the repository/,
+    );
+  });
+
+  it("never falls back to a valid mirror when the canonical ref is malformed", async () => {
+    const directory = await temporaryDirectory();
+    const store = new StateStore(directory, "state.json");
+    const mirrorBytes = `${JSON.stringify(validState(directory))}\n`;
+    await writeFile(store.path, mirrorBytes, "utf8");
+    const blob = spawnSync(
+      "git",
+      ["-C", directory, "hash-object", "-w", "--stdin"],
+      { encoding: "utf8", input: "not a state commit\n", windowsHide: true },
+    );
+    expect(blob.status, blob.stderr).toBe(0);
+    const update = spawnSync(
+      "git",
+      ["-C", directory, "update-ref", STATE_REF, blob.stdout.trim()],
+      { encoding: "utf8", windowsHide: true },
+    );
+    expect(update.status, update.stderr).toBe(0);
+
+    await expect(store.load()).rejects.toThrow(/rather than a commit/);
+    await expect(store.loadForMutation()).rejects.toThrow(
+      /rather than a commit/,
+    );
+    expect(await readFile(store.path, "utf8")).toBe(mirrorBytes);
   });
 
   it("rejects saving over missing durable state", async () => {
@@ -96,7 +471,7 @@ describe("atomic state persistence", () => {
     );
   });
 
-  it("initializes exclusively and returns the existing durable state on contention", async () => {
+  it("initializes exclusively, returns the winner, and repairs its mirror", async () => {
     const directory = await temporaryDirectory();
     const relativePath = "state.json";
     const winner = new StateStore(directory, relativePath);
@@ -116,24 +491,71 @@ describe("atomic state persistence", () => {
     });
 
     await writeFile(winner.path, '{"schemaVersion":"0.0.0"}\n', "utf8");
-    await expect(loser.initialize(loserState)).rejects.toThrow(
-      /Invalid orchestrator state/,
+    const readOnly = new StateStore(directory, relativePath);
+    await expect(readOnly.load()).resolves.toMatchObject({
+      nextAllowedAction: winnerState.nextAllowedAction,
+    });
+    expect(await readFile(winner.path, "utf8")).toBe(
+      '{"schemaVersion":"0.0.0"}\n',
     );
+    await expect(loser.initialize(loserState)).resolves.toMatchObject({
+      nextAllowedAction: winnerState.nextAllowedAction,
+    });
+    expect(JSON.parse(await readFile(winner.path, "utf8"))).toMatchObject({
+      nextAllowedAction: winnerState.nextAllowedAction,
+    });
   });
 
-  it("leaves nothing behind when exclusive initialization is interrupted", async () => {
+  it("recovers every initialization crash boundary from the canonical ref", async () => {
     const directory = await temporaryDirectory();
     const store = new StateStore(directory, "state.json");
     await expect(
       store.initialize(validState(directory), {
-        beforeRename() {
-          throw new Error("injected interruption");
+        beforeObjectCreation() {
+          throw new Error("before object");
         },
       }),
-    ).rejects.toThrow(/injected interruption/);
-    expect(await readdir(directory)).toEqual([]);
-    const recovered = await store.initialize(validState(directory));
-    expect(recovered.revision).toBe(0);
+    ).rejects.toThrow(/before object/);
+    expect(stateRef(directory)).toBeNull();
+    await expect(readFile(store.path, "utf8")).rejects.toMatchObject({
+      code: "ENOENT",
+    });
+
+    await expect(
+      store.initialize(validState(directory), {
+        afterObjectCreated() {
+          throw new Error("after object");
+        },
+      }),
+    ).rejects.toThrow(/after object/);
+    expect(stateRef(directory)).toBeNull();
+    await expect(readFile(store.path, "utf8")).rejects.toMatchObject({
+      code: "ENOENT",
+    });
+
+    await expect(
+      store.initialize(validState(directory), {
+        afterReferenceUpdated() {
+          throw new Error("after ref");
+        },
+      }),
+    ).rejects.toThrow(/after ref/);
+    expect(stateRef(directory)).toMatch(/^[0-9a-f]{40,64}$/u);
+    await expect(readFile(store.path, "utf8")).rejects.toMatchObject({
+      code: "ENOENT",
+    });
+
+    const restarted = new StateStore(directory, "state.json");
+    await expect(restarted.load()).resolves.toMatchObject({ revision: 0 });
+    await expect(readFile(store.path, "utf8")).rejects.toMatchObject({
+      code: "ENOENT",
+    });
+    await expect(restarted.loadForMutation()).resolves.toMatchObject({
+      revision: 0,
+    });
+    expect(JSON.parse(await readFile(store.path, "utf8"))).toMatchObject({
+      revision: 0,
+    });
   });
 
   it("leaves the prior durable file intact when replacement is interrupted", async () => {
@@ -227,8 +649,14 @@ describe("atomic state persistence", () => {
   it("rejects malformed stored state rather than guessing a recovery", async () => {
     const directory = await temporaryDirectory();
     const store = new StateStore(directory, "state.json");
-    await writeFile(store.path, '{"schemaVersion":"0.0.0"}\n', "utf8");
+    const malformed = '{"schemaVersion":"0.0.0"}\n';
+    await writeFile(store.path, malformed, "utf8");
     await expect(store.load()).rejects.toThrow(/Invalid orchestrator state/);
+    await expect(store.loadForMutation()).rejects.toThrow(
+      /Invalid orchestrator state/,
+    );
+    expect(stateRef(directory)).toBeNull();
+    expect(await readFile(store.path, "utf8")).toBe(malformed);
   });
 
   it("migrates the prior state schema without losing recoverable controller state", async () => {

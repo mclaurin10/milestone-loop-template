@@ -229,12 +229,22 @@ rejection of every canonical path including case variants.
   remove, alter, or release the winner. The retained
   `artifacts/orchestrator/state/controller.lease` file is a permanent
   protocol guard: a different legacy file fails closed so an older file-lease
-  controller cannot run beside the private-ref protocol. State initialization
-  remains exclusive-create and crash-atomic, and state replacement is atomic,
-  but the current read/check/write revision fence is not itself an atomic CAS;
-  the controller lease is the required single-writer boundary until canonical
-  private-ref state generations replace it.
-  `loop:status`/`loop:dry-run` are read-only and lease-free.
+  controller cannot run beside the private-ref protocol.
+- Canonical state publication: `refs/milestone-loop/state` points to a strict
+  commit generation containing validated state JSON plus exact revision/hash
+  metadata. Its single parent is the previous generation; the current and
+  immediately previous generations, fixed controller identity, canonical
+  commit message, tree shape, hashes, revisions, and parent relationship are
+  validated on read. Initialization and saves publish by expected-old
+  `git update-ref`, so exactly one writer from a shared generation can advance
+  the ref. The configured `state.json` is a derived, repairable mirror only.
+  A valid legacy mirror imports exactly once on a mutating open when the ref is
+  absent; malformed, linked, or ambiguous legacy data fails closed, and an
+  invalid canonical ref never falls back to the mirror. Mirror repair happens
+  only on mutation-capable opens after canonical publication.
+  `loop:status`/`loop:dry-run` are read-only and lease-free; their state load
+  cannot authorize publication or repair the mirror. Normal branch pushes do
+  not include either private ref.
 - Approval-bound evidence retention: `loop:run` never deletes evidence —
   controller startup only writes a retention *plan*
   (`evidence-retention.json` in the run directory). Deletion requires

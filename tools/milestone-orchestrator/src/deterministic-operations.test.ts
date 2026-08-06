@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { CodexGateway } from "./codex-gateway.js";
 import { MilestoneOrchestrator } from "./orchestrator.js";
+import { StateStore } from "./state-store.js";
 import { validConfig, validReconciliationRecord } from "../test/fixtures.js";
 
 async function deterministicFixture(): Promise<string> {
@@ -102,8 +103,15 @@ describe("deterministic controller operations", () => {
     ];
     stored["reconciliation"] = { active: record, history: [] };
     stored["nextAllowedAction"] = "reconcile";
-    const activeText = `${JSON.stringify(stored, null, 2)}\n`;
-    await writeFile(statePath, activeText);
+    const stateStore = new StateStore(
+      root,
+      "artifacts/orchestrator/state/state.json",
+      () => "2026-08-02T00:00:01.000Z",
+    );
+    const canonical = await stateStore.loadForMutation();
+    if (!canonical) throw new Error("Expected initialized canonical state.");
+    await stateStore.save(stored as unknown as typeof canonical);
+    const activeText = await readFile(statePath, "utf8");
 
     await expect(
       MilestoneOrchestrator.open(root, undefined, {
