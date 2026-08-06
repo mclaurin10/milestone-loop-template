@@ -3,6 +3,43 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-05 — WP1a atomic controller ownership
+
+**Objective.** Replace stale-file quarantine takeover with a real
+expected-owner primitive so a losing first-owner or stale-owner contender can
+never remove, replace, or release the live winner.
+
+**Outcome.** The canonical lease is now
+`refs/milestone-loop/controller-lease`, pointing to a strictly validated owner
+JSON blob. Acquisition, stale takeover, and release use expected-old
+`git update-ref`; inspection is read-only. A permanent file-protocol guard
+blocks older file-lease binaries and conflicting legacy files fail closed.
+Doctor schema `1.1.0` and status expose the canonical ref and guard state.
+Normal `git push --all` excludes the private namespace.
+
+**Verification.** Under Node `24.18.0` and pnpm `11.15.1`: the focused lease
+suite passed 16/16; the three synchronized first-owner/stale-owner/winner-life
+race cases passed in five consecutive repetitions; the complete orchestrator
+suite passed 328/328 at
+`artifacts/manual/test-orchestrator-20228/orchestrator-report.json`. From the
+clean implementation commit, `pnpm test:unit` passed 341/341 with receipt at
+`artifacts/manual/test-unit-15140/result.json`; typecheck, lint, and format
+receipts are `artifacts/manual/typecheck-3040/`,
+`artifacts/manual/lint-16032/`, and
+`artifacts/manual/format-check-15788/`; `pnpm loop:demo-safety` passed with its
+report under `artifacts/orchestrator/runs/safety-demonstration/`. A direct
+`loop:status` probe left both the ref and legacy guard absent, proving the
+read-only path does not initialize ownership state.
+
+**Commit.** `fa1ef6f80c1dd089f8f78133d0aa2344f40a2174` (tree
+`0be6b70c386cf58b076f7d3b33cc8f82545cb2a0`).
+
+**Known gaps.** The JSON state mirror still uses a non-atomic revision
+read/check/write sequence. WP1b must make `refs/milestone-loop/state`
+canonical, migrate legacy state exactly once, and demote `state.json` to a
+repairable mirror before WP1 is complete. Linux race evidence remains a WP5 CI
+deliverable; no unsupported platform result is claimed here.
+
 ## 2026-08-05 — WP0 truthful production-build evidence
 
 **Objective.** Eliminate the zero-command production-build PASS and require an

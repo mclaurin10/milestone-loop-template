@@ -3,6 +3,29 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-05 — Git private ref plus legacy-protocol guard for leases (WP1a)
+
+**Decision.** Controller ownership lives at the fixed local ref
+`refs/milestone-loop/controller-lease`; its target is a strict schema `2.0.0`
+owner blob. All publication and deletion names an expected old object ID. The
+old `controller.lease` pathname remains only as a permanent, recognizable
+protocol guard whose foreign host-instance identity makes an older binary fail
+closed. Any other legacy-path content blocks ref acquisition. The doctor
+diagnostic was advanced to schema `1.1.0` to expose the canonical ref and guard
+status.
+
+**Why.** Git is already mandatory, provides tested cross-platform atomic ref
+comparison, supports SHA-1 and SHA-256 repositories, keeps the active owner
+object reachable, and does not push this namespace during normal branch
+pushes. The guard closes the otherwise unavoidable overlap window where an
+already-installed old binary could acquire the retired file lease while a new
+binary owns only the ref. Alternatives rejected: rename/quarantine retries,
+PID-only lock files, an unproved third-party lock package, automatic deletion
+of ambiguous legacy files, and running dual lease writers.
+
+**Affected files.** `tools/milestone-orchestrator/src/private-ref-store.ts`,
+`controller-lease.ts`, `doctor.ts`, their tests, `README.md`, and `CONTRACT.md`.
+
 ## 2026-08-05 — Explicit, clean-clone production-build contract (WP0)
 
 **Decision.** The root `build` script remains the controller-owned evidence
