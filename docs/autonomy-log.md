@@ -35,6 +35,9 @@ typecheck, lint, and format passed at `artifacts/manual/typecheck-21940/`,
 `pnpm loop:demo-safety` passed with its report at
 `artifacts/orchestrator/runs/safety-demonstration/safety-demonstration-20260806175034510-a6ecc318.json`.
 
+**Commit.** `3f6d8e916a7139c71d7aa1e6b99e2bfe10ff1844` (tree
+`55858b14eff61c7b4348719604ebf1357bdfb2fe`).
+
 **Known gaps.** WP2b must journal target integration and converge interrupted
 integration through one canonical completion reducer; later WP2 increments
 still own cleanup and retention side effects. Linux path and publication-race
