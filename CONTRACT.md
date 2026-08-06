@@ -23,6 +23,31 @@ change once, at `CAL-1` close, under the rules in `AGENTS.md`.
 
 - `milestoneLoop.verification.defaultProfile`: `"bootstrap"` or
   `"readiness"`. The workspace clone's profile is read from this key.
+- `milestoneLoop.productionBuild`: required before the production-build stage
+  can pass. It contains exactly `script` (an existing project-owned package
+  script other than the evidence-owning `build` wrapper) and one or more
+  project-relative `outputRoots`, for example:
+
+  ```json
+  {
+    "milestoneLoop": {
+      "productionBuild": {
+        "script": "build:production",
+        "outputRoots": ["dist"]
+      }
+    }
+  }
+  ```
+
+  An absent declaration reports `NOT_READY` (exit 2) without a PASS receipt.
+  The wrapper clones the exact clean candidate into a disposable directory,
+  prepares dependencies with the frozen lockfile in offline copy mode, removes
+  pre-existing declared outputs, runs `pnpm run <script>`, rejects mutations
+  outside the declared roots and every symlink/junction output, and requires at
+  least one nonempty regular output file. Its `build-report` records exact argv
+  plus sorted output paths, sizes, and SHA-256 hashes, then rechecks the output
+  inventory before issuing the receipt.
+
 - `scripts.verify` must be exactly `node scripts/verify.mjs` (checked by the
   environment stage).
 - Exact runtime pins: `engines.node` (`24.x.y`) and `packageManager`
@@ -32,7 +57,9 @@ change once, at `CAL-1` close, under the rules in `AGENTS.md`.
   `format:check`, `lint`, `typecheck`, `build`, `test:unit`,
   `test:orchestrator` (via `tools/run-tool-evidence.mjs`), plus
   `verify:dependencies` and `lint:architecture` (project-owned; shipped as
-  fail-loud placeholders).
+  fail-loud placeholders). `build` remains the controller-owned evidence
+  wrapper; put the real build under the distinct script named by
+  `milestoneLoop.productionBuild.script`.
 - Tier scripts (already wired to the orchestrator): `test:invariants`,
   `test:unit:fast`, `test:unit:migrations`, `verify:iteration`,
   `verify:candidate`, `verify:milestone`, `verify:periodic`, and the

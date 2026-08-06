@@ -76,7 +76,27 @@ report `NOT_READY`, never pass.
    replace every `tools/placeholder-check.mjs` script with a real
    evidence-producing command, wire your product's verify stages, and
    author the verification manifest
-   (`.agent/completed/loop-recommissioning-verification.json`).
+   (`.agent/completed/loop-recommissioning-verification.json`). Keep `build`
+   as the evidence-owning wrapper and declare the real production boundary in
+   `package.json`, for example:
+
+   ```json
+   {
+     "milestoneLoop": {
+       "productionBuild": {
+         "script": "build:production",
+         "outputRoots": ["dist"]
+       }
+     }
+   }
+   ```
+
+   Until this declaration exists, `pnpm build` and the production-build stage
+   report `NOT_READY` and cannot emit a PASS receipt. A configured build runs
+   from a clean disposable clone, removes stale declared outputs, rejects
+   outside-root mutations and linked outputs, and retains a path/size/SHA-256
+   inventory in `build-report.json`.
+
 5. **Check the wiring**:
 
    ```bash

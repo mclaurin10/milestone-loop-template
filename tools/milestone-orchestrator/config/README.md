@@ -49,6 +49,14 @@ sections, and the migration additively unions the mandatory protected trust
 roots into `protectedPaths` (protections are only ever strengthened).
 The environment variable `MILESTONE_LOOP_CONFIG` overrides the config path.
 
+Production-build wiring is package-owned rather than part of `default.json`.
+Keep the root `build` script pointed at `tools/run-tool-evidence.mjs build`,
+then configure `package.json#milestoneLoop.productionBuild` with a distinct
+project script and explicit project-relative output roots. Omitting that
+declaration is an intentional `NOT_READY`; an empty or echo-only build cannot
+produce a passing receipt. See the production-build contract in
+[`CONTRACT.md`](../../../CONTRACT.md#2-packagejson-obligations).
+
 Telemetry is non-semantic everywhere: a telemetry open/write/finalize
 failure degrades telemetry claims only — the underlying command, agent,
 verification, review, and run outcomes are preserved, and a

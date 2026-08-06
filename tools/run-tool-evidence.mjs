@@ -11,8 +11,13 @@ import {
   finishDirectTelemetry,
   runPnpm,
   writeJson,
+  writeManualEvidenceFailure,
   writeReceipt,
 } from "./evidence.mjs";
+import {
+  ProductionBuildNotReadyError,
+  runProductionBuild,
+} from "./production-build.mjs";
 import { runWorkspaceTypecheck } from "./workspace-typecheck.mjs";
 
 const mode = process.argv[2];
@@ -54,7 +59,6 @@ const definitions = {
     stageId: "production-build",
     commandId: "build",
     kind: "build-report",
-    commands: [],
   },
   test: {
     stageId: "bootstrap-tests",
@@ -257,11 +261,9 @@ if (mode === "invariant-vitest" || mode === "focused-verify") {
   process.exitCode = 64;
 } else {
   let telemetry = null;
+  let context = null;
   try {
-    const context = await evidenceContext(
-      definition.stageId,
-      definition.commandId,
-    );
+    context = await evidenceContext(definition.stageId, definition.commandId);
     telemetry = await beginDirectTelemetry(context, {
       phase: "verification",
       eventType: `${mode}-evidence`,
@@ -286,24 +288,31 @@ if (mode === "invariant-vitest" || mode === "focused-verify") {
         `--outputFile=${reportPath}`,
       ]);
     }
-    const results = [];
-    if (mode === "typecheck") {
-      results.push(runWorkspaceTypecheck(context.repositoryRoot));
-    }
-    for (const args of definition.commands) {
-      const result = runPnpm(args);
-      results.push(describeResult(result));
-      assertCommandPassed(result, `${mode} command`);
-    }
-    if (!vitestMode) {
-      const report = {
-        schemaVersion: "1.0.0",
-        status: "PASS",
-        mode,
-        identity: commandIdentity(),
-        commands: results,
-      };
-      await writeJson(reportPath, report);
+    if (mode === "build") {
+      await runProductionBuild({
+        repositoryRoot: context.repositoryRoot,
+        artifactDirectory: context.artifactDirectory,
+      });
+    } else {
+      const results = [];
+      if (mode === "typecheck") {
+        results.push(runWorkspaceTypecheck(context.repositoryRoot));
+      }
+      for (const args of definition.commands) {
+        const result = runPnpm(args);
+        results.push(describeResult(result));
+        assertCommandPassed(result, `${mode} command`);
+      }
+      if (!vitestMode) {
+        const report = {
+          schemaVersion: "1.0.0",
+          status: "PASS",
+          mode,
+          identity: commandIdentity(),
+          commands: results,
+        };
+        await writeJson(reportPath, report);
+      }
     }
     await writeReceipt(
       context,
@@ -364,22 +373,45 @@ if (mode === "invariant-vitest" || mode === "focused-verify") {
     process.stdout.write(`${mode} evidence: ${reportPath}\n`);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    if (telemetry) {
-      try {
-        await finishDirectTelemetry(telemetry, {
-          status: "ERROR",
-          reason: message,
-          exitCode: 1,
-        });
-      } catch (telemetryError) {
-        process.stderr.write(
-          `Telemetry finalization failed: ${telemetryError instanceof Error ? telemetryError.message : String(telemetryError)}\n`,
-        );
+    if (error instanceof ProductionBuildNotReadyError && context) {
+      if (telemetry) {
+        try {
+          await finishDirectTelemetry(telemetry, {
+            status: "NOT_READY",
+            reason: message,
+            exitCode: 2,
+          });
+        } catch (telemetryError) {
+          process.stderr.write(
+            `Telemetry finalization failed: ${telemetryError instanceof Error ? telemetryError.message : String(telemetryError)}\n`,
+          );
+        }
       }
+      await writeManualEvidenceFailure(context, {
+        status: "NOT_READY",
+        kind: "product",
+        message,
+      });
+      process.stderr.write(`Production build NOT_READY: ${message}\n`);
+      process.exitCode = 2;
+    } else {
+      if (telemetry) {
+        try {
+          await finishDirectTelemetry(telemetry, {
+            status: "ERROR",
+            reason: message,
+            exitCode: 1,
+          });
+        } catch (telemetryError) {
+          process.stderr.write(
+            `Telemetry finalization failed: ${telemetryError instanceof Error ? telemetryError.message : String(telemetryError)}\n`,
+          );
+        }
+      }
+      process.stderr.write(
+        `${error instanceof Error ? error.stack : String(error)}\n`,
+      );
+      process.exitCode = 1;
     }
-    process.stderr.write(
-      `${error instanceof Error ? error.stack : String(error)}\n`,
-    );
-    process.exitCode = 1;
   }
 }
