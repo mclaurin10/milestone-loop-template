@@ -123,7 +123,11 @@ export class GitStateGenerationStore {
   readonly reference = STATE_REF;
   private readonly refs: GitPrivateRefStore;
 
-  constructor(repositoryRoot: string) {
+  constructor(
+    repositoryRoot: string,
+    private readonly migrateState: (value: unknown) => unknown = (value) =>
+      value,
+  ) {
     this.repositoryRoot = resolve(repositoryRoot);
     this.refs = new GitPrivateRefStore(this.repositoryRoot, STATE_REF);
   }
@@ -218,7 +222,7 @@ export class GitStateGenerationStore {
         },
       );
     }
-    const state = assertOrchestratorState(parsed);
+    const state = assertOrchestratorState(this.migrateState(parsed));
     if (state.revision !== metadata.revision)
       throw new Error(
         `State generation ${objectId} revision does not match its metadata.`,

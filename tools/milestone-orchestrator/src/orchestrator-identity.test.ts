@@ -14,11 +14,8 @@ import type {
 } from "./contracts.js";
 import { READINESS_VERIFICATION_STAGE_IDS } from "./contracts.js";
 import { candidateIdentityFrom } from "./candidate-identity.js";
-import {
-  captureProtectedFiles,
-  createIsolatedWorkspace,
-  inspectAttempt,
-} from "./git-isolation.js";
+import { captureProtectedFiles, inspectAttempt } from "./git-isolation.js";
+import { createIsolatedWorkspaceFixture } from "../test/workspace-fixture.js";
 import { createMilestoneRecord } from "./milestone-state.js";
 import { MilestoneOrchestrator } from "./orchestrator.js";
 import { StateStore, createInitialState } from "./state-store.js";
@@ -120,7 +117,7 @@ async function reviewingFixture(options?: {
   git(root, "commit", "-m", "fixture base");
   const baseCommit = git(root, "rev-parse", "HEAD");
 
-  const workspace = await createIsolatedWorkspace({
+  const workspace = await createIsolatedWorkspaceFixture({
     repositoryRoot: root,
     workspaceRoot: config.workspaceRoot,
     targetBranch: config.targetBranch,

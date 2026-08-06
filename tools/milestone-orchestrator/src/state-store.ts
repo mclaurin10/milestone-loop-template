@@ -21,6 +21,7 @@ import {
 import { ensureContainedDirectory, strictlyContained } from "./path-safety.js";
 import { STATE_REF } from "./private-ref-store.js";
 import { assertOrchestratorState } from "./schema.js";
+import { assertPendingOperationStateTransition } from "./operation-intent.js";
 import {
   GitStateGenerationStore,
   type StateGeneration,
@@ -428,8 +429,15 @@ export function migrateOrchestratorState(value: unknown): unknown {
       : migrated["milestones"];
     migrated = {
       ...migrated,
-      schemaVersion: STATE_SCHEMA_VERSION,
+      schemaVersion: "1.4.0",
       milestones,
+    };
+  }
+  if (migrated["schemaVersion"] === "1.4.0") {
+    migrated = {
+      ...migrated,
+      schemaVersion: STATE_SCHEMA_VERSION,
+      pendingOperation: null,
     };
   }
   return migrated;
@@ -470,6 +478,7 @@ export function createInitialState(input: {
     },
     controllerHistory: [],
     reconciliation: { active: null, history: [] },
+    pendingOperation: null,
     nextAllowedAction: "plan",
     createdAt: input.now,
     updatedAt: input.now,
@@ -498,10 +507,50 @@ export class StateStore {
       throw new Error(
         `Controller state mirror escapes the repository: ${this.path}.`,
       );
-    this.generations = new GitStateGenerationStore(this.repositoryRoot);
+    this.generations = new GitStateGenerationStore(
+      this.repositoryRoot,
+      migrateOrchestratorState,
+    );
+  }
+
+  private assertPendingOperationLineage(generation: StateGeneration): void {
+    const operation = generation.state.pendingOperation;
+    if (operation === null) return;
+    if (operation.inputStateRevision >= generation.state.revision)
+      throw new Error(
+        `Pending operation ${operation.id} is not descended from its recorded input revision.`,
+      );
+    let cursor = generation;
+    while (cursor.state.revision > operation.inputStateRevision) {
+      if (cursor.state.pendingOperation?.id !== operation.id)
+        throw new Error(
+          `Pending operation ${operation.id} has discontinuous state-generation history.`,
+        );
+      const previousId = cursor.metadata.previousGeneration;
+      if (previousId === null)
+        throw new Error(
+          `Pending operation ${operation.id} cannot reach its recorded input generation.`,
+        );
+      const previous = this.generations.readGeneration(previousId);
+      if (previous.objectId === operation.inputStateGeneration) {
+        if (
+          previous.state.revision !== operation.inputStateRevision ||
+          previous.state.pendingOperation !== null
+        )
+          throw new Error(
+            `Pending operation ${operation.id} has an invalid recorded input generation.`,
+          );
+        return;
+      }
+      cursor = previous;
+    }
+    throw new Error(
+      `Pending operation ${operation.id} is not descended from generation ${operation.inputStateGeneration}.`,
+    );
   }
 
   private rememberGeneration(generation: StateGeneration): OrchestratorState {
+    this.assertPendingOperationLineage(generation);
     this.loadedGeneration = generation;
     this.legacySourceJson = null;
     this.loadedSource = "canonical";
@@ -701,6 +750,7 @@ export class StateStore {
   async load(): Promise<OrchestratorState | null> {
     const canonical = this.generations.readCurrent();
     if (canonical) {
+      this.assertPendingOperationLineage(canonical);
       this.loadedGeneration = null;
       this.legacySourceJson = null;
       this.loadedSource = "read-only-canonical";
@@ -715,7 +765,8 @@ export class StateStore {
 
   async inspect(): Promise<StateStoreInspection> {
     const canonical = this.generations.readCurrent();
-    if (canonical)
+    if (canonical) {
+      this.assertPendingOperationLineage(canonical);
       return {
         reference: STATE_REF,
         canonicalGeneration: canonical.objectId,
@@ -723,6 +774,7 @@ export class StateStore {
         source: "canonical",
         mirror: await this.mirrorStatus(canonical.state),
       };
+    }
     const legacy = await this.readLegacyMirror();
     return legacy
       ? {
@@ -765,6 +817,10 @@ export class StateStore {
     hooks: StateStoreHooks = {},
   ): Promise<OrchestratorState> {
     assertOrchestratorState(state);
+    if (state.pendingOperation !== null)
+      throw new Error(
+        "Controller state cannot initialize with a pending operation.",
+      );
     const canonical = this.generations.readCurrent();
     if (canonical) {
       const existing = this.rememberGeneration(canonical);
@@ -792,6 +848,20 @@ export class StateStore {
     throw new Error("Controller source state has not been loaded.");
   }
 
+  mutationGeneration(): {
+    readonly objectId: string;
+    readonly revision: number;
+  } {
+    if (this.loadedSource !== "canonical" || !this.loadedGeneration)
+      throw new Error(
+        "A mutation generation is available only after initialize() or loadForMutation().",
+      );
+    return {
+      objectId: this.loadedGeneration.objectId,
+      revision: this.loadedGeneration.state.revision,
+    };
+  }
+
   async save(
     state: OrchestratorState,
     hooks: StateStoreHooks = {},
@@ -810,6 +880,11 @@ export class StateStore {
     const observedObjectId = this.generations.readReference();
     if (observedObjectId !== expected.objectId)
       throw this.staleError(state.revision, expected.objectId);
+    assertPendingOperationStateTransition(
+      expected.state,
+      state,
+      expected.objectId,
+    );
     await hooks.afterObservedGeneration?.({
       objectId: expected.objectId,
       revision: expected.state.revision,

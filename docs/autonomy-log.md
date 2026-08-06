@@ -3,6 +3,45 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-06 — WP2a recoverable workspace creation
+
+**Objective.** Persist a strict workspace-create operation before any clone
+side effect, publish through a unique contained temporary path, and make every
+creation boundary deterministic and recoverable under the controller lease.
+
+**Outcome.** State schema `1.5.0` adds one exclusive, exact-generation-bound
+`workspace-create` intent with pure set/advance/block/complete transitions and
+a global unrelated-mutation fence. Canonical `1.4.0` generations migrate
+virtually on read and durably on their next CAS successor. Attempt startup now
+persists intent before creating directories, clones without hardlinks into a
+short unique temporary entry, establishes standalone remote-free identity,
+and publishes with no-clobber semantics. Leased startup classifies missing,
+source-clone, ready-temporary, exact-final, ambiguous, substituted, and unsafe
+paths; it resumes or adopts only exact identity and otherwise preserves the
+entries in place with a durable blocked diagnostic. Validation covers lexical
+and realpath containment, symlinks/junctions/gitfiles, repository ownership,
+alternates/shallow state, exact base/branch, cleanliness, canonical config,
+controller markers, and remote facts. Status and doctor schema `1.3.0` expose
+the pending operation and next safe action using read-only Git inspection.
+
+**Verification.** Under Node `24.18.0` and pnpm `11.15.1`, a real-clone matrix
+injected process loss at all eight declared durable/filesystem boundaries and
+converged every restart to the same normalized revision-9 state. The complete
+orchestrator suite passed 363/363 at
+`artifacts/manual/test-orchestrator-13136/result.json`; the full unit aggregate
+passed 376/376 at `artifacts/manual/test-unit-17720/result.json`. Receipt-owning
+typecheck, lint, and format passed at `artifacts/manual/typecheck-21940/`,
+`artifacts/manual/lint-7288/`, and `artifacts/manual/format-check-25136/`.
+`pnpm loop:demo-safety` passed with its report at
+`artifacts/orchestrator/runs/safety-demonstration/safety-demonstration-20260806175034510-a6ecc318.json`.
+
+**Known gaps.** WP2b must journal target integration and converge interrupted
+integration through one canonical completion reducer; later WP2 increments
+still own cleanup and retention side effects. Linux path and publication-race
+evidence remains a WP5 CI deliverable. This Windows result does not claim
+unsupported-platform coverage or autonomous readiness, and the adopting
+product verification placeholders remain honestly non-passing.
+
 ## 2026-08-05 — WP1b atomic canonical state generations
 
 **Objective.** Replace mirror-revision read/check/write with a canonical,

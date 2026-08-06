@@ -3,6 +3,7 @@ import {
   spawnSync,
   type ChildProcessWithoutNullStreams,
 } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
   access,
   mkdir,
@@ -23,6 +24,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { atomicWriteJson, StaleStateError, StateStore } from "./state-store.js";
 import { createMilestoneRecord } from "./milestone-state.js";
+import { GitPrivateRefStore } from "./private-ref-store.js";
 import { legacyProposal, validProposal, validState } from "../test/fixtures.js";
 
 const temporaryDirectories: string[] = [];
@@ -659,6 +661,79 @@ describe("atomic state persistence", () => {
     expect(await readFile(store.path, "utf8")).toBe(malformed);
   });
 
+  it("virtually reads a canonical 1.4 generation and durably upgrades on the next CAS save", async () => {
+    const directory = await temporaryDirectory();
+    const prior = JSON.parse(JSON.stringify(validState(directory))) as Record<
+      string,
+      unknown
+    >;
+    prior["schemaVersion"] = "1.4.0";
+    delete prior["pendingOperation"];
+    const stateJson = `${JSON.stringify(prior, null, 2)}\n`;
+    const stateSha256 = createHash("sha256")
+      .update(stateJson, "utf8")
+      .digest("hex");
+    const refs = new GitPrivateRefStore(directory, STATE_REF);
+    const metadataJson = `${JSON.stringify(
+      {
+        schemaVersion: "1.0.0",
+        revision: 0,
+        stateSha256,
+        legacySourceSha256: null,
+        previousGeneration: null,
+      },
+      null,
+      2,
+    )}\n`;
+    const tree = refs.writeTree([
+      {
+        mode: "100644",
+        type: "blob",
+        objectId: refs.writeBlob(metadataJson),
+        name: "metadata.json",
+      },
+      {
+        mode: "100644",
+        type: "blob",
+        objectId: refs.writeBlob(stateJson),
+        name: "state.json",
+      },
+    ]);
+    const priorGeneration = refs.writeCommit({
+      treeObjectId: tree,
+      parentObjectId: null,
+      timestamp: String(prior["updatedAt"]),
+      message: `milestone-loop state revision 0\n\nstate-sha256: ${stateSha256}\n`,
+    });
+    expect(refs.compareAndSwap(null, priorGeneration)).toBe(true);
+
+    const readOnly = new StateStore(directory, "state.json");
+    await expect(readOnly.load()).resolves.toMatchObject({
+      schemaVersion: "1.5.0",
+      revision: 0,
+      pendingOperation: null,
+    });
+    expect(stateRef(directory)).toBe(priorGeneration);
+
+    const mutable = new StateStore(directory, "state.json");
+    const migrated = await mutable.loadForMutation();
+    expect(migrated).not.toBeNull();
+    const saved = await mutable.save(migrated!);
+    expect(saved).toMatchObject({
+      schemaVersion: "1.5.0",
+      revision: 1,
+      pendingOperation: null,
+    });
+    expect(stateRef(directory)).not.toBe(priorGeneration);
+    expect(
+      spawnSync(
+        "git",
+        ["-C", directory, "rev-parse", `${stateRef(directory)}^`],
+        { encoding: "utf8", windowsHide: true },
+      ).stdout.trim(),
+    ).toBe(priorGeneration);
+  });
+
   it("migrates the prior state schema without losing recoverable controller state", async () => {
     const directory = await temporaryDirectory();
     const store = new StateStore(directory, "state.json");
@@ -690,7 +765,8 @@ describe("atomic state persistence", () => {
     delete (legacy["run"] as Record<string, unknown>)["agentInvocations"];
     await writeFile(store.path, `${JSON.stringify(legacy)}\n`, "utf8");
     await expect(store.load()).resolves.toMatchObject({
-      schemaVersion: "1.4.0",
+      schemaVersion: "1.5.0",
+      pendingOperation: null,
       run: { agentInvocations: [] },
       evidenceRetention: {
         schemaVersion: "1.0.0",
@@ -760,7 +836,8 @@ describe("atomic state persistence", () => {
     await writeFile(store.path, `${JSON.stringify(legacy)}\n`, "utf8");
 
     await expect(store.load()).resolves.toMatchObject({
-      schemaVersion: "1.4.0",
+      schemaVersion: "1.5.0",
+      pendingOperation: null,
       evidenceRetention: {
         initializedAt: null,
         legacyRunIds: [],
@@ -807,7 +884,8 @@ describe("atomic state persistence", () => {
     await writeFile(store.path, `${JSON.stringify(legacy)}\n`, "utf8");
 
     await expect(store.load()).resolves.toMatchObject({
-      schemaVersion: "1.4.0",
+      schemaVersion: "1.5.0",
+      pendingOperation: null,
       revision: current.revision,
       repository: current.repository,
       queue: current.queue,
@@ -858,7 +936,10 @@ describe("atomic state persistence", () => {
     await writeFile(store.path, `${JSON.stringify(legacy)}\n`, "utf8");
 
     const migrated = await store.load();
-    expect(migrated).toMatchObject({ schemaVersion: "1.4.0" });
+    expect(migrated).toMatchObject({
+      schemaVersion: "1.5.0",
+      pendingOperation: null,
+    });
     const summaries = migrated?.milestones[0]?.verificationSummaries;
     expect(summaries).toHaveLength(1);
     expect(summaries?.[0]).toMatchObject({

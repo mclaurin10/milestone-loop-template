@@ -7,11 +7,11 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import {
   commitWorkingChanges,
-  createIsolatedWorkspace,
   inspectAttempt,
   integrateFastForward,
   workingChangedPaths,
 } from "./git-isolation.js";
+import { createIsolatedWorkspaceFixture } from "../test/workspace-fixture.js";
 
 const temporaryDirectories: string[] = [];
 
@@ -45,7 +45,7 @@ describe("Git isolation", () => {
     git(repository, "commit", "-m", "base");
     const base = git(repository, "rev-parse", "HEAD");
 
-    const workspace = await createIsolatedWorkspace({
+    const workspace = await createIsolatedWorkspaceFixture({
       repositoryRoot: repository,
       workspaceRoot: "artifacts/orchestrator/workspaces",
       targetBranch: "main",
@@ -101,7 +101,7 @@ describe("Git isolation", () => {
     git(repository, "commit", "-m", "base");
     const base = git(repository, "rev-parse", "HEAD");
 
-    const workspace = await createIsolatedWorkspace({
+    const workspace = await createIsolatedWorkspaceFixture({
       repositoryRoot: repository,
       workspaceRoot: "artifacts/orchestrator/workspaces",
       targetBranch: "main",

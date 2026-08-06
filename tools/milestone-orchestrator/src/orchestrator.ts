@@ -28,6 +28,7 @@ import type {
   VerificationSummary,
   WorkerFailureRecord,
   WorkspaceCleanupReason,
+  WorkspaceCreateOperation,
 } from "./contracts.js";
 import {
   candidateIdentitiesEqual,
@@ -66,7 +67,6 @@ import {
   assertProtectedFiles,
   captureProtectedFiles,
   commitWorkingChanges,
-  createIsolatedWorkspace,
   currentVerificationProfile,
   inspectAttempt,
   inspectTarget,
@@ -74,6 +74,12 @@ import {
   integrateFastForward,
   workingChangedPaths,
 } from "./git-isolation.js";
+import {
+  advanceWorkspaceCreateOperation,
+  blockWorkspaceCreateOperation,
+  completeWorkspaceCreateOperation,
+  setWorkspaceCreateOperation,
+} from "./operation-intent.js";
 import {
   createMilestoneRecord,
   assertRequiredVerticalConsumerStart,
@@ -109,6 +115,15 @@ import {
 } from "./state-store.js";
 import { verifyMilestone } from "./verifier.js";
 import { performWorkspaceCleanup } from "./workspace-cleanup.js";
+import {
+  cloneWorkspaceCreateTemporary,
+  finishWorkspaceCreateTemporary,
+  inspectWorkspaceCreateOperation,
+  planWorkspaceCreateOperation,
+  publishWorkspaceCreateTemporary,
+  type WorkspaceCreateHooks,
+  type WorkspaceCreateRecoveryInspection,
+} from "./workspace-create.js";
 import { TelemetryStore } from "./telemetry-store.js";
 import type {
   BeginTelemetryPhaseInput,
@@ -123,6 +138,8 @@ export interface OrchestratorDependencies {
   readonly gateway?: CodexGateway;
   readonly now?: () => Date;
   readonly createRunId?: () => string;
+  readonly createWorkspaceOperationId?: () => string;
+  readonly workspaceCreateHooks?: WorkspaceCreateHooks;
   readonly workspaceCleanup?: typeof performWorkspaceCleanup;
   readonly evidencePlanner?: typeof planManagedEvidenceRuns;
   readonly evidenceDiscovery?: typeof discoverManagedEvidenceRuns;
@@ -139,6 +156,10 @@ export interface OrchestratorInspection {
     readonly actualHead: string;
   } | null;
   readonly pendingWorkspaceCleanups: number;
+  readonly pendingOperation: {
+    readonly operation: WorkspaceCreateOperation;
+    readonly recovery: WorkspaceCreateRecoveryInspection;
+  } | null;
   readonly protectedIntegrity:
     "verified" | "uninitialized" | { readonly driftedPaths: readonly string[] };
   readonly lease: ControllerLeaseInspection;
@@ -164,6 +185,26 @@ function safeRunId(now: Date): string {
     .toISOString()
     .replaceAll(/[^0-9]/g, "")
     .slice(0, 14)}-${randomUUID().slice(0, 8)}`;
+}
+
+export class WorkspaceCreateInterruptedError extends Error {
+  constructor(
+    readonly point: string,
+    options: { readonly cause: unknown },
+  ) {
+    super(`Workspace-create operation was interrupted at ${point}.`, options);
+    this.name = "WorkspaceCreateInterruptedError";
+  }
+}
+
+export class WorkspaceCreateBlockedError extends Error {
+  constructor(
+    readonly operationId: string,
+    message: string,
+  ) {
+    super(`Workspace-create operation ${operationId} is blocked: ${message}`);
+    this.name = "WorkspaceCreateBlockedError";
+  }
 }
 
 function telemetryCandidate(
@@ -592,6 +633,8 @@ export class MilestoneOrchestrator {
   private readonly gateway: CodexGateway;
   private readonly now: () => Date;
   private readonly createRunId: () => string;
+  private readonly createWorkspaceOperationId: () => string;
+  private readonly workspaceCreateHooks: WorkspaceCreateHooks;
   private readonly workspaceCleanup: typeof performWorkspaceCleanup;
   private readonly evidencePlanner: typeof planManagedEvidenceRuns;
   private readonly evidenceDiscovery: typeof discoverManagedEvidenceRuns;
@@ -607,6 +650,8 @@ export class MilestoneOrchestrator {
     gateway: CodexGateway;
     now: () => Date;
     createRunId: () => string;
+    createWorkspaceOperationId: () => string;
+    workspaceCreateHooks: WorkspaceCreateHooks;
     workspaceCleanup: typeof performWorkspaceCleanup;
     evidencePlanner: typeof planManagedEvidenceRuns;
     evidenceDiscovery: typeof discoverManagedEvidenceRuns;
@@ -620,6 +665,17 @@ export class MilestoneOrchestrator {
     this.gateway = input.gateway;
     this.now = input.now;
     this.createRunId = input.createRunId;
+    this.createWorkspaceOperationId = input.createWorkspaceOperationId;
+    this.workspaceCreateHooks = {
+      fault: async (point, operation) => {
+        if (!input.workspaceCreateHooks.fault) return;
+        try {
+          await input.workspaceCreateHooks.fault(point, operation);
+        } catch (error) {
+          throw new WorkspaceCreateInterruptedError(point, { cause: error });
+        }
+      },
+    };
     this.workspaceCleanup = input.workspaceCleanup;
     this.evidencePlanner = input.evidencePlanner;
     this.evidenceDiscovery = input.evidenceDiscovery;
@@ -705,26 +761,6 @@ export class MilestoneOrchestrator {
       throw new Error(
         "Active controller reconciliation must resume before ordinary orchestration.",
       );
-    const canonical = enforcementProtectedPatterns(
-      config,
-      state.repository.protectedFiles,
-    );
-    const known = new Set(
-      state.repository.protectedFiles.map((file) => casefoldPathKey(file.path)),
-    );
-    const missingProtectedPaths = canonical.filter(
-      (path) => !known.has(casefoldPathKey(path)),
-    );
-    if (missingProtectedPaths.length > 0) {
-      const added = await captureProtectedFiles(root, missingProtectedPaths);
-      state = await store.save({
-        ...state,
-        repository: {
-          ...state.repository,
-          protectedFiles: [...state.repository.protectedFiles, ...added],
-        },
-      });
-    }
     const instance = new MilestoneOrchestrator({
       repositoryRoot: root,
       config,
@@ -733,6 +769,10 @@ export class MilestoneOrchestrator {
       gateway: dependencies.gateway ?? new SdkCodexGateway(config),
       now,
       createRunId: dependencies.createRunId ?? (() => safeRunId(now())),
+      createWorkspaceOperationId:
+        dependencies.createWorkspaceOperationId ??
+        (() => `workspace-create-${randomUUID()}`),
+      workspaceCreateHooks: dependencies.workspaceCreateHooks ?? {},
       workspaceCleanup:
         dependencies.workspaceCleanup ?? performWorkspaceCleanup,
       evidencePlanner: dependencies.evidencePlanner ?? planManagedEvidenceRuns,
@@ -743,6 +783,32 @@ export class MilestoneOrchestrator {
       lease,
     });
     instance.assertStoredPaths();
+    await instance.recoverPendingWorkspaceCreate();
+    const canonical = enforcementProtectedPatterns(
+      config,
+      instance.stateValue.repository.protectedFiles,
+    );
+    const known = new Set(
+      instance.stateValue.repository.protectedFiles.map((file) =>
+        casefoldPathKey(file.path),
+      ),
+    );
+    const missingProtectedPaths = canonical.filter(
+      (path) => !known.has(casefoldPathKey(path)),
+    );
+    if (missingProtectedPaths.length > 0) {
+      const added = await captureProtectedFiles(root, missingProtectedPaths);
+      await instance.persist({
+        ...instance.stateValue,
+        repository: {
+          ...instance.stateValue.repository,
+          protectedFiles: [
+            ...instance.stateValue.repository.protectedFiles,
+            ...added,
+          ],
+        },
+      });
+    }
     instance.assertStoredAgentPolicies();
     await instance.reconcileTarget(target.head);
     await instance.initializeEvidenceRetention();
@@ -782,6 +848,7 @@ export class MilestoneOrchestrator {
         targetHead,
         targetDrift: null,
         pendingWorkspaceCleanups: 0,
+        pendingOperation: null,
         protectedIntegrity: "uninitialized",
         lease,
         nextAllowedAction: "plan",
@@ -798,6 +865,14 @@ export class MilestoneOrchestrator {
         .digest("hex");
       if (actual !== file.sha256) driftedPaths.push(file.path);
     }
+    const pendingOperation = state.pendingOperation
+      ? {
+          operation: state.pendingOperation,
+          recovery: await inspectWorkspaceCreateOperation(
+            state.pendingOperation,
+          ),
+        }
+      : null;
     return {
       state,
       stateStorage,
@@ -815,6 +890,7 @@ export class MilestoneOrchestrator {
           (milestone.workspace.cleanup.status === "pending" ||
             milestone.workspace.cleanup.status === "failed"),
       ).length,
+      pendingOperation,
       protectedIntegrity:
         driftedPaths.length === 0 ? "verified" : { driftedPaths },
       lease,
@@ -856,6 +932,32 @@ export class MilestoneOrchestrator {
       )
         throw new Error(
           `Stored diagnostic archive for ${milestone.proposal.id} escapes its configured root.`,
+        );
+    }
+    const operation = this.stateValue.pendingOperation;
+    if (operation) {
+      const planned = planWorkspaceCreateOperation({
+        operationId: operation.id,
+        inputStateGeneration: operation.inputStateGeneration,
+        inputStateRevision: operation.inputStateRevision,
+        repositoryRoot: this.repositoryRoot,
+        configuredWorkspaceRoot: this.config.workspaceRoot,
+        targetBranch: this.config.targetBranch,
+        baseCommit: operation.baseCommit,
+        runId: operation.runId,
+        milestoneId: operation.milestoneId,
+        attempt: operation.attempt,
+        now: operation.createdAt,
+      });
+      if (
+        operation.repositoryRoot !== planned.repositoryRoot ||
+        operation.workspaceRoot !== planned.workspaceRoot ||
+        operation.temporaryPath !== planned.temporaryPath ||
+        operation.finalPath !== planned.finalPath ||
+        operation.branch !== planned.branch
+      )
+        throw new Error(
+          `Pending workspace-create operation ${operation.id} has non-canonical controller paths.`,
         );
     }
     const retentionReport = this.stateValue.evidenceRetention.lastReportPath;
@@ -929,6 +1031,208 @@ export class MilestoneOrchestrator {
 
   private async persist(next: OrchestratorState): Promise<void> {
     this.stateValue = await this.store.save(next);
+  }
+
+  private async workspaceCreateFault(
+    point: Parameters<NonNullable<WorkspaceCreateHooks["fault"]>>[0],
+    operation: WorkspaceCreateOperation,
+  ): Promise<void> {
+    await this.workspaceCreateHooks.fault?.(point, operation);
+  }
+
+  private async advanceWorkspaceCreateTo(
+    target: "clone-started" | "clone-ready" | "publish-started" | "published",
+  ): Promise<void> {
+    const phases = [
+      "intent-persisted",
+      "clone-started",
+      "clone-ready",
+      "publish-started",
+      "published",
+    ] as const;
+    const targetIndex = phases.indexOf(target);
+    while (this.stateValue.pendingOperation) {
+      const operation = this.stateValue.pendingOperation;
+      if (operation.phase === "blocked")
+        throw new WorkspaceCreateBlockedError(
+          operation.id,
+          operation.diagnostic?.message ?? "manual reconciliation is required",
+        );
+      const currentIndex = phases.indexOf(operation.phase);
+      if (currentIndex < 0)
+        throw new Error(
+          `Workspace-create operation ${operation.id} has an unknown active phase.`,
+        );
+      if (currentIndex >= targetIndex) return;
+      const nextPhase = phases[currentIndex + 1] as
+        | "clone-started"
+        | "clone-ready"
+        | "publish-started"
+        | "published"
+        | undefined;
+      if (!nextPhase)
+        throw new Error(
+          `Workspace-create operation ${operation.id} cannot advance to ${target}.`,
+        );
+      await this.persist(
+        advanceWorkspaceCreateOperation(
+          this.stateValue,
+          operation.id,
+          nextPhase,
+          iso(this.now),
+        ),
+      );
+      const advanced = this.stateValue.pendingOperation;
+      if (!advanced)
+        throw new Error(
+          "Workspace-create phase advance unexpectedly cleared intent.",
+        );
+      const faultPoint = {
+        "clone-started": "after-clone-started-state",
+        "clone-ready": "after-clone-ready-state",
+        "publish-started": "after-publish-started-state",
+        published: "after-published-state",
+      }[nextPhase] as Parameters<NonNullable<WorkspaceCreateHooks["fault"]>>[0];
+      await this.workspaceCreateFault(faultPoint, advanced);
+    }
+  }
+
+  private async blockWorkspaceCreate(
+    inspection: WorkspaceCreateRecoveryInspection,
+  ): Promise<never> {
+    const operation = this.stateValue.pendingOperation;
+    if (!operation)
+      throw new Error(
+        "Cannot block a workspace-create operation that is absent.",
+      );
+    if (operation.phase === "blocked")
+      throw new WorkspaceCreateBlockedError(
+        operation.id,
+        operation.diagnostic?.message ?? inspection.message,
+      );
+    if (
+      ![
+        "ambiguous-paths",
+        "invalid-final-workspace",
+        "invalid-temporary-workspace",
+        "publication-conflict",
+        "workspace-root-unsafe",
+      ].includes(inspection.classification)
+    )
+      throw new Error(
+        `Cannot block recoverable workspace classification ${inspection.classification}.`,
+      );
+    const observedAt = iso(this.now);
+    await this.persist(
+      blockWorkspaceCreateOperation(this.stateValue, operation.id, {
+        classification: inspection.classification as
+          | "ambiguous-paths"
+          | "invalid-final-workspace"
+          | "invalid-temporary-workspace"
+          | "publication-conflict"
+          | "workspace-root-unsafe",
+        message: redactSensitiveText(inspection.message),
+        observedAt,
+        preservedPaths: inspection.preservedPaths,
+        quarantinePath: null,
+      }),
+    );
+    throw new WorkspaceCreateBlockedError(
+      operation.id,
+      redactSensitiveText(inspection.message),
+    );
+  }
+
+  private async recoverPendingWorkspaceCreate(): Promise<void> {
+    const initial = this.stateValue.pendingOperation;
+    if (!initial) return;
+    if (initial.phase === "blocked")
+      throw new WorkspaceCreateBlockedError(
+        initial.id,
+        initial.diagnostic?.message ?? "manual reconciliation is required",
+      );
+    try {
+      while (this.stateValue.pendingOperation) {
+        const operation = this.stateValue.pendingOperation;
+        const inspection = await inspectWorkspaceCreateOperation(operation);
+        if (
+          operation.phase === "published" &&
+          inspection.classification !== "final-ready"
+        )
+          await this.blockWorkspaceCreate({
+            ...inspection,
+            classification: "publication-conflict",
+            nextSafeAction: "manual-reconciliation-required",
+            message:
+              "The recorded final publication is no longer present as the exact intended workspace.",
+          });
+        switch (inspection.classification) {
+          case "missing":
+            await this.advanceWorkspaceCreateTo("clone-started");
+            await cloneWorkspaceCreateTemporary(
+              this.stateValue.pendingOperation!,
+              this.workspaceCreateHooks,
+            );
+            await this.advanceWorkspaceCreateTo("clone-ready");
+            break;
+          case "temporary-source-clone":
+            await this.advanceWorkspaceCreateTo("clone-started");
+            await finishWorkspaceCreateTemporary(
+              this.stateValue.pendingOperation!,
+            );
+            await this.workspaceCreateFault(
+              "after-temporary-ready",
+              this.stateValue.pendingOperation!,
+            );
+            await this.advanceWorkspaceCreateTo("clone-ready");
+            break;
+          case "temporary-ready":
+            await this.advanceWorkspaceCreateTo("clone-ready");
+            await this.advanceWorkspaceCreateTo("publish-started");
+            await publishWorkspaceCreateTemporary(
+              this.stateValue.pendingOperation!,
+              this.workspaceCreateHooks,
+            );
+            break;
+          case "final-ready": {
+            await this.advanceWorkspaceCreateTo("published");
+            const published = this.stateValue.pendingOperation;
+            if (!published)
+              throw new Error("Published workspace lost its durable intent.");
+            await this.persist(
+              completeWorkspaceCreateOperation(this.stateValue, published.id),
+            );
+            return;
+          }
+          case "ambiguous-paths":
+          case "invalid-final-workspace":
+          case "invalid-temporary-workspace":
+          case "publication-conflict":
+          case "workspace-root-unsafe":
+            await this.blockWorkspaceCreate(inspection);
+        }
+      }
+    } catch (error) {
+      if (
+        error instanceof WorkspaceCreateInterruptedError ||
+        error instanceof WorkspaceCreateBlockedError
+      )
+        throw error;
+      const operation = this.stateValue.pendingOperation;
+      if (!operation) throw error;
+      const inspection = await inspectWorkspaceCreateOperation(operation);
+      if (
+        [
+          "ambiguous-paths",
+          "invalid-final-workspace",
+          "invalid-temporary-workspace",
+          "publication-conflict",
+          "workspace-root-unsafe",
+        ].includes(inspection.classification)
+      )
+        await this.blockWorkspaceCreate(inspection);
+      throw error;
+    }
   }
 
   private async initializeEvidenceRetention(): Promise<void> {
@@ -2024,21 +2328,31 @@ export class MilestoneOrchestrator {
     });
     let milestone = milestoneById(this.stateValue, id);
     if (!milestone.workspace) {
-      const workspace = await createIsolatedWorkspace({
+      const runId = this.stateValue.run.id;
+      if (!runId)
+        throw new Error("Workspace creation requires an active run identity.");
+      const generation = this.store.mutationGeneration();
+      const operation = planWorkspaceCreateOperation({
+        operationId: this.createWorkspaceOperationId(),
+        inputStateGeneration: generation.objectId,
+        inputStateRevision: generation.revision,
         repositoryRoot: this.repositoryRoot,
-        workspaceRoot: this.config.workspaceRoot,
+        configuredWorkspaceRoot: this.config.workspaceRoot,
         targetBranch: this.config.targetBranch,
         baseCommit: this.stateValue.repository.verifiedCommit,
-        runId: this.stateValue.run.id ?? "run",
+        runId,
         milestoneId: id,
+        attempt: milestone.attempts,
         now: iso(this.now),
       });
       await this.persist(
-        replaceMilestone(this.stateValue, id, (record) => ({
-          ...record,
-          workspace,
-        })),
+        setWorkspaceCreateOperation(this.stateValue, operation),
       );
+      await this.workspaceCreateFault(
+        "after-intent-persisted",
+        this.stateValue.pendingOperation!,
+      );
+      await this.recoverPendingWorkspaceCreate();
       milestone = milestoneById(this.stateValue, id);
     }
     await this.prepareWorkspace(milestone);
@@ -2605,6 +2919,7 @@ export class MilestoneOrchestrator {
           try {
             await this.beginAttempt(id);
           } catch (error) {
+            if (this.stateValue.pendingOperation) throw error;
             await this.retryOrEscalate(
               id,
               "infrastructure",
@@ -2696,6 +3011,7 @@ export class MilestoneOrchestrator {
         }
         await this.processMilestone(id);
       } catch (error) {
+        if (this.stateValue.pendingOperation) throw error;
         await this.escalate(
           "RUN_CONTROLLER_FAILURE",
           redactSensitiveText(
@@ -2912,6 +3228,7 @@ export function stateStatusSummary(
     run: state.run,
     queue: state.queue,
     activeMilestoneId: state.activeMilestoneId,
+    pendingOperation: state.pendingOperation,
     requiredNextVerticalConsumer: state.requiredNextVerticalConsumer,
     evidenceRetention: state.evidenceRetention,
     milestones: state.milestones.map((milestone) => ({

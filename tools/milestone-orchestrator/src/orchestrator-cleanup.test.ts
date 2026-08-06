@@ -14,7 +14,6 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import {
   captureProtectedFiles,
-  createIsolatedWorkspace,
   integrateFastForward,
 } from "./git-isolation.js";
 import { createMilestoneRecord } from "./milestone-state.js";
@@ -22,6 +21,7 @@ import { MilestoneOrchestrator } from "./orchestrator.js";
 import { StateStore, createInitialState } from "./state-store.js";
 import { performWorkspaceCleanup } from "./workspace-cleanup.js";
 import { validConfig, validProposal } from "../test/fixtures.js";
+import { createIsolatedWorkspaceFixture } from "../test/workspace-fixture.js";
 
 const NOW = "2026-08-02T18:00:00.000Z";
 const temporaryDirectories: string[] = [];
@@ -265,7 +265,7 @@ describe("post-persistence workspace lifecycle", () => {
     async () => {
       const fixture = await repositoryFixture();
       const config = fixture.config;
-      const workspace = await createIsolatedWorkspace({
+      const workspace = await createIsolatedWorkspaceFixture({
         repositoryRoot: fixture.root,
         workspaceRoot: config.workspaceRoot,
         targetBranch: config.targetBranch,
@@ -422,7 +422,7 @@ describe("post-persistence workspace lifecycle", () => {
         validConfig({ preserveFailedWorkspaces: false }),
       );
       const config = fixture.config;
-      const workspace = await createIsolatedWorkspace({
+      const workspace = await createIsolatedWorkspaceFixture({
         repositoryRoot: fixture.root,
         workspaceRoot: config.workspaceRoot,
         targetBranch: config.targetBranch,
@@ -586,7 +586,7 @@ describe("post-persistence workspace lifecycle", () => {
         validConfig({ cleanupCompletedWorkspaces: false }),
       );
       const config = fixture.config;
-      const workspace = await createIsolatedWorkspace({
+      const workspace = await createIsolatedWorkspaceFixture({
         repositoryRoot: fixture.root,
         workspaceRoot: config.workspaceRoot,
         targetBranch: config.targetBranch,

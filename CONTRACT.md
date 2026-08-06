@@ -245,6 +245,26 @@ rejection of every canonical path including case variants.
   `loop:status`/`loop:dry-run` are read-only and lease-free; their state load
   cannot authorize publication or repair the mirror. Normal branch pushes do
   not include either private ref.
+- Recoverable workspace creation: state schema `1.5.0` permits exactly one
+  exclusive `workspace-create` operation. Its intent is published by state CAS
+  before any directory creation or `git clone` and binds the operation ID,
+  run/milestone/attempt, exact input generation and revision, target base,
+  controller-derived branch, temporary/final paths, timestamps, phase, and
+  fixed recovery policy. Canonical `1.4.0` generations migrate virtually for
+  read-only compatibility and are written as `1.5.0` by the next successful
+  CAS save. While an intent is pending, unrelated state mutations fail closed.
+  The clone is created with no hardlinks under a unique contained temporary
+  path, converted to a clean standalone remote-free repository, and published
+  to the stable final path without replacing an existing entry. Leased startup
+  recovery validates lexical and realpath containment, every directory in the
+  chain, `.git` ownership, no alternates or shallow state, exact HEAD/branch,
+  canonical config and controller markers, cleanliness, and remote facts
+  before it resumes, finishes, publishes, or adopts. Linked, dirty,
+  substituted, conflicting, or otherwise ambiguous entries are preserved in
+  place with a durable blocked diagnostic; the controller never overwrites or
+  automatically deletes them. Status and doctor perform the same
+  classification read-only (including Git optional-lock suppression) and
+  report the exact next safe action without acquiring the lease or recovering.
 - Approval-bound evidence retention: `loop:run` never deletes evidence —
   controller startup only writes a retention *plan*
   (`evidence-retention.json` in the run directory). Deletion requires

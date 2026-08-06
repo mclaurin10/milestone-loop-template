@@ -91,7 +91,7 @@ describe("read-only orchestrator doctor", () => {
     );
 
     expect(diagnostic).toEqual({
-      schemaVersion: "1.2.0",
+      schemaVersion: "1.3.0",
       diagnostic: "orchestrator-doctor",
       status: "ready",
       readOnly: true,
@@ -118,6 +118,7 @@ describe("read-only orchestrator doctor", () => {
           canonicalGeneration: null,
           source: "legacy",
           mirror: "legacy",
+          pendingOperation: null,
           outcome: "valid",
         },
         codexAuthentication: {
@@ -175,6 +176,7 @@ describe("read-only orchestrator doctor", () => {
       canonicalGeneration: null,
       source: "absent",
       mirror: "missing",
+      pendingOperation: null,
       outcome: "missing",
     });
     expect(diagnostic.checks.codexAuthentication).toEqual({
@@ -247,6 +249,7 @@ describe("read-only orchestrator doctor", () => {
       canonicalGeneration: null,
       source: "invalid",
       mirror: "invalid",
+      pendingOperation: null,
       outcome: "invalid-or-unreadable",
     });
     expect(diagnostic.checks.codexAuthentication).toEqual({
@@ -292,6 +295,7 @@ describe("read-only orchestrator doctor", () => {
       canonicalGeneration: null,
       source: "not-checked",
       mirror: "not-checked",
+      pendingOperation: null,
       outcome: "not-checked",
     });
     expect(JSON.stringify(diagnostic)).not.toContain(
@@ -320,6 +324,7 @@ describe("read-only orchestrator doctor", () => {
       canonicalGeneration: null,
       source: "legacy",
       mirror: "legacy",
+      pendingOperation: null,
       outcome: "reconciliation-required",
     });
 
@@ -357,6 +362,7 @@ describe("read-only orchestrator doctor", () => {
       canonicalGeneration: null,
       source: "legacy",
       mirror: "legacy",
+      pendingOperation: null,
       outcome: "reconciliation-active",
     });
   });

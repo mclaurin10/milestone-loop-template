@@ -1,7 +1,7 @@
 export const LEGACY_MILESTONE_SCHEMA_VERSION = "1.0.0" as const;
 export const PREVIOUS_MILESTONE_SCHEMA_VERSION = "1.1.0" as const;
 export const MILESTONE_SCHEMA_VERSION = "1.2.0" as const;
-export const STATE_SCHEMA_VERSION = "1.4.0" as const;
+export const STATE_SCHEMA_VERSION = "1.5.0" as const;
 export const CONFIG_SCHEMA_VERSION = "1.4.0" as const;
 export const REVIEW_LEGACY_SCHEMA_VERSION = "1.0.0" as const;
 export const REVIEW_SCHEMA_VERSION = "1.1.0" as const;
@@ -12,6 +12,7 @@ export const CONTROLLER_ARCHIVE_SCHEMA_VERSION = "1.0.0" as const;
 export const AGENT_POLICY_SCHEMA_VERSION = "1.0.0" as const;
 export const AGENT_INVOCATION_SCHEMA_VERSION = "1.0.0" as const;
 export const WORKSPACE_CLEANUP_SCHEMA_VERSION = "1.0.0" as const;
+export const OPERATION_INTENT_SCHEMA_VERSION = "1.0.0" as const;
 export const EVIDENCE_RETENTION_SCHEMA_VERSION = "1.0.0" as const;
 export const VERIFICATION_TIER_SCHEMA_VERSION = "1.1.0" as const;
 export const VERIFICATION_MANIFEST_SCHEMA_VERSION =
@@ -651,6 +652,56 @@ export interface IsolatedWorkspaceRecord {
   readonly cleanup: WorkspaceCleanupRecord;
 }
 
+export const WORKSPACE_CREATE_PHASES = [
+  "intent-persisted",
+  "clone-started",
+  "clone-ready",
+  "publish-started",
+  "published",
+  "blocked",
+] as const;
+export type WorkspaceCreatePhase = (typeof WORKSPACE_CREATE_PHASES)[number];
+
+export type WorkspaceCreateBlockedClassification =
+  | "ambiguous-paths"
+  | "invalid-final-workspace"
+  | "invalid-temporary-workspace"
+  | "publication-conflict"
+  | "workspace-root-unsafe";
+
+export interface WorkspaceCreateDiagnostic {
+  readonly classification: WorkspaceCreateBlockedClassification;
+  readonly message: string;
+  readonly observedAt: string;
+  readonly preservedPaths: readonly string[];
+  readonly quarantinePath: null;
+}
+
+export interface WorkspaceCreateOperation {
+  readonly schemaVersion: typeof OPERATION_INTENT_SCHEMA_VERSION;
+  readonly kind: "workspace-create";
+  readonly id: string;
+  readonly runId: string;
+  readonly milestoneId: string;
+  readonly attempt: number;
+  readonly inputStateGeneration: string;
+  readonly inputStateRevision: number;
+  readonly repositoryRoot: string;
+  readonly workspaceRoot: string;
+  readonly targetBranch: string;
+  readonly baseCommit: string;
+  readonly branch: string;
+  readonly temporaryPath: string;
+  readonly finalPath: string;
+  readonly phase: WorkspaceCreatePhase;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+  readonly recoveryPolicy: "validate-adopt-or-preserve";
+  readonly diagnostic: WorkspaceCreateDiagnostic | null;
+}
+
+export type PendingOperation = WorkspaceCreateOperation;
+
 export type WorkspaceCleanupReason =
   | "legacy-pre-policy"
   | "completed-delete-workspace"
@@ -952,6 +1003,7 @@ export interface OrchestratorState {
     readonly active: ReconciliationRecord | null;
     readonly history: readonly ReconciliationRecord[];
   };
+  readonly pendingOperation: PendingOperation | null;
   readonly nextAllowedAction: NextAllowedAction;
   readonly createdAt: string;
   readonly updatedAt: string;

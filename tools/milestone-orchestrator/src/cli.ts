@@ -346,6 +346,7 @@ async function main(): Promise<void> {
       stateStorage: inspection.stateStorage,
       targetDrift: inspection.targetDrift,
       pendingWorkspaceCleanups: inspection.pendingWorkspaceCleanups,
+      pendingOperation: inspection.pendingOperation,
       protectedIntegrity: inspection.protectedIntegrity,
       lease: inspection.lease,
     } satisfies Partial<OrchestratorInspection>;

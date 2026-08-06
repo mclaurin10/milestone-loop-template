@@ -12,6 +12,7 @@ import {
   PREVIOUS_MILESTONE_SCHEMA_VERSION,
   MILESTONE_STATUSES,
   NEXT_ACTIONS,
+  OPERATION_INTENT_SCHEMA_VERSION,
   RECONCILIATION_PHASES,
   RECONCILIATION_REVIEW_CHECK_IDS,
   RECONCILIATION_REVIEW_SCHEMA_VERSION,
@@ -26,6 +27,7 @@ import {
   VERIFICATION_TIERS,
   VERIFICATION_TIER_SCHEMA_VERSION,
   WORKSPACE_CLEANUP_SCHEMA_VERSION,
+  WORKSPACE_CREATE_PHASES,
   type InvariantSuiteRegistry,
   type MilestoneProposal,
   type OrchestratorConfig,
@@ -39,6 +41,7 @@ import {
   type VerificationTierResult,
 } from "./contracts.js";
 import { validateAgentModelPolicy } from "./model-policy.js";
+import { strictlyContained } from "./path-safety.js";
 
 export interface ValidationResult<T> {
   readonly valid: boolean;
@@ -184,6 +187,104 @@ function validWorkspaceCleanup(value: unknown): boolean {
     (reason === "failed-delete-after-diagnostics") ===
       (value["diagnosticArchivePath"] !== null)
   );
+}
+
+function validWorkspaceCreateOperation(value: unknown): boolean {
+  if (
+    !isRecord(value) ||
+    !hasOnlyKeys(value, [
+      "schemaVersion",
+      "kind",
+      "id",
+      "runId",
+      "milestoneId",
+      "attempt",
+      "inputStateGeneration",
+      "inputStateRevision",
+      "repositoryRoot",
+      "workspaceRoot",
+      "targetBranch",
+      "baseCommit",
+      "branch",
+      "temporaryPath",
+      "finalPath",
+      "phase",
+      "createdAt",
+      "updatedAt",
+      "recoveryPolicy",
+      "diagnostic",
+    ]) ||
+    value["schemaVersion"] !== OPERATION_INTENT_SCHEMA_VERSION ||
+    value["kind"] !== "workspace-create" ||
+    !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(String(value["id"])) ||
+    !nonEmptyString(value["runId"]) ||
+    !nonEmptyString(value["milestoneId"]) ||
+    !positiveInteger(value["attempt"]) ||
+    !/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(
+      String(value["inputStateGeneration"]),
+    ) ||
+    !nonnegativeInteger(value["inputStateRevision"]) ||
+    !nonEmptyString(value["repositoryRoot"]) ||
+    !isAbsolute(value["repositoryRoot"]) ||
+    !nonEmptyString(value["workspaceRoot"]) ||
+    !isAbsolute(value["workspaceRoot"]) ||
+    !nonEmptyString(value["targetBranch"]) ||
+    !/^[a-f0-9]{40}$/.test(String(value["baseCommit"])) ||
+    !nonEmptyString(value["branch"]) ||
+    !nonEmptyString(value["temporaryPath"]) ||
+    !isAbsolute(value["temporaryPath"]) ||
+    !nonEmptyString(value["finalPath"]) ||
+    !isAbsolute(value["finalPath"]) ||
+    value["temporaryPath"] === value["finalPath"] ||
+    !strictlyContained(value["repositoryRoot"], value["workspaceRoot"]) ||
+    !strictlyContained(value["workspaceRoot"], value["temporaryPath"]) ||
+    !strictlyContained(value["workspaceRoot"], value["finalPath"]) ||
+    !WORKSPACE_CREATE_PHASES.includes(value["phase"] as never) ||
+    !timestampOrNull(value["createdAt"]) ||
+    value["createdAt"] === null ||
+    !timestampOrNull(value["updatedAt"]) ||
+    value["updatedAt"] === null ||
+    String(value["updatedAt"]) < String(value["createdAt"]) ||
+    value["recoveryPolicy"] !== "validate-adopt-or-preserve"
+  )
+    return false;
+
+  const diagnostic = value["diagnostic"];
+  if ((value["phase"] === "blocked") !== (diagnostic !== null)) return false;
+  if (diagnostic === null) return true;
+  if (
+    !isRecord(diagnostic) ||
+    !hasOnlyKeys(diagnostic, [
+      "classification",
+      "message",
+      "observedAt",
+      "preservedPaths",
+      "quarantinePath",
+    ]) ||
+    ![
+      "ambiguous-paths",
+      "invalid-final-workspace",
+      "invalid-temporary-workspace",
+      "publication-conflict",
+      "workspace-root-unsafe",
+    ].includes(String(diagnostic["classification"])) ||
+    !nonEmptyString(diagnostic["message"]) ||
+    !timestampOrNull(diagnostic["observedAt"]) ||
+    diagnostic["observedAt"] === null ||
+    !stringArray(
+      diagnostic["preservedPaths"],
+      diagnostic["classification"] === "workspace-root-unsafe" ||
+        diagnostic["classification"] === "publication-conflict"
+        ? 0
+        : 1,
+    ) ||
+    diagnostic["preservedPaths"].some(
+      (path) => path !== value["temporaryPath"] && path !== value["finalPath"],
+    ) ||
+    diagnostic["quarantinePath"] !== null
+  )
+    return false;
+  return value["updatedAt"] === diagnostic["observedAt"];
 }
 
 function validProposalProvenance(value: unknown): boolean {
@@ -1316,6 +1417,7 @@ export function validateOrchestratorState(
       "evidenceRetention",
       "controllerHistory",
       "reconciliation",
+      "pendingOperation",
       "nextAllowedAction",
       "createdAt",
       "updatedAt",
@@ -1704,6 +1806,40 @@ export function validateOrchestratorState(
       errors.push(
         "An active reconciliation must exclusively own the next action.",
       );
+  }
+
+  const pendingOperation = value["pendingOperation"];
+  if (
+    pendingOperation !== null &&
+    !validWorkspaceCreateOperation(pendingOperation)
+  ) {
+    errors.push("State pending operation is invalid.");
+  } else if (isRecord(pendingOperation)) {
+    const milestone = Array.isArray(milestones)
+      ? milestones.find(
+          (entry) =>
+            isRecord(entry) &&
+            isRecord(entry["proposal"]) &&
+            entry["proposal"]["id"] === pendingOperation["milestoneId"],
+        )
+      : undefined;
+    if (
+      !isRecord(milestone) ||
+      value["activeMilestoneId"] !== pendingOperation["milestoneId"] ||
+      milestone["status"] !== "running" ||
+      milestone["attempts"] !== pendingOperation["attempt"] ||
+      milestone["workspace"] !== null ||
+      milestone["nextAllowedAction"] !== "resume-worker" ||
+      value["nextAllowedAction"] !== "resume-worker" ||
+      !isRecord(repository) ||
+      repository["root"] !== pendingOperation["repositoryRoot"] ||
+      repository["targetBranch"] !== pendingOperation["targetBranch"] ||
+      repository["verifiedCommit"] !== pendingOperation["baseCommit"] ||
+      !isRecord(run) ||
+      run["id"] !== pendingOperation["runId"] ||
+      Number(pendingOperation["inputStateRevision"]) > Number(value["revision"])
+    )
+      errors.push("State pending operation does not match its active attempt.");
   }
 
   return {

@@ -21,8 +21,12 @@ import {
 } from "./protected-roots.js";
 import { STATE_REF } from "./private-ref-store.js";
 import { StateStore, type StateStoreInspection } from "./state-store.js";
+import {
+  inspectWorkspaceCreateOperation,
+  type WorkspaceCreateRecoveryClassification,
+} from "./workspace-create.js";
 
-export const DOCTOR_SCHEMA_VERSION = "1.2.0" as const;
+export const DOCTOR_SCHEMA_VERSION = "1.3.0" as const;
 
 type CheckStatus = "pass" | "attention";
 
@@ -74,11 +78,21 @@ export interface DoctorDiagnostic {
         StateStoreInspection["source"] | "invalid" | "not-checked";
       readonly mirror:
         StateStoreInspection["mirror"] | "invalid" | "not-checked";
+      readonly pendingOperation: {
+        readonly id: string;
+        readonly kind: "workspace-create";
+        readonly phase: string;
+        readonly classification: WorkspaceCreateRecoveryClassification;
+        readonly temporaryPath: string;
+        readonly finalPath: string;
+        readonly nextSafeAction: string;
+      } | null;
       readonly outcome:
         | "valid"
         | "missing"
         | "reconciliation-required"
         | "reconciliation-active"
+        | "workspace-operation-pending"
         | "invalid-or-unreadable"
         | "not-checked";
     };
@@ -159,11 +173,19 @@ async function configuredRuntimePins(
 function defaultGitProbe(repositoryRoot: string): DoctorGitProbe {
   const result = spawnSync(
     "git",
-    ["-C", repositoryRoot, "status", "--porcelain=v1", "--untracked-files=all"],
+    [
+      "--no-optional-locks",
+      "-C",
+      repositoryRoot,
+      "status",
+      "--porcelain=v1",
+      "--untracked-files=all",
+    ],
     {
       encoding: "utf8",
       maxBuffer: 1024 * 1024,
       windowsHide: true,
+      env: { ...process.env, GIT_OPTIONAL_LOCKS: "0" },
     },
   );
   if (result.error || result.status !== 0) return { clean: null };
@@ -192,6 +214,7 @@ async function stateOutcome(
       canonicalGeneration: null,
       source: "not-checked",
       mirror: "not-checked",
+      pendingOperation: null,
       outcome: "not-checked",
     };
   try {
@@ -203,21 +226,43 @@ async function stateOutcome(
       source: storage.source,
       mirror: storage.mirror,
     } as const;
+    if (state?.pendingOperation) {
+      const recovery = await inspectWorkspaceCreateOperation(
+        state.pendingOperation,
+      );
+      return {
+        status: "attention",
+        ...details,
+        pendingOperation: {
+          id: state.pendingOperation.id,
+          kind: state.pendingOperation.kind,
+          phase: state.pendingOperation.phase,
+          classification: recovery.classification,
+          temporaryPath: state.pendingOperation.temporaryPath,
+          finalPath: state.pendingOperation.finalPath,
+          nextSafeAction: recovery.nextSafeAction,
+        },
+        outcome: "workspace-operation-pending",
+      };
+    }
     if (state?.reconciliation.active)
       return {
         status: "attention",
         ...details,
+        pendingOperation: null,
         outcome: "reconciliation-active",
       };
     if (state && head !== state.repository.verifiedCommit)
       return {
         status: "attention",
         ...details,
+        pendingOperation: null,
         outcome: "reconciliation-required",
       };
     return {
       status: "pass",
       ...details,
+      pendingOperation: null,
       outcome: state ? "valid" : "missing",
     };
   } catch {
@@ -227,6 +272,7 @@ async function stateOutcome(
       canonicalGeneration: null,
       source: "invalid",
       mirror: "invalid",
+      pendingOperation: null,
       outcome: "invalid-or-unreadable",
     };
   }

@@ -7,7 +7,10 @@ isolated git clone, machine-verifies it with receipt-owning evidence, has an
 independent Reviewer agent judge the actual diff, and integrates only what
 survives all three gates. The controller is durable and resumable: every
 state transition is a validated, schema-versioned Git generation published by
-an expected-generation atomic ref update.
+an expected-generation atomic ref update. Workspace creation is likewise
+restart-safe: the controller commits an exact operation intent before cloning,
+publishes through a contained temporary path, and adopts only a clone that
+still proves every recorded identity and isolation fact.
 
 Extracted from a battle-tested production loop (source repository pinned at
 commit `8928aecc19e8d3ade663063e0ed41740483774e3`); behavior is preserved,
@@ -19,7 +22,7 @@ full configuration ships as a worked example in
 
 | Area | Where | What it does |
 | --- | --- | --- |
-| Orchestrator | `tools/milestone-orchestrator/` | Planner/Worker/Reviewer loop over the Codex SDK, ref-rooted CAS state generations with schema migrations, retry/escalation policy, git isolation, protected-path diff policy, safety demonstration, canary milestone, doctor diagnostics |
+| Orchestrator | `tools/milestone-orchestrator/` | Planner/Worker/Reviewer loop over the Codex SDK, ref-rooted CAS state generations with schema migrations, recoverable intent-first git isolation, retry/escalation policy, protected-path diff policy, safety demonstration, canary milestone, doctor diagnostics |
 | Verification tiers | `src/verification-tier.ts`, `src/verification-cli.ts` | `iteration`, `candidate`, `milestone`, and `periodic` tiers planned from the verification manifest |
 | Invariant suite | `src/invariant-suite.ts`, `config/invariant-suite.json` | Always-run, serial invariants with pinned owner files; fast/migration unit partition |
 | Evidence | `scripts/verify.mjs`, `tools/evidence.mjs`, `tools/run-tool-evidence.mjs` | The authoritative `pnpm verify` aggregate, command-owned receipts with hashed artifacts, fail-closed receipt validation |
@@ -145,6 +148,24 @@ report `NOT_READY`, never pass.
    legacy mirror is imported exactly once when no state ref exists; malformed
    or linked legacy paths fail closed without publication. Normal branch
    pushes do not include either private ref.
+
+   Isolated clone creation is a durable state operation, not a direct
+   filesystem call. State schema `1.5.0` records one exclusive
+   `workspace-create` intent bound to the exact input state generation before
+   any directory or clone side effect. The clone is built under a unique
+   controller-derived `.create-<hash>` path, made standalone and remote-free,
+   then published to its stable final path with no-clobber rename semantics.
+   A leased restart classifies the recorded paths and can resume a missing
+   clone, finish an exact source clone, publish an exact temporary clone, or
+   adopt an exact final clone. Validation requires realpath containment, real
+   directories (not symlinks, junctions, or gitfiles), the recorded base and
+   branch, a clean non-shallow repository, controller identity markers, no
+   alternates, and no remote configuration. Ambiguous or substituted content
+   is preserved in place and the intent becomes durably blocked; it is never
+   overwritten or automatically deleted. `loop:status` and `loop:doctor`
+   report the classification and next safe action without taking the lease or
+   recovering the operation. Canonical `1.4.0` state is migrated virtually on
+   read and becomes `1.5.0` on its next successful CAS publication.
 
    **Nothing is deleted by `loop:run`.** Controller startup only *plans*
    evidence retention (the run's `evidence-retention.json` lists what a

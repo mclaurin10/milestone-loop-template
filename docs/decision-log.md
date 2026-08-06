@@ -3,6 +3,39 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-06 — Intent-first, validate/adopt workspace creation (WP2a)
+
+**Decision.** Isolated workspace creation is represented by one exclusive
+state-schema `1.5.0` `workspace-create` operation bound to the exact pre-intent
+Git state generation. The controller clones only after that intent is
+canonical, uses a unique short `.create-<sha256-prefix>` entry under the
+configured workspace root, records adjacent durable phases around filesystem
+boundaries, and publishes to the stable run/milestone path with no-clobber
+rename semantics. Recovery runs under the controller lease before ordinary
+orchestrator mutations. It resumes or adopts only after exact filesystem and
+Git validation; ambiguous entries remain in place with a durable blocked
+diagnostic. Read-only status and doctor expose the same classification and
+next safe action without recovery. Canonical `1.4.0` generations are migrated
+in memory and advance to `1.5.0` only on the next CAS save.
+
+**Why.** Direct cloning to the final deterministic path left an unrecorded
+directory after a crash between clone and workspace-record persistence, and a
+retry could neither prove ownership nor proceed. Intent-first ordering gives
+every possible controller-created entry a durable identity, while a temporary
+publication boundary separates incomplete clones from adoptable final state.
+The short hashed temporary name preserves Windows path headroom for Git ref
+lock files without weakening uniqueness. Preserving suspicious content is the
+only fail-closed default that does not destroy possible user evidence.
+Alternatives rejected: direct final-path clone, deleting or overwriting an
+unrecognized path, treating path existence as ownership, reusing the state
+mirror as a journal, a second operation-log authority, and automatic
+quarantine moves whose source identity cannot be proved race-free.
+
+**Affected files.** State contracts/schema/store, `operation-intent.ts`,
+`workspace-create.ts`, orchestrator startup and attempt creation, status and
+doctor diagnostics, Git-isolation fixtures, tests, `README.md`, and
+`CONTRACT.md`.
+
 ## 2026-08-05 — Ref-rooted Git commits as canonical state generations (WP1b)
 
 **Decision.** Canonical controller state lives at the fixed local ref

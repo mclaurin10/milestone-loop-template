@@ -1,14 +1,10 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, lstatSync } from "node:fs";
-import { mkdir, readFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
 
-import type {
-  IsolatedWorkspaceRecord,
-  ProtectedFileRecord,
-} from "./contracts.js";
-import { strictlyContained } from "./path-safety.js";
+import type { ProtectedFileRecord } from "./contracts.js";
 
 interface GitResult {
   readonly status: number;
@@ -145,102 +141,6 @@ export async function assertProtectedFiles(
     if (actual !== file.sha256)
       throw new Error(`Protected file changed: ${file.path}.`);
   }
-}
-
-function safeBranchSegment(value: string): string {
-  return value
-    .toLowerCase()
-    .replaceAll(/[^a-z0-9._-]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 48);
-}
-
-export async function createIsolatedWorkspace(input: {
-  readonly repositoryRoot: string;
-  readonly workspaceRoot: string;
-  readonly targetBranch: string;
-  readonly baseCommit: string;
-  readonly runId: string;
-  readonly milestoneId: string;
-  readonly now: string;
-}): Promise<IsolatedWorkspaceRecord> {
-  inspectTarget(input.repositoryRoot, input.targetBranch, input.baseCommit);
-  const workspaceRoot = resolve(input.repositoryRoot, input.workspaceRoot);
-  const name = `${safeBranchSegment(input.runId)}-${safeBranchSegment(input.milestoneId)}`;
-  const workspacePath = resolve(workspaceRoot, name);
-  if (!strictlyContained(workspaceRoot, workspacePath))
-    throw new Error(
-      "Resolved isolated workspace is outside its configured root.",
-    );
-  if (existsSync(workspacePath))
-    throw new Error(`Isolated workspace already exists: ${workspacePath}.`);
-  await mkdir(dirname(workspacePath), { recursive: true });
-  const clone = spawnSync(
-    "git",
-    [
-      "clone",
-      "-c",
-      "core.autocrlf=false",
-      "-c",
-      "core.eol=lf",
-      "--local",
-      "--no-hardlinks",
-      "--no-tags",
-      "--single-branch",
-      "--branch",
-      input.targetBranch,
-      resolve(input.repositoryRoot),
-      workspacePath,
-    ],
-    { encoding: "utf8", maxBuffer: 64 * 1024 * 1024, windowsHide: true },
-  );
-  if (clone.error || clone.status !== 0)
-    throw new Error(
-      `Could not create isolated local clone: ${clone.error?.message ?? clone.stderr}`,
-    );
-  runGit(workspacePath, ["remote", "remove", "origin"]);
-  runGit(workspacePath, ["config", "core.autocrlf", "false"]);
-  runGit(workspacePath, ["config", "core.eol", "lf"]);
-  const branch = `milestone-loop/${safeBranchSegment(input.runId)}/${safeBranchSegment(input.milestoneId)}`;
-  runGit(workspacePath, ["switch", "-c", branch]);
-  const userName = runGit(workspacePath, ["config", "user.name"], true).stdout;
-  const userEmail = runGit(
-    workspacePath,
-    ["config", "user.email"],
-    true,
-  ).stdout;
-  if (!userName)
-    runGit(workspacePath, ["config", "user.name", "Milestone Orchestrator"]);
-  if (!userEmail)
-    runGit(workspacePath, [
-      "config",
-      "user.email",
-      "orchestrator@local.invalid",
-    ]);
-  const head = runGit(workspacePath, ["rev-parse", "HEAD"]).stdout;
-  if (head !== input.baseCommit)
-    throw new Error(
-      `Isolated clone started at ${head}, expected ${input.baseCommit}.`,
-    );
-  return {
-    isolation: "standalone-local-clone-branch",
-    path: workspacePath,
-    branch,
-    baseCommit: input.baseCommit,
-    headCommit: null,
-    createdAt: input.now,
-    preserved: true,
-    cleanup: {
-      schemaVersion: "1.0.0",
-      status: "active",
-      reason: null,
-      requestedAt: null,
-      completedAt: null,
-      nodeModulesRemovedAt: null,
-      diagnosticArchivePath: null,
-      error: null,
-    },
-  };
 }
 
 export interface AttemptInspection {

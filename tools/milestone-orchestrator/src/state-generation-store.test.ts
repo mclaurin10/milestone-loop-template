@@ -99,28 +99,32 @@ function writeRawGeneration(input: {
 }
 
 describe("canonical Git state generations", () => {
-  it("roots complete current and previous generations through commit ancestry", async () => {
-    const root = await repositoryFixture();
-    const store = new GitStateGenerationStore(root);
-    const firstState = validState(root);
-    const first = store.createGeneration(firstState, null);
-    expect(store.publish(null, first.objectId)).toBe(true);
-    const secondState = {
-      ...firstState,
-      revision: 1,
-      nextAllowedAction: "stop" as const,
-      updatedAt: "2026-08-05T00:00:01.000Z",
-    };
-    const second = store.createGeneration(secondState, first.objectId);
-    expect(store.publish(first.objectId, second.objectId)).toBe(true);
+  it(
+    "roots complete current and previous generations through commit ancestry",
+    { timeout: 30_000 },
+    async () => {
+      const root = await repositoryFixture();
+      const store = new GitStateGenerationStore(root);
+      const firstState = validState(root);
+      const first = store.createGeneration(firstState, null);
+      expect(store.publish(null, first.objectId)).toBe(true);
+      const secondState = {
+        ...firstState,
+        revision: 1,
+        nextAllowedAction: "stop" as const,
+        updatedAt: "2026-08-05T00:00:01.000Z",
+      };
+      const second = store.createGeneration(secondState, first.objectId);
+      expect(store.publish(first.objectId, second.objectId)).toBe(true);
 
-    expect(store.readCurrent()).toEqual(second);
-    expect(store.readGeneration(first.objectId).state).toEqual(firstState);
-    expect(
-      git(root, ["rev-list", "--parents", "-n", "1", second.objectId]),
-    ).toBe(`${second.objectId} ${first.objectId}`);
-    expect(git(root, ["cat-file", "-t", first.objectId])).toBe("commit");
-  });
+      expect(store.readCurrent()).toEqual(second);
+      expect(store.readGeneration(first.objectId).state).toEqual(firstState);
+      expect(
+        git(root, ["rev-list", "--parents", "-n", "1", second.objectId]),
+      ).toBe(`${second.objectId} ${first.objectId}`);
+      expect(git(root, ["cat-file", "-t", first.objectId])).toBe("commit");
+    },
+  );
 
   it("refuses a non-commit canonical ref target", async () => {
     const root = await repositoryFixture();
