@@ -1,6 +1,6 @@
 # Current Execution Plan
 
-**Status:** WP2b target-integration intent inspection pending
+**Status:** WP2b implementation and verification complete; cohesive commit pending
 **Updated:** 2026-08-06
 **Owner:** autonomous loop
 
@@ -72,36 +72,36 @@ integration slice.
 
 ## Steps
 
-1. [ ] Inventory the review-to-integration transition, target Git mutation,
+1. [x] Inventory the review-to-integration transition, target Git mutation,
    outcome artifact, telemetry, completion bookkeeping, cleanup trigger, stop
    decision, startup drift path, and all tests that exercise integration.
    Reproduce process loss after target advancement but before the state save,
    and compare normal versus recovered state field by field.
-2. [ ] Advance the state schema exactly once and add the strict
+2. [x] Advance the state schema exactly once and add the strict
    `target-integrate` pending-operation discriminant, including 1.5 migration,
    exact generation lineage, context validation, pure phase/block/complete
    reducers, and a generic transition fence that still rejects unrelated state.
-3. [ ] Split integration into pure intent planning, read-only base/candidate/
+3. [x] Split integration into pure intent planning, read-only base/candidate/
    unsafe target classification, exact candidate revalidation, idempotent
    fast-forward action, and deterministic outcome-artifact materialization.
    Add narrow controller-owned fault hooks around every durable/external edge.
-4. [ ] Persist intent before the first integration side effect. Order outcome
+4. [x] Persist intent before the first integration side effect. Order outcome
    creation, target advancement, durable phases, and semantic completion so
    every crash has one provable next action and no path depends on telemetry.
-5. [ ] Recover under the controller lease before ordinary target-drift logic:
+5. [x] Recover under the controller lease before ordinary target-drift logic:
    resume from the exact base, adopt the exact clean candidate, regenerate the
    exact outcome artifact when required, and durably block all other
    classifications without altering target or workspace content.
-6. [ ] Route uninterrupted and recovered integration through one completion
+6. [x] Route uninterrupted and recovered integration through one completion
    reducer, including required-consumer bookkeeping, processed count, and the
    human-verification stop result. Remove the implicit reviewer-as-intent
    completion path and keep terminal cleanup as the existing later resumable
    subsystem.
-7. [ ] Expose read-only integration operation facts through status and doctor.
+7. [x] Expose read-only integration operation facts through status and doctor.
    Add crash-boundary convergence, double-resume, concurrent-resume, target
    substitution/dirty/index-lock/wrong-commit, candidate drift, outcome
    interruption, migration, and read-only byte-digest tests.
-8. [ ] Run focused repeated target-update races, affected lifecycle/identity/
+8. [x] Run focused repeated target-update races, affected lifecycle/identity/
    reconciliation/cleanup suites, exact-runtime static and broad checks, update
    contract/logs, and commit only the cohesive WP2b result.
 
@@ -172,11 +172,61 @@ integration slice.
   divergent handwritten completion path missing required-consumer, processed-
   count, outcome, cleanup/stop ordering, and shared-reducer semantics. No WP2b
   implementation has begun.
+- 2026-08-06: Resumption confirmed handoff commit `bc0bd4b`, a clean tracked
+  tree, and the exact Node `24.18.0` runtime at
+  `.tools/node-v24.18.0-win-x64/node.exe`; the only untracked entry is the
+  unrelated human file `Implementation-ready improvement plan 8-5-26.txt`,
+  which remains outside this increment.
+- 2026-08-06: Exact-runtime child-process reproduction exited at the first
+  post-fast-forward await, before the completion save. The target was the
+  approved candidate while canonical state retained the base, `reviewing`,
+  zero processed milestones, and a pending outcome. Legacy startup adopted the
+  target through `reconcileTarget`, but differed from uninterrupted completion
+  in `requiredNextVerticalConsumer`, processed count, run terminal fields, and
+  final outcome status. Focused reproduction passed 1/1; structured evidence is
+  `artifacts/manual/wp2b-baseline/target-state-crash.json`.
+- 2026-08-06: State schema `1.6.0` now defines the exclusive
+  `target-integrate` operation, exact-generation publication and transition
+  fence, durable phase/block reducers, and the one canonical completion reducer.
+  The normal path persists intent before outcome/fetch/fast-forward effects;
+  leased startup classifies and recovers it before ordinary target drift, while
+  reviewer approval without intent now fails explicit reconciliation.
+- 2026-08-06: Exact Node `24.18.0` focused checks passed for the target
+  classifier/action/outcome module (3/3), state store and migrations (24/24),
+  operation/schema/state reducers (34/34), cleanup lifecycle (9/9), identity
+  behavior (8/8), and status/doctor/CLI diagnostics (14/14). Strict tools
+  TypeScript compilation also passed.
+- 2026-08-06: Real child-process loss converged at all 12 declared integration
+  fault points. Ten points passed in the matrix (326.360 s); post-fast-forward
+  and post-completion loss are covered by the independent convergence case
+  (70.005 s), which also barrier-synchronizes two recovery contenders and found
+  no semantic differences from canonical completion. Structured receipts are
+  `artifacts/manual/wp2b-target-integration/fault-matrix.json` and
+  `artifacts/manual/wp2b-target-integration/post-fast-forward-convergence.json`.
+  A durable dirty-target block test passed separately (1/1), preserving the
+  canonical state ref, outcome, target HEAD/content, and workspace content on
+  repeated restart. The first combined focused run had only a test-fixture path
+  assertion defect after the two recovery cases passed; the fixture was bound
+  to its emitted workspace path, then typecheck and the corrected blocked case
+  passed.
+- 2026-08-06: Exact-runtime receipt-owning static checks passed at
+  `artifacts/manual/typecheck-15628/typecheck-report.json`,
+  `artifacts/manual/lint-904/lint-report.json`, and
+  `artifacts/manual/format-check-13872/format-report.json`; `git diff --check`
+  also passed. The complete orchestrator aggregate passed 372/372 at
+  `artifacts/manual/test-orchestrator-20588/result.json`, and the full unit
+  aggregate passed 385/385 at `artifacts/manual/test-unit-11116/result.json`.
+  Both successful broad commands ran under a temporary Windows execution-state
+  guard because two earlier attempts crossed machine suspend: their reports
+  recorded impossible 925/2,520/1,938-second durations against unchanged
+  60-second tests. Every affected test passed awake under its original limit;
+  no repository timeout or assertion was changed. `pnpm loop:demo-safety`
+  passed with report
+  `artifacts/orchestrator/runs/safety-demonstration/safety-demonstration-20260806215546754-eb6dd114.json`.
 
 ## Next Action
 
-Build a disposable approved-review fixture, inject process loss immediately
-after `integrateFastForward` returns but before the completion save, and record
-the advanced target, stale canonical state, pending outcome artifact, and exact
-normal-versus-recovered semantic diff before fixing the target-integrate intent
-schema.
+Audit the exact diff and protected authorities, add the completed WP2b autonomy
+entry, stage only the bounded implementation/documentation files, and create
+the cohesive verified commit while leaving the unrelated untracked human plan
+untouched. Then record the commit identity in a narrow repository handoff.

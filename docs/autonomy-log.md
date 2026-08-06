@@ -3,6 +3,60 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-06 — WP2b recoverable target integration
+
+**Objective.** Publish one exact approved target-integration intent before any
+outcome, fetch, ref, index, or worktree side effect, recover it under the
+controller lease, and make uninterrupted and restarted completion use one pure
+semantic reducer.
+
+**Outcome.** State schema `1.6.0` extends the exclusive pending-operation union
+with `target-integrate`, bound to the exact canonical generation/revision,
+run/milestone/attempt, repository/target/workspace identity, approved candidate
+and commit list, verification-result digest, deterministic outcome paths,
+phases, timestamps, and validate/adopt-or-preserve policy. Normal integration
+persists intent before its first external side effect. Startup recovers before
+ordinary target drift, revalidates protected files and the standalone
+remote-free candidate, resumes only from the exact clean base, and adopts only
+the exact clean candidate. Pending and integrated outcome bytes are exactly
+regenerable. Dirty, locked, in-progress, unexpected, drifted, linked,
+substituted, and conflicting states are preserved with durable diagnostics.
+Reviewer approval without intent now requires explicit reconciliation. One
+completion reducer owns target/milestone/queue/vertical-consumer/processed-count
+and human-verification-stop state. Status and doctor schema `1.4.0` classify the
+operation and exact next action without mutation.
+
+**Verification.** Under Node `24.18.0` and pnpm `11.15.1`, hard child-process
+loss at all 12 declared boundaries converged to canonical completion; the
+structured records are
+`artifacts/manual/wp2b-target-integration/fault-matrix.json` and
+`artifacts/manual/wp2b-target-integration/post-fast-forward-convergence.json`.
+The latter also barrier-synchronized two restart contenders and found no normal
+versus recovered semantic difference. Target classification/action/outcome,
+migration, lifecycle, identity, reconciliation, cleanup, status, doctor, and
+CLI focused checks passed. Receipt-owning typecheck, lint, and format passed at
+`artifacts/manual/typecheck-15628/`, `artifacts/manual/lint-904/`, and
+`artifacts/manual/format-check-13872/`. The complete orchestrator aggregate
+passed 372/372 at `artifacts/manual/test-orchestrator-20588/result.json`; the
+full unit aggregate passed 385/385 at
+`artifacts/manual/test-unit-11116/result.json`; and `pnpm loop:demo-safety`
+passed at
+`artifacts/orchestrator/runs/safety-demonstration/safety-demonstration-20260806215546754-eb6dd114.json`.
+Two earlier broad attempts were invalidated by machine suspend, which produced
+impossible multi-thousand-second durations for unchanged 60-second tests; every
+affected case passed awake under its original limit, and the successful broad
+runs used only a temporary OS awake guard, not altered repository timeouts.
+
+**Commit.** Pending the final cohesive WP2b commit from this exact verified
+tree.
+
+**Known gaps.** Later WP2 increments still own terminal cleanup and retention
+side-effect journaling; this change uses but does not make those subsystems
+recoverable. Linux ref/index/worktree race evidence remains a WP5 CI
+deliverable. This Windows result does not claim unsupported-platform coverage
+or autonomous readiness, and the adopting product verification placeholders
+remain honestly non-passing.
+
 ## 2026-08-06 — WP2a recoverable workspace creation
 
 **Objective.** Persist a strict workspace-create operation before any clone

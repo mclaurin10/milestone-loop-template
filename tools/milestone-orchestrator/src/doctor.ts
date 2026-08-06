@@ -25,8 +25,12 @@ import {
   inspectWorkspaceCreateOperation,
   type WorkspaceCreateRecoveryClassification,
 } from "./workspace-create.js";
+import {
+  inspectTargetIntegrationOperation,
+  type TargetIntegrationRecoveryClassification,
+} from "./target-integration.js";
 
-export const DOCTOR_SCHEMA_VERSION = "1.3.0" as const;
+export const DOCTOR_SCHEMA_VERSION = "1.4.0" as const;
 
 type CheckStatus = "pass" | "attention";
 
@@ -78,21 +82,35 @@ export interface DoctorDiagnostic {
         StateStoreInspection["source"] | "invalid" | "not-checked";
       readonly mirror:
         StateStoreInspection["mirror"] | "invalid" | "not-checked";
-      readonly pendingOperation: {
-        readonly id: string;
-        readonly kind: "workspace-create";
-        readonly phase: string;
-        readonly classification: WorkspaceCreateRecoveryClassification;
-        readonly temporaryPath: string;
-        readonly finalPath: string;
-        readonly nextSafeAction: string;
-      } | null;
+      readonly pendingOperation:
+        | {
+            readonly id: string;
+            readonly kind: "workspace-create";
+            readonly phase: string;
+            readonly classification: WorkspaceCreateRecoveryClassification;
+            readonly temporaryPath: string;
+            readonly finalPath: string;
+            readonly nextSafeAction: string;
+          }
+        | {
+            readonly id: string;
+            readonly kind: "target-integrate";
+            readonly phase: string;
+            readonly classification: TargetIntegrationRecoveryClassification;
+            readonly targetClassification: string;
+            readonly targetHead: string | null;
+            readonly workspacePath: string;
+            readonly outcomePath: string;
+            readonly nextSafeAction: string;
+          }
+        | null;
       readonly outcome:
         | "valid"
         | "missing"
         | "reconciliation-required"
         | "reconciliation-active"
         | "workspace-operation-pending"
+        | "target-operation-pending"
         | "invalid-or-unreadable"
         | "not-checked";
     };
@@ -227,7 +245,26 @@ async function stateOutcome(
       mirror: storage.mirror,
     } as const;
     if (state?.pendingOperation) {
-      const recovery = await inspectWorkspaceCreateOperation(
+      if (state.pendingOperation.kind === "workspace-create") {
+        const recovery = await inspectWorkspaceCreateOperation(
+          state.pendingOperation,
+        );
+        return {
+          status: "attention",
+          ...details,
+          pendingOperation: {
+            id: state.pendingOperation.id,
+            kind: state.pendingOperation.kind,
+            phase: state.pendingOperation.phase,
+            classification: recovery.classification,
+            temporaryPath: state.pendingOperation.temporaryPath,
+            finalPath: state.pendingOperation.finalPath,
+            nextSafeAction: recovery.nextSafeAction,
+          },
+          outcome: "workspace-operation-pending",
+        };
+      }
+      const recovery = await inspectTargetIntegrationOperation(
         state.pendingOperation,
       );
       return {
@@ -238,11 +275,13 @@ async function stateOutcome(
           kind: state.pendingOperation.kind,
           phase: state.pendingOperation.phase,
           classification: recovery.classification,
-          temporaryPath: state.pendingOperation.temporaryPath,
-          finalPath: state.pendingOperation.finalPath,
+          targetClassification: recovery.target.classification,
+          targetHead: recovery.target.head,
+          workspacePath: state.pendingOperation.workspacePath,
+          outcomePath: state.pendingOperation.outcomePath,
           nextSafeAction: recovery.nextSafeAction,
         },
-        outcome: "workspace-operation-pending",
+        outcome: "target-operation-pending",
       };
     }
     if (state?.reconciliation.active)

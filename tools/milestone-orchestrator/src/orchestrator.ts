@@ -4,14 +4,9 @@ import { existsSync } from "node:fs";
 import { mkdir, readFile, stat } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
 
-import {
-  AGENT_INVOCATION_SCHEMA_VERSION,
-  AGENT_ROLES,
-  READINESS_VERIFICATION_STAGE_IDS,
-} from "./contracts.js";
+import { AGENT_INVOCATION_SCHEMA_VERSION, AGENT_ROLES } from "./contracts.js";
 import type {
   AgentInvocationRecord,
-  AuthoritativeVerificationSummary,
   BlockerRecord,
   CandidateIdentity,
   CodexTurnResult,
@@ -25,6 +20,7 @@ import type {
   ReadinessHistoryEvidence,
   ReviewerReport,
   RunState,
+  TargetIntegrateOperation,
   VerificationSummary,
   WorkerFailureRecord,
   WorkspaceCleanupReason,
@@ -71,13 +67,16 @@ import {
   inspectAttempt,
   inspectTarget,
   gitHead,
-  integrateFastForward,
   workingChangedPaths,
 } from "./git-isolation.js";
 import {
+  advanceTargetIntegrateOperation,
   advanceWorkspaceCreateOperation,
+  blockTargetIntegrateOperation,
   blockWorkspaceCreateOperation,
+  completeTargetIntegrateOperation,
   completeWorkspaceCreateOperation,
+  setTargetIntegrateOperation,
   setWorkspaceCreateOperation,
 } from "./operation-intent.js";
 import {
@@ -85,7 +84,6 @@ import {
   assertRequiredVerticalConsumerStart,
   milestoneById,
   replaceMilestone,
-  requiredVerticalConsumerAfterCompletion,
   transitionMilestone,
 } from "./milestone-state.js";
 import {
@@ -97,6 +95,8 @@ import { strictlyContained } from "./path-safety.js";
 import { requestPlan } from "./planner.js";
 import { redactSensitiveText, redactSensitiveValue } from "./redaction.js";
 import { requestReview, reviewerApproves } from "./reviewer.js";
+import { authoritativeStageSetsAreConsistent } from "./readiness-completion.js";
+export { humanPlaytestStopReason } from "./readiness-completion.js";
 import {
   assertWorkerThreadPolicy,
   decideWorkerEscalation,
@@ -124,6 +124,15 @@ import {
   type WorkspaceCreateHooks,
   type WorkspaceCreateRecoveryInspection,
 } from "./workspace-create.js";
+import {
+  fastForwardTargetIntegration,
+  fetchTargetIntegrationCandidate,
+  inspectTargetIntegrationOperation,
+  materializeTargetIntegrationOutcome,
+  planTargetIntegrateOperation,
+  type TargetIntegrationHooks,
+  type TargetIntegrationRecoveryInspection,
+} from "./target-integration.js";
 import { TelemetryStore } from "./telemetry-store.js";
 import type {
   BeginTelemetryPhaseInput,
@@ -139,7 +148,9 @@ export interface OrchestratorDependencies {
   readonly now?: () => Date;
   readonly createRunId?: () => string;
   readonly createWorkspaceOperationId?: () => string;
+  readonly createTargetIntegrationOperationId?: () => string;
   readonly workspaceCreateHooks?: WorkspaceCreateHooks;
+  readonly targetIntegrationHooks?: TargetIntegrationHooks;
   readonly workspaceCleanup?: typeof performWorkspaceCleanup;
   readonly evidencePlanner?: typeof planManagedEvidenceRuns;
   readonly evidenceDiscovery?: typeof discoverManagedEvidenceRuns;
@@ -157,8 +168,9 @@ export interface OrchestratorInspection {
   } | null;
   readonly pendingWorkspaceCleanups: number;
   readonly pendingOperation: {
-    readonly operation: WorkspaceCreateOperation;
-    readonly recovery: WorkspaceCreateRecoveryInspection;
+    readonly operation: WorkspaceCreateOperation | TargetIntegrateOperation;
+    readonly recovery:
+      WorkspaceCreateRecoveryInspection | TargetIntegrationRecoveryInspection;
   } | null;
   readonly protectedIntegrity:
     "verified" | "uninitialized" | { readonly driftedPaths: readonly string[] };
@@ -204,6 +216,26 @@ export class WorkspaceCreateBlockedError extends Error {
   ) {
     super(`Workspace-create operation ${operationId} is blocked: ${message}`);
     this.name = "WorkspaceCreateBlockedError";
+  }
+}
+
+export class TargetIntegrationInterruptedError extends Error {
+  constructor(
+    readonly point: string,
+    options: { readonly cause: unknown },
+  ) {
+    super(`Target-integrate operation was interrupted at ${point}.`, options);
+    this.name = "TargetIntegrationInterruptedError";
+  }
+}
+
+export class TargetIntegrationBlockedError extends Error {
+  constructor(
+    readonly operationId: string,
+    message: string,
+  ) {
+    super(`Target-integrate operation ${operationId} is blocked: ${message}`);
+    this.name = "TargetIntegrationBlockedError";
   }
 }
 
@@ -358,59 +390,6 @@ function feedbackFromReview(report: ReviewerReport): string {
       findings: report.findings,
       checks: report.checks,
     }),
-  );
-}
-
-function authoritativeStageSetsAreConsistent(
-  authoritative: AuthoritativeVerificationSummary,
-): boolean {
-  if (
-    authoritative.profileId !== "readiness" ||
-    !Array.isArray(authoritative.stages) ||
-    !Array.isArray(authoritative.passingStageIds) ||
-    !Array.isArray(authoritative.notReadyStageIds) ||
-    !Array.isArray(authoritative.previouslyPassingStageIds) ||
-    authoritative.requiredStageCount !==
-      READINESS_VERIFICATION_STAGE_IDS.length ||
-    authoritative.stages.length !== READINESS_VERIFICATION_STAGE_IDS.length ||
-    authoritative.stages.some(
-      (stage, index) =>
-        typeof stage?.id !== "string" ||
-        stage.id !== READINESS_VERIFICATION_STAGE_IDS[index] ||
-        (stage.status !== "PASS" && stage.status !== "NOT_READY"),
-    ) ||
-    (authoritative.readinessHistoryMode !== "first-readiness-transition" &&
-      authoritative.readinessHistoryMode !== "durable-records")
-  )
-    return false;
-  const stageIds = authoritative.stages.map((stage) => stage.id);
-  const expectedPassing = authoritative.stages
-    .filter((stage) => stage.status === "PASS")
-    .map((stage) => stage.id);
-  const expectedNotReady = authoritative.stages
-    .filter((stage) => stage.status === "NOT_READY")
-    .map((stage) => stage.id);
-  const previousIds = authoritative.previouslyPassingStageIds;
-  return (
-    new Set(stageIds).size === stageIds.length &&
-    new Set(previousIds).size === previousIds.length &&
-    previousIds.every(
-      (stageId) =>
-        READINESS_VERIFICATION_STAGE_IDS.includes(stageId as never) &&
-        expectedPassing.includes(stageId),
-    ) &&
-    ((authoritative.readinessHistoryMode === "first-readiness-transition" &&
-      previousIds.length === 0) ||
-      (authoritative.readinessHistoryMode === "durable-records" &&
-        previousIds.length > 0)) &&
-    authoritative.passingStageIds.length === expectedPassing.length &&
-    authoritative.passingStageIds.every(
-      (stageId, index) => stageId === expectedPassing[index],
-    ) &&
-    authoritative.notReadyStageIds.length === expectedNotReady.length &&
-    authoritative.notReadyStageIds.every(
-      (stageId, index) => stageId === expectedNotReady[index],
-    )
   );
 }
 
@@ -605,26 +584,6 @@ export function readinessHistoryEvidenceForCandidate(
   };
 }
 
-export function humanPlaytestStopReason(
-  authoritative: AuthoritativeVerificationSummary | null | undefined,
-): string | null {
-  if (
-    authoritative?.status === "PASS" &&
-    authoritative.exitCode === 0 &&
-    authoritative.disposition === "completion-eligible" &&
-    authoritative.profileId === "readiness" &&
-    authoritative.completionClaim === "autonomous_readiness" &&
-    authoritative.completionEligible === true &&
-    authoritative.profileAutonomousReadinessEquivalent === true &&
-    authoritative.autonomousReadinessEquivalent === true &&
-    authoritativeStageSetsAreConsistent(authoritative) &&
-    authoritative.notReadyStageIds.length === 0 &&
-    authoritative.passingStageIds.length === authoritative.requiredStageCount
-  )
-    return "Final autonomous-readiness verification passed; stop for human playtesting.";
-  return null;
-}
-
 export class MilestoneOrchestrator {
   readonly repositoryRoot: string;
   readonly config: OrchestratorConfig;
@@ -634,7 +593,9 @@ export class MilestoneOrchestrator {
   private readonly now: () => Date;
   private readonly createRunId: () => string;
   private readonly createWorkspaceOperationId: () => string;
+  private readonly createTargetIntegrationOperationId: () => string;
   private readonly workspaceCreateHooks: WorkspaceCreateHooks;
+  private readonly targetIntegrationHooks: TargetIntegrationHooks;
   private readonly workspaceCleanup: typeof performWorkspaceCleanup;
   private readonly evidencePlanner: typeof planManagedEvidenceRuns;
   private readonly evidenceDiscovery: typeof discoverManagedEvidenceRuns;
@@ -651,7 +612,9 @@ export class MilestoneOrchestrator {
     now: () => Date;
     createRunId: () => string;
     createWorkspaceOperationId: () => string;
+    createTargetIntegrationOperationId: () => string;
     workspaceCreateHooks: WorkspaceCreateHooks;
+    targetIntegrationHooks: TargetIntegrationHooks;
     workspaceCleanup: typeof performWorkspaceCleanup;
     evidencePlanner: typeof planManagedEvidenceRuns;
     evidenceDiscovery: typeof discoverManagedEvidenceRuns;
@@ -666,6 +629,8 @@ export class MilestoneOrchestrator {
     this.now = input.now;
     this.createRunId = input.createRunId;
     this.createWorkspaceOperationId = input.createWorkspaceOperationId;
+    this.createTargetIntegrationOperationId =
+      input.createTargetIntegrationOperationId;
     this.workspaceCreateHooks = {
       fault: async (point, operation) => {
         if (!input.workspaceCreateHooks.fault) return;
@@ -673,6 +638,16 @@ export class MilestoneOrchestrator {
           await input.workspaceCreateHooks.fault(point, operation);
         } catch (error) {
           throw new WorkspaceCreateInterruptedError(point, { cause: error });
+        }
+      },
+    };
+    this.targetIntegrationHooks = {
+      fault: async (point, operation) => {
+        if (!input.targetIntegrationHooks.fault) return;
+        try {
+          await input.targetIntegrationHooks.fault(point, operation);
+        } catch (error) {
+          throw new TargetIntegrationInterruptedError(point, { cause: error });
         }
       },
     };
@@ -724,7 +699,10 @@ export class MilestoneOrchestrator {
     const now = dependencies.now ?? (() => new Date());
     const store = new StateStore(root, config.statePath, () => iso(now));
     let state = await store.loadForMutation();
-    const target = inspectTarget(root, config.targetBranch);
+    const target =
+      state?.pendingOperation?.kind === "target-integrate"
+        ? { head: gitHead(root) }
+        : inspectTarget(root, config.targetBranch);
     if (!state) {
       const discover =
         dependencies.evidenceDiscovery ?? discoverManagedEvidenceRuns;
@@ -772,7 +750,11 @@ export class MilestoneOrchestrator {
       createWorkspaceOperationId:
         dependencies.createWorkspaceOperationId ??
         (() => `workspace-create-${randomUUID()}`),
+      createTargetIntegrationOperationId:
+        dependencies.createTargetIntegrationOperationId ??
+        (() => `target-integrate-${randomUUID()}`),
       workspaceCreateHooks: dependencies.workspaceCreateHooks ?? {},
+      targetIntegrationHooks: dependencies.targetIntegrationHooks ?? {},
       workspaceCleanup:
         dependencies.workspaceCleanup ?? performWorkspaceCleanup,
       evidencePlanner: dependencies.evidencePlanner ?? planManagedEvidenceRuns,
@@ -783,7 +765,7 @@ export class MilestoneOrchestrator {
       lease,
     });
     instance.assertStoredPaths();
-    await instance.recoverPendingWorkspaceCreate();
+    await instance.recoverPendingOperation();
     const canonical = enforcementProtectedPatterns(
       config,
       instance.stateValue.repository.protectedFiles,
@@ -810,7 +792,9 @@ export class MilestoneOrchestrator {
       });
     }
     instance.assertStoredAgentPolicies();
-    await instance.reconcileTarget(target.head);
+    await instance.reconcileTarget(
+      inspectTarget(root, config.targetBranch).head,
+    );
     await instance.initializeEvidenceRetention();
     await instance.reconcileTerminalWorkspaceCleanup();
     await assertProtectedFiles(
@@ -868,9 +852,10 @@ export class MilestoneOrchestrator {
     const pendingOperation = state.pendingOperation
       ? {
           operation: state.pendingOperation,
-          recovery: await inspectWorkspaceCreateOperation(
-            state.pendingOperation,
-          ),
+          recovery:
+            state.pendingOperation.kind === "workspace-create"
+              ? await inspectWorkspaceCreateOperation(state.pendingOperation)
+              : await inspectTargetIntegrationOperation(state.pendingOperation),
         }
       : null;
     return {
@@ -935,7 +920,7 @@ export class MilestoneOrchestrator {
         );
     }
     const operation = this.stateValue.pendingOperation;
-    if (operation) {
+    if (operation?.kind === "workspace-create") {
       const planned = planWorkspaceCreateOperation({
         operationId: operation.id,
         inputStateGeneration: operation.inputStateGeneration,
@@ -958,6 +943,38 @@ export class MilestoneOrchestrator {
       )
         throw new Error(
           `Pending workspace-create operation ${operation.id} has non-canonical controller paths.`,
+        );
+    } else if (operation?.kind === "target-integrate") {
+      const milestone = milestoneById(this.stateValue, operation.milestoneId);
+      const planned = planTargetIntegrateOperation({
+        operationId: operation.id,
+        inputStateGeneration: operation.inputStateGeneration,
+        inputStateRevision: operation.inputStateRevision,
+        repositoryRoot: this.repositoryRoot,
+        targetBranch: this.config.targetBranch,
+        expectedBaseCommit: operation.expectedBaseCommit,
+        workspacePath: operation.workspacePath,
+        workspaceBranch: operation.workspaceBranch,
+        candidate: operation.candidate,
+        verificationResultSha256: operation.verificationResultSha256,
+        commits: operation.commits,
+        outcomePath: resolve(
+          this.attemptDirectory(milestone),
+          "git-outcome.json",
+        ),
+        runId: operation.runId,
+        milestoneId: operation.milestoneId,
+        attempt: operation.attempt,
+        now: operation.createdAt,
+      });
+      if (
+        operation.repositoryRoot !== planned.repositoryRoot ||
+        operation.workspacePath !== planned.workspacePath ||
+        operation.outcomePath !== planned.outcomePath ||
+        operation.outcomeTemporaryPath !== planned.outcomeTemporaryPath
+      )
+        throw new Error(
+          `Pending target-integrate operation ${operation.id} has non-canonical controller paths.`,
         );
     }
     const retentionReport = this.stateValue.evidenceRetention.lastReportPath;
@@ -1051,7 +1068,7 @@ export class MilestoneOrchestrator {
       "published",
     ] as const;
     const targetIndex = phases.indexOf(target);
-    while (this.stateValue.pendingOperation) {
+    while (this.stateValue.pendingOperation?.kind === "workspace-create") {
       const operation = this.stateValue.pendingOperation;
       if (operation.phase === "blocked")
         throw new WorkspaceCreateBlockedError(
@@ -1083,7 +1100,7 @@ export class MilestoneOrchestrator {
         ),
       );
       const advanced = this.stateValue.pendingOperation;
-      if (!advanced)
+      if (!advanced || advanced.kind !== "workspace-create")
         throw new Error(
           "Workspace-create phase advance unexpectedly cleared intent.",
         );
@@ -1101,7 +1118,7 @@ export class MilestoneOrchestrator {
     inspection: WorkspaceCreateRecoveryInspection,
   ): Promise<never> {
     const operation = this.stateValue.pendingOperation;
-    if (!operation)
+    if (!operation || operation.kind !== "workspace-create")
       throw new Error(
         "Cannot block a workspace-create operation that is absent.",
       );
@@ -1145,14 +1162,14 @@ export class MilestoneOrchestrator {
 
   private async recoverPendingWorkspaceCreate(): Promise<void> {
     const initial = this.stateValue.pendingOperation;
-    if (!initial) return;
+    if (!initial || initial.kind !== "workspace-create") return;
     if (initial.phase === "blocked")
       throw new WorkspaceCreateBlockedError(
         initial.id,
         initial.diagnostic?.message ?? "manual reconciliation is required",
       );
     try {
-      while (this.stateValue.pendingOperation) {
+      while (this.stateValue.pendingOperation?.kind === "workspace-create") {
         const operation = this.stateValue.pendingOperation;
         const inspection = await inspectWorkspaceCreateOperation(operation);
         if (
@@ -1170,7 +1187,7 @@ export class MilestoneOrchestrator {
           case "missing":
             await this.advanceWorkspaceCreateTo("clone-started");
             await cloneWorkspaceCreateTemporary(
-              this.stateValue.pendingOperation!,
+              this.stateValue.pendingOperation,
               this.workspaceCreateHooks,
             );
             await this.advanceWorkspaceCreateTo("clone-ready");
@@ -1178,11 +1195,11 @@ export class MilestoneOrchestrator {
           case "temporary-source-clone":
             await this.advanceWorkspaceCreateTo("clone-started");
             await finishWorkspaceCreateTemporary(
-              this.stateValue.pendingOperation!,
+              this.stateValue.pendingOperation,
             );
             await this.workspaceCreateFault(
               "after-temporary-ready",
-              this.stateValue.pendingOperation!,
+              this.stateValue.pendingOperation,
             );
             await this.advanceWorkspaceCreateTo("clone-ready");
             break;
@@ -1190,14 +1207,14 @@ export class MilestoneOrchestrator {
             await this.advanceWorkspaceCreateTo("clone-ready");
             await this.advanceWorkspaceCreateTo("publish-started");
             await publishWorkspaceCreateTemporary(
-              this.stateValue.pendingOperation!,
+              this.stateValue.pendingOperation,
               this.workspaceCreateHooks,
             );
             break;
           case "final-ready": {
             await this.advanceWorkspaceCreateTo("published");
             const published = this.stateValue.pendingOperation;
-            if (!published)
+            if (!published || published.kind !== "workspace-create")
               throw new Error("Published workspace lost its durable intent.");
             await this.persist(
               completeWorkspaceCreateOperation(this.stateValue, published.id),
@@ -1219,7 +1236,7 @@ export class MilestoneOrchestrator {
       )
         throw error;
       const operation = this.stateValue.pendingOperation;
-      if (!operation) throw error;
+      if (!operation || operation.kind !== "workspace-create") throw error;
       const inspection = await inspectWorkspaceCreateOperation(operation);
       if (
         [
@@ -1233,6 +1250,249 @@ export class MilestoneOrchestrator {
         await this.blockWorkspaceCreate(inspection);
       throw error;
     }
+  }
+
+  private async targetIntegrationFault(
+    point: Parameters<NonNullable<TargetIntegrationHooks["fault"]>>[0],
+    operation: TargetIntegrateOperation,
+  ): Promise<void> {
+    await this.targetIntegrationHooks.fault?.(point, operation);
+  }
+
+  private async advanceTargetIntegrationTo(
+    target:
+      | "outcome-pending"
+      | "target-update-started"
+      | "target-updated"
+      | "outcome-integrated",
+  ): Promise<void> {
+    const phases = [
+      "intent-persisted",
+      "outcome-pending",
+      "target-update-started",
+      "target-updated",
+      "outcome-integrated",
+    ] as const;
+    const targetIndex = phases.indexOf(target);
+    while (this.stateValue.pendingOperation?.kind === "target-integrate") {
+      const operation = this.stateValue.pendingOperation;
+      if (operation.phase === "blocked")
+        throw new TargetIntegrationBlockedError(
+          operation.id,
+          operation.diagnostic?.message ?? "manual reconciliation is required",
+        );
+      const currentIndex = phases.indexOf(operation.phase);
+      if (currentIndex < 0)
+        throw new Error(
+          `Target-integrate operation ${operation.id} has an unknown active phase.`,
+        );
+      if (currentIndex >= targetIndex) return;
+      const nextPhase = phases[currentIndex + 1] as
+        | "outcome-pending"
+        | "target-update-started"
+        | "target-updated"
+        | "outcome-integrated"
+        | undefined;
+      if (!nextPhase)
+        throw new Error(
+          `Target-integrate operation ${operation.id} cannot advance to ${target}.`,
+        );
+      await this.persist(
+        advanceTargetIntegrateOperation(
+          this.stateValue,
+          operation.id,
+          nextPhase,
+          iso(this.now),
+        ),
+      );
+      const advanced = this.stateValue.pendingOperation;
+      if (!advanced || advanced.kind !== "target-integrate")
+        throw new Error(
+          "Target-integrate phase advance unexpectedly cleared intent.",
+        );
+      const faultPoint = {
+        "outcome-pending": "after-outcome-pending-state",
+        "target-update-started": "after-target-update-started-state",
+        "target-updated": "after-target-updated-state",
+        "outcome-integrated": "after-outcome-integrated-state",
+      }[nextPhase] as Parameters<
+        NonNullable<TargetIntegrationHooks["fault"]>
+      >[0];
+      await this.targetIntegrationFault(faultPoint, advanced);
+    }
+  }
+
+  private async blockTargetIntegration(
+    inspection: TargetIntegrationRecoveryInspection,
+  ): Promise<never> {
+    const operation = this.stateValue.pendingOperation;
+    if (!operation || operation.kind !== "target-integrate")
+      throw new Error(
+        "Cannot block a target-integrate operation that is absent.",
+      );
+    if (operation.phase === "blocked")
+      throw new TargetIntegrationBlockedError(
+        operation.id,
+        operation.diagnostic?.message ?? inspection.message,
+      );
+    if (
+      inspection.classification === "target-base" ||
+      inspection.classification === "target-candidate"
+    )
+      throw new Error(
+        `Cannot block recoverable target classification ${inspection.classification}.`,
+      );
+    const observedAt = iso(this.now);
+    await this.persist(
+      blockTargetIntegrateOperation(this.stateValue, operation.id, {
+        classification: inspection.classification,
+        message: redactSensitiveText(inspection.message),
+        observedAt,
+        targetHead: inspection.target.head,
+        preservedPaths: inspection.preservedPaths,
+        quarantinePath: null,
+      }),
+    );
+    throw new TargetIntegrationBlockedError(
+      operation.id,
+      redactSensitiveText(inspection.message),
+    );
+  }
+
+  private async recoverPendingTargetIntegration(): Promise<void> {
+    const initial = this.stateValue.pendingOperation;
+    if (!initial || initial.kind !== "target-integrate") return;
+    if (initial.phase === "blocked")
+      throw new TargetIntegrationBlockedError(
+        initial.id,
+        initial.diagnostic?.message ?? "manual reconciliation is required",
+      );
+    try {
+      while (this.stateValue.pendingOperation?.kind === "target-integrate") {
+        let operation = this.stateValue.pendingOperation;
+        const inspection = await inspectTargetIntegrationOperation(operation);
+        if (
+          inspection.classification !== "target-base" &&
+          inspection.classification !== "target-candidate"
+        )
+          await this.blockTargetIntegration(inspection);
+
+        await assertProtectedFiles(
+          operation.workspacePath,
+          this.stateValue.repository.protectedFiles,
+        );
+        await assertProtectedFiles(
+          operation.repositoryRoot,
+          this.stateValue.repository.protectedFiles,
+        );
+
+        if (operation.phase === "intent-persisted") {
+          await materializeTargetIntegrationOutcome(
+            operation,
+            "pending",
+            this.targetIntegrationHooks,
+          );
+          await this.advanceTargetIntegrationTo("outcome-pending");
+          operation = this.stateValue
+            .pendingOperation as TargetIntegrateOperation;
+        }
+
+        if (
+          operation.phase === "outcome-pending" ||
+          operation.phase === "target-update-started"
+        ) {
+          await materializeTargetIntegrationOutcome(
+            operation,
+            "pending",
+            this.targetIntegrationHooks,
+          );
+          await this.advanceTargetIntegrationTo("target-update-started");
+          operation = this.stateValue
+            .pendingOperation as TargetIntegrateOperation;
+          const target = await inspectTargetIntegrationOperation(operation);
+          if (target.classification === "target-base") {
+            await fetchTargetIntegrationCandidate(
+              operation,
+              this.targetIntegrationHooks,
+            );
+            await fastForwardTargetIntegration(
+              operation,
+              this.targetIntegrationHooks,
+            );
+          } else if (target.classification !== "target-candidate") {
+            await this.blockTargetIntegration(target);
+          }
+          await this.advanceTargetIntegrationTo("target-updated");
+          operation = this.stateValue
+            .pendingOperation as TargetIntegrateOperation;
+        }
+
+        if (operation.phase === "target-updated") {
+          const target = await inspectTargetIntegrationOperation(operation);
+          if (target.classification !== "target-candidate") {
+            if (target.classification === "target-base")
+              await this.blockTargetIntegration({
+                ...target,
+                classification: "state-target-inconsistent",
+                nextSafeAction: "manual-reconciliation-required",
+                message:
+                  "Durable integration phase says target-updated, but target remains at the base.",
+              });
+            await this.blockTargetIntegration(target);
+          }
+          await materializeTargetIntegrationOutcome(
+            operation,
+            "integrated",
+            this.targetIntegrationHooks,
+          );
+          await this.advanceTargetIntegrationTo("outcome-integrated");
+          operation = this.stateValue
+            .pendingOperation as TargetIntegrateOperation;
+        }
+
+        if (operation.phase === "outcome-integrated") {
+          const finalInspection =
+            await inspectTargetIntegrationOperation(operation);
+          if (finalInspection.classification !== "target-candidate")
+            await this.blockTargetIntegration(finalInspection);
+          await materializeTargetIntegrationOutcome(
+            operation,
+            "integrated",
+            this.targetIntegrationHooks,
+          );
+          await this.persist(
+            completeTargetIntegrateOperation(this.stateValue, operation.id),
+          );
+          await this.targetIntegrationFault(
+            "after-completion-state",
+            operation,
+          );
+          return;
+        }
+      }
+    } catch (error) {
+      if (
+        error instanceof TargetIntegrationInterruptedError ||
+        error instanceof TargetIntegrationBlockedError
+      )
+        throw error;
+      const operation = this.stateValue.pendingOperation;
+      if (!operation || operation.kind !== "target-integrate") throw error;
+      const inspection = await inspectTargetIntegrationOperation(operation);
+      if (
+        inspection.classification !== "target-base" &&
+        inspection.classification !== "target-candidate"
+      )
+        await this.blockTargetIntegration(inspection);
+      throw error;
+    }
+  }
+
+  private async recoverPendingOperation(): Promise<void> {
+    if (this.stateValue.pendingOperation?.kind === "workspace-create")
+      await this.recoverPendingWorkspaceCreate();
+    else if (this.stateValue.pendingOperation?.kind === "target-integrate")
+      await this.recoverPendingTargetIntegration();
   }
 
   private async initializeEvidenceRetention(): Promise<void> {
@@ -1463,67 +1723,9 @@ export class MilestoneOrchestrator {
 
   private async reconcileTarget(targetHead: string): Promise<void> {
     if (targetHead === this.stateValue.repository.verifiedCommit) return;
-    const activeId = this.stateValue.activeMilestoneId;
-    if (!activeId)
-      throw new Error(
-        `Unsafe target HEAD ${targetHead}; stored verified commit is ${this.stateValue.repository.verifiedCommit}.`,
-      );
-    const milestone = milestoneById(this.stateValue, activeId);
-    const lastReview = milestone.reviewerDecisions.at(-1);
-    if (
-      milestone.status !== "reviewing" ||
-      !lastReview ||
-      !reviewerApproves(lastReview) ||
-      !milestone.workspace
-    )
-      throw new Error(
-        "Target advanced without a persisted approved integration intent.",
-      );
-    const attempt = inspectAttempt(
-      milestone.workspace.path,
-      milestone.workspace.baseCommit,
+    throw new Error(
+      `Target HEAD ${targetHead} differs from stored verified commit ${this.stateValue.repository.verifiedCommit} without a durable target-integrate operation. Explicit external reconciliation is required.`,
     );
-    if (attempt.headCommit !== targetHead || !attempt.clean)
-      throw new Error(
-        "Target and approved isolated attempt do not match during recovery.",
-      );
-    const pinned = milestone.verificationSummaries.at(-1);
-    if (
-      pinned?.status === "PASS" &&
-      pinned.candidate !== null &&
-      !candidateIdentitiesEqual(
-        pinned.candidate,
-        candidateIdentityFrom(milestone.workspace.baseCommit, attempt),
-      )
-    )
-      throw new Error(
-        "Target advanced but the workspace no longer matches the pinned verified candidate.",
-      );
-    await assertProtectedFiles(
-      this.repositoryRoot,
-      this.stateValue.repository.protectedFiles,
-    );
-    let recovered = replaceMilestone(this.stateValue, activeId, (record) => ({
-      ...record,
-      commits: attempt.commits,
-      workspace: record.workspace
-        ? { ...record.workspace, headCommit: targetHead }
-        : null,
-    }));
-    recovered = transitionMilestone(
-      recovered,
-      activeId,
-      "completed",
-      iso(this.now),
-    );
-    recovered = {
-      ...recovered,
-      repository: { ...recovered.repository, verifiedCommit: targetHead },
-      queue: recovered.queue.filter((id) => id !== activeId),
-      activeMilestoneId: null,
-      nextAllowedAction: "plan",
-    };
-    await this.persist(recovered);
   }
 
   private runArtifactDirectory(): string {
@@ -2348,10 +2550,7 @@ export class MilestoneOrchestrator {
       await this.persist(
         setWorkspaceCreateOperation(this.stateValue, operation),
       );
-      await this.workspaceCreateFault(
-        "after-intent-persisted",
-        this.stateValue.pendingOperation!,
-      );
+      await this.workspaceCreateFault("after-intent-persisted", operation);
       await this.recoverPendingWorkspaceCreate();
       milestone = milestoneById(this.stateValue, id);
     }
@@ -2818,37 +3017,50 @@ export class MilestoneOrchestrator {
       this.repositoryRoot,
       this.stateValue.repository.protectedFiles,
     );
+    const verification = milestone.verificationSummaries.at(-1);
+    const verificationResultSha256 = verification?.authoritativeResultSha256;
+    const runId = this.stateValue.run.id;
+    if (!verificationResultSha256 || !runId)
+      throw new Error(
+        "Target integration requires an active run and pinned verification result hash.",
+      );
     const outcomePath = resolve(
       this.attemptDirectory(milestone),
       "git-outcome.json",
     );
-    await atomicWriteJson(outcomePath, {
-      schemaVersion: "1.0.0",
-      status: "pending",
-      baseCommit: milestone.workspace.baseCommit,
-      headCommit: verified.commit,
+    const generation = this.store.mutationGeneration();
+    const operation = planTargetIntegrateOperation({
+      operationId: this.createTargetIntegrationOperationId(),
+      inputStateGeneration: generation.objectId,
+      inputStateRevision: generation.revision,
+      repositoryRoot: this.repositoryRoot,
+      targetBranch: this.config.targetBranch,
+      expectedBaseCommit: this.stateValue.repository.verifiedCommit,
+      workspacePath: milestone.workspace.path,
+      workspaceBranch: milestone.workspace.branch,
+      candidate: verified,
+      verificationResultSha256,
       commits,
+      outcomePath,
+      runId,
+      milestoneId: id,
+      attempt: milestone.attempts,
+      now: iso(this.now),
     });
+    await this.persist(setTargetIntegrateOperation(this.stateValue, operation));
+    await this.targetIntegrationFault("after-intent-persisted", operation);
     const telemetry = await this.telemetryStoreBestEffort();
     const integrationSpan = await this.beginPhaseBestEffort(telemetry, {
       phase: "integration",
       eventType: "milestone-fast-forward",
-      operationId: `${this.stateValue.run.id ?? "run"}-${id}-integration`,
+      operationId: operation.id,
       candidate: telemetryCandidate(
         milestone.workspace.path,
         milestone.workspace.baseCommit,
       ),
     });
-    let integrated: string;
     try {
-      integrated = integrateFastForward({
-        repositoryRoot: this.repositoryRoot,
-        targetBranch: this.config.targetBranch,
-        expectedBaseCommit: this.stateValue.repository.verifiedCommit,
-        workspacePath: milestone.workspace.path,
-        headCommit: verified.commit,
-        expectedTree: verified.tree,
-      });
+      await this.recoverPendingTargetIntegration();
       await this.finishSpanBestEffort(integrationSpan, {
         status: "PASS",
         candidate: telemetryCandidate(
@@ -2866,46 +3078,16 @@ export class MilestoneOrchestrator {
       });
       throw error;
     }
-    let completed = replaceMilestone(this.stateValue, id, (record) => ({
-      ...record,
-      commits,
-      workspace: record.workspace
-        ? { ...record.workspace, headCommit: integrated }
-        : null,
-    }));
-    completed = transitionMilestone(completed, id, "completed", iso(this.now));
-    completed = {
-      ...completed,
-      repository: { ...completed.repository, verifiedCommit: integrated },
-      queue: completed.queue.filter((entry) => entry !== id),
-      activeMilestoneId: null,
-      requiredNextVerticalConsumer: requiredVerticalConsumerAfterCompletion(
-        completed.requiredNextVerticalConsumer,
-        milestone.proposal,
-      ),
-      run: {
-        ...completed.run,
-        milestonesProcessed: completed.run.milestonesProcessed + 1,
-      },
-      nextAllowedAction: "plan",
-    };
-    await this.persist(completed);
-    await atomicWriteJson(outcomePath, {
-      schemaVersion: "1.0.0",
-      status: "integrated",
-      baseCommit: milestone.workspace.baseCommit,
-      headCommit: integrated,
-      commits,
-      targetBranch: this.config.targetBranch,
-    });
     const cleanup = await this.cleanupTerminalWorkspace(id);
     if (!cleanup.ok && cleanup.error) {
       await this.recordCleanupControllerFailure(id, cleanup.error);
       return;
     }
-    const authoritative = milestone.verificationSummaries.at(-1)?.authoritative;
-    const stopReason = humanPlaytestStopReason(authoritative);
-    if (stopReason) await this.stopRun(stopReason);
+    const stopReason = this.stateValue.run.stopReason;
+    if (this.stateValue.run.status === "stopped" && stopReason) {
+      await this.writeRunSummary();
+      await this.completeTelemetry("PASS", stopReason);
+    }
   }
 
   private async processMilestone(id: string): Promise<void> {
@@ -2949,6 +3131,7 @@ export class MilestoneOrchestrator {
           try {
             await this.review(id);
           } catch (error) {
+            if (this.stateValue.pendingOperation) throw error;
             await this.retryOrEscalate(
               id,
               "infrastructure",

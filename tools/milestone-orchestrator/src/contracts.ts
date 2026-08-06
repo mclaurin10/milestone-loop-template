@@ -1,7 +1,7 @@
 export const LEGACY_MILESTONE_SCHEMA_VERSION = "1.0.0" as const;
 export const PREVIOUS_MILESTONE_SCHEMA_VERSION = "1.1.0" as const;
 export const MILESTONE_SCHEMA_VERSION = "1.2.0" as const;
-export const STATE_SCHEMA_VERSION = "1.5.0" as const;
+export const STATE_SCHEMA_VERSION = "1.6.0" as const;
 export const CONFIG_SCHEMA_VERSION = "1.4.0" as const;
 export const REVIEW_LEGACY_SCHEMA_VERSION = "1.0.0" as const;
 export const REVIEW_SCHEMA_VERSION = "1.1.0" as const;
@@ -700,7 +700,66 @@ export interface WorkspaceCreateOperation {
   readonly diagnostic: WorkspaceCreateDiagnostic | null;
 }
 
-export type PendingOperation = WorkspaceCreateOperation;
+export const TARGET_INTEGRATE_PHASES = [
+  "intent-persisted",
+  "outcome-pending",
+  "target-update-started",
+  "target-updated",
+  "outcome-integrated",
+  "blocked",
+] as const;
+export type TargetIntegratePhase = (typeof TARGET_INTEGRATE_PHASES)[number];
+
+export type TargetIntegrateBlockedClassification =
+  | "candidate-drift"
+  | "outcome-conflict"
+  | "state-target-inconsistent"
+  | "target-branch-mismatch"
+  | "target-dirty"
+  | "target-index-locked"
+  | "target-operation-in-progress"
+  | "target-path-unsafe"
+  | "target-unexpected-commit"
+  | "workspace-path-unsafe";
+
+export interface TargetIntegrateDiagnostic {
+  readonly classification: TargetIntegrateBlockedClassification;
+  readonly message: string;
+  readonly observedAt: string;
+  readonly targetHead: string | null;
+  readonly preservedPaths: readonly string[];
+  readonly quarantinePath: null;
+}
+
+export interface TargetIntegrateOperation {
+  readonly schemaVersion: typeof OPERATION_INTENT_SCHEMA_VERSION;
+  readonly kind: "target-integrate";
+  readonly id: string;
+  readonly runId: string;
+  readonly milestoneId: string;
+  readonly attempt: number;
+  readonly inputStateGeneration: string;
+  readonly inputStateRevision: number;
+  readonly repositoryRoot: string;
+  readonly targetBranch: string;
+  readonly expectedBaseCommit: string;
+  readonly workspacePath: string;
+  readonly workspaceBranch: string;
+  readonly candidate: CandidateIdentity;
+  readonly verificationResultSha256: string;
+  readonly commits: readonly string[];
+  readonly outcomePath: string;
+  readonly outcomeTemporaryPath: string;
+  readonly phase: TargetIntegratePhase;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+  readonly completionAt: string;
+  readonly recoveryPolicy: "validate-adopt-or-preserve";
+  readonly diagnostic: TargetIntegrateDiagnostic | null;
+}
+
+export type PendingOperation =
+  WorkspaceCreateOperation | TargetIntegrateOperation;
 
 export type WorkspaceCleanupReason =
   | "legacy-pre-policy"

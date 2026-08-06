@@ -28,6 +28,7 @@ import {
 } from "./state-generation-store.js";
 
 export interface AtomicWriteHooks {
+  readonly temporaryPath?: string;
   readonly beforeRename?: (
     temporaryPath: string,
     targetPath: string,
@@ -142,7 +143,8 @@ export async function atomicWriteJson(
   hooks: AtomicWriteHooks = {},
 ): Promise<void> {
   await mkdir(dirname(targetPath), { recursive: true });
-  const temporaryPath = `${targetPath}.tmp-${process.pid}-${randomUUID()}`;
+  const temporaryPath =
+    hooks.temporaryPath ?? `${targetPath}.tmp-${process.pid}-${randomUUID()}`;
   const handle = await open(temporaryPath, "wx");
   let closed = false;
   try {
@@ -436,8 +438,14 @@ export function migrateOrchestratorState(value: unknown): unknown {
   if (migrated["schemaVersion"] === "1.4.0") {
     migrated = {
       ...migrated,
-      schemaVersion: STATE_SCHEMA_VERSION,
+      schemaVersion: "1.5.0",
       pendingOperation: null,
+    };
+  }
+  if (migrated["schemaVersion"] === "1.5.0") {
+    migrated = {
+      ...migrated,
+      schemaVersion: STATE_SCHEMA_VERSION,
     };
   }
   return migrated;

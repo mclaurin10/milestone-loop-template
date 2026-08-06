@@ -150,11 +150,12 @@ report `NOT_READY`, never pass.
    pushes do not include either private ref.
 
    Isolated clone creation is a durable state operation, not a direct
-   filesystem call. State schema `1.5.0` records one exclusive
-   `workspace-create` intent bound to the exact input state generation before
-   any directory or clone side effect. The clone is built under a unique
-   controller-derived `.create-<hash>` path, made standalone and remote-free,
-   then published to its stable final path with no-clobber rename semantics.
+   filesystem call. State schema `1.6.0` records one exclusive pending
+   operation; a `workspace-create` intent is bound to the exact input state
+   generation before any directory or clone side effect. The clone is built
+   under a unique controller-derived `.create-<hash>` path, made standalone and
+   remote-free, then published to its stable final path with no-clobber rename
+   semantics.
    A leased restart classifies the recorded paths and can resume a missing
    clone, finish an exact source clone, publish an exact temporary clone, or
    adopt an exact final clone. Validation requires realpath containment, real
@@ -164,8 +165,24 @@ report `NOT_READY`, never pass.
    is preserved in place and the intent becomes durably blocked; it is never
    overwritten or automatically deleted. `loop:status` and `loop:doctor`
    report the classification and next safe action without taking the lease or
-   recovering the operation. Canonical `1.4.0` state is migrated virtually on
-   read and becomes `1.5.0` on its next successful CAS publication.
+   recovering the operation.
+
+   Approved target integration uses the same exclusive operation authority.
+   A strict `target-integrate` intent pins the run, milestone, attempt, exact
+   input generation, target base and branch, standalone workspace, approved
+   candidate identity and commits, verification-result digest, and canonical
+   outcome paths before `git-outcome.json`, fetch, or fast-forward side
+   effects. Leased restart revalidates protected files and candidate identity,
+   then resumes only from the exact clean base or adopts only the exact clean
+   candidate. Deterministic pending/integrated outcome bytes are adopted or
+   regenerated around explicit phases, and one pure reducer owns milestone,
+   queue, target, vertical-consumer, processed-count, and human-verification
+   stop bookkeeping. Dirty, locked, conflicted, drifted, linked, substituted,
+   or unexpected state is preserved with a durable blocked diagnostic. A
+   reviewer approval without the operation never authorizes implicit target
+   adoption. `loop:status` and `loop:doctor` classify recovery read-only.
+   Canonical `1.4.0`/`1.5.0` state is migrated virtually on read and becomes
+   `1.6.0` on its next successful CAS publication.
 
    **Nothing is deleted by `loop:run`.** Controller startup only *plans*
    evidence retention (the run's `evidence-retention.json` lists what a

@@ -15,6 +15,7 @@ import { dirname, join, relative, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { captureProtectedFiles } from "./git-isolation.js";
+import type { WorkspaceCreateOperation } from "./contracts.js";
 import { createMilestoneRecord } from "./milestone-state.js";
 import {
   MilestoneOrchestrator,
@@ -137,7 +138,7 @@ async function fixture() {
 async function crashAtWorkspaceBoundary(
   input: Awaited<ReturnType<typeof fixture>>,
   faultPoint: WorkspaceCreateFaultPoint = "after-final-publish",
-) {
+): Promise<WorkspaceCreateOperation> {
   const orchestrator = await MilestoneOrchestrator.open(
     input.root,
     input.configPath,
@@ -170,7 +171,10 @@ async function crashAtWorkspaceBoundary(
     expect(orchestrator.state.pendingOperation).toMatchObject({
       kind: "workspace-create",
     });
-    return orchestrator.state.pendingOperation!;
+    const operation = orchestrator.state.pendingOperation;
+    if (!operation || operation.kind !== "workspace-create")
+      throw new Error("Workspace-create crash did not retain its operation.");
+    return operation;
   } finally {
     await orchestrator.close();
   }

@@ -22,6 +22,7 @@ import {
   REQUIRED_PROTECTED_PATHS,
   SCOPE_TRIGGER_CLASSES,
   STATE_SCHEMA_VERSION,
+  TARGET_INTEGRATE_PHASES,
   VERIFICATION_MANIFEST_SCHEMA_VERSION,
   VERIFICATION_SUMMARY_SCHEMA_VERSION,
   VERIFICATION_TIERS,
@@ -281,6 +282,122 @@ function validWorkspaceCreateOperation(value: unknown): boolean {
     diagnostic["preservedPaths"].some(
       (path) => path !== value["temporaryPath"] && path !== value["finalPath"],
     ) ||
+    diagnostic["quarantinePath"] !== null
+  )
+    return false;
+  return value["updatedAt"] === diagnostic["observedAt"];
+}
+
+function validTargetIntegrateOperation(value: unknown): boolean {
+  if (
+    !isRecord(value) ||
+    !hasOnlyKeys(value, [
+      "schemaVersion",
+      "kind",
+      "id",
+      "runId",
+      "milestoneId",
+      "attempt",
+      "inputStateGeneration",
+      "inputStateRevision",
+      "repositoryRoot",
+      "targetBranch",
+      "expectedBaseCommit",
+      "workspacePath",
+      "workspaceBranch",
+      "candidate",
+      "verificationResultSha256",
+      "commits",
+      "outcomePath",
+      "outcomeTemporaryPath",
+      "phase",
+      "createdAt",
+      "updatedAt",
+      "completionAt",
+      "recoveryPolicy",
+      "diagnostic",
+    ]) ||
+    value["schemaVersion"] !== OPERATION_INTENT_SCHEMA_VERSION ||
+    value["kind"] !== "target-integrate" ||
+    !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(String(value["id"])) ||
+    !nonEmptyString(value["runId"]) ||
+    !nonEmptyString(value["milestoneId"]) ||
+    !positiveInteger(value["attempt"]) ||
+    !/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(
+      String(value["inputStateGeneration"]),
+    ) ||
+    !nonnegativeInteger(value["inputStateRevision"]) ||
+    !nonEmptyString(value["repositoryRoot"]) ||
+    !isAbsolute(value["repositoryRoot"]) ||
+    !nonEmptyString(value["targetBranch"]) ||
+    !commitId(value["expectedBaseCommit"]) ||
+    !nonEmptyString(value["workspacePath"]) ||
+    !isAbsolute(value["workspacePath"]) ||
+    !strictlyContained(value["repositoryRoot"], value["workspacePath"]) ||
+    !nonEmptyString(value["workspaceBranch"]) ||
+    !validCandidateIdentity(value["candidate"]) ||
+    (value["candidate"] as Record<string, unknown>)["baseCommit"] !==
+      value["expectedBaseCommit"] ||
+    (value["candidate"] as Record<string, unknown>)["clean"] !== true ||
+    !sha256(value["verificationResultSha256"]) ||
+    !stringArray(value["commits"], 1) ||
+    value["commits"].some((commit) => !commitId(commit)) ||
+    value["commits"].at(-1) !==
+      (value["candidate"] as Record<string, unknown>)["commit"] ||
+    !nonEmptyString(value["outcomePath"]) ||
+    !isAbsolute(value["outcomePath"]) ||
+    !strictlyContained(value["repositoryRoot"], value["outcomePath"]) ||
+    !nonEmptyString(value["outcomeTemporaryPath"]) ||
+    !isAbsolute(value["outcomeTemporaryPath"]) ||
+    !strictlyContained(
+      value["repositoryRoot"],
+      value["outcomeTemporaryPath"],
+    ) ||
+    value["outcomeTemporaryPath"] === value["outcomePath"] ||
+    !TARGET_INTEGRATE_PHASES.includes(value["phase"] as never) ||
+    !timestampOrNull(value["createdAt"]) ||
+    value["createdAt"] === null ||
+    !timestampOrNull(value["updatedAt"]) ||
+    value["updatedAt"] === null ||
+    !timestampOrNull(value["completionAt"]) ||
+    value["completionAt"] === null ||
+    String(value["updatedAt"]) < String(value["createdAt"]) ||
+    String(value["completionAt"]) < String(value["createdAt"]) ||
+    value["recoveryPolicy"] !== "validate-adopt-or-preserve"
+  )
+    return false;
+
+  const diagnostic = value["diagnostic"];
+  if ((value["phase"] === "blocked") !== (diagnostic !== null)) return false;
+  if (diagnostic === null) return true;
+  if (
+    !isRecord(diagnostic) ||
+    !hasOnlyKeys(diagnostic, [
+      "classification",
+      "message",
+      "observedAt",
+      "targetHead",
+      "preservedPaths",
+      "quarantinePath",
+    ]) ||
+    ![
+      "candidate-drift",
+      "outcome-conflict",
+      "state-target-inconsistent",
+      "target-branch-mismatch",
+      "target-dirty",
+      "target-index-locked",
+      "target-operation-in-progress",
+      "target-path-unsafe",
+      "target-unexpected-commit",
+      "workspace-path-unsafe",
+    ].includes(String(diagnostic["classification"])) ||
+    !nonEmptyString(diagnostic["message"]) ||
+    !timestampOrNull(diagnostic["observedAt"]) ||
+    diagnostic["observedAt"] === null ||
+    (diagnostic["targetHead"] !== null &&
+      !commitId(diagnostic["targetHead"])) ||
+    !stringArray(diagnostic["preservedPaths"]) ||
     diagnostic["quarantinePath"] !== null
   )
     return false;
@@ -1811,7 +1928,8 @@ export function validateOrchestratorState(
   const pendingOperation = value["pendingOperation"];
   if (
     pendingOperation !== null &&
-    !validWorkspaceCreateOperation(pendingOperation)
+    !validWorkspaceCreateOperation(pendingOperation) &&
+    !validTargetIntegrateOperation(pendingOperation)
   ) {
     errors.push("State pending operation is invalid.");
   } else if (isRecord(pendingOperation)) {
@@ -1823,23 +1941,82 @@ export function validateOrchestratorState(
             entry["proposal"]["id"] === pendingOperation["milestoneId"],
         )
       : undefined;
-    if (
+    const commonMismatch =
       !isRecord(milestone) ||
       value["activeMilestoneId"] !== pendingOperation["milestoneId"] ||
-      milestone["status"] !== "running" ||
       milestone["attempts"] !== pendingOperation["attempt"] ||
-      milestone["workspace"] !== null ||
-      milestone["nextAllowedAction"] !== "resume-worker" ||
-      value["nextAllowedAction"] !== "resume-worker" ||
       !isRecord(repository) ||
       repository["root"] !== pendingOperation["repositoryRoot"] ||
       repository["targetBranch"] !== pendingOperation["targetBranch"] ||
-      repository["verifiedCommit"] !== pendingOperation["baseCommit"] ||
       !isRecord(run) ||
       run["id"] !== pendingOperation["runId"] ||
-      Number(pendingOperation["inputStateRevision"]) > Number(value["revision"])
-    )
+      Number(pendingOperation["inputStateRevision"]) >
+        Number(value["revision"]);
+    if (commonMismatch) {
       errors.push("State pending operation does not match its active attempt.");
+    } else if (pendingOperation["kind"] === "workspace-create") {
+      if (
+        milestone["status"] !== "running" ||
+        milestone["workspace"] !== null ||
+        milestone["nextAllowedAction"] !== "resume-worker" ||
+        value["nextAllowedAction"] !== "resume-worker" ||
+        repository["verifiedCommit"] !== pendingOperation["baseCommit"]
+      )
+        errors.push(
+          "State workspace-create operation does not match its active attempt.",
+        );
+    } else if (pendingOperation["kind"] === "target-integrate") {
+      const workspace = milestone["workspace"];
+      const summaries = milestone["verificationSummaries"];
+      const reviews = milestone["reviewerDecisions"];
+      const verification = Array.isArray(summaries) ? summaries.at(-1) : null;
+      const review = Array.isArray(reviews) ? reviews.at(-1) : null;
+      const candidate = pendingOperation["candidate"];
+      const checks = isRecord(review) ? review["checks"] : null;
+      const findings = isRecord(review) ? review["findings"] : null;
+      if (
+        milestone["status"] !== "reviewing" ||
+        milestone["nextAllowedAction"] !== "review" ||
+        value["nextAllowedAction"] !== "review" ||
+        run["status"] !== "running" ||
+        repository["verifiedCommit"] !==
+          pendingOperation["expectedBaseCommit"] ||
+        !isRecord(workspace) ||
+        workspace["path"] !== pendingOperation["workspacePath"] ||
+        workspace["branch"] !== pendingOperation["workspaceBranch"] ||
+        workspace["baseCommit"] !== pendingOperation["expectedBaseCommit"] ||
+        !isRecord(candidate) ||
+        workspace["headCommit"] !== candidate["commit"] ||
+        !isRecord(verification) ||
+        verification["status"] !== "PASS" ||
+        JSON.stringify(verification["candidate"]) !==
+          JSON.stringify(candidate) ||
+        verification["authoritativeResultSha256"] !==
+          pendingOperation["verificationResultSha256"] ||
+        !isRecord(review) ||
+        review["schemaVersion"] !== REVIEW_SCHEMA_VERSION ||
+        review["decision"] !== "approve" ||
+        !isRecord(checks) ||
+        Object.values(checks).some((check) => check !== true) ||
+        !Array.isArray(findings) ||
+        findings.some(
+          (finding) =>
+            isRecord(finding) &&
+            (finding["severity"] === "high" ||
+              finding["severity"] === "critical"),
+        ) ||
+        review["verifiedBaseCommit"] !==
+          pendingOperation["expectedBaseCommit"] ||
+        review["verifiedHeadCommit"] !== candidate["commit"] ||
+        review["verifiedTree"] !== candidate["tree"] ||
+        review["verificationResultSha256"] !==
+          pendingOperation["verificationResultSha256"] ||
+        review["attempt"] !== pendingOperation["attempt"]
+      )
+        errors.push(
+          "State target-integrate operation does not match its approved attempt.",
+        );
+    }
   }
 
   return {

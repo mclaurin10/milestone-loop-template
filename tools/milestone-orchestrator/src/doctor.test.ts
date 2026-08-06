@@ -91,7 +91,7 @@ describe("read-only orchestrator doctor", () => {
     );
 
     expect(diagnostic).toEqual({
-      schemaVersion: "1.3.0",
+      schemaVersion: "1.4.0",
       diagnostic: "orchestrator-doctor",
       status: "ready",
       readOnly: true,

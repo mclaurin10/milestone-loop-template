@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://milestone-loop.local/schemas/orchestrator-state-1.5.0.json",
+  "$id": "https://milestone-loop.local/schemas/orchestrator-state-1.6.0.json",
   "title": "Example Project Orchestrator State",
   "type": "object",
   "additionalProperties": false,
@@ -23,7 +23,7 @@
     "updatedAt"
   ],
   "properties": {
-    "schemaVersion": { "const": "1.5.0" },
+    "schemaVersion": { "const": "1.6.0" },
     "revision": { "type": "integer", "minimum": 0 },
     "repository": { "type": "object" },
     "queue": {
@@ -116,7 +116,8 @@
     "pendingOperation": {
       "oneOf": [
         { "type": "null" },
-        { "$ref": "#/$defs/workspaceCreateOperation" }
+        { "$ref": "#/$defs/workspaceCreateOperation" },
+        { "$ref": "#/$defs/targetIntegrateOperation" }
       ]
     },
     "nextAllowedAction": {
@@ -221,6 +222,157 @@
                 },
                 "message": { "type": "string", "minLength": 1 },
                 "observedAt": { "type": "string", "format": "date-time" },
+                "preservedPaths": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": { "type": "string", "minLength": 1 }
+                },
+                "quarantinePath": { "type": "null" }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "targetIntegrateOperation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "kind",
+        "id",
+        "runId",
+        "milestoneId",
+        "attempt",
+        "inputStateGeneration",
+        "inputStateRevision",
+        "repositoryRoot",
+        "targetBranch",
+        "expectedBaseCommit",
+        "workspacePath",
+        "workspaceBranch",
+        "candidate",
+        "verificationResultSha256",
+        "commits",
+        "outcomePath",
+        "outcomeTemporaryPath",
+        "phase",
+        "createdAt",
+        "updatedAt",
+        "completionAt",
+        "recoveryPolicy",
+        "diagnostic"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "kind": { "const": "target-integrate" },
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+        },
+        "runId": { "type": "string", "minLength": 1 },
+        "milestoneId": { "type": "string", "minLength": 1 },
+        "attempt": { "type": "integer", "minimum": 1 },
+        "inputStateGeneration": {
+          "type": "string",
+          "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$"
+        },
+        "inputStateRevision": { "type": "integer", "minimum": 0 },
+        "repositoryRoot": { "type": "string", "minLength": 1 },
+        "targetBranch": { "type": "string", "minLength": 1 },
+        "expectedBaseCommit": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "workspacePath": { "type": "string", "minLength": 1 },
+        "workspaceBranch": { "type": "string", "minLength": 1 },
+        "candidate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "baseCommit",
+            "commit",
+            "tree",
+            "clean",
+            "changedEntriesDigest"
+          ],
+          "properties": {
+            "baseCommit": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{40}$"
+            },
+            "commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+            "tree": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+            "clean": { "const": true },
+            "changedEntriesDigest": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        },
+        "verificationResultSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "commits": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[a-f0-9]{40}$" }
+        },
+        "outcomePath": { "type": "string", "minLength": 1 },
+        "outcomeTemporaryPath": { "type": "string", "minLength": 1 },
+        "phase": {
+          "enum": [
+            "intent-persisted",
+            "outcome-pending",
+            "target-update-started",
+            "target-updated",
+            "outcome-integrated",
+            "blocked"
+          ]
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "completionAt": { "type": "string", "format": "date-time" },
+        "recoveryPolicy": { "const": "validate-adopt-or-preserve" },
+        "diagnostic": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "classification",
+                "message",
+                "observedAt",
+                "targetHead",
+                "preservedPaths",
+                "quarantinePath"
+              ],
+              "properties": {
+                "classification": {
+                  "enum": [
+                    "candidate-drift",
+                    "outcome-conflict",
+                    "state-target-inconsistent",
+                    "target-branch-mismatch",
+                    "target-dirty",
+                    "target-index-locked",
+                    "target-operation-in-progress",
+                    "target-path-unsafe",
+                    "target-unexpected-commit",
+                    "workspace-path-unsafe"
+                  ]
+                },
+                "message": { "type": "string", "minLength": 1 },
+                "observedAt": { "type": "string", "format": "date-time" },
+                "targetHead": {
+                  "oneOf": [
+                    { "type": "null" },
+                    { "type": "string", "pattern": "^[a-f0-9]{40}$" }
+                  ]
+                },
                 "preservedPaths": {
                   "type": "array",
                   "uniqueItems": true,

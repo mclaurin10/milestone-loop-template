@@ -245,14 +245,15 @@ rejection of every canonical path including case variants.
   `loop:status`/`loop:dry-run` are read-only and lease-free; their state load
   cannot authorize publication or repair the mirror. Normal branch pushes do
   not include either private ref.
-- Recoverable workspace creation: state schema `1.5.0` permits exactly one
-  exclusive `workspace-create` operation. Its intent is published by state CAS
-  before any directory creation or `git clone` and binds the operation ID,
+- Recoverable workspace creation: state schema `1.6.0` permits exactly one
+  exclusive pending operation. A `workspace-create` intent is published by
+  state CAS before any directory creation or `git clone` and binds the operation ID,
   run/milestone/attempt, exact input generation and revision, target base,
   controller-derived branch, temporary/final paths, timestamps, phase, and
-  fixed recovery policy. Canonical `1.4.0` generations migrate virtually for
-  read-only compatibility and are written as `1.5.0` by the next successful
-  CAS save. While an intent is pending, unrelated state mutations fail closed.
+  fixed recovery policy. Canonical `1.4.0`/`1.5.0` generations migrate
+  virtually for read-only compatibility and are written as `1.6.0` by the next
+  successful CAS save. While an intent is pending, unrelated state mutations
+  fail closed.
   The clone is created with no hardlinks under a unique contained temporary
   path, converted to a clean standalone remote-free repository, and published
   to the stable final path without replacing an existing entry. Leased startup
@@ -265,6 +266,27 @@ rejection of every canonical path including case variants.
   automatically deletes them. Status and doctor perform the same
   classification read-only (including Git optional-lock suppression) and
   report the exact next safe action without acquiring the lease or recovering.
+- Recoverable target integration: after final candidate, reviewer, verification,
+  commit-list, and protected-path validation, the controller publishes a strict
+  `target-integrate` intent before writing the outcome artifact, fetching the
+  candidate, or changing the target ref/index/worktree. The intent pins the
+  exact state generation and revision, repository/target/workspace identities,
+  approved candidate and commits, verification-result digest, deterministic
+  outcome and temporary paths, timestamps, phases, and recovery policy. Leased
+  startup runs this recovery before ordinary target-drift handling. It resumes
+  from only the exact clean base or adopts only the exact clean candidate,
+  revalidates the standalone remote-free workspace and protected files, and
+  materializes exact pending/integrated outcome bytes idempotently. One pure
+  completion reducer exclusively owns the verified target, milestone commits
+  and timestamps, queue/active milestone, required vertical consumer,
+  processed count, human-verification stop state, next action, and intent
+  removal. Candidate drift, unexpected target commits or branches, dirty or
+  locked target state, in-progress Git operations, linked/substituted paths,
+  and conflicting outcome bytes are preserved with a durable blocked
+  diagnostic. Reviewer approval alone is never integration intent. Status and
+  doctor expose the operation, classification, and exact next safe action with
+  optional-lock-suppressed read-only inspection and no recovery or artifact
+  repair.
 - Approval-bound evidence retention: `loop:run` never deletes evidence —
   controller startup only writes a retention *plan*
   (`evidence-retention.json` in the run directory). Deletion requires

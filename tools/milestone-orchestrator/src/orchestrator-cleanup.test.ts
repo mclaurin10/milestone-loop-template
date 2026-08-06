@@ -260,7 +260,7 @@ describe("canonical protected trust roots at controller startup", () => {
 
 describe("post-persistence workspace lifecycle", () => {
   it(
-    "keeps reviewing workspaces and cleans only after target recovery is durably completed",
+    "preserves reviewing workspaces when target advancement lacks a durable integration operation",
     { timeout: 30_000 },
     async () => {
       const fixture = await repositoryFixture();
@@ -390,27 +390,24 @@ describe("post-persistence workspace lifecycle", () => {
         headCommit,
         expectedTree: git(workspace.path, "rev-parse", `${headCommit}^{tree}`),
       });
-      const recovered = await MilestoneOrchestrator.open(
-        fixture.root,
-        fixture.configPath,
-        { workspaceCleanup: cleanup, now: () => new Date(NOW) },
-      );
-      await recovered.close();
+      await expect(
+        MilestoneOrchestrator.open(fixture.root, fixture.configPath, {
+          workspaceCleanup: cleanup,
+          now: () => new Date(NOW),
+        }),
+      ).rejects.toThrow(/without a durable target-integrate operation/);
 
-      expect(cleanupCalls).toBe(1);
-      expect(recovered.state.repository.verifiedCommit).toBe(headCommit);
-      expect(recovered.state.milestones[0]).toMatchObject({
-        status: "completed",
-        workspace: {
-          preserved: false,
-          cleanup: {
-            status: "deleted",
-            reason: "completed-delete-workspace",
-            nodeModulesRemovedAt: NOW,
-          },
-        },
+      expect(cleanupCalls).toBe(0);
+      const preserved = await new StateStore(
+        fixture.root,
+        config.statePath,
+      ).load();
+      expect(preserved?.repository.verifiedCommit).toBe(fixture.baseCommit);
+      expect(preserved?.milestones[0]).toMatchObject({
+        status: "reviewing",
+        workspace: { cleanup: { status: "active" } },
       });
-      expect(await exists(workspace.path)).toBe(false);
+      expect(await exists(workspace.path)).toBe(true);
     },
   );
 

@@ -7,18 +7,28 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import type {
   OrchestratorState,
+  TargetIntegrateOperation,
   WorkspaceCreateOperation,
 } from "./contracts.js";
 import { createMilestoneRecord } from "./milestone-state.js";
 import {
+  advanceTargetIntegrateOperation,
   advanceWorkspaceCreateOperation,
+  blockTargetIntegrateOperation,
   blockWorkspaceCreateOperation,
+  completeTargetIntegrateOperation,
   completeWorkspaceCreateOperation,
+  setTargetIntegrateOperation,
   setWorkspaceCreateOperation,
 } from "./operation-intent.js";
 import { validateOrchestratorState } from "./schema.js";
 import { StateStore } from "./state-store.js";
-import { validProposal, validState } from "../test/fixtures.js";
+import {
+  validFeatureProposal,
+  validProposal,
+  validState,
+} from "../test/fixtures.js";
+import { planTargetIntegrateOperation } from "./target-integration.js";
 
 const NOW = "2026-08-06T00:00:00.000Z";
 const temporaryDirectories: string[] = [];
@@ -109,6 +119,150 @@ function operation(
     updatedAt: NOW,
     recoveryPolicy: "validate-adopt-or-preserve",
     diagnostic: null,
+  };
+}
+
+function approvedIntegrationState(root: string): {
+  readonly state: OrchestratorState;
+  readonly operation: TargetIntegrateOperation;
+} {
+  const initial = validState(root);
+  const candidate = {
+    baseCommit: "a".repeat(40),
+    commit: "c".repeat(40),
+    tree: "d".repeat(40),
+    clean: true,
+    changedEntriesDigest: "e".repeat(64),
+  } as const;
+  const verificationResultSha256 = "f".repeat(64);
+  const proposal = validFeatureProposal({
+    id: "target-intent",
+    verticalSlice: {
+      mode: "exception",
+      userGoal: null,
+      publicActionKinds: [],
+      sharedRuleOwners: [],
+      standardCompositionOwner: null,
+      persistenceReplayEvidence: [],
+      nodeWorkerParityEvidence: [],
+      inspectableConsequence: null,
+      exception: {
+        kind: "kernel-only",
+        justification: "Exercise completion bookkeeping.",
+        immediateConsumerMilestoneId: "target-consumer",
+        consumerContract: "Consume the target intent through a public action.",
+      },
+    },
+  });
+  const milestone = createMilestoneRecord(proposal, NOW);
+  const workspacePath = resolve(root, "artifacts", "workspaces", "target");
+  const workspaceBranch = "milestone-loop/target-run/target-intent";
+  const state: OrchestratorState = {
+    ...initial,
+    queue: [proposal.id],
+    milestones: [
+      {
+        ...milestone,
+        status: "reviewing",
+        attempts: 1,
+        verificationSummaries: [
+          {
+            schemaVersion: "1.1.0",
+            attempt: 1,
+            status: "PASS",
+            disposition: "incremental-readiness",
+            failureKind: null,
+            summary: "Candidate is pinned.",
+            startedAt: NOW,
+            finishedAt: NOW,
+            commands: [],
+            authoritative: null,
+            candidate,
+            authoritativeResultSha256: verificationResultSha256,
+            changedPaths: ["change.txt"],
+            artifactPaths: ["verification-summary.json"],
+          },
+        ],
+        reviewerDecisions: [
+          {
+            schemaVersion: "1.1.0",
+            decision: "approve",
+            summary: "Exact candidate approved.",
+            findings: [],
+            checks: {
+              acceptanceEvidence: true,
+              architectureCompliance: true,
+              testQuality: true,
+              noSuspiciousShortcuts: true,
+              noScopeReduction: true,
+              regressionsHandled: true,
+            },
+            verifiedBaseCommit: candidate.baseCommit,
+            verifiedHeadCommit: candidate.commit,
+            verifiedTree: candidate.tree,
+            verificationResultSha256,
+            attempt: 1,
+            threadId: "target-reviewer",
+            reviewedAt: NOW,
+          },
+        ],
+        workspace: {
+          isolation: "standalone-local-clone-branch",
+          path: workspacePath,
+          branch: workspaceBranch,
+          baseCommit: candidate.baseCommit,
+          headCommit: candidate.commit,
+          createdAt: NOW,
+          preserved: true,
+          cleanup: {
+            schemaVersion: "1.0.0",
+            status: "active",
+            reason: null,
+            requestedAt: null,
+            completedAt: null,
+            nodeModulesRemovedAt: null,
+            diagnosticArchivePath: null,
+            error: null,
+          },
+        },
+        timestamps: {
+          ...milestone.timestamps,
+          startedAt: NOW,
+          updatedAt: NOW,
+        },
+        nextAllowedAction: "review",
+      },
+    ],
+    activeMilestoneId: proposal.id,
+    run: {
+      ...initial.run,
+      id: "target-run",
+      status: "running",
+      startedAt: NOW,
+      deadlineAt: "2026-08-07T00:00:00.000Z",
+    },
+    nextAllowedAction: "review",
+  };
+  return {
+    state,
+    operation: planTargetIntegrateOperation({
+      operationId: "target-integrate-12345678",
+      inputStateGeneration: "b".repeat(40),
+      inputStateRevision: state.revision,
+      repositoryRoot: root,
+      targetBranch: "main",
+      expectedBaseCommit: candidate.baseCommit,
+      workspacePath,
+      workspaceBranch,
+      candidate,
+      verificationResultSha256,
+      commits: [candidate.commit],
+      outcomePath: resolve(root, "artifacts", "runs", "git-outcome.json"),
+      runId: "target-run",
+      milestoneId: proposal.id,
+      attempt: 1,
+      now: NOW,
+    }),
   };
 }
 
@@ -212,4 +366,88 @@ describe("workspace-create operation intent", () => {
       await expect(reopened.loadForMutation()).resolves.toEqual(cloneStarted);
     },
   );
+});
+
+describe("target-integrate operation intent", () => {
+  it("owns every phase and all semantic completion fields in one reducer", () => {
+    const root = resolve(process.cwd(), "target-operation-fixture");
+    const fixture = approvedIntegrationState(root);
+    let next = setTargetIntegrateOperation(fixture.state, fixture.operation);
+    expect(validateOrchestratorState(next)).toMatchObject({ valid: true });
+    next = advanceTargetIntegrateOperation(
+      next,
+      fixture.operation.id,
+      "outcome-pending",
+      NOW,
+    );
+    next = advanceTargetIntegrateOperation(
+      next,
+      fixture.operation.id,
+      "target-update-started",
+      NOW,
+    );
+    next = advanceTargetIntegrateOperation(
+      next,
+      fixture.operation.id,
+      "target-updated",
+      NOW,
+    );
+    next = advanceTargetIntegrateOperation(
+      next,
+      fixture.operation.id,
+      "outcome-integrated",
+      NOW,
+    );
+    next = completeTargetIntegrateOperation(next, fixture.operation.id);
+    expect(next).toMatchObject({
+      repository: { verifiedCommit: fixture.operation.candidate.commit },
+      queue: [],
+      activeMilestoneId: null,
+      run: { status: "running", milestonesProcessed: 1 },
+      pendingOperation: null,
+      nextAllowedAction: "plan",
+      milestones: [
+        {
+          status: "completed",
+          commits: fixture.operation.commits,
+          workspace: { headCommit: fixture.operation.candidate.commit },
+          timestamps: { completedAt: fixture.operation.completionAt },
+        },
+      ],
+      requiredNextVerticalConsumer: {
+        sourceMilestoneId: "target-intent",
+        consumerMilestoneId: "target-consumer",
+      },
+    });
+    expect(validateOrchestratorState(next)).toMatchObject({ valid: true });
+  });
+
+  it("blocks without mutating the approved attempt or target identity", () => {
+    const root = resolve(process.cwd(), "target-operation-fixture");
+    const fixture = approvedIntegrationState(root);
+    const pending = setTargetIntegrateOperation(
+      fixture.state,
+      fixture.operation,
+    );
+    const blocked = blockTargetIntegrateOperation(
+      pending,
+      fixture.operation.id,
+      {
+        classification: "target-dirty",
+        message: "Target working tree is dirty.",
+        observedAt: NOW,
+        targetHead: fixture.operation.expectedBaseCommit,
+        preservedPaths: [fixture.operation.repositoryRoot],
+        quarantinePath: null,
+      },
+    );
+    expect(blocked.pendingOperation).toMatchObject({
+      kind: "target-integrate",
+      phase: "blocked",
+      diagnostic: { classification: "target-dirty" },
+    });
+    expect(blocked.repository).toEqual(fixture.state.repository);
+    expect(blocked.milestones).toEqual(fixture.state.milestones);
+    expect(validateOrchestratorState(blocked)).toMatchObject({ valid: true });
+  });
 });

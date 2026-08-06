@@ -3,6 +3,39 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-06 — Intent-first target integration and canonical completion (WP2b)
+
+**Decision.** State schema `1.6.0` extends the single pending-operation union
+with a strict `target-integrate` intent. The controller publishes that intent
+after exact candidate, approval, verification-result, commit-list, and
+protected-file validation but before outcome, fetch, ref, index, or worktree
+side effects. The operation pins one deterministic pending/integrated outcome
+encoding and advances through explicit artifact/target phases. Recovery runs
+under the controller lease before ordinary target-drift handling, revalidates
+the standalone candidate on every pass, resumes only from the exact clean
+base, and adopts only the exact clean candidate. One pure completion reducer
+owns every semantic state consequence. Any other target, candidate, path, Git,
+or outcome classification is preserved and durably blocked. Reviewer approval
+without the intent no longer permits implicit integration reconciliation.
+
+**Why.** The previous fast-forward happened before canonical completion state,
+so process loss could leave the target at the candidate while state still
+reported the base and a reviewing milestone. Startup then used a second
+handwritten reviewer-as-intent path that omitted vertical-consumer state,
+processed count, final outcome, and stop bookkeeping. Intent-first ordering
+makes the external side effect attributable before it can happen; deterministic
+outcome bytes and exact base/candidate classification make every observable
+restart state decidable. A shared reducer prevents normal and recovered paths
+from drifting semantically. Alternatives rejected: retaining reviewer approval
+as implicit intent, using `git-outcome.json` as authority, resetting or cleaning
+an ambiguous target, accepting any descendant target, a second integration
+journal, and separate normal/recovery completion mutations.
+
+**Affected files.** State contracts/schema/store and JSON schema,
+`operation-intent.ts`, `readiness-completion.ts`, `target-integration.ts`,
+orchestrator integration/startup, status and doctor diagnostics, crash/race
+workers and recovery tests, `README.md`, and `CONTRACT.md`.
+
 ## 2026-08-06 — Intent-first, validate/adopt workspace creation (WP2a)
 
 **Decision.** Isolated workspace creation is represented by one exclusive
