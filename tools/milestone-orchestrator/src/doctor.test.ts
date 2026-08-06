@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -29,6 +30,15 @@ async function repositoryFixture(
 ): Promise<{ readonly root: string; readonly statePath: string }> {
   const root = await mkdtemp(join(tmpdir(), "milestone-loop-doctor-"));
   temporaryDirectories.push(root);
+  const initialized = spawnSync(
+    "git",
+    ["-C", root, "init", "--initial-branch=fixture"],
+    { encoding: "utf8", windowsHide: true },
+  );
+  if (initialized.status !== 0)
+    throw new Error(
+      `Could not initialize doctor fixture: ${initialized.stderr}`,
+    );
   await writeJson(
     join(root, "tools/milestone-orchestrator/config/default.json"),
     validConfig(),
@@ -81,7 +91,7 @@ describe("read-only orchestrator doctor", () => {
     );
 
     expect(diagnostic).toEqual({
-      schemaVersion: "1.0.0",
+      schemaVersion: "1.1.0",
       diagnostic: "orchestrator-doctor",
       status: "ready",
       readOnly: true,
@@ -117,6 +127,8 @@ describe("read-only orchestrator doctor", () => {
         },
         controllerLease: {
           status: "pass",
+          reference: "refs/milestone-loop/controller-lease",
+          legacyGuard: "absent",
           present: false,
           malformed: false,
           owner: null,

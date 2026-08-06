@@ -223,14 +223,17 @@ rejection of every canonical path including case variants.
   `MILESTONE_LOOP_CONFIG` overrides the config path;
   `MILESTONE_LOOP_TELEMETRY_RUN_ID` scopes direct-telemetry runs).
 - Single-writer mutation: every mutating loop command (including
-  reconciliation) holds the repository-wide lease at
-  `artifacts/orchestrator/state/controller.lease`, state initialization is
-  exclusive-create *and* crash-atomic (fully written bytes are published
-  via hard link, so an interrupted initialization leaves nothing behind),
-  and every state save compare-and-swaps the stored revision — a stale
-  writer fails with an actionable error and no merge is attempted.
-  Stale-lease recovery is an atomic quarantine-rename with byte
-  verification: concurrent recoveries have exactly one winner.
+  reconciliation) holds `refs/milestone-loop/controller-lease`. Its strict
+  owner blob is published, taken over, and deleted with an expected-old Git
+  ref update. A losing first-owner or stale-owner contender therefore cannot
+  remove, alter, or release the winner. The retained
+  `artifacts/orchestrator/state/controller.lease` file is a permanent
+  protocol guard: a different legacy file fails closed so an older file-lease
+  controller cannot run beside the private-ref protocol. State initialization
+  remains exclusive-create and crash-atomic, and state replacement is atomic,
+  but the current read/check/write revision fence is not itself an atomic CAS;
+  the controller lease is the required single-writer boundary until canonical
+  private-ref state generations replace it.
   `loop:status`/`loop:dry-run` are read-only and lease-free.
 - Approval-bound evidence retention: `loop:run` never deletes evidence —
   controller startup only writes a retention *plan*

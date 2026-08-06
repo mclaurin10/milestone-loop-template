@@ -115,19 +115,26 @@ report `NOT_READY`, never pass.
    `loop:reconcile` for lifecycle operations.
 
    Every mutating command (`plan`, `run`, `resume`, `canary`, `reconcile`)
-   holds a single repository-wide mutation lease
-   (`artifacts/orchestrator/state/controller.lease`) for its lifetime, and
-   durable state writes use compare-and-swap on the stored revision, so a
-   concurrent controller fails loudly instead of silently losing updates.
+   holds the repository-private Git ref
+   `refs/milestone-loop/controller-lease` for its lifetime. The ref points to
+   a strict owner JSON blob and is acquired, taken over, and released only by
+   an atomic expected-owner `git update-ref` operation. A permanent
+   `artifacts/orchestrator/state/controller.lease` guard prevents an older
+   file-lease implementation from running concurrently with the ref protocol.
    `loop:status` and `loop:dry-run` are strictly read-only — they never
-   initialize state, never take the lease, and report the current lease
-   owner. Lease files are published atomically (no reader can observe a
-   partially written lease), and a lease held by a dead process on the
-   same host is recovered automatically via an atomic quarantine-rename,
-   so two controllers racing the same dead lease cannot both win. A lease
-   from another host (host identity includes a per-machine instance id,
-   not just the hostname), or a malformed lease file, is never stolen —
-   after confirming the owner is dead, delete the lease file manually.
+   initialize state, never take the lease, and report the current lease owner
+   and canonical ref. A dead same-host owner is recovered by replacing exactly
+   the object ID that was inspected, so a losing recoverer cannot disturb a
+   newer winner. A lease from another host (host identity includes a
+   per-machine instance id, not just the hostname), a malformed owner object,
+   or a conflicting legacy lease is never stolen. After independently
+   confirming a reported owner is dead, an operator can delete only its exact
+   object with the diagnostic's `git update-ref -d` command.
+
+   State saves currently retain a revision stale-writer check and atomic file
+   replacement, but the revision comparison is not yet an atomic publication
+   primitive. The lease is therefore the active single-writer boundary until
+   the canonical private-ref state-generation migration is completed.
 
    **Nothing is deleted by `loop:run`.** Controller startup only *plans*
    evidence retention (the run's `evidence-retention.json` lists what a

@@ -21,7 +21,7 @@ import {
 } from "./protected-roots.js";
 import { StateStore } from "./state-store.js";
 
-export const DOCTOR_SCHEMA_VERSION = "1.0.0" as const;
+export const DOCTOR_SCHEMA_VERSION = "1.1.0" as const;
 
 type CheckStatus = "pass" | "attention";
 
@@ -90,6 +90,9 @@ export interface DoctorDiagnostic {
     };
     readonly controllerLease: {
       readonly status: CheckStatus;
+      readonly reference: ControllerLeaseInspection["reference"];
+      readonly legacyGuard:
+        ControllerLeaseInspection["legacyGuard"] | "not-checked";
       readonly present: boolean;
       readonly malformed: boolean;
       readonly owner: ControllerLeaseInspection["owner"];
@@ -263,6 +266,8 @@ async function controllerLeaseCheck(
   if (!config)
     return {
       status: "attention",
+      reference: ControllerLease.leaseReference(),
+      legacyGuard: "not-checked",
       present: false,
       malformed: false,
       owner: null,
@@ -273,6 +278,8 @@ async function controllerLeaseCheck(
   );
   return {
     status: inspection.present || inspection.malformed ? "attention" : "pass",
+    reference: inspection.reference,
+    legacyGuard: inspection.legacyGuard,
     present: inspection.present,
     malformed: inspection.malformed,
     owner: inspection.owner,
