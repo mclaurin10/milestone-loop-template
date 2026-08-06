@@ -1,4 +1,11 @@
-import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import {
+  mkdtemp,
+  readFile,
+  readdir,
+  rename,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -145,6 +152,73 @@ describe("atomic state persistence", () => {
       ),
     ).rejects.toThrow(/injected interruption/);
     expect(await readFile(target, "utf8")).toBe('{"generation":"old"}\n');
+    expect(
+      (await readdir(directory)).filter((name) => name.includes(".tmp-")),
+    ).toEqual([]);
+  });
+
+  it("retries transient replacement contention before publishing", async () => {
+    const directory = await temporaryDirectory();
+    const target = join(directory, "state.json");
+    await writeFile(target, '{"generation":"old"}\n', "utf8");
+    let attempts = 0;
+    const retryDelays: number[] = [];
+
+    await atomicWriteJson(
+      target,
+      { generation: "new" },
+      {
+        async replaceFile(temporaryPath, targetPath) {
+          attempts += 1;
+          if (attempts < 3) {
+            throw Object.assign(new Error("simulated scanner contention"), {
+              code: "EPERM",
+            });
+          }
+          await rename(temporaryPath, targetPath);
+        },
+        waitBeforeReplaceRetry(delayMs) {
+          retryDelays.push(delayMs);
+        },
+      },
+    );
+
+    expect(attempts).toBe(3);
+    expect(retryDelays).toEqual([25, 50]);
+    expect(JSON.parse(await readFile(target, "utf8"))).toEqual({
+      generation: "new",
+    });
+    expect(
+      (await readdir(directory)).filter((name) => name.includes(".tmp-")),
+    ).toEqual([]);
+  });
+
+  it("fails closed after bounded persistent replacement contention", async () => {
+    const directory = await temporaryDirectory();
+    const target = join(directory, "state.json");
+    await writeFile(target, '{"generation":"old"}\n', "utf8");
+    let attempts = 0;
+
+    await expect(
+      atomicWriteJson(
+        target,
+        { generation: "new" },
+        {
+          replaceFile() {
+            attempts += 1;
+            throw Object.assign(new Error("persistent access denial"), {
+              code: "EPERM",
+            });
+          },
+          waitBeforeReplaceRetry() {},
+        },
+      ),
+    ).rejects.toThrow(/persistent access denial/);
+
+    expect(attempts).toBe(9);
+    expect(JSON.parse(await readFile(target, "utf8"))).toEqual({
+      generation: "old",
+    });
     expect(
       (await readdir(directory)).filter((name) => name.includes(".tmp-")),
     ).toEqual([]);

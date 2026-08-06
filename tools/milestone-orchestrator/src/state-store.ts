@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { link, mkdir, open, readFile, rename, unlink } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
+import { setTimeout as delay } from "node:timers/promises";
 
 import {
   STATE_SCHEMA_VERSION,
@@ -15,6 +16,49 @@ export interface AtomicWriteHooks {
     temporaryPath: string,
     targetPath: string,
   ) => void | Promise<void>;
+  readonly replaceFile?: (
+    temporaryPath: string,
+    targetPath: string,
+  ) => void | Promise<void>;
+  readonly waitBeforeReplaceRetry?: (delayMs: number) => void | Promise<void>;
+}
+
+const MAX_REPLACE_RETRIES = 8;
+const REPLACE_RETRY_DELAY_MS = 25;
+const TRANSIENT_REPLACE_CODES = new Set([
+  "EACCES",
+  "EBUSY",
+  "ENOTEMPTY",
+  "EPERM",
+]);
+
+async function replaceFileWithRetry(
+  temporaryPath: string,
+  targetPath: string,
+  hooks: AtomicWriteHooks,
+): Promise<void> {
+  const replaceFile = hooks.replaceFile ?? rename;
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      await replaceFile(temporaryPath, targetPath);
+      return;
+    } catch (error) {
+      const code =
+        error instanceof Error && "code" in error
+          ? (error as NodeJS.ErrnoException).code
+          : undefined;
+      if (
+        attempt >= MAX_REPLACE_RETRIES ||
+        code === undefined ||
+        !TRANSIENT_REPLACE_CODES.has(code)
+      )
+        throw error;
+      const delayMs = REPLACE_RETRY_DELAY_MS * (attempt + 1);
+      if (hooks.waitBeforeReplaceRetry)
+        await hooks.waitBeforeReplaceRetry(delayMs);
+      else await delay(delayMs);
+    }
+  }
 }
 
 export class StaleStateError extends Error {
@@ -54,7 +98,7 @@ export async function atomicWriteJson(
     await handle.close();
     closed = true;
     await hooks.beforeRename?.(temporaryPath, targetPath);
-    await rename(temporaryPath, targetPath);
+    await replaceFileWithRetry(temporaryPath, targetPath, hooks);
   } catch (error) {
     if (!closed) await handle.close().catch(() => undefined);
     await unlink(temporaryPath).catch(() => undefined);
