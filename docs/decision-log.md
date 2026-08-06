@@ -3,6 +3,36 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-05 — Ref-rooted Git commits as canonical state generations (WP1b)
+
+**Decision.** Canonical controller state lives at the fixed local ref
+`refs/milestone-loop/state`. Each target is a strict commit with exact
+`state.json` and `metadata.json` blobs, an optional byte-exact
+`legacy-state.json`, and one parent naming the prior generation. Creation pins
+the controller identity, timestamp, and message; reading validates those facts
+plus state schema/hash/revision, exact successor relation, parent, and tree.
+Publication uses the exact loaded object ID as the expected old ref. The
+configured JSON path is a replaceable human mirror, never a second authority.
+Only `initialize()` and `loadForMutation()` arm a `StateStore` for publication;
+`load()` is capability-read-only. Doctor diagnostics advanced to schema
+`1.2.0` to expose the state ref, generation, source, and mirror disposition.
+
+**Why.** Git is already a required cross-platform dependency and its ref CAS
+closes the lost-update window without introducing a second lock protocol.
+Commit ancestry keeps the previous generation reachable and inspectable, while
+ordinary branch pushes exclude the private namespace. Separating the mirror
+allows post-publication repair without rolling back canonical state. Retaining
+exact imported bytes preserves reconciliation evidence without running dual
+writers. Alternatives rejected: relying on the controller lease alone,
+revision-only rename fencing, file locks, treating the mirror as a fallback,
+two-format canonical writes, automatic recovery from malformed canonical refs,
+and permitting observational loads to authorize later saves.
+
+**Affected files.** `private-ref-store.ts`, `state-generation-store.ts`,
+`state-store.ts`, orchestrator/reconciliation/retention call sites, doctor and
+status diagnostics, the safety demonstration, tests, `README.md`, and
+`CONTRACT.md`.
+
 ## 2026-08-05 — Git private ref plus legacy-protocol guard for leases (WP1a)
 
 **Decision.** Controller ownership lives at the fixed local ref

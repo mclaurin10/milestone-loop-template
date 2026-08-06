@@ -3,6 +3,46 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-05 — WP1b atomic canonical state generations
+
+**Objective.** Replace mirror-revision read/check/write with a canonical,
+recoverable state-generation primitive that permits exactly one publication
+from a shared starting generation and preserves read-only command semantics.
+
+**Outcome.** `refs/milestone-loop/state` now points to a strict Git commit
+generation containing canonical state JSON and exact revision/hash metadata.
+The single parent is the prior generation; current and immediately previous
+commits are validated for type, exact tree, schema, hashes, revision successor,
+parent, fixed controller identity/timestamp, and canonical message. Saves use
+expected-old `git update-ref`. The configured `state.json` is a derived mirror
+repaired only on mutation-capable opens. Valid legacy bytes import exactly once
+and remain available for reconciliation provenance; malformed, linked, or
+ambiguous input fails closed. `load()` cannot authorize `save()`. Status and
+doctor schema `1.2.0` expose canonical-generation and mirror facts without
+mutating either store. The safety demonstration uses an isolated Git fixture.
+
+**Verification.** Under Node `24.18.0` and pnpm `11.15.1`, the synchronized
+multiprocess same-generation race passed five consecutive runs at
+`artifacts/manual/wp1b-state-races/run-{1..5}.json`. Receipt-owning typecheck,
+lint, and format passed at `artifacts/manual/typecheck-7476/`,
+`artifacts/manual/lint-21564/`, and
+`artifacts/manual/format-check-22368/`. The complete orchestrator suite passed
+349/349 at `artifacts/manual/test-orchestrator-20856/result.json`; the full
+unit aggregate passed 362/362 before commit and again from the clean committed
+tree at `artifacts/manual/test-unit-24644/result.json`. The live safety
+demonstration passed at
+`artifacts/orchestrator/runs/safety-demonstration/safety-demonstration-20260806045354446-4e64d4e5.json`.
+
+**Commit.** `987ce005a410470d078b8dd57802abbffc2d0356` (tree
+`0b9c1719ebc9f7accac4d64e872c6878b753eed2`).
+
+**Known gaps.** WP2 must journal workspace, integration, cleanup, and retention
+side effects and converge interrupted integration through the same canonical
+completion reducer. Linux race evidence remains a WP5 CI deliverable; this
+Windows proof does not claim unsupported-platform coverage. Uncommissioned
+readiness placeholders remain honestly non-passing and WP1 is not an
+autonomous-readiness claim.
+
 ## 2026-08-05 — WP1a atomic controller ownership
 
 **Objective.** Replace stale-file quarantine takeover with a real

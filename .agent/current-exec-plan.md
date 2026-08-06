@@ -1,147 +1,143 @@
 # Current Execution Plan
 
-**Status:** WP1b implementation verified; cohesive commit pending
+**Status:** WP2a workspace-create intent inspection pending
 **Updated:** 2026-08-05
 **Owner:** autonomous loop
 
 ## Objective
 
-Make `refs/milestone-loop/state` the canonical durable state-generation head.
-Each complete validated state must be stored in a ref-rooted Git commit whose
-parent is the prior generation and published by an expected-generation ref
-update. Keep `artifacts/orchestrator/state/state.json` only as a derived,
-repairable human-readable mirror and import a valid legacy state exactly once.
+Make isolated workspace creation recoverable by persisting one strict
+`workspace-create` operation intent before any clone-side effect, cloning into
+a unique contained temporary path, and deterministically adopting, publishing,
+or preserving an ambiguous result on restart.
 
-This is the second and final bounded increment of WP1. WP1a atomic controller
-ownership is committed at `fa1ef6f`; durable workspace/integration intents
-remain WP2 and must not be mixed into this state-storage increment.
+This is the first bounded increment of WP2. WP1 atomic lease and canonical
+state CAS are complete at `fa1ef6f` and `987ce00`. Target integration,
+candidate preparation, cleanup, retention, and the shared completion reducer
+remain later WP2 increments and must not be mixed into this workspace slice.
 
 ## Goal Constraints
 
-- Preserve every schema-supported state field and migration meaning; do not
-  alter lifecycle transitions, readiness meaning, or immutable authority.
-- A writer may publish only from the exact generation it loaded. Revision
-  equality alone is not ownership of a generation.
-- The private ref and commit ancestry are canonical. A missing, stale,
-  malformed, or externally modified JSON mirror can never override them.
-- `loop:status`, doctor, benchmark reads, retention planning, and dry-run stay
-  mutation-free. Legacy import and mirror repair occur only on a leased
-  mutating path.
-- State commits permanently root prior generations. Normal pushes must not
-  publish the private state namespace.
-- No dual canonical writers and no fallback from a malformed canonical ref to
-  a plausible mirror.
+- Preserve standalone local-clone isolation, protected-path enforcement,
+  candidate identity, Planner/Worker/Reviewer separation, and all immutable
+  readiness semantics.
+- Persist intent through canonical state CAS before creating any directory or
+  running `git clone`; one repository-mutating operation may be pending.
+- Every intent names a stable operation ID, milestone/attempt, exact input
+  state generation, target base, temporary/final paths, phase, timestamps, and
+  recovery policy. Paths are controller-derived, never agent-supplied.
+- Temporary and final paths must be lexically and realpath contained beneath
+  the configured workspace root. Symlink, junction, reparse-point, gitfile,
+  substituted repository, unexpected branch/base, dirty clone, or retained
+  remote facts fail closed.
+- Recovery may adopt only a workspace that exactly proves the recorded
+  repository/base/branch/isolation facts. Ambiguous content is preserved with
+  diagnostics; it is never silently deleted or overwritten.
+- Read-only status/doctor inspection reports the pending operation and exact
+  safe next action without acquiring the lease, repairing state, or recovering.
 
 ## Baseline Evidence
 
-- `StateStore.save` currently reads the mirror revision, compares it with the
-  caller's revision, then renames a new mirror. Two same-revision writers can
-  both pass and publish distinct revision `N + 1` values.
-- Existing stale-writer coverage is sequential and cannot force both writers
-  past their shared revision read.
-- State unit fixtures are not Git repositories, and the safety demonstration
-  uses a custom mirror path in the main repository; both need explicit fixture
-  isolation before the canonical ref can be introduced.
-- The shared fixed-ref wrapper added by WP1a already validates Git object IDs,
-  supports SHA-1/SHA-256 zero IDs, and performs expected-old ref updates.
+- `createIsolatedWorkspace` currently derives the deterministic final path,
+  rejects it only if already present, and clones directly into that path.
+- Orchestrator attempt startup persists attempt state, calls the clone helper,
+  and only afterward saves the returned workspace record. A crash after clone
+  completion therefore leaves an unrecorded directory that blocks retry.
+- Existing containment checks protect later cleanup but there is no durable
+  pre-clone intent, unique temporary path, publish boundary, adoption proof,
+  quarantine diagnostic, or restart fault matrix for creation.
+- WP1b now supplies exact loaded-generation identity and CAS publication, so
+  the intent can be durably ordered before the external filesystem boundary.
 
 ## Steps
 
-1. [x] Inventory every read, initialization, save, migration, status, doctor,
-   retention, reconciliation, benchmark, and safety-demonstration call site;
-   add a barrier test that reproduces two same-generation writers succeeding.
-2. [x] Define strict state-generation metadata and Git commit validation:
-   exact state JSON hash/revision, exact parent, exact tree entries, and fixed
-   controller author identity.
-3. [x] Publish initialization and saves through
-   `refs/milestone-loop/state` using the exact loaded generation as expected
-   old; keep prior commits reachable through parent ancestry.
-4. [x] Split read-only load from leased mutation load. Import a valid legacy
-   mirror exactly once only on the latter, and fail closed on malformed legacy
-   or canonical data.
-5. [x] Regenerate the JSON mirror only after canonical publication and repair
-   it on the next leased open after missing, stale, malformed, modified, or
-   interrupted mirror writes.
-6. [x] Isolate safety/demo fixtures from the production state ref and update
-   all state-using fixtures to real Git repositories without weakening their
-   assertions.
-7. [x] Add crash-boundary, corruption, unexpected-ref-change, history,
-   read-only, migration-semantic, and normal-push tests; update status, doctor,
-   README, and contract.
-8. [x] Run repeated forced races, focused and broad exact-runtime checks, then
-   record and commit the cohesive WP1b result.
+1. [ ] Inventory attempt-start state transitions, workspace naming, clone
+   configuration, cleanup ownership, status/doctor output, and every test that
+   assumes direct final-path creation. Reproduce the post-clone/pre-save crash.
+2. [ ] Add a strict schema-versioned `pendingOperation` state field and the
+   initial `workspace-create` discriminant, including exact 1.4 migration,
+   validation, generation binding, and pure set/advance/clear reducers.
+3. [ ] Split workspace preparation into deterministic path planning, unique
+   contained temporary clone, exact Git/filesystem validation, and atomic
+   final-path publication. Add narrow controller-owned fault hooks at each
+   durable/external boundary.
+4. [ ] Persist intent before clone and atomically save the workspace record
+   while clearing intent after publication. Refuse any unrelated mutation while
+   the operation remains pending.
+5. [ ] Recover under the controller lease: resume a missing clone, validate and
+   finish an exact temporary clone, adopt an exact final clone, and preserve an
+   invalid/ambiguous path with contained diagnostics and an explicit blocked
+   disposition. Quarantine by atomic rename under the workspace root only when
+   the entry itself is safely movable; otherwise block in place. Never
+   automatically delete ambiguous work.
+6. [ ] Expose pending-operation identity, phase, paths, classification, and
+   exact next safe action through read-only inspection and doctor diagnostics.
+7. [ ] Add deterministic crash, double-resume, concurrent-resume, substitution,
+   junction, missing-path, dirty-repository, wrong-base/branch, retained-remote,
+   and Windows replacement/lock tests. Compare uninterrupted and recovered
+   state semantically, ignoring only explicitly nondeterministic diagnostics.
+8. [ ] Run focused repeated recovery races, affected and broad exact-runtime
+   checks, update contract/logs, and commit only the cohesive WP2a result.
 
 ## Acceptance Criteria
 
-- Exactly one writer starting from generation `N` publishes generation
-  `N + 1`; every loser reports a typed stale-generation error and cannot alter
-  the winner or its mirror.
-- Canonical readers observe only complete validated generations. The current
-  and immediately previous generations remain readable through commit ancestry.
-- A crash before object creation or ref update leaves generation `N`
-  canonical; a crash after ref update leaves `N + 1` canonical and later
-  repairs the mirror.
-- Missing, stale, malformed, linked, or externally edited mirrors never become
-  authoritative while a canonical ref exists.
-- A valid legacy state imports once with semantic equality; malformed or
-  ambiguous legacy state blocks mutation without changing either store.
-- An invalid object type, tree, metadata hash/revision, parent relation, state
-  schema, or unexpectedly changed ref fails closed.
-- All read-only commands leave the ref, object database, mirror, and lease
-  untouched; ordinary Git pushes exclude both private refs.
+- No workspace directory or clone can be controller-created without a durable
+  canonical `workspace-create` intent naming it first.
+- Uninterrupted creation and every recoverable crash boundary converge to
+  semantically equal workspace and milestone state; recovery is idempotent.
+- An exact final or temporary clone is adopted/finished only after complete
+  containment and Git identity validation.
+- A missing path resumes safely. A substituted, linked, dirty, wrong-base,
+  wrong-branch, remote-bearing, or otherwise ambiguous path blocks, preserves
+  evidence (in place or in a proven-safe contained quarantine), and cannot be
+  overwritten or automatically deleted.
+- Two recovery contenders cannot both publish or mutate the workspace; the
+  lease plus exact state-generation CAS leaves one canonical outcome.
+- Status and doctor identify the pending operation and next safe action while
+  remaining byte-for-byte read-only over refs, objects, mirrors, and paths.
 
 ## Verification
 
-- Focused: state-store and private-ref tests, including barrier-synchronized
-  multiprocess writers and injected crash hooks, repeated under Node `24.18.0`
-  on Windows.
-- Affected: orchestrator identity/cleanup, reconciliation, retention, doctor,
-  deterministic operations, benchmark, and safety demonstration.
+- Focused: operation-intent schema/reducers, Git workspace planning/validation,
+  fault-injected creation/recovery, and barrier-synchronized resume races under
+  Node `24.18.0` on Windows.
+- Affected: orchestrator lifecycle/cleanup/identity, schema migrations,
+  deterministic operations, status/doctor, reconciliation non-interference,
+  and safety demonstration.
 - Static and broad: `pnpm typecheck`, `pnpm lint`, `pnpm format:check`,
   `pnpm test:orchestrator`, `pnpm test:unit`, `pnpm loop:demo-safety`, and
   `git diff --check`.
-- Exact aggregate remains diagnostically non-passing for unrelated
-  uncommissioned placeholders; no WP1 result may relabel that state.
+- Linux junction/path/race coverage remains required in WP5 CI before any
+  supported-platform or autonomous-readiness claim.
 
 ## Risks and Recovery
 
-- Commit construction must not depend on mutable user Git identity or accept
-  candidate-controlled ref names, paths, or command arguments.
-- Read-only legacy visibility is required for status before migration, but it
-  must not silently bless invalid bytes or mutate the repository.
-- A ref update can succeed before mirror publication fails. That is a
-  recoverable canonical success, not permission to roll the ref back.
-- Unreachable objects from losing/crashed candidates are safe for Git GC;
-  active history must remain rooted by the state ref's parent chain.
-- Rollback is a normal revert to `fa1ef6f` before WP2. Never restore the
-  non-atomic mirror as canonical to manufacture green tests.
+- A state-schema bump affects every fixture and migration. Add only the field
+  required for the discriminated operation contract; do not prebuild a generic
+  workflow engine or fabricate future operation payloads.
+- Rename semantics and reparse-point behavior differ on Windows. Validate both
+  lexical and resolved parents immediately before publication and fail closed
+  if atomic publication cannot be proven.
+- Clone failure may leave partial temporary content. Preserve its exact intent
+  relationship and diagnostics; removal is allowed only when the path is
+  positively proven controller-owned, contained, and safe under an explicit
+  recovery disposition.
+- Rollback is a normal revert to `987ce00` before later WP2 intent variants.
+  Never fall back to direct final-path cloning to manufacture a green result.
 
 ## Progress and Evidence
 
-- 2026-08-05: WP1a closed at `fa1ef6f80c1dd089f8f78133d0aa2344f40a2174`
-  (tree `0be6b70c386cf58b076f7d3b33cc8f82545cb2a0`) with 341/341 clean-tree
-  unit tests and repeated synchronized lease-race coverage.
-- 2026-08-05: StateStore call-site inspection confirmed that mutating and
-  read-only loads currently share one API and that the safety demonstration's
-  custom main-repository path must be isolated before adopting a fixed ref.
-- 2026-08-05: The canonical state ref, strict commit/tree/metadata validation,
-  exact-generation CAS, previous-generation validation, mutation-capability
-  split, legacy import, mirror repair, diagnostics, and isolated safety fixture
-  are implemented. The synchronized multiprocess same-generation race passed
-  five consecutive runs retained at
-  `artifacts/manual/wp1b-state-races/run-{1..5}.json`.
-- 2026-08-05: Under Node `24.18.0` and pnpm `11.15.1`, receipt-owning
-  typecheck, lint, and format passed at `artifacts/manual/typecheck-7476/`,
-  `artifacts/manual/lint-21564/`, and
-  `artifacts/manual/format-check-22368/`. The complete orchestrator suite
-  passed 349/349 at `artifacts/manual/test-orchestrator-20856/result.json` and
-  the repository unit aggregate passed 362/362 at
-  `artifacts/manual/test-unit-24764/result.json`. The live safety demonstration
-  passed at
-  `artifacts/orchestrator/runs/safety-demonstration/safety-demonstration-20260806045354446-4e64d4e5.json`.
+- 2026-08-05: WP1 closed through `987ce005a410470d078b8dd57802abbffc2d0356`
+  (tree `0b9c1719ebc9f7accac4d64e872c6878b753eed2`). Its clean committed unit
+  aggregate passed 362/362 with receipt at
+  `artifacts/manual/test-unit-24644/result.json`.
+- 2026-08-05: Initial WP2 inspection located direct deterministic-path clone
+  creation in `git-isolation.ts` and the post-clone workspace-record save gap
+  described by audit defect CD-06. No WP2 implementation has begun.
 
 ## Next Action
 
-Review the exact diff and immutable-lock status, commit the cohesive WP1b
-implementation, rerun the clean committed unit aggregate, then record the
-commit identity and replace this plan with the first bounded WP2 intent slice.
+Trace and test the exact attempt-start transition around
+`createIsolatedWorkspace`, inject a crash after successful clone but before the
+workspace record save, and record the resulting stranded final path before
+designing the minimal `workspace-create` intent schema.
