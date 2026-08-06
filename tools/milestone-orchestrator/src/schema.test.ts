@@ -9,10 +9,12 @@ import {
   validateOrchestratorState,
   validateReconciliationReview,
   validateReviewerReport,
+  validateVerificationManifest,
 } from "./schema.js";
 import { RECONCILIATION_REVIEW_CHECK_IDS } from "./contracts.js";
 import { createMilestoneRecord } from "./milestone-state.js";
 import {
+  legacyProposal,
   validConfig,
   validProposal,
   validReconciliationRecord,
@@ -32,17 +34,99 @@ describe("versioned orchestrator schemas", () => {
       ],
     };
     expect(validateMilestoneProposal(invalid)).toMatchObject({ valid: false });
-    const historical = {
-      ...validProposal(),
-      schemaVersion: "1.0.0",
-    } as Record<string, unknown>;
-    delete historical["verticalSlice"];
+    const historical = legacyProposal("1.0.0") as unknown as Record<
+      string,
+      unknown
+    >;
     expect(validateMilestoneProposal(historical)).toMatchObject({
       valid: false,
     });
     expect(
       validateMilestoneProposal(historical, { allowLegacy: true }),
     ).toMatchObject({ valid: true });
+    expect(
+      validateMilestoneProposal(legacyProposal("1.1.0"), { allowLegacy: true }),
+    ).toMatchObject({ valid: true });
+  });
+
+  it("requires parser-coupled per-command receipt kinds at milestone schema 1.2.0", () => {
+    const base = validProposal();
+    const [focused, authoritative] = base.verificationCommands;
+    if (!focused || !authoritative)
+      throw new Error("Fixture proposal lost its commands.");
+    const withCommands = (commands: readonly unknown[]): unknown => ({
+      ...base,
+      verificationCommands: commands,
+    });
+
+    const strip = { ...focused } as Record<string, unknown>;
+    delete strip["expectedArtifactKinds"];
+    expect(
+      validateMilestoneProposal(withCommands([strip, authoritative])),
+    ).toMatchObject({ valid: false });
+    expect(
+      validateMilestoneProposal(
+        withCommands([
+          { ...focused, expectedArtifactKinds: [] },
+          authoritative,
+        ]),
+      ),
+    ).toMatchObject({ valid: false });
+    expect(
+      validateMilestoneProposal(
+        withCommands([
+          { ...focused, expectedArtifactKinds: ["dup", "dup"] },
+          authoritative,
+        ]),
+      ),
+    ).toMatchObject({ valid: false });
+    expect(
+      validateMilestoneProposal(
+        withCommands([
+          focused,
+          { ...authoritative, expectedArtifactKinds: ["not-allowed"] },
+        ]),
+      ),
+    ).toMatchObject({ valid: false });
+
+    expect(
+      validateMilestoneProposal({
+        ...base,
+        expectedArtifacts: ["verification-summary.json"],
+      }),
+    ).toMatchObject({ valid: false });
+
+    const legacyWithKinds = legacyProposal("1.1.0", {
+      verificationCommands: base.verificationCommands,
+    });
+    expect(
+      validateMilestoneProposal(legacyWithKinds, { allowLegacy: true }),
+    ).toMatchObject({ valid: false });
+  });
+
+  it("rejects manifest focused commands without receipt kinds", async () => {
+    const manifest = JSON.parse(
+      await readFile(
+        resolve(
+          process.cwd(),
+          ".agent",
+          "completed",
+          "loop-recommissioning-verification.json",
+        ),
+        "utf8",
+      ),
+    ) as Record<string, unknown> & {
+      focusedCommands: { expectedArtifactKinds: string[] }[];
+    };
+    expect(validateVerificationManifest(manifest)).toMatchObject({
+      valid: true,
+    });
+    const first = manifest.focusedCommands[0];
+    if (!first) throw new Error("Manifest fixture lost its commands.");
+    first.expectedArtifactKinds = [];
+    expect(validateVerificationManifest(manifest)).toMatchObject({
+      valid: false,
+    });
   });
 
   it("rejects unsafe sandbox and approval configuration", () => {
@@ -109,22 +193,73 @@ describe("versioned orchestrator schemas", () => {
     expect(validateOrchestratorState(validState(process.cwd()))).toMatchObject({
       valid: true,
     });
+    const reviewerChecks = {
+      acceptanceEvidence: true,
+      architectureCompliance: true,
+      testQuality: true,
+      noSuspiciousShortcuts: true,
+      noScopeReduction: true,
+      regressionsHandled: true,
+    };
+    expect(
+      validateReviewerReport({
+        schemaVersion: "1.1.0",
+        decision: "approve",
+        summary: "The bounded diff and evidence pass review.",
+        findings: [],
+        checks: reviewerChecks,
+        verifiedBaseCommit: "a".repeat(40),
+        verifiedHeadCommit: "b".repeat(40),
+        verifiedTree: "c".repeat(40),
+        verificationResultSha256: "d".repeat(64),
+      }),
+    ).toMatchObject({ valid: true });
+    expect(
+      validateReviewerReport({
+        schemaVersion: "1.1.0",
+        decision: "approve",
+        summary: "Fresh reviews must echo the verified candidate identity.",
+        findings: [],
+        checks: reviewerChecks,
+      }),
+    ).toMatchObject({ valid: false });
+    expect(
+      validateReviewerReport(
+        {
+          schemaVersion: "1.0.0",
+          decision: "approve",
+          summary: "Persisted legacy reviews stay loadable.",
+          findings: [],
+          checks: reviewerChecks,
+        },
+        { allowLegacy: true },
+      ),
+    ).toMatchObject({ valid: true });
     expect(
       validateReviewerReport({
         schemaVersion: "1.0.0",
         decision: "approve",
-        summary: "The bounded diff and evidence pass review.",
+        summary: "Legacy reviews are rejected outside persisted state.",
         findings: [],
-        checks: {
-          acceptanceEvidence: true,
-          architectureCompliance: true,
-          testQuality: true,
-          noSuspiciousShortcuts: true,
-          noScopeReduction: true,
-          regressionsHandled: true,
-        },
+        checks: reviewerChecks,
       }),
-    ).toMatchObject({ valid: true });
+    ).toMatchObject({ valid: false });
+    expect(
+      validateReviewerReport(
+        {
+          schemaVersion: "1.0.0",
+          decision: "approve",
+          summary: "Legacy reviews cannot carry identity fields.",
+          findings: [],
+          checks: reviewerChecks,
+          verifiedBaseCommit: "a".repeat(40),
+          verifiedHeadCommit: "b".repeat(40),
+          verifiedTree: "c".repeat(40),
+          verificationResultSha256: "d".repeat(64),
+        },
+        { allowLegacy: true },
+      ),
+    ).toMatchObject({ valid: false });
     expect(
       validateOrchestratorState({
         ...validState(process.cwd()),
@@ -305,10 +440,12 @@ describe("versioned orchestrator schemas", () => {
       expect(schema.$schema).toContain("2020-12");
       expect(schema.$id).toContain(
         file === "state.schema.json"
-          ? "1.3.0"
+          ? "1.4.0"
           : file === "milestone.schema.json"
-            ? "1.1.0"
-            : "1.0.0",
+            ? "1.2.0"
+            : file === "review.schema.json"
+              ? "1.1.0"
+              : "1.0.0",
       );
     }
   });

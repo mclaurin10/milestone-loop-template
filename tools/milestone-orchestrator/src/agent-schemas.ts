@@ -14,7 +14,6 @@ export const MILESTONE_OUTPUT_SCHEMA = {
     "acceptanceCriteria",
     "requiredTests",
     "verificationCommands",
-    "expectedArtifacts",
     "terminalConditions",
     "estimatedFileCount",
     "requiresBrowserInspection",
@@ -23,7 +22,7 @@ export const MILESTONE_OUTPUT_SCHEMA = {
     "verticalSlice",
   ],
   properties: {
-    schemaVersion: { type: "string", enum: ["1.1.0"] },
+    schemaVersion: { type: "string", enum: ["1.2.0"] },
     id: { type: "string", pattern: "^[a-z][a-z0-9-]{2,63}$" },
     title: { type: "string", minLength: 3, maxLength: 120 },
     kind: {
@@ -62,22 +61,25 @@ export const MILESTONE_OUTPUT_SCHEMA = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["id", "executable", "args", "parser", "timeoutMs"],
+        required: [
+          "id",
+          "executable",
+          "args",
+          "parser",
+          "expectedArtifactKinds",
+          "timeoutMs",
+        ],
         properties: {
           id: { type: "string" },
           executable: { type: "string", enum: ["pnpm", "node", "git"] },
           args: { type: "array", items: { type: "string" } },
           parser: { type: "string", enum: ["exit-code", "pnpm-verify"] },
+          expectedArtifactKinds: { type: "array", items: { type: "string" } },
           timeoutMs: {
             anyOf: [{ type: "integer", minimum: 1000 }, { type: "null" }],
           },
         },
       },
-    },
-    expectedArtifacts: {
-      type: "array",
-      minItems: 1,
-      items: { type: "string" },
     },
     terminalConditions: {
       type: "array",
@@ -192,11 +194,25 @@ export const MILESTONE_OUTPUT_SCHEMA = {
 export const REVIEW_OUTPUT_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["schemaVersion", "decision", "summary", "findings", "checks"],
+  required: [
+    "schemaVersion",
+    "decision",
+    "summary",
+    "findings",
+    "checks",
+    "verifiedBaseCommit",
+    "verifiedHeadCommit",
+    "verifiedTree",
+    "verificationResultSha256",
+  ],
   properties: {
-    schemaVersion: { type: "string", enum: ["1.0.0"] },
+    schemaVersion: { type: "string", enum: ["1.1.0"] },
     decision: { type: "string", enum: ["approve", "reject", "escalate"] },
     summary: { type: "string" },
+    verifiedBaseCommit: { type: "string", pattern: "^[a-f0-9]{40}$" },
+    verifiedHeadCommit: { type: "string", pattern: "^[a-f0-9]{40}$" },
+    verifiedTree: { type: "string", pattern: "^[a-f0-9]{40}$" },
+    verificationResultSha256: { type: "string", pattern: "^[a-f0-9]{64}$" },
     findings: {
       type: "array",
       items: {

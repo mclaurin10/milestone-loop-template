@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
+import { existsSync } from "node:fs";
 import { mkdir, readFile, stat } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
 
@@ -12,6 +13,7 @@ import type {
   AgentInvocationRecord,
   AuthoritativeVerificationSummary,
   BlockerRecord,
+  CandidateIdentity,
   CodexTurnResult,
   MilestoneProposal,
   MilestoneRecord,
@@ -28,17 +30,37 @@ import type {
   WorkspaceCleanupReason,
 } from "./contracts.js";
 import {
+  candidateIdentitiesEqual,
+  candidateIdentityFrom,
+  differingIdentityFields,
+} from "./candidate-identity.js";
+import {
+  ControllerLease,
+  type ControllerLeaseInspection,
+  type ControllerLeaseOperation,
+} from "./controller-lease.js";
+import {
   type CodexGateway,
   type CodexInvocation,
   SdkCodexGateway,
 } from "./codex-gateway.js";
 import { measurableTokenUnits } from "./budget.js";
-import { readArtifactInventoryRetentionGuard } from "./artifact-inventory.js";
-import { loadConfig } from "./config.js";
+import {
+  DEFAULT_VERIFICATION_MANIFEST_PATH,
+  loadConfig,
+  loadVerificationManifest,
+} from "./config.js";
+import {
+  assertManifestProtectedPathsCovered,
+  buildCanonicalProtectedSet,
+  casefoldPathKey,
+  enforcementProtectedPatterns,
+} from "./protected-roots.js";
 import { runCommand } from "./command-runner.js";
 import {
+  buildEvidenceRetentionPlan,
   discoverManagedEvidenceRuns,
-  pruneManagedEvidenceRuns,
+  planManagedEvidenceRuns,
 } from "./evidence-retention.js";
 import {
   assertProtectedFiles,
@@ -88,6 +110,10 @@ import { verifyMilestone } from "./verifier.js";
 import { performWorkspaceCleanup } from "./workspace-cleanup.js";
 import { TelemetryStore } from "./telemetry-store.js";
 import type {
+  BeginTelemetryPhaseInput,
+  TelemetrySpan,
+} from "./telemetry-store.js";
+import type {
   TelemetryCandidate,
   TelemetryStatus,
 } from "./telemetry-contracts.js";
@@ -97,9 +123,24 @@ export interface OrchestratorDependencies {
   readonly now?: () => Date;
   readonly createRunId?: () => string;
   readonly workspaceCleanup?: typeof performWorkspaceCleanup;
-  readonly evidencePruner?: typeof pruneManagedEvidenceRuns;
+  readonly evidencePlanner?: typeof planManagedEvidenceRuns;
   readonly evidenceDiscovery?: typeof discoverManagedEvidenceRuns;
   readonly telemetryStoreOpen?: typeof TelemetryStore.open;
+  readonly leaseOperation?: ControllerLeaseOperation;
+}
+
+export interface OrchestratorInspection {
+  readonly state: OrchestratorState | null;
+  readonly targetHead: string;
+  readonly targetDrift: {
+    readonly storedVerifiedCommit: string;
+    readonly actualHead: string;
+  } | null;
+  readonly pendingWorkspaceCleanups: number;
+  readonly protectedIntegrity:
+    "verified" | "uninitialized" | { readonly driftedPaths: readonly string[] };
+  readonly lease: ControllerLeaseInspection;
+  readonly nextAllowedAction: OrchestratorState["nextAllowedAction"];
 }
 
 export interface RunOptions {
@@ -550,9 +591,10 @@ export class MilestoneOrchestrator {
   private readonly now: () => Date;
   private readonly createRunId: () => string;
   private readonly workspaceCleanup: typeof performWorkspaceCleanup;
-  private readonly evidencePruner: typeof pruneManagedEvidenceRuns;
+  private readonly evidencePlanner: typeof planManagedEvidenceRuns;
   private readonly evidenceDiscovery: typeof discoverManagedEvidenceRuns;
   private readonly telemetryStoreOpen: typeof TelemetryStore.open;
+  private readonly lease: ControllerLease;
   private telemetryValue: TelemetryStore | null = null;
 
   private constructor(input: {
@@ -564,9 +606,10 @@ export class MilestoneOrchestrator {
     now: () => Date;
     createRunId: () => string;
     workspaceCleanup: typeof performWorkspaceCleanup;
-    evidencePruner: typeof pruneManagedEvidenceRuns;
+    evidencePlanner: typeof planManagedEvidenceRuns;
     evidenceDiscovery: typeof discoverManagedEvidenceRuns;
     telemetryStoreOpen: typeof TelemetryStore.open;
+    lease: ControllerLease;
   }) {
     this.repositoryRoot = input.repositoryRoot;
     this.config = input.config;
@@ -576,9 +619,10 @@ export class MilestoneOrchestrator {
     this.now = input.now;
     this.createRunId = input.createRunId;
     this.workspaceCleanup = input.workspaceCleanup;
-    this.evidencePruner = input.evidencePruner;
+    this.evidencePlanner = input.evidencePlanner;
     this.evidenceDiscovery = input.evidenceDiscovery;
     this.telemetryStoreOpen = input.telemetryStoreOpen;
+    this.lease = input.lease;
   }
 
   static async open(
@@ -588,6 +632,37 @@ export class MilestoneOrchestrator {
   ): Promise<MilestoneOrchestrator> {
     const root = resolve(repositoryRoot);
     const config = await loadConfig(root, configPath);
+    if (existsSync(resolve(root, DEFAULT_VERIFICATION_MANIFEST_PATH))) {
+      const manifest = await loadVerificationManifest(root);
+      assertManifestProtectedPathsCovered(
+        manifest.value,
+        buildCanonicalProtectedSet(config),
+      );
+    }
+    const lease = await ControllerLease.acquire({
+      repositoryRoot: root,
+      statePath: config.statePath,
+      operation: dependencies.leaseOperation ?? "run",
+    });
+    try {
+      return await MilestoneOrchestrator.openLeased(
+        root,
+        config,
+        lease,
+        dependencies,
+      );
+    } catch (error) {
+      await lease.release().catch(() => undefined);
+      throw error;
+    }
+  }
+
+  private static async openLeased(
+    root: string,
+    config: OrchestratorConfig,
+    lease: ControllerLease,
+    dependencies: OrchestratorDependencies,
+  ): Promise<MilestoneOrchestrator> {
     const now = dependencies.now ?? (() => new Date());
     const store = new StateStore(root, config.statePath, () => iso(now));
     let state = await store.load();
@@ -628,6 +703,26 @@ export class MilestoneOrchestrator {
       throw new Error(
         "Active controller reconciliation must resume before ordinary orchestration.",
       );
+    const canonical = enforcementProtectedPatterns(
+      config,
+      state.repository.protectedFiles,
+    );
+    const known = new Set(
+      state.repository.protectedFiles.map((file) => casefoldPathKey(file.path)),
+    );
+    const missingProtectedPaths = canonical.filter(
+      (path) => !known.has(casefoldPathKey(path)),
+    );
+    if (missingProtectedPaths.length > 0) {
+      const added = await captureProtectedFiles(root, missingProtectedPaths);
+      state = await store.save({
+        ...state,
+        repository: {
+          ...state.repository,
+          protectedFiles: [...state.repository.protectedFiles, ...added],
+        },
+      });
+    }
     const instance = new MilestoneOrchestrator({
       repositoryRoot: root,
       config,
@@ -638,11 +733,12 @@ export class MilestoneOrchestrator {
       createRunId: dependencies.createRunId ?? (() => safeRunId(now())),
       workspaceCleanup:
         dependencies.workspaceCleanup ?? performWorkspaceCleanup,
-      evidencePruner: dependencies.evidencePruner ?? pruneManagedEvidenceRuns,
+      evidencePlanner: dependencies.evidencePlanner ?? planManagedEvidenceRuns,
       evidenceDiscovery:
         dependencies.evidenceDiscovery ?? discoverManagedEvidenceRuns,
       telemetryStoreOpen:
         dependencies.telemetryStoreOpen ?? TelemetryStore.open,
+      lease,
     });
     instance.assertStoredPaths();
     instance.assertStoredAgentPolicies();
@@ -658,6 +754,65 @@ export class MilestoneOrchestrator {
 
   get state(): OrchestratorState {
     return this.stateValue;
+  }
+
+  async close(): Promise<void> {
+    await this.lease.release();
+  }
+
+  static async inspect(
+    repositoryRoot: string,
+    configPath?: string,
+  ): Promise<OrchestratorInspection> {
+    const root = resolve(repositoryRoot);
+    const config = await loadConfig(root, configPath);
+    const store = new StateStore(root, config.statePath);
+    const state = await store.load();
+    const targetHead = gitHead(root);
+    const lease = await ControllerLease.inspect(root, config.statePath);
+    if (!state)
+      return {
+        state: null,
+        targetHead,
+        targetDrift: null,
+        pendingWorkspaceCleanups: 0,
+        protectedIntegrity: "uninitialized",
+        lease,
+        nextAllowedAction: "plan",
+      };
+    const driftedPaths: string[] = [];
+    for (const file of state.repository.protectedFiles) {
+      const absolute = resolve(root, file.path);
+      if (!existsSync(absolute)) {
+        driftedPaths.push(file.path);
+        continue;
+      }
+      const actual = createHash("sha256")
+        .update(await readFile(absolute))
+        .digest("hex");
+      if (actual !== file.sha256) driftedPaths.push(file.path);
+    }
+    return {
+      state,
+      targetHead,
+      targetDrift:
+        targetHead === state.repository.verifiedCommit
+          ? null
+          : {
+              storedVerifiedCommit: state.repository.verifiedCommit,
+              actualHead: targetHead,
+            },
+      pendingWorkspaceCleanups: state.milestones.filter(
+        (milestone) =>
+          milestone.workspace !== null &&
+          (milestone.workspace.cleanup.status === "pending" ||
+            milestone.workspace.cleanup.status === "failed"),
+      ).length,
+      protectedIntegrity:
+        driftedPaths.length === 0 ? "verified" : { driftedPaths },
+      lease,
+      nextAllowedAction: state.nextAllowedAction,
+    };
   }
 
   private assertStoredPaths(): void {
@@ -968,51 +1123,23 @@ export class MilestoneOrchestrator {
     }
   }
 
-  private async pruneEvidence(): Promise<void> {
+  // Startup never deletes evidence: it writes an approval-ready plan.
+  // Deletion happens only through the hash-approved loop:retention:apply
+  // command under its own controller lease.
+  private async planEvidenceRetention(): Promise<void> {
     const generatedAt = iso(this.now);
-    const candidateCommit = gitHead(this.repositoryRoot);
-    const inventoryGuard = await readArtifactInventoryRetentionGuard(
-      this.repositoryRoot,
-      candidateCommit,
-    );
-    const common = {
+    const plan = await buildEvidenceRetentionPlan({
       repositoryRoot: this.repositoryRoot,
-      keepRecentRuns: this.config.evidenceRetention.keepRecentRuns,
-      legacyRunIds: this.stateValue.evidenceRetention.legacyRunIds,
-      durableState: this.stateValue,
-      safety: {
-        candidateCommit,
-        activeReconciliation: inventoryGuard.activeReconciliation,
-        inventoryHasUnknownReferences:
-          inventoryGuard.inventoryHasUnknownReferences,
-      },
+      config: this.config,
+      state: this.stateValue,
       now: generatedAt,
-    } as const;
-    const [verificationRuns, controllerRuns] = await Promise.all([
-      this.evidencePruner({
-        ...common,
-        artifactRoot: resolve(
-          this.repositoryRoot,
-          this.config.evidenceRetention.artifactRoot,
-        ),
-      }),
-      this.evidencePruner({
-        ...common,
-        artifactRoot: resolve(this.repositoryRoot, this.config.artifactRoot),
-        manifestKind: "controller-run-summary",
-      }),
-    ]);
-    const report = {
-      schemaVersion: "1.0.0",
-      generatedAt,
-      verificationRuns,
-      controllerRuns,
-    } as const;
+      planner: this.evidencePlanner,
+    });
     const reportPath = resolve(
       this.runArtifactDirectory(),
       "evidence-retention.json",
     );
-    await atomicWriteJson(reportPath, report);
+    await atomicWriteJson(reportPath, plan);
     await this.persist({
       ...this.stateValue,
       evidenceRetention: {
@@ -1048,6 +1175,18 @@ export class MilestoneOrchestrator {
     if (attempt.headCommit !== targetHead || !attempt.clean)
       throw new Error(
         "Target and approved isolated attempt do not match during recovery.",
+      );
+    const pinned = milestone.verificationSummaries.at(-1);
+    if (
+      pinned?.status === "PASS" &&
+      pinned.candidate !== null &&
+      !candidateIdentitiesEqual(
+        pinned.candidate,
+        candidateIdentityFrom(milestone.workspace.baseCommit, attempt),
+      )
+    )
+      throw new Error(
+        "Target advanced but the workspace no longer matches the pinned verified candidate.",
       );
     await assertProtectedFiles(
       this.repositoryRoot,
@@ -1102,6 +1241,68 @@ export class MilestoneOrchestrator {
     return store;
   }
 
+  private async recordTelemetryDegradation(
+    error: unknown,
+    directoryOverride?: string,
+  ): Promise<void> {
+    const message = redactSensitiveText(
+      error instanceof Error ? error.message : String(error),
+    );
+    process.stderr.write(
+      `[telemetry] non-semantic controller telemetry failure: ${message}\n`,
+    );
+    const directory =
+      directoryOverride ?? this.stateValue.run.artifactDirectory;
+    if (!directory) return;
+    try {
+      await atomicWriteJson(resolve(directory, "telemetry-error.json"), {
+        schemaVersion: "1.0.0",
+        status: "ERROR",
+        error: message,
+        recordedAt: iso(this.now),
+      });
+    } catch {
+      // The stderr line above is the only remaining channel when even the
+      // diagnostic write fails; telemetry availability must stay non-semantic.
+    }
+  }
+
+  private async finishSpanBestEffort(
+    span: { finish: (input: never) => Promise<unknown> } | null,
+    input: unknown,
+  ): Promise<void> {
+    if (!span) return;
+    try {
+      await span.finish(input as never);
+    } catch (error) {
+      await this.recordTelemetryDegradation(error);
+    }
+  }
+
+  private async telemetryStoreBestEffort(
+    recoverInterrupted = false,
+  ): Promise<TelemetryStore | null> {
+    try {
+      return await this.telemetryStore(recoverInterrupted);
+    } catch (error) {
+      await this.recordTelemetryDegradation(error);
+      return null;
+    }
+  }
+
+  private async beginPhaseBestEffort(
+    telemetry: TelemetryStore | null,
+    input: BeginTelemetryPhaseInput,
+  ): Promise<TelemetrySpan | null> {
+    if (!telemetry) return null;
+    try {
+      return await telemetry.beginPhase(input);
+    } catch (error) {
+      await this.recordTelemetryDegradation(error);
+      return null;
+    }
+  }
+
   private async completeTelemetry(
     status: TelemetryStatus,
     reason: string | null,
@@ -1110,31 +1311,7 @@ export class MilestoneOrchestrator {
       const telemetry = await this.telemetryStore();
       await telemetry.complete(status, reason);
     } catch (error) {
-      const message = redactSensitiveText(
-        error instanceof Error ? error.message : String(error),
-      );
-      const directory = this.stateValue.run.artifactDirectory;
-      if (directory)
-        await atomicWriteJson(resolve(directory, "telemetry-error.json"), {
-          schemaVersion: "1.0.0",
-          status: "ERROR",
-          error: message,
-          recordedAt: iso(this.now),
-        });
-      if (this.stateValue.run.status !== "escalated")
-        await this.persist({
-          ...this.stateValue,
-          run: {
-            ...this.stateValue.run,
-            status: "escalated",
-            finishedAt: iso(this.now),
-            stopReason: `Telemetry finalization failed: ${message}`,
-          },
-          nextAllowedAction: "stop",
-        });
-      throw new Error(`Telemetry finalization failed: ${message}`, {
-        cause: error,
-      });
+      await this.recordTelemetryDegradation(error);
     }
   }
 
@@ -1145,7 +1322,7 @@ export class MilestoneOrchestrator {
       this.stateValue.repository.verifiedCommit,
     );
     if (this.stateValue.run.status === "running") {
-      await this.telemetryStore(true);
+      await this.telemetryStoreBestEffort(true);
       return;
     }
     if (this.stateValue.run.status === "escalated")
@@ -1160,23 +1337,35 @@ export class MilestoneOrchestrator {
     );
     await mkdir(directory, { recursive: true });
     const started = this.now();
-    const telemetry = await this.telemetryStoreOpen({
-      repositoryRoot: this.repositoryRoot,
-      directory: resolve(directory, "telemetry"),
-      runId: id,
-      source: "controller",
-      now: this.now,
-    });
-    const inspectionSpan = await telemetry.beginPhase({
-      phase: "inspection",
-      eventType: "controller-start",
-      operationId: `${id}-inspection`,
-      candidate: telemetryCandidate(
-        this.repositoryRoot,
-        this.stateValue.repository.verifiedCommit,
-      ),
-    });
-    this.telemetryValue = telemetry;
+    let telemetry: TelemetryStore | null = null;
+    try {
+      telemetry = await this.telemetryStoreOpen({
+        repositoryRoot: this.repositoryRoot,
+        directory: resolve(directory, "telemetry"),
+        runId: id,
+        source: "controller",
+        now: this.now,
+      });
+    } catch (error) {
+      await this.recordTelemetryDegradation(error, directory);
+    }
+    let inspectionSpan: TelemetrySpan | null = null;
+    if (telemetry) {
+      try {
+        inspectionSpan = await telemetry.beginPhase({
+          phase: "inspection",
+          eventType: "controller-start",
+          operationId: `${id}-inspection`,
+          candidate: telemetryCandidate(
+            this.repositoryRoot,
+            this.stateValue.repository.verifiedCommit,
+          ),
+        });
+      } catch (error) {
+        await this.recordTelemetryDegradation(error, directory);
+      }
+      this.telemetryValue = telemetry;
+    }
     await atomicWriteJson(
       resolve(directory, "model-policy.json"),
       redactSensitiveValue({
@@ -1200,8 +1389,8 @@ export class MilestoneOrchestrator {
       run: activeRun(id, directory, started, this.config.limits.wallClockMs),
     });
     try {
-      await this.pruneEvidence();
-      await inspectionSpan.finish({ status: "PASS" });
+      await this.planEvidenceRetention();
+      await this.finishSpanBestEffort(inspectionSpan, { status: "PASS" });
     } catch (error) {
       const message = redactSensitiveText(
         error instanceof Error ? error.message : String(error),
@@ -1225,7 +1414,10 @@ export class MilestoneOrchestrator {
           recordedAt: stoppedAt,
         },
       );
-      await inspectionSpan.finish({ status: "ERROR", reason: message });
+      await this.finishSpanBestEffort(inspectionSpan, {
+        status: "ERROR",
+        reason: message,
+      });
       await this.writeRunSummary();
       await this.completeTelemetry("ERROR", message);
       throw new Error(`Evidence retention failed: ${message}`, {
@@ -1322,11 +1514,11 @@ export class MilestoneOrchestrator {
         };
         const originalThreadStarted = invocation.onThreadStarted;
         try {
-          const telemetry = await this.telemetryStore();
+          const telemetry = await this.telemetryStoreBestEffort();
           const result = await this.gateway.run({
             ...invocation,
             invocationId,
-            telemetryStore: telemetry,
+            ...(telemetry ? { telemetryStore: telemetry } : {}),
             telemetryCandidate: telemetryCandidate(
               invocation.workingDirectory,
               this.stateValue.repository.verifiedCommit,
@@ -1610,14 +1802,14 @@ export class MilestoneOrchestrator {
     );
   }
 
-  private async prepareWorkspace(milestone: MilestoneRecord): Promise<void> {
+  private async prepareWorkspace(
+    milestone: MilestoneRecord,
+    stage: "workspace-setup" | "verification-reinstall" = "workspace-setup",
+  ): Promise<void> {
     if (!milestone.workspace)
       throw new Error("Cannot prepare a missing workspace.");
-    const directory = resolve(
-      this.attemptDirectory(milestone),
-      "workspace-setup",
-    );
-    const telemetry = await this.telemetryStore();
+    const directory = resolve(this.attemptDirectory(milestone), stage);
+    const telemetry = await this.telemetryStoreBestEffort();
     const result = await runCommand(
       {
         id: "frozen-install",
@@ -1635,32 +1827,34 @@ export class MilestoneOrchestrator {
         artifactDirectory: directory,
         timeoutMs: this.phaseTimeout(this.config.limits.commandMs),
         trustedControllerCommand: true,
-        telemetry: {
-          store: telemetry,
-          phase: "inspection",
-          candidate: telemetryCandidate(
-            milestone.workspace.path,
-            milestone.workspace.baseCommit,
-          ),
-          checkSetId: "workspace-setup",
-          selectedCheckIds: ["frozen-install"],
-          actualCheckIds: ["frozen-install"],
-          retryAttempt: milestone.attempts,
-        },
+        ...(telemetry
+          ? {
+              telemetry: {
+                store: telemetry,
+                phase: "inspection" as const,
+                candidate: telemetryCandidate(
+                  milestone.workspace.path,
+                  milestone.workspace.baseCommit,
+                ),
+                checkSetId: stage,
+                selectedCheckIds: ["frozen-install"],
+                actualCheckIds: ["frozen-install"],
+                retryAttempt: milestone.attempts,
+              },
+            }
+          : {}),
       },
     );
-    await atomicWriteJson(resolve(directory, "workspace-setup.json"), result);
+    await atomicWriteJson(resolve(directory, `${stage}.json`), result);
     if (result.status !== "PASS")
       throw new Error(`Isolated workspace setup failed: ${result.message}`);
   }
 
   private protectedPatterns(): readonly string[] {
-    return [
-      ...new Set([
-        ...this.config.protectedPaths,
-        ...this.stateValue.repository.protectedFiles.map((file) => file.path),
-      ]),
-    ];
+    return enforcementProtectedPatterns(
+      this.config,
+      this.stateValue.repository.protectedFiles,
+    );
   }
 
   private async finalizeWorkerAttempt(id: string): Promise<boolean> {
@@ -1928,8 +2122,13 @@ export class MilestoneOrchestrator {
     const milestone = milestoneById(this.stateValue, id);
     if (!milestone.workspace)
       throw new Error("Verification has no isolated workspace.");
-    const telemetry = await this.telemetryStore();
-    const verificationSpan = await telemetry.beginPhase({
+    // Restore lockfile-bound toolchain content between the Worker turn and
+    // verification: gitignored node_modules edits are invisible to every diff
+    // and hash fence, so verification must not run whatever the Worker left
+    // there. Full write-denial belongs to process sandboxing (P1.1).
+    await this.prepareWorkspace(milestone, "verification-reinstall");
+    const telemetry = await this.telemetryStoreBestEffort();
+    const verificationSpan = await this.beginPhaseBestEffort(telemetry, {
       phase: "verification",
       eventType: "milestone-verification",
       operationId: `${this.stateValue.run.id ?? "run"}-${id}-a${milestone.attempts}-verification`,
@@ -1965,13 +2164,13 @@ export class MilestoneOrchestrator {
           this.attemptDirectory(milestone),
           "verification",
         ),
-        telemetry,
+        ...(telemetry ? { telemetry } : {}),
         ...(readinessHistory ? { readinessHistory } : {}),
       });
       const artifactMetadata = await Promise.all(
         summary.artifactPaths.map((path) => stat(path)),
       );
-      await verificationSpan.finish({
+      await this.finishSpanBestEffort(verificationSpan, {
         status: summary.status,
         reason: summary.status === "PASS" ? null : summary.summary,
         candidate: telemetryCandidate(
@@ -1998,7 +2197,10 @@ export class MilestoneOrchestrator {
       const message = redactSensitiveText(
         error instanceof Error ? error.message : String(error),
       );
-      await verificationSpan.finish({ status: "ERROR", reason: message });
+      await this.finishSpanBestEffort(verificationSpan, {
+        status: "ERROR",
+        reason: message,
+      });
       throw error;
     }
     await this.persist(
@@ -2029,14 +2231,15 @@ export class MilestoneOrchestrator {
       );
       return;
     }
-    const inspection = inspectAttempt(
-      milestone.workspace.path,
-      milestone.workspace.baseCommit,
-    );
+    const verified = summary.candidate;
+    if (!verified || !verified.clean)
+      throw new Error(
+        "PASS verification summary lacks a clean pinned candidate identity.",
+      );
     let updated = replaceMilestone(this.stateValue, id, (record) => ({
       ...record,
       workspace: record.workspace
-        ? { ...record.workspace, headCommit: inspection.headCommit }
+        ? { ...record.workspace, headCommit: verified.commit }
         : null,
     }));
     updated = transitionMilestone(updated, id, "reviewing", iso(this.now));
@@ -2050,23 +2253,86 @@ export class MilestoneOrchestrator {
     });
   }
 
+  private async escalateCandidateIdentityDrift(
+    id: string,
+    boundary: "review-entry" | "post-review" | "pre-integration",
+    expected: CandidateIdentity | null,
+    observed: CandidateIdentity | null,
+    messageOverride?: string,
+  ): Promise<void> {
+    const milestone = milestoneById(this.stateValue, id);
+    const reportPath = resolve(
+      this.attemptDirectory(milestone),
+      `candidate-identity-drift-${boundary}.json`,
+    );
+    await atomicWriteJson(reportPath, {
+      schemaVersion: "1.0.0",
+      milestoneId: id,
+      boundary,
+      expected,
+      observed,
+      recordedAt: iso(this.now),
+    });
+    const fields =
+      expected && observed ? differingIdentityFields(expected, observed) : [];
+    const message =
+      messageOverride ??
+      `Candidate identity changed at ${boundary}: [${fields.join(", ")}] differ from the machine-verified candidate. Nothing was integrated.`;
+    await this.escalate("CANDIDATE_IDENTITY_DRIFT", message, [reportPath], id);
+  }
+
   private async review(id: string): Promise<void> {
     const milestone = milestoneById(this.stateValue, id);
     const verification = milestone.verificationSummaries.at(-1);
     if (!milestone.workspace || !verification || verification.status !== "PASS")
       throw new Error("Review requires a verified isolated attempt.");
-    const attempt = inspectAttempt(
-      milestone.workspace.path,
+    const verified = verification.candidate;
+    const resultSha256 = verification.authoritativeResultSha256;
+    const copiedResultPath = verification.authoritative?.copiedResultPath;
+    if (!verified || !resultSha256 || !copiedResultPath) {
+      await this.escalateCandidateIdentityDrift(
+        id,
+        "review-entry",
+        verified,
+        null,
+        "Persisted verification predates the candidate identity fence; re-verification is required before review.",
+      );
+      return;
+    }
+    const entryIdentity = candidateIdentityFrom(
       milestone.workspace.baseCommit,
+      inspectAttempt(milestone.workspace.path, milestone.workspace.baseCommit),
     );
+    if (!candidateIdentitiesEqual(verified, entryIdentity)) {
+      await this.escalateCandidateIdentityDrift(
+        id,
+        "review-entry",
+        verified,
+        entryIdentity,
+      );
+      return;
+    }
+    const observedResultSha256 = createHash("sha256")
+      .update(await readFile(copiedResultPath))
+      .digest("hex");
+    if (observedResultSha256 !== resultSha256) {
+      await this.escalateCandidateIdentityDrift(
+        id,
+        "review-entry",
+        verified,
+        entryIdentity,
+        "The copied authoritative verification result no longer matches its recorded hash.",
+      );
+      return;
+    }
     const report = await requestReview({
       gateway: this.accountingGateway(),
       project: this.config.project,
       proposal: milestone.proposal,
       verification,
       workspacePath: milestone.workspace.path,
-      baseCommit: milestone.workspace.baseCommit,
-      headCommit: attempt.headCommit,
+      verifiedCandidate: verified,
+      verificationResultSha256: resultSha256,
       attempt: milestone.attempts,
       artifactDirectory: resolve(this.attemptDirectory(milestone), "review"),
       timeoutMs: this.phaseTimeout(this.config.limits.codexTurnMs),
@@ -2101,7 +2367,24 @@ export class MilestoneOrchestrator {
       );
       return;
     }
-    await this.integrate(id, attempt.headCommit, attempt.commits);
+    const postReviewInspection = inspectAttempt(
+      milestone.workspace.path,
+      milestone.workspace.baseCommit,
+    );
+    const postReviewIdentity = candidateIdentityFrom(
+      milestone.workspace.baseCommit,
+      postReviewInspection,
+    );
+    if (!candidateIdentitiesEqual(verified, postReviewIdentity)) {
+      await this.escalateCandidateIdentityDrift(
+        id,
+        "post-review",
+        verified,
+        postReviewIdentity,
+      );
+      return;
+    }
+    await this.integrate(id, verified, postReviewInspection.commits);
   }
 
   private async retryOrEscalate(
@@ -2187,12 +2470,25 @@ export class MilestoneOrchestrator {
 
   private async integrate(
     id: string,
-    headCommit: string,
+    verified: CandidateIdentity,
     commits: readonly string[],
   ): Promise<void> {
     const milestone = milestoneById(this.stateValue, id);
     if (!milestone.workspace)
       throw new Error("Integration has no isolated workspace.");
+    const preIntegrationIdentity = candidateIdentityFrom(
+      milestone.workspace.baseCommit,
+      inspectAttempt(milestone.workspace.path, milestone.workspace.baseCommit),
+    );
+    if (!candidateIdentitiesEqual(verified, preIntegrationIdentity)) {
+      await this.escalateCandidateIdentityDrift(
+        id,
+        "pre-integration",
+        verified,
+        preIntegrationIdentity,
+      );
+      return;
+    }
     await assertProtectedFiles(
       milestone.workspace.path,
       this.stateValue.repository.protectedFiles,
@@ -2209,11 +2505,11 @@ export class MilestoneOrchestrator {
       schemaVersion: "1.0.0",
       status: "pending",
       baseCommit: milestone.workspace.baseCommit,
-      headCommit,
+      headCommit: verified.commit,
       commits,
     });
-    const telemetry = await this.telemetryStore();
-    const integrationSpan = await telemetry.beginPhase({
+    const telemetry = await this.telemetryStoreBestEffort();
+    const integrationSpan = await this.beginPhaseBestEffort(telemetry, {
       phase: "integration",
       eventType: "milestone-fast-forward",
       operationId: `${this.stateValue.run.id ?? "run"}-${id}-integration`,
@@ -2229,9 +2525,10 @@ export class MilestoneOrchestrator {
         targetBranch: this.config.targetBranch,
         expectedBaseCommit: this.stateValue.repository.verifiedCommit,
         workspacePath: milestone.workspace.path,
-        headCommit,
+        headCommit: verified.commit,
+        expectedTree: verified.tree,
       });
-      await integrationSpan.finish({
+      await this.finishSpanBestEffort(integrationSpan, {
         status: "PASS",
         candidate: telemetryCandidate(
           this.repositoryRoot,
@@ -2242,7 +2539,10 @@ export class MilestoneOrchestrator {
       const message = redactSensitiveText(
         error instanceof Error ? error.message : String(error),
       );
-      await integrationSpan.finish({ status: "ERROR", reason: message });
+      await this.finishSpanBestEffort(integrationSpan, {
+        status: "ERROR",
+        reason: message,
+      });
       throw error;
     }
     let completed = replaceMilestone(this.stateValue, id, (record) => ({
@@ -2590,36 +2890,42 @@ export class MilestoneOrchestrator {
   }
 
   statusSummary(): unknown {
-    return {
-      schemaVersion: this.stateValue.schemaVersion,
-      revision: this.stateValue.revision,
-      repository: this.stateValue.repository,
-      run: this.stateValue.run,
-      queue: this.stateValue.queue,
-      activeMilestoneId: this.stateValue.activeMilestoneId,
-      requiredNextVerticalConsumer:
-        this.stateValue.requiredNextVerticalConsumer,
-      evidenceRetention: this.stateValue.evidenceRetention,
-      milestones: this.stateValue.milestones.map((milestone) => ({
-        id: milestone.proposal.id,
-        title: milestone.proposal.title,
-        status: milestone.status,
-        attempts: milestone.attempts,
-        workerThreadId: milestone.workerThreadId,
-        workerPolicy: milestone.workerPolicy,
-        workerThreadLineage: milestone.workerThreadLineage,
-        nextAllowedAction: milestone.nextAllowedAction,
-        workspace:
-          milestone.workspace === null
-            ? null
-            : relative(
-                this.repositoryRoot,
-                milestone.workspace.path,
-              ).replaceAll("\\", "/"),
-        workspacePreserved: milestone.workspace?.preserved ?? null,
-        workspaceCleanup: milestone.workspace?.cleanup ?? null,
-      })),
-      nextAllowedAction: this.stateValue.nextAllowedAction,
-    };
+    return stateStatusSummary(this.repositoryRoot, this.stateValue);
   }
+}
+
+export function stateStatusSummary(
+  repositoryRoot: string,
+  state: OrchestratorState,
+): unknown {
+  return {
+    schemaVersion: state.schemaVersion,
+    revision: state.revision,
+    repository: state.repository,
+    run: state.run,
+    queue: state.queue,
+    activeMilestoneId: state.activeMilestoneId,
+    requiredNextVerticalConsumer: state.requiredNextVerticalConsumer,
+    evidenceRetention: state.evidenceRetention,
+    milestones: state.milestones.map((milestone) => ({
+      id: milestone.proposal.id,
+      title: milestone.proposal.title,
+      status: milestone.status,
+      attempts: milestone.attempts,
+      workerThreadId: milestone.workerThreadId,
+      workerPolicy: milestone.workerPolicy,
+      workerThreadLineage: milestone.workerThreadLineage,
+      nextAllowedAction: milestone.nextAllowedAction,
+      workspace:
+        milestone.workspace === null
+          ? null
+          : relative(repositoryRoot, milestone.workspace.path).replaceAll(
+              "\\",
+              "/",
+            ),
+      workspacePreserved: milestone.workspace?.preserved ?? null,
+      workspaceCleanup: milestone.workspace?.cleanup ?? null,
+    })),
+    nextAllowedAction: state.nextAllowedAction,
+  };
 }

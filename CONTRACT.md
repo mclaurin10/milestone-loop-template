@@ -39,7 +39,10 @@ change once, at `CAL-1` close, under the rules in `AGENTS.md`.
   `loop:*` / `artifacts:*` commands.
 - One `verify:<check>` script per focused command in the verification
   manifest (§5). The template ships nine `verify:domain-*` placeholders that
-  exit 1 with instructions; replace them.
+  exit 1 with instructions; replace them. A replacement must produce the
+  command's declared `expectedArtifactKinds` (the placeholders declare
+  `<id>-report`) through a command-owned receipt (§4) — a bare exit 0 never
+  passes.
 
 The pnpm workspace (`pnpm-workspace.yaml`) must include
 `tools/milestone-orchestrator`; `tools/workspace-typecheck.mjs` lists every
@@ -65,9 +68,14 @@ tsconfig the `typecheck` evidence covers.
   file.
 - **Run identity**: `--run-id <id>` (the orchestrator appends it); results
   are written under `artifacts/<run-id>/`: `run-manifest.json`,
-  `result.json` (schema `2.0.0`: status, exit code, profile, completion
+  `result.json` (schema `2.1.0`: status, exit code, profile, completion
   eligibility with reasons, candidate identity incl. git commit/tree and
-  authority hashes, per-stage checks/commands), and `summary.md`.
+  authority hashes, per-stage checks/commands), and `summary.md`. The
+  candidate identity is captured again after the stage loop
+  (`candidateFinal` plus `identityDrift`); any tracked or ref drift
+  between the two captures forces `FAIL` with completion reason
+  `candidate_identity_drift`, and completion eligibility reads the final
+  cleanliness, never the starting snapshot.
 - **Focused runs**: `--stage <id>` always bundles `environment` and
   `contract-integrity`, and is marked completion-ineligible.
 - **contract-integrity stage**: validates the immutable lock hash, the lock
@@ -117,6 +125,14 @@ valid receipt is a failure. Stages additionally declare
 `requiredArtifactKinds`; the union of receipt artifact kinds must cover
 them.
 
+The milestone verifier enforces the same contract on every focused
+(`exit-code`) verification command a proposal declares: the command runs
+with `LOOP_VERIFY_STAGE_ID` bound to the run × milestone × attempt ×
+candidate, and a passing exit status without a validated receipt covering
+the command's `expectedArtifactKinds` is an infrastructure error, never a
+pass. `pnpm-verify` commands are exempt because their evidence is the
+independently parsed authoritative result tree.
+
 ## 5. Verification manifest
 
 `.agent/completed/loop-recommissioning-verification.json` is the check
@@ -125,7 +141,12 @@ catalogue everything else references:
 - `focusedCommands[]`: `{ id, argv, tiers, expectedArtifactKinds }` for
   every focused check. `argv` must start with `pnpm`, `node`, or `git`.
   `tiers` places each check into `iteration` / `candidate` / `milestone` /
-  `periodic` plans. Three auxiliary ids are always available:
+  `periodic` plans. `expectedArtifactKinds` must be nonempty for every
+  focused command (and for every invariant-registry entry) — an empty list
+  no longer disables receipt validation anywhere. Milestone proposals carry
+  the same per-command field at schema `1.2.0` (nonempty for `exit-code`,
+  exactly `[]` for `pnpm-verify`); the proposal-level `expectedArtifacts`
+  list was removed at `1.2.0`. Three auxiliary ids are always available:
   `dependencies`, `test-unit`, `exact-readiness`.
 - Check-id consistency is enforced at load time: every id used by
   `verification-scope-policy.json` (`mandatoryChecks`, `workspaceChecks`)
@@ -143,7 +164,7 @@ catalogue everything else references:
 | --- | --- |
 | `.agent/PLANS.md` | The executable-plan standard (shape, maintenance, completion rules). |
 | `.agent/current-exec-plan.md` | The single living plan for the active increment, using the required headings. |
-| `.agent/next-milestone.json` | The queued next proposal in milestone schema `1.1.0`; written by reconciliation, consumed by the planner policy. |
+| `.agent/next-milestone.json` | The queued next proposal in milestone schema `1.2.0`; written by reconciliation, consumed by the planner policy. |
 | `.agent/readiness-profile-activated.json` | Permanent one-way lifecycle marker (`{schemaVersion, state:"readiness", previousState:"bootstrap", activatedDate, reason}`). |
 | `.agent/completed/` | Durable milestone records, including the verification manifest (§5). |
 
@@ -153,9 +174,17 @@ All five config files under `tools/milestone-orchestrator/config/` must
 validate at load time; see
 [`config/README.md`](tools/milestone-orchestrator/config/README.md) and the
 `*.template.json` skeletons. `protectedPaths` must include the authority
-file and the `evals/` contract files; the loop's diff policy rejects any
-worker change touching them, and `pnpm loop:demo-safety` demonstrates that
-rejection.
+file, the `evals/` contract files, and the mandatory controller trust
+roots (`AGENTS.md`, `.agent/readiness-profile-activated.json`,
+`scripts/verify.mjs`, `pnpm-lock.yaml`); the loop unions these with the
+configured entries into one canonical protected set enforced (with
+case-fold matching and both rename sides) at proposal, worker diff,
+verification, review, integration, and reconciliation boundaries.
+Symlink and gitlink change types are rejected outright. A commissioned
+verification manifest may not require a protected path outside this
+canonical set — controller startup, reconciliation, and doctor all
+validate the coverage — and `pnpm loop:demo-safety` demonstrates the
+rejection of every canonical path including case variants.
 
 ## 8. Environment
 
@@ -166,6 +195,26 @@ rejection.
   (`pnpm loop:check-model-policy` verifies the live model policy;
   `MILESTONE_LOOP_CONFIG` overrides the config path;
   `MILESTONE_LOOP_TELEMETRY_RUN_ID` scopes direct-telemetry runs).
+- Single-writer mutation: every mutating loop command (including
+  reconciliation) holds the repository-wide lease at
+  `artifacts/orchestrator/state/controller.lease`, state initialization is
+  exclusive-create *and* crash-atomic (fully written bytes are published
+  via hard link, so an interrupted initialization leaves nothing behind),
+  and every state save compare-and-swaps the stored revision — a stale
+  writer fails with an actionable error and no merge is attempted.
+  Stale-lease recovery is an atomic quarantine-rename with byte
+  verification: concurrent recoveries have exactly one winner.
+  `loop:status`/`loop:dry-run` are read-only and lease-free.
+- Approval-bound evidence retention: `loop:run` never deletes evidence —
+  controller startup only writes a retention *plan*
+  (`evidence-retention.json` in the run directory). Deletion requires
+  `loop:retention:plan` (standalone plan + sha256 approval token) followed
+  by `loop:retention:apply -- --plan <path> --sha256 <hex>`, which runs
+  under the controller lease, re-verifies the candidate, configuration,
+  roots, citations, and suspensions against a fresh plan, refuses the
+  whole plan on any divergence, and journals every deletion for
+  interruption-safe resumption. Terminal milestone workspace cleanup is a
+  separate automatic temporary-workspace policy (§ workspaces above).
 
 ## Adoption checklist
 

@@ -4,9 +4,9 @@ import { join } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { atomicWriteJson, StateStore } from "./state-store.js";
+import { atomicWriteJson, StaleStateError, StateStore } from "./state-store.js";
 import { createMilestoneRecord } from "./milestone-state.js";
-import { validProposal, validState } from "../test/fixtures.js";
+import { legacyProposal, validProposal, validState } from "../test/fixtures.js";
 
 const temporaryDirectories: string[] = [];
 
@@ -34,6 +34,99 @@ describe("atomic state persistence", () => {
     const saved = await store.save(initial);
     expect(saved.revision).toBe(1);
     await expect(store.load()).resolves.toEqual(saved);
+  });
+
+  it("rejects a stale concurrent writer and keeps the first update durable", async () => {
+    const directory = await temporaryDirectory();
+    const relativePath = "artifacts/orchestrator/state/state.json";
+    const first = new StateStore(
+      directory,
+      relativePath,
+      () => "2026-08-05T00:00:01.000Z",
+    );
+    const second = new StateStore(
+      directory,
+      relativePath,
+      () => "2026-08-05T00:00:02.000Z",
+    );
+    await first.initialize(validState(directory));
+    const loadedByFirst = await first.load();
+    const loadedBySecond = await second.load();
+    if (!loadedByFirst || !loadedBySecond)
+      throw new Error("Both writers must load the initialized state.");
+
+    const firstSaved = await first.save({
+      ...loadedByFirst,
+      nextAllowedAction: "start-milestone",
+    });
+    expect(firstSaved.revision).toBe(1);
+
+    await expect(
+      second.save({ ...loadedBySecond, nextAllowedAction: "stop" }),
+    ).rejects.toThrow(StaleStateError);
+    await expect(
+      second.save({ ...loadedBySecond, nextAllowedAction: "stop" }),
+    ).rejects.toThrow(/No merge was attempted/);
+
+    const durable = await first.load();
+    expect(durable?.revision).toBe(1);
+    expect(durable?.nextAllowedAction).toBe("start-milestone");
+
+    const refreshed = await second.load();
+    if (!refreshed) throw new Error("Durable state must reload.");
+    const secondSaved = await second.save({
+      ...refreshed,
+      nextAllowedAction: "stop",
+    });
+    expect(secondSaved.revision).toBe(2);
+  });
+
+  it("rejects saving over missing durable state", async () => {
+    const directory = await temporaryDirectory();
+    const store = new StateStore(directory, "state.json");
+    await expect(store.save(validState(directory))).rejects.toThrow(
+      /mutations must go through initialization/,
+    );
+  });
+
+  it("initializes exclusively and returns the existing durable state on contention", async () => {
+    const directory = await temporaryDirectory();
+    const relativePath = "state.json";
+    const winner = new StateStore(directory, relativePath);
+    const loser = new StateStore(directory, relativePath);
+    const winnerState = validState(directory);
+    const initialized = await winner.initialize(winnerState);
+    expect(initialized.revision).toBe(0);
+
+    const loserState = {
+      ...validState(directory),
+      nextAllowedAction: "stop" as const,
+    };
+    const observed = await loser.initialize(loserState);
+    expect(observed.nextAllowedAction).toBe(winnerState.nextAllowedAction);
+    expect(JSON.parse(await readFile(winner.path, "utf8"))).toMatchObject({
+      nextAllowedAction: winnerState.nextAllowedAction,
+    });
+
+    await writeFile(winner.path, '{"schemaVersion":"0.0.0"}\n', "utf8");
+    await expect(loser.initialize(loserState)).rejects.toThrow(
+      /Invalid orchestrator state/,
+    );
+  });
+
+  it("leaves nothing behind when exclusive initialization is interrupted", async () => {
+    const directory = await temporaryDirectory();
+    const store = new StateStore(directory, "state.json");
+    await expect(
+      store.initialize(validState(directory), {
+        beforeRename() {
+          throw new Error("injected interruption");
+        },
+      }),
+    ).rejects.toThrow(/injected interruption/);
+    expect(await readdir(directory)).toEqual([]);
+    const recovered = await store.initialize(validState(directory));
+    expect(recovered.revision).toBe(0);
   });
 
   it("leaves the prior durable file intact when replacement is interrupted", async () => {
@@ -72,17 +165,11 @@ describe("atomic state persistence", () => {
       unknown
     >;
     const milestone = createMilestoneRecord(
-      validProposal(),
+      legacyProposal("1.0.0"),
       "2026-08-01T00:00:00.000Z",
     );
     const historicalMilestone = { ...milestone } as Record<string, unknown>;
     delete historicalMilestone["proposalProvenance"];
-    const historicalProposal: Record<string, unknown> = {
-      ...(historicalMilestone["proposal"] as Record<string, unknown>),
-      schemaVersion: "1.0.0",
-    };
-    delete historicalProposal["verticalSlice"];
-    historicalMilestone["proposal"] = historicalProposal;
     legacy["milestones"] = [
       {
         ...historicalMilestone,
@@ -101,7 +188,7 @@ describe("atomic state persistence", () => {
     delete (legacy["run"] as Record<string, unknown>)["agentInvocations"];
     await writeFile(store.path, `${JSON.stringify(legacy)}\n`, "utf8");
     await expect(store.load()).resolves.toMatchObject({
-      schemaVersion: "1.3.0",
+      schemaVersion: "1.4.0",
       run: { agentInvocations: [] },
       evidenceRetention: {
         schemaVersion: "1.0.0",
@@ -141,17 +228,11 @@ describe("atomic state persistence", () => {
       unknown
     >;
     const milestone = createMilestoneRecord(
-      validProposal(),
+      legacyProposal("1.0.0"),
       "2026-08-01T00:00:00.000Z",
     );
     const historicalMilestone = { ...milestone } as Record<string, unknown>;
     delete historicalMilestone["proposalProvenance"];
-    const historicalProposal: Record<string, unknown> = {
-      ...(historicalMilestone["proposal"] as Record<string, unknown>),
-      schemaVersion: "1.0.0",
-    };
-    delete historicalProposal["verticalSlice"];
-    historicalMilestone["proposal"] = historicalProposal;
     legacy["schemaVersion"] = "1.1.0";
     delete legacy["evidenceRetention"];
     legacy["milestones"] = [
@@ -177,7 +258,7 @@ describe("atomic state persistence", () => {
     await writeFile(store.path, `${JSON.stringify(legacy)}\n`, "utf8");
 
     await expect(store.load()).resolves.toMatchObject({
-      schemaVersion: "1.3.0",
+      schemaVersion: "1.4.0",
       evidenceRetention: {
         initializedAt: null,
         legacyRunIds: [],
@@ -224,7 +305,7 @@ describe("atomic state persistence", () => {
     await writeFile(store.path, `${JSON.stringify(legacy)}\n`, "utf8");
 
     await expect(store.load()).resolves.toMatchObject({
-      schemaVersion: "1.3.0",
+      schemaVersion: "1.4.0",
       revision: current.revision,
       repository: current.repository,
       queue: current.queue,
@@ -236,6 +317,56 @@ describe("atomic state persistence", () => {
       },
       controllerHistory: [],
       reconciliation: { active: null, history: [] },
+    });
+  });
+
+  it("migrates 1.3 state by marking prior verification summaries as unpinned", async () => {
+    const directory = await temporaryDirectory();
+    const store = new StateStore(directory, "state.json");
+    const current = validState(directory);
+    const milestone = JSON.parse(
+      JSON.stringify(
+        createMilestoneRecord(validProposal(), "2026-08-01T00:00:00.000Z"),
+      ),
+    ) as Record<string, unknown>;
+    const legacySummary = {
+      schemaVersion: "1.0.0",
+      attempt: 1,
+      status: "PASS",
+      disposition: "incremental-readiness",
+      failureKind: null,
+      summary: "Pre-fence verification evidence.",
+      startedAt: "2026-08-01T00:00:00.000Z",
+      finishedAt: "2026-08-01T00:00:01.000Z",
+      commands: [],
+      authoritative: null,
+      changedPaths: ["tools/example.ts"],
+      artifactPaths: ["verification/verification-summary.json"],
+    };
+    milestone["verificationSummaries"] = [legacySummary];
+    const legacy = JSON.parse(JSON.stringify(current)) as Record<
+      string,
+      unknown
+    >;
+    legacy["schemaVersion"] = "1.3.0";
+    legacy["milestones"] = [milestone];
+    legacy["queue"] = [
+      (milestone["proposal"] as Record<string, unknown>)["id"],
+    ];
+    await writeFile(store.path, `${JSON.stringify(legacy)}\n`, "utf8");
+
+    const migrated = await store.load();
+    expect(migrated).toMatchObject({ schemaVersion: "1.4.0" });
+    const summaries = migrated?.milestones[0]?.verificationSummaries;
+    expect(summaries).toHaveLength(1);
+    expect(summaries?.[0]).toMatchObject({
+      schemaVersion: "1.1.0",
+      attempt: 1,
+      status: "PASS",
+      summary: "Pre-fence verification evidence.",
+      candidate: null,
+      authoritativeResultSha256: null,
+      changedPaths: ["tools/example.ts"],
     });
   });
 });

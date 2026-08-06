@@ -28,11 +28,32 @@ their contents, guided by the templates.
   worker-escalation policy.
 - `limits` — hard loop budgets (attempts, wall clock, invocations, tokens).
 - `protectedPaths` — frozen files the diff policy refuses to let a worker
-  touch. Must include `project.authorityFile` and the `evals/` contract files.
+  touch. Must include `project.authorityFile`, the `evals/` contract files,
+  and the mandatory controller trust roots (`AGENTS.md`,
+  `.agent/readiness-profile-activated.json`, `scripts/verify.mjs`,
+  `pnpm-lock.yaml`, `package.json`,
+  `tools/milestone-orchestrator/config/invariant-suite.json`). The loop
+  always enforces the canonical union of these mandatory roots with the
+  configured entries, matched case-insensitively; adopters may add stricter
+  paths but can never remove the floor. Beyond file literals, the entire
+  `tools/milestone-orchestrator/` subtree is protected (the controller runs
+  from the target checkout, so its source and config are
+  verifier-equivalent): any changed path under it — including newly created
+  files — is a protected change. A commissioned verification manifest at
+  `.agent/completed/loop-recommissioning-verification.json` joins the
+  enforced set automatically while it exists.
 
 Config schema migrations live in `src/config.ts` (`migrateConfig`); 1.0.0 →
-1.3.0 configs are migrated in memory with generic defaults for new sections.
+1.3.0 configs are migrated in memory to 1.4.0 with generic defaults for new
+sections, and the migration additively unions the mandatory protected trust
+roots into `protectedPaths` (protections are only ever strengthened).
 The environment variable `MILESTONE_LOOP_CONFIG` overrides the config path.
+
+Telemetry is non-semantic everywhere: a telemetry open/write/finalize
+failure degrades telemetry claims only — the underlying command, agent,
+verification, review, and run outcomes are preserved, and a
+`telemetry-error.json` (or `agent-telemetry-error.json`) diagnostic plus a
+stderr line record the degradation.
 
 ## verification-scope-policy.json (`VerificationScopePolicy`)
 
@@ -62,7 +83,12 @@ mismatch weakens telemetry, never correctness.
 The always-run invariant suite: fast, serial checks executed on every tier.
 Each entry pins the files that own the invariant (`ownerPaths` must exist),
 the paths that trigger it, and an exact argv. Optional `testFile`/`testTitle`
-pin one named test whose title must literally appear in that file.
+pin one named test whose title must literally appear in that file. Every
+entry must declare nonempty `expectedArtifactKinds`, and a missing receipt
+fails the invariant. `pnpm exec vitest run …` and `pnpm verify -- --stage …`
+argvs are routed through `tools/run-tool-evidence.mjs` receipt wrappers
+(`invariant-vitest` produces `invariant-vitest-report`; `focused-verify`
+retains the stage's authoritative `result.json` as `focused-verify-result`).
 
 ## slow-suite-registry.json (`SlowSuiteRegistry`)
 

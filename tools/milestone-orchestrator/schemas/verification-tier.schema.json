@@ -255,6 +255,8 @@
         "fullClosureCheckIds",
         "commands",
         "exactVerification",
+        "candidateFinal",
+        "identityDrift",
         "reviewRequired",
         "telemetryManifestPath",
         "startedAt",
@@ -262,7 +264,7 @@
         "durationMs"
       ],
       "properties": {
-        "schemaVersion": { "const": "1.0.0" },
+        "schemaVersion": { "const": "1.1.0" },
         "runId": { "type": "string", "minLength": 1 },
         "tier": { "enum": ["iteration", "candidate", "milestone", "periodic"] },
         "status": { "enum": ["PASS", "NOT_READY", "FAIL", "ERROR"] },
@@ -283,6 +285,16 @@
         },
         "exactVerification": {
           "oneOf": [{ "$ref": "#/$defs/exactVerification" }, { "type": "null" }]
+        },
+        "candidateFinal": { "$ref": "#/$defs/candidate" },
+        "identityDrift": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["detected", "fields"],
+          "properties": {
+            "detected": { "type": "boolean" },
+            "fields": { "$ref": "#/$defs/stringArray" }
+          }
         },
         "reviewRequired": { "type": "boolean" },
         "telemetryManifestPath": { "type": ["string", "null"] },

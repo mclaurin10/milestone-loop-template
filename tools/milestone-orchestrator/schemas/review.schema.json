@@ -1,15 +1,72 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://milestone-loop.local/schemas/orchestrator-review-1.0.0.json",
+  "$id": "https://milestone-loop.local/schemas/orchestrator-review-1.1.0.json",
   "title": "Example Project Independent Review",
+  "description": "The persisted independent-review artifact. The reviewer model returns the identity-echo and decision fields; the controller injects attempt, threadId, and reviewedAt before persisting.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "decision", "summary", "findings", "checks"],
+  "required": [
+    "schemaVersion",
+    "decision",
+    "summary",
+    "findings",
+    "checks",
+    "verifiedBaseCommit",
+    "verifiedHeadCommit",
+    "verifiedTree",
+    "verificationResultSha256",
+    "attempt",
+    "threadId",
+    "reviewedAt"
+  ],
   "properties": {
-    "schemaVersion": { "const": "1.0.0" },
+    "schemaVersion": { "const": "1.1.0" },
     "decision": { "enum": ["approve", "reject", "escalate"] },
-    "summary": { "type": "string" },
-    "findings": { "type": "array", "items": { "type": "object" } },
-    "checks": { "type": "object" }
+    "summary": { "type": "string", "minLength": 1 },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "severity", "message", "evidence"],
+        "properties": {
+          "code": { "type": "string", "minLength": 1 },
+          "severity": { "enum": ["low", "medium", "high", "critical"] },
+          "message": { "type": "string", "minLength": 1 },
+          "evidence": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "acceptanceEvidence",
+        "architectureCompliance",
+        "testQuality",
+        "noSuspiciousShortcuts",
+        "noScopeReduction",
+        "regressionsHandled"
+      ],
+      "properties": {
+        "acceptanceEvidence": { "type": "boolean" },
+        "architectureCompliance": { "type": "boolean" },
+        "testQuality": { "type": "boolean" },
+        "noSuspiciousShortcuts": { "type": "boolean" },
+        "noScopeReduction": { "type": "boolean" },
+        "regressionsHandled": { "type": "boolean" }
+      }
+    },
+    "verifiedBaseCommit": { "$ref": "#/$defs/commit" },
+    "verifiedHeadCommit": { "$ref": "#/$defs/commit" },
+    "verifiedTree": { "$ref": "#/$defs/commit" },
+    "verificationResultSha256": { "$ref": "#/$defs/sha256" },
+    "attempt": { "type": "integer", "minimum": 1 },
+    "threadId": { "type": "string", "minLength": 1 },
+    "reviewedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
   }
 }

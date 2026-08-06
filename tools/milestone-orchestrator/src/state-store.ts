@@ -1,4 +1,5 @@
-import { mkdir, open, readFile, rename, unlink } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import { link, mkdir, open, readFile, rename, unlink } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 
 import {
@@ -14,6 +15,28 @@ export interface AtomicWriteHooks {
     temporaryPath: string,
     targetPath: string,
   ) => void | Promise<void>;
+}
+
+export class StaleStateError extends Error {
+  readonly path: string;
+  readonly expectedRevision: number;
+  readonly actualRevision: number | null;
+
+  constructor(
+    path: string,
+    expectedRevision: number,
+    actualRevision: number | null,
+  ) {
+    super(
+      actualRevision === null
+        ? `Durable controller state is missing at ${path}; mutations must go through initialization.`
+        : `Durable controller state advanced under this process (disk revision ${actualRevision}, in-memory ${expectedRevision}) at ${path}. Another controller likely ran; re-run the command to load the durable state. No merge was attempted.`,
+    );
+    this.name = "StaleStateError";
+    this.path = path;
+    this.expectedRevision = expectedRevision;
+    this.actualRevision = actualRevision;
+  }
 }
 
 export async function atomicWriteJson(
@@ -36,6 +59,41 @@ export async function atomicWriteJson(
     if (!closed) await handle.close().catch(() => undefined);
     await unlink(temporaryPath).catch(() => undefined);
     throw error;
+  }
+}
+
+export async function exclusiveWriteSerialized(
+  targetPath: string,
+  serialized: string,
+  hooks: AtomicWriteHooks = {},
+): Promise<"created" | "exists"> {
+  await mkdir(dirname(targetPath), { recursive: true });
+  const temporaryPath = `${targetPath}.tmp-${process.pid}-${randomUUID()}`;
+  const handle = await open(temporaryPath, "wx");
+  let closed = false;
+  try {
+    await handle.writeFile(serialized, "utf8");
+    await handle.sync();
+    await handle.close();
+    closed = true;
+    await hooks.beforeRename?.(temporaryPath, targetPath);
+    // link keeps wx-exclusive semantics (EEXIST when the target exists) while
+    // publishing fully written, fsynced bytes - no reader can observe a
+    // partially written target.
+    await link(temporaryPath, targetPath);
+    return "created";
+  } catch (error) {
+    if (!closed) await handle.close().catch(() => undefined);
+    if (
+      closed &&
+      error instanceof Error &&
+      "code" in error &&
+      (error as NodeJS.ErrnoException).code === "EEXIST"
+    )
+      return "exists";
+    throw error;
+  } finally {
+    await unlink(temporaryPath).catch(() => undefined);
   }
 }
 
@@ -235,7 +293,7 @@ export function migrateOrchestratorState(value: unknown): unknown {
       : migrated["milestones"];
     migrated = {
       ...migrated,
-      schemaVersion: STATE_SCHEMA_VERSION,
+      schemaVersion: "1.3.0",
       milestones,
       requiredNextVerticalConsumer:
         "requiredNextVerticalConsumer" in migrated
@@ -243,6 +301,39 @@ export function migrateOrchestratorState(value: unknown): unknown {
           : null,
       controllerHistory: [],
       reconciliation: { active: null, history: [] },
+    };
+  }
+  if (migrated["schemaVersion"] === "1.3.0") {
+    const milestones = Array.isArray(migrated["milestones"])
+      ? migrated["milestones"].map((entry) => {
+          if (
+            typeof entry !== "object" ||
+            entry === null ||
+            Array.isArray(entry)
+          )
+            return entry;
+          const milestone = entry as Record<string, unknown>;
+          const summaries = Array.isArray(milestone["verificationSummaries"])
+            ? milestone["verificationSummaries"].map((summary) =>
+                typeof summary === "object" &&
+                summary !== null &&
+                !Array.isArray(summary)
+                  ? {
+                      ...(summary as Record<string, unknown>),
+                      schemaVersion: "1.1.0",
+                      candidate: null,
+                      authoritativeResultSha256: null,
+                    }
+                  : summary,
+              )
+            : milestone["verificationSummaries"];
+          return { ...milestone, verificationSummaries: summaries };
+        })
+      : migrated["milestones"];
+    migrated = {
+      ...migrated,
+      schemaVersion: STATE_SCHEMA_VERSION,
+      milestones,
     };
   }
   return migrated;
@@ -318,16 +409,49 @@ export class StateStore {
     }
   }
 
-  async initialize(state: OrchestratorState): Promise<OrchestratorState> {
-    const existing = await this.load();
-    if (existing) return existing;
+  async initialize(
+    state: OrchestratorState,
+    hooks: AtomicWriteHooks = {},
+  ): Promise<OrchestratorState> {
     assertOrchestratorState(state);
-    await atomicWriteJson(this.path, state);
+    const outcome = await exclusiveWriteSerialized(
+      this.path,
+      `${JSON.stringify(state, null, 2)}\n`,
+      hooks,
+    );
+    if (outcome === "exists") {
+      const existing = await this.load();
+      if (existing) return existing;
+      throw new Error(
+        `Durable controller state at ${this.path} vanished during exclusive initialization.`,
+      );
+    }
     return state;
   }
 
   async save(state: OrchestratorState): Promise<OrchestratorState> {
     assertOrchestratorState(state);
+    let diskRevision: number;
+    try {
+      const parsed = JSON.parse(await readFile(this.path, "utf8")) as {
+        revision?: unknown;
+      };
+      if (!Number.isSafeInteger(parsed.revision))
+        throw new Error(
+          `Durable controller state at ${this.path} has no readable revision; refusing to replace it.`,
+        );
+      diskRevision = Number(parsed.revision);
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        "code" in error &&
+        (error as NodeJS.ErrnoException).code === "ENOENT"
+      )
+        throw new StaleStateError(this.path, state.revision, null);
+      throw error;
+    }
+    if (diskRevision !== state.revision)
+      throw new StaleStateError(this.path, state.revision, diskRevision);
     const saved: OrchestratorState = {
       ...state,
       revision: state.revision + 1,

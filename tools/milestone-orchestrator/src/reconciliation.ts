@@ -1,14 +1,6 @@
 import { spawnSync } from "node:child_process";
-import { createHash, randomUUID } from "node:crypto";
-import {
-  lstat,
-  mkdir,
-  open,
-  readFile,
-  readdir,
-  realpath,
-  unlink,
-} from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { lstat, open, readFile, readdir, realpath } from "node:fs/promises";
 import { dirname, isAbsolute, relative, resolve } from "node:path";
 
 import {
@@ -19,6 +11,7 @@ import {
   type OrchestratorConfig,
   type ProjectProfile,
   type OrchestratorState,
+  type ProtectedFileRecord,
   type ReconciliationPhase,
   type ReconciliationRecord,
   type ReconciliationReview,
@@ -38,9 +31,23 @@ import {
 } from "./benchmark.js";
 import type { CodexGateway } from "./codex-gateway.js";
 import { SdkCodexGateway } from "./codex-gateway.js";
+import {
+  ControllerLease,
+  releaseLeaseWithoutMasking,
+} from "./controller-lease.js";
+import { ensureContainedDirectory } from "./path-safety.js";
 import { createMilestoneRecord } from "./milestone-state.js";
-import { currentVerificationProfile } from "./git-isolation.js";
+import {
+  captureProtectedFiles,
+  currentVerificationProfile,
+} from "./git-isolation.js";
 import { evaluateProposal } from "./policy.js";
+import {
+  assertManifestProtectedPathsCovered,
+  buildCanonicalProtectedSet,
+  casefoldPathKey,
+  enforcementProtectedPatterns,
+} from "./protected-roots.js";
 import {
   reconciliationReviewApproves,
   requestReconciliationReview,
@@ -196,25 +203,6 @@ function safeRelative(repositoryRoot: string, path: string): string {
   )
     throw new Error("Reconciliation artifact escapes the repository.");
   return value;
-}
-
-async function ensureContainedDirectory(
-  repositoryRoot: string,
-  path: string,
-): Promise<void> {
-  const absolute = resolve(path);
-  safeRelative(repositoryRoot, absolute);
-  await mkdir(absolute, { recursive: true });
-  const metadata = await lstat(absolute);
-  if (!metadata.isDirectory() || metadata.isSymbolicLink())
-    throw new Error("Reconciliation artifact parent is not a real directory.");
-  const root = await realpath(resolve(repositoryRoot));
-  const resolvedDirectory = await realpath(absolute);
-  const rel = slash(relative(root, resolvedDirectory));
-  if (rel.length === 0 || isAbsolute(rel) || rel.split("/").includes(".."))
-    throw new Error(
-      "Reconciliation artifact parent resolves outside the repository.",
-    );
 }
 
 async function regularContainedFile(
@@ -414,10 +402,11 @@ function overlapsProtectedPath(
   path: string,
   protectedPaths: readonly string[],
 ): boolean {
-  return protectedPaths.some(
-    (protectedPath) =>
-      path === protectedPath || path.startsWith(`${protectedPath}/`),
-  );
+  const candidate = casefoldPathKey(path);
+  return protectedPaths.some((protectedPath) => {
+    const folded = casefoldPathKey(protectedPath);
+    return candidate === folded || candidate.startsWith(`${folded}/`);
+  });
 }
 
 export function createCommitRangeManifest(input: {
@@ -848,8 +837,8 @@ async function trackedNextProposal(input: {
   const proposal = assertMilestoneProposal(
     JSON.parse(contents.toString("utf8")) as unknown,
   );
-  if (proposal.schemaVersion !== "1.1.0")
-    throw new Error("Next reconciliation proposal must use schema 1.1.0.");
+  if (proposal.schemaVersion !== "1.2.0")
+    throw new Error("Next reconciliation proposal must use schema 1.2.0.");
   return {
     proposal,
     reference: {
@@ -935,89 +924,6 @@ async function defaultMilestoneTier(input: {
   if (!match?.[1])
     throw new Error("Milestone tier did not report its result path.");
   return match[1];
-}
-
-class ReconciliationLock {
-  private constructor(
-    private readonly path: string,
-    private readonly token: string,
-  ) {}
-
-  static async acquire(repositoryRoot: string): Promise<ReconciliationLock> {
-    const directory = resolve(repositoryRoot, RECONCILIATION_ROOT);
-    await ensureContainedDirectory(repositoryRoot, directory);
-    const path = resolve(directory, "reconciliation.lock");
-    const token = randomUUID();
-    for (let attempt = 0; attempt < 2; attempt += 1) {
-      try {
-        const handle = await open(path, "wx");
-        try {
-          await handle.writeFile(
-            `${JSON.stringify({ schemaVersion: "1.0.0", token, pid: process.pid, createdAt: new Date().toISOString() })}\n`,
-            "utf8",
-          );
-          await handle.sync();
-        } finally {
-          await handle.close();
-        }
-        return new ReconciliationLock(path, token);
-      } catch (error) {
-        if (
-          !(error instanceof Error) ||
-          !("code" in error) ||
-          error.code !== "EEXIST" ||
-          attempt > 0
-        )
-          throw error;
-        const metadata = await lstat(path);
-        if (!metadata.isFile() || metadata.isSymbolicLink())
-          throw new Error("Reconciliation lock is not a regular file.", {
-            cause: error,
-          });
-        const existing = JSON.parse(await readFile(path, "utf8")) as {
-          pid?: unknown;
-        };
-        if (!Number.isSafeInteger(existing.pid))
-          throw new Error("Reconciliation lock is malformed.", {
-            cause: error,
-          });
-        let alive = true;
-        try {
-          process.kill(Number(existing.pid), 0);
-        } catch (probeError) {
-          alive =
-            probeError instanceof Error &&
-            "code" in probeError &&
-            probeError.code === "EPERM";
-        }
-        if (alive)
-          throw new Error("Another reconciliation process owns the lock.", {
-            cause: error,
-          });
-        await unlink(path);
-      }
-    }
-    throw new Error("Cannot acquire reconciliation lock.");
-  }
-
-  async release(): Promise<void> {
-    try {
-      const value = JSON.parse(await readFile(this.path, "utf8")) as {
-        token?: unknown;
-      };
-      if (value.token !== this.token)
-        throw new Error("Reconciliation lock ownership changed.");
-      await unlink(this.path);
-    } catch (error) {
-      if (
-        error instanceof Error &&
-        "code" in error &&
-        (error as NodeJS.ErrnoException).code === "ENOENT"
-      )
-        return;
-      throw error;
-    }
-  }
 }
 
 export class ReconciliationController {
@@ -1170,6 +1076,10 @@ export class ReconciliationController {
       throw new Error(
         "Reconciliation next proposal does not match the tracked recommissioning manifest.",
       );
+    assertManifestProtectedPathsCovered(
+      verificationManifest.value,
+      buildCanonicalProtectedSet(this.config),
+    );
     const rawContents = await regularContainedFile(
       this.repositoryRoot,
       this.store.path,
@@ -1193,6 +1103,12 @@ export class ReconciliationController {
     );
     if (migrated.repository.verifiedCommit !== archive.priorVerifiedCommit)
       throw new Error("Migrated state changed the source verified commit.");
+    // The raw source state is archived above; from here the recorded
+    // protected baseline may be completed with any missing canonical trust
+    // roots so every comparison below sees the full fence.
+    const protectedBaseline = await this.canonicalProtectedBaseline(
+      migrated.repository.protectedFiles,
+    );
     const candidate = candidateIdentity(
       this.repositoryRoot,
       invocation.candidate,
@@ -1211,8 +1127,9 @@ export class ReconciliationController {
       reconciliationId: id,
       sourceVerifiedCommit: archive.priorVerifiedCommit,
       candidateCommit: candidate.commit,
-      protectedPaths: migrated.repository.protectedFiles.map(
-        (file) => file.path,
+      protectedPaths: buildCanonicalProtectedSet(
+        this.config,
+        protectedBaseline.map((file) => file.path),
       ),
     });
     const rangeReference = await writeJsonArtifact(
@@ -1223,7 +1140,7 @@ export class ReconciliationController {
     const comparison = await protectedComparison({
       repositoryRoot: this.repositoryRoot,
       candidateCommit: candidate.commit,
-      protectedFiles: migrated.repository.protectedFiles,
+      protectedFiles: protectedBaseline,
       commitRange: range,
       outputPath: resolve(directory, "protected-comparison.json"),
     });
@@ -1271,16 +1188,23 @@ export class ReconciliationController {
       failure: null,
     };
     assertCandidateUnchanged(this.repositoryRoot, record);
-    this.stateValue = migrated;
-    await this.persist({
+    const prepared = {
       ...migrated,
+      repository: {
+        ...migrated.repository,
+        protectedFiles: protectedBaseline,
+      },
+    };
+    this.stateValue = prepared;
+    await this.persist({
+      ...prepared,
       controllerHistory: [
-        ...migrated.controllerHistory.filter(
+        ...prepared.controllerHistory.filter(
           (entry) => entry.id !== archive.id,
         ),
         archive,
       ],
-      reconciliation: { ...migrated.reconciliation, active: record },
+      reconciliation: { ...prepared.reconciliation, active: record },
       nextAllowedAction: "reconcile",
     });
     await this.afterPhasePersisted?.("prepared");
@@ -1640,12 +1564,44 @@ export class ReconciliationController {
     await this.afterPhasePersisted?.("completed");
   }
 
+  // Mirror of MilestoneOrchestrator.openLeased's canonical backfill: capture
+  // any canonical trust roots missing from the recorded baseline so hash
+  // comparisons and drift resets see the full protected set. Pure capture -
+  // the caller's next persist carries the completed baseline, so the raw
+  // pre-reconciliation state archive stays byte-faithful.
+  private async canonicalProtectedBaseline(
+    current: readonly ProtectedFileRecord[],
+  ): Promise<readonly ProtectedFileRecord[]> {
+    const canonical = enforcementProtectedPatterns(this.config, current);
+    const known = new Set(current.map((file) => casefoldPathKey(file.path)));
+    const missing = canonical.filter(
+      (path) => !known.has(casefoldPathKey(path)),
+    );
+    if (missing.length === 0) return current;
+    return [
+      ...current,
+      ...(await captureProtectedFiles(this.repositoryRoot, missing)),
+    ];
+  }
+
   private async resetForCandidateDrift(): Promise<void> {
     const record = this.active();
     if (["state-adopted", "queueing-next"].includes(record.phase))
       throw new Error(
         "Candidate drift cannot reset a reconciliation after state adoption.",
       );
+    // A resumed run reaches drift reset without passing through prepare();
+    // complete the recorded baseline so the reset fence is canonical too.
+    // The merge is in-memory only - persistActive below durably carries it.
+    this.stateValue = {
+      ...this.stateValue,
+      repository: {
+        ...this.stateValue.repository,
+        protectedFiles: await this.canonicalProtectedBaseline(
+          this.stateValue.repository.protectedFiles,
+        ),
+      },
+    };
     const candidate = candidateIdentity(
       this.repositoryRoot,
       record.candidateRevision,
@@ -1655,8 +1611,9 @@ export class ReconciliationController {
       reconciliationId: record.id,
       sourceVerifiedCommit: record.sourceVerifiedCommit,
       candidateCommit: candidate.commit,
-      protectedPaths: this.stateValue.repository.protectedFiles.map(
-        (file) => file.path,
+      protectedPaths: buildCanonicalProtectedSet(
+        this.config,
+        this.stateValue.repository.protectedFiles.map((file) => file.path),
       ),
     });
     const directory = resolve(
@@ -1769,8 +1726,19 @@ export class ReconciliationController {
   async run(
     invocation?: ReconciliationInvocation,
   ): Promise<ReconciliationStatusSummary> {
-    const lock = await ReconciliationLock.acquire(this.repositoryRoot);
+    const lock = await ControllerLease.acquire({
+      repositoryRoot: this.repositoryRoot,
+      statePath: this.config.statePath,
+      operation: "reconcile",
+    });
+    let reconciliationFailed = false;
     try {
+      const fresh = await this.store.load();
+      if (!fresh)
+        throw new Error(
+          "Durable controller state disappeared before reconciliation could start.",
+        );
+      this.stateValue = fresh;
       if (invocation && !this.stateValue.reconciliation.active) {
         const proposalPath = safeRelative(
           this.repositoryRoot,
@@ -1820,6 +1788,7 @@ export class ReconciliationController {
       }
       return this.status();
     } catch (error) {
+      reconciliationFailed = true;
       if (error instanceof ReconciliationInterruption) throw error;
       if (error instanceof CandidateDriftError) {
         await this.resetForCandidateDrift();
@@ -1834,7 +1803,10 @@ export class ReconciliationController {
       await this.fail(error, classification);
       throw error;
     } finally {
-      await lock.release();
+      await releaseLeaseWithoutMasking(
+        () => lock.release(),
+        reconciliationFailed,
+      );
     }
   }
 }

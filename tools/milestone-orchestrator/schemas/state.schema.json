@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://milestone-loop.local/schemas/orchestrator-state-1.3.0.json",
+  "$id": "https://milestone-loop.local/schemas/orchestrator-state-1.4.0.json",
   "title": "Example Project Orchestrator State",
   "type": "object",
   "additionalProperties": false,
@@ -22,7 +22,7 @@
     "updatedAt"
   ],
   "properties": {
-    "schemaVersion": { "const": "1.3.0" },
+    "schemaVersion": { "const": "1.4.0" },
     "revision": { "type": "integer", "minimum": 0 },
     "repository": { "type": "object" },
     "queue": {

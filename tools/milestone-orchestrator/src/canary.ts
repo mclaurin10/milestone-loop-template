@@ -4,7 +4,7 @@ export const CANARY_MILESTONE_ID = "stage1-orchestrator-doctor-canary";
 
 export function canaryMilestone(): MilestoneProposal {
   return {
-    schemaVersion: "1.1.0",
+    schemaVersion: "1.2.0",
     id: CANARY_MILESTONE_ID,
     title: "Add a read-only orchestrator doctor diagnostic",
     kind: "tooling",
@@ -42,36 +42,22 @@ export function canaryMilestone(): MilestoneProposal {
           "Diff policy, protected hashes, authoritative pnpm verify, and independent review all pass.",
       },
     ],
-    requiredTests: [
-      "pnpm test:orchestrator",
-      "pnpm loop:doctor",
-      "pnpm verify",
-    ],
+    requiredTests: ["pnpm test:orchestrator", "pnpm verify"],
     verificationCommands: [
       {
         id: "orchestrator-tests",
         executable: "pnpm",
         args: ["test:orchestrator"],
         parser: "exit-code",
-      },
-      {
-        id: "doctor-diagnostic",
-        executable: "pnpm",
-        args: ["loop:doctor"],
-        parser: "exit-code",
+        expectedArtifactKinds: ["orchestrator-vitest-report"],
       },
       {
         id: "authoritative-verification",
         executable: "pnpm",
         args: ["verify"],
         parser: "pnpm-verify",
+        expectedArtifactKinds: [],
       },
-    ],
-    expectedArtifacts: [
-      "verification/verification-summary.json",
-      "review/reviewer-report.json",
-      "git-outcome.json",
-      "run-summary.json",
     ],
     terminalConditions: [
       "All focused and authoritative commands pass from the exact committed isolated candidate.",

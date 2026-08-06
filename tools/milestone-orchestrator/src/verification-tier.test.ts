@@ -1,8 +1,11 @@
-import { resolve } from "node:path";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import type {
+  CommandExecutionSummary,
   ExactVerificationIndex,
   VerificationTierCommandRecord,
 } from "./contracts.js";
@@ -15,6 +18,8 @@ import {
   coordinateTierOutcome,
   exactNoArgumentVerificationCommand,
   planVerificationTier,
+  tierCommandRecord,
+  tierIdentityDrift,
 } from "./verification-tier.js";
 
 const repositoryRoot = resolve(import.meta.dirname, "../../..");
@@ -185,5 +190,230 @@ describe("non-authoritative tier outcomes", () => {
         exactFailureClass: "infrastructure",
       }),
     ).toEqual({ status: "ERROR", exitCode: 3 });
+  });
+});
+
+describe("tier focused-command classification", () => {
+  const temporaryDirectories: string[] = [];
+  afterEach(async () => {
+    await Promise.all(
+      temporaryDirectories
+        .splice(0)
+        .map((directory) => rm(directory, { recursive: true, force: true })),
+    );
+  });
+
+  function tierExecution(
+    overrides: Partial<CommandExecutionSummary> = {},
+  ): CommandExecutionSummary {
+    return {
+      id: "test-invariants",
+      displayCommand: "pnpm test:invariants",
+      status: "FAIL",
+      exitCode: 1,
+      signal: null,
+      startedAt: "2026-08-03T00:00:00.000Z",
+      finishedAt: "2026-08-03T00:00:01.000Z",
+      durationMs: 1000,
+      stdoutPath: "artifacts/stdout.log",
+      stderrPath: "artifacts/stderr.log",
+      stdoutSha256: "a".repeat(64),
+      stderrSha256: "b".repeat(64),
+      parser: "exit-code",
+      parsedArtifactPath: null,
+      message: "Command exited 1.",
+      receipt: null,
+      receiptAbsenceReason:
+        "Receipt validation is owned by the verification caller.",
+      ...overrides,
+    };
+  }
+
+  async function recordFor(
+    overrides: Partial<CommandExecutionSummary> = {},
+  ): Promise<VerificationTierCommandRecord> {
+    const runRoot = await mkdtemp(join(tmpdir(), "tier-classification-"));
+    temporaryDirectories.push(runRoot);
+    const execution = tierExecution({
+      stdoutPath: join(runRoot, "stdout.log"),
+      stderrPath: join(runRoot, "stderr.log"),
+      ...overrides,
+    });
+    return tierCommandRecord({
+      repositoryRoot: runRoot,
+      tier: "candidate",
+      runRoot,
+      index: 0,
+      command: {
+        id: execution.id,
+        argv: ["pnpm", "test:invariants"],
+        tiers: ["candidate"],
+        expectedArtifactKinds: ["orchestrator-vitest-report"],
+      },
+      telemetry: null,
+      candidate: {
+        baseCommit: "a".repeat(40),
+        gitCommit: "b".repeat(40),
+        gitTree: "c".repeat(40),
+        workingTreeDirty: false,
+        changedPaths: [],
+      },
+      selectedCheckIds: [execution.id],
+      actualCheckIds: [execution.id],
+      executeCommand: async () => execution,
+    });
+  }
+
+  it("keeps a failing focused command a product failure without a receipt", async () => {
+    const record = await recordFor();
+    expect(record).toMatchObject({
+      status: "FAIL",
+      exitCode: 1,
+      failureClass: "product",
+      receipt: null,
+      receiptAbsenceReason:
+        "The command did not pass; failing commands retain no receipt.",
+      message: "Command exited 1.",
+    });
+    expect(
+      coordinateTierOutcome({
+        tier: "candidate",
+        focusedCommands: [record],
+        exactVerification: null,
+      }),
+    ).toEqual({ status: "FAIL", exitCode: 1 });
+  });
+
+  it("never passes a zero-exit focused command without a receipt", async () => {
+    const record = await recordFor({
+      status: "PASS",
+      exitCode: 0,
+      message: "passed",
+    });
+    expect(record).toMatchObject({
+      status: "ERROR",
+      failureClass: "infrastructure",
+      receipt: null,
+      receiptAbsenceReason:
+        "Passing check test-invariants did not write its required command-owned receipt.",
+    });
+    expect(
+      coordinateTierOutcome({
+        tier: "candidate",
+        focusedCommands: [record],
+        exactVerification: null,
+      }),
+    ).toEqual({ status: "ERROR", exitCode: 3 });
+  });
+
+  it("keeps timeouts and command errors in the infrastructure lane", async () => {
+    const record = await recordFor({
+      status: "TIMEOUT",
+      exitCode: null,
+      message: "Command timed out.",
+    });
+    expect(record).toMatchObject({
+      status: "TIMEOUT",
+      failureClass: "infrastructure",
+      receiptAbsenceReason:
+        "The command did not pass; failing commands retain no receipt.",
+    });
+    expect(
+      coordinateTierOutcome({
+        tier: "candidate",
+        focusedCommands: [record],
+        exactVerification: null,
+      }),
+    ).toEqual({ status: "ERROR", exitCode: 3 });
+  });
+});
+
+describe("tier end-of-run identity", () => {
+  const start = {
+    gitCommit: "b".repeat(40),
+    gitTree: "c".repeat(40),
+    workingTreeDirty: false,
+  };
+
+  it("detects commit, tree, and cleanliness drift with exact fields", () => {
+    expect(tierIdentityDrift(start, { ...start })).toEqual({
+      detected: false,
+      fields: [],
+    });
+    expect(
+      tierIdentityDrift(start, { ...start, gitCommit: "f".repeat(40) }),
+    ).toEqual({ detected: true, fields: ["gitCommit"] });
+    expect(
+      tierIdentityDrift(start, {
+        gitCommit: "f".repeat(40),
+        gitTree: "e".repeat(40),
+        workingTreeDirty: true,
+      }),
+    ).toEqual({
+      detected: true,
+      fields: ["gitCommit", "gitTree", "workingTreeDirty"],
+    });
+  });
+
+  it("requires detected drift to report ERROR exit 3 and equality otherwise", () => {
+    const candidate = {
+      baseCommit: "a".repeat(40),
+      gitCommit: "b".repeat(40),
+      gitTree: "c".repeat(40),
+      workingTreeDirty: false,
+    };
+    const base = {
+      schemaVersion: "1.1.0",
+      runId: "candidate-fixture",
+      tier: "candidate" as const,
+      status: "PASS" as const,
+      exitCode: 0 as const,
+      authoritative: false,
+      candidate,
+      changedPaths: [],
+      invariantSuiteId: "fixture",
+      invariantSuiteSha256: "d".repeat(64),
+      scopePolicySha256: "e".repeat(64),
+      shadowSelectionPath: null,
+      selectedCheckIds: [],
+      actualCheckIds: [],
+      fullClosureCheckIds: [],
+      commands: [],
+      exactVerification: null,
+      candidateFinal: candidate,
+      identityDrift: { detected: false, fields: [] },
+      reviewRequired: false,
+      telemetryManifestPath: null,
+      startedAt: "2026-08-03T00:00:00.000Z",
+      finishedAt: "2026-08-03T00:00:01.000Z",
+      durationMs: 1000,
+    };
+    expect(validateVerificationTierResult(base).valid).toBe(true);
+
+    const driftedWithoutError = {
+      ...base,
+      identityDrift: { detected: true, fields: ["gitCommit"] },
+      candidateFinal: { ...candidate, gitCommit: "f".repeat(40) },
+    };
+    const driftValidation = validateVerificationTierResult(driftedWithoutError);
+    expect(driftValidation.valid).toBe(false);
+    expect(driftValidation.errors.join(" ")).toMatch(/ERROR exit 3/);
+
+    const driftedError = {
+      ...driftedWithoutError,
+      status: "ERROR" as const,
+      exitCode: 3 as const,
+    };
+    expect(validateVerificationTierResult(driftedError).valid).toBe(true);
+
+    const silentDrift = {
+      ...base,
+      candidateFinal: { ...candidate, gitTree: "f".repeat(40) },
+    };
+    const silentValidation = validateVerificationTierResult(silentDrift);
+    expect(silentValidation.valid).toBe(false);
+    expect(silentValidation.errors.join(" ")).toMatch(
+      /candidateFinal must equal candidate/,
+    );
   });
 });

@@ -14,7 +14,7 @@ import {
 import { dirname, isAbsolute, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const RESULT_SCHEMA_VERSION = "2.0.0";
+const RESULT_SCHEMA_VERSION = "2.1.0";
 const EVIDENCE_RECEIPT_SCHEMA_VERSION = "1.0.0";
 const IMMUTABLE_LOCK_SCHEMA_VERSION = "1.0.0";
 const ESTABLISHED_IMMUTABLE_LOCK_SHA256 =
@@ -1669,7 +1669,32 @@ async function runVerification(options) {
     console.log(`[${result.status}] ${result.id} - ${result.name}`);
   }
 
-  const status = aggregateStatus(stages.map((stage) => stage.status));
+  const candidateFinal = await collectCandidateIdentity(
+    packageJson,
+    pnpmVersion,
+  );
+  const identityDriftFields = [
+    "gitCommit",
+    "gitTree",
+    "workingTreeDirty",
+    "packageJsonSha256",
+    "workspaceManifestSha256",
+    "lockfileSha256",
+    "acceptanceManifestSha256",
+    "immutableContractLockSha256",
+    "readinessActivationMarkerSha256",
+  ].filter((field) => candidate[field] !== candidateFinal[field]);
+  const identityDrift = {
+    detected: identityDriftFields.length > 0,
+    fields: identityDriftFields,
+  };
+  let status = aggregateStatus(stages.map((stage) => stage.status));
+  if (identityDrift.detected && status !== STATUS.ERROR) {
+    status = STATUS.FAIL;
+    console.log(
+      `[VERIFY] candidate identity drifted during verification: ${identityDriftFields.join(", ")}`,
+    );
+  }
   const finishedAt = new Date();
   const exitCode = EXIT_CODE[status];
   const completionReasons = [];
@@ -1678,8 +1703,10 @@ async function runVerification(options) {
   if (!fullRun) completionReasons.push("focused_stage_selection");
   if (configuredProfileId !== profile.id)
     completionReasons.push("selected_profile_is_not_package_default");
-  if (candidate.workingTreeDirty !== false)
+  if (candidateFinal.workingTreeDirty !== false)
     completionReasons.push("working_tree_not_proven_clean");
+  if (identityDrift.detected)
+    completionReasons.push("candidate_identity_drift");
   const completion = {
     claim: profile.completionClaim,
     eligible: completionReasons.length === 0,
@@ -1705,6 +1732,8 @@ async function runVerification(options) {
     profile: profileResult,
     completion,
     candidate,
+    candidateFinal,
+    identityDrift,
     summary: { stageCounts: counts, requiredStageCount: stages.length },
     stages,
   };
@@ -1722,6 +1751,8 @@ async function runVerification(options) {
     status,
     exitCode,
     completion,
+    candidateFinal,
+    identityDrift,
     result: "result.json",
   });
   console.log(

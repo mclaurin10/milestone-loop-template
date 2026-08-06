@@ -25,7 +25,7 @@ full configuration ships as a worked example in
 | Shadow scope selection | `src/affected-scope.ts`, `config/verification-scope-policy.json` | Observational affected-scope recommendation (never suppresses closure) with graduation criteria |
 | Paired benchmark | `src/benchmark.ts`, `config/benchmark-matrix.json` | Commissioned before/after benchmark of the scope selector against the historical check workload |
 | Telemetry | `src/telemetry-*.ts` | Non-semantic run telemetry and reporting |
-| Artifacts | `src/artifact-inventory.ts`, `src/evidence-retention.ts`, `src/retention-plan.ts` | Non-destructive inventory and retention planning |
+| Artifacts | `src/artifact-inventory.ts`, `src/evidence-retention.ts`, `src/retention-plan.ts` | Non-destructive inventory and retention planning; deletion only via hash-approved `loop:retention:apply` |
 | Reconciliation | `src/reconciliation.ts` | Resumable controller-boundary reconciliation when work advanced outside the tracked loop, with a fresh independent review |
 | Repo contract | `CONTRACT.md`, `PROJECT_GOAL.md`, `evals/`, `.agent/`, `AGENTS.md` | Everything an adopting repository must provide |
 
@@ -45,7 +45,10 @@ Verification cost scales with how much a change claims:
    that detect drift between milestones.
 
 Tier plans are derived from the manifest's check catalogue; the shadow scope
-selector only *observes* which checks it would have chosen. `pnpm verify`
+selector only *observes* which checks it would have chosen. Every focused
+command — in tier plans, invariant entries, and milestone proposals alike —
+must produce a validated command-owned receipt covering its declared
+`expectedArtifactKinds`; a zero exit status alone never passes. `pnpm verify`
 itself is profile-based (`bootstrap` → `readiness`, a one-way transition
 enforced by marker-file history) and fail-closed: a command that exits 0
 without a valid evidence receipt is a failure, and missing stage scripts
@@ -90,6 +93,34 @@ report `NOT_READY`, never pass.
 6. **Run the loop**: `pnpm loop:plan` for one planning pass, `pnpm loop:run`
    for the autonomous loop, `pnpm loop:status` / `loop:resume` /
    `loop:reconcile` for lifecycle operations.
+
+   Every mutating command (`plan`, `run`, `resume`, `canary`, `reconcile`)
+   holds a single repository-wide mutation lease
+   (`artifacts/orchestrator/state/controller.lease`) for its lifetime, and
+   durable state writes use compare-and-swap on the stored revision, so a
+   concurrent controller fails loudly instead of silently losing updates.
+   `loop:status` and `loop:dry-run` are strictly read-only — they never
+   initialize state, never take the lease, and report the current lease
+   owner. Lease files are published atomically (no reader can observe a
+   partially written lease), and a lease held by a dead process on the
+   same host is recovered automatically via an atomic quarantine-rename,
+   so two controllers racing the same dead lease cannot both win. A lease
+   from another host (host identity includes a per-machine instance id,
+   not just the hostname), or a malformed lease file, is never stolen —
+   after confirming the owner is dead, delete the lease file manually.
+
+   **Nothing is deleted by `loop:run`.** Controller startup only *plans*
+   evidence retention (the run's `evidence-retention.json` lists what a
+   deletion would remove and why, or why it is suspended). To actually
+   delete: `pnpm loop:retention:plan` writes a standalone plan under
+   `artifacts/orchestrator/retention/plans/` and prints its sha256;
+   `pnpm loop:retention:apply -- --plan <path> --sha256 <hex>` verifies the
+   hash, takes the controller lease, re-checks the candidate, configuration,
+   citations, and suspensions against a fresh plan, refuses the whole plan
+   on any divergence, and deletes with a resumable journal under
+   `artifacts/orchestrator/retention/apply/`. Terminal milestone *workspace*
+   cleanup (`src/workspace-cleanup.ts`) is a separate automatic
+   temporary-workspace policy and is unchanged.
 
 ## Extension points
 

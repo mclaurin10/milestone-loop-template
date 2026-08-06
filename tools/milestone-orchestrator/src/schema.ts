@@ -9,17 +9,20 @@ import {
   EVIDENCE_RETENTION_SCHEMA_VERSION,
   LEGACY_MILESTONE_SCHEMA_VERSION,
   MILESTONE_SCHEMA_VERSION,
+  PREVIOUS_MILESTONE_SCHEMA_VERSION,
   MILESTONE_STATUSES,
   NEXT_ACTIONS,
   RECONCILIATION_PHASES,
   RECONCILIATION_REVIEW_CHECK_IDS,
   RECONCILIATION_REVIEW_SCHEMA_VERSION,
   RECONCILIATION_SCHEMA_VERSION,
+  REVIEW_LEGACY_SCHEMA_VERSION,
   REVIEW_SCHEMA_VERSION,
   REQUIRED_PROTECTED_PATHS,
   SCOPE_TRIGGER_CLASSES,
   STATE_SCHEMA_VERSION,
   VERIFICATION_MANIFEST_SCHEMA_VERSION,
+  VERIFICATION_SUMMARY_SCHEMA_VERSION,
   VERIFICATION_TIERS,
   VERIFICATION_TIER_SCHEMA_VERSION,
   WORKSPACE_CLEANUP_SCHEMA_VERSION,
@@ -432,27 +435,30 @@ export function validateMilestoneProposal(
     "acceptanceCriteria",
     "requiredTests",
     "verificationCommands",
-    "expectedArtifacts",
     "terminalConditions",
     "estimatedFileCount",
     "requiresBrowserInspection",
     "requiresHeadlessEvaluation",
     "hiddenValidation",
   ] as const;
-  const legacy = value["schemaVersion"] === LEGACY_MILESTONE_SCHEMA_VERSION;
-  const requiredKeys = legacy ? baseKeys : [...baseKeys, "verticalSlice"];
+  const version = value["schemaVersion"];
+  const isOriginalLegacy = version === LEGACY_MILESTONE_SCHEMA_VERSION;
+  const legacy =
+    isOriginalLegacy || version === PREVIOUS_MILESTONE_SCHEMA_VERSION;
+  const requiredKeys = [
+    ...baseKeys,
+    ...(legacy ? (["expectedArtifacts"] as const) : []),
+    ...(isOriginalLegacy ? [] : (["verticalSlice"] as const)),
+  ];
   if (!hasOnlyKeys(value, requiredKeys))
     errors.push("Milestone has unknown fields.");
-  if (
-    value["schemaVersion"] !== MILESTONE_SCHEMA_VERSION &&
-    value["schemaVersion"] !== LEGACY_MILESTONE_SCHEMA_VERSION
-  )
+  if (version !== MILESTONE_SCHEMA_VERSION && !legacy)
     errors.push(
-      `Milestone schemaVersion must be ${MILESTONE_SCHEMA_VERSION}${options.allowLegacy ? ` or historical ${LEGACY_MILESTONE_SCHEMA_VERSION}` : ""}.`,
+      `Milestone schemaVersion must be ${MILESTONE_SCHEMA_VERSION}${options.allowLegacy ? ` or historical ${LEGACY_MILESTONE_SCHEMA_VERSION}/${PREVIOUS_MILESTONE_SCHEMA_VERSION}` : ""}.`,
     );
   else if (legacy && !options.allowLegacy)
     errors.push(
-      `New milestone proposals must use schemaVersion ${MILESTONE_SCHEMA_VERSION}; ${LEGACY_MILESTONE_SCHEMA_VERSION} is historical-state-only.`,
+      `New milestone proposals must use schemaVersion ${MILESTONE_SCHEMA_VERSION}; ${String(version)} is historical-state-only.`,
     );
   if (
     typeof value["id"] !== "string" ||
@@ -483,8 +489,16 @@ export function validateMilestoneProposal(
     errors.push("Milestone needs at least two explicit exclusions.");
   if (!stringArray(value["requiredTests"], 1))
     errors.push("Milestone requiredTests must be nonempty unique strings.");
-  if (!stringArray(value["expectedArtifacts"], 1))
-    errors.push("Milestone expectedArtifacts must be nonempty unique strings.");
+  if (legacy) {
+    if (!stringArray(value["expectedArtifacts"], 1))
+      errors.push(
+        "Milestone expectedArtifacts must be nonempty unique strings.",
+      );
+  } else if (value["expectedArtifacts"] !== undefined) {
+    errors.push(
+      `Milestone expectedArtifacts was removed at schema ${MILESTONE_SCHEMA_VERSION}; declare per-command expectedArtifactKinds instead.`,
+    );
+  }
   if (!stringArray(value["terminalConditions"], 1))
     errors.push(
       "Milestone terminalConditions must be nonempty unique strings.",
@@ -524,17 +538,21 @@ export function validateMilestoneProposal(
   if (!Array.isArray(commands) || commands.length === 0) {
     errors.push("Milestone verificationCommands must be nonempty.");
   } else {
-    const ids: string[] = [];
-    for (const command of commands) {
-      if (
-        !isRecord(command) ||
-        !hasOnlyKeys(command, [
+    const commandKeys = legacy
+      ? ["id", "executable", "args", "parser", "timeoutMs"]
+      : [
           "id",
           "executable",
           "args",
           "parser",
+          "expectedArtifactKinds",
           "timeoutMs",
-        ]) ||
+        ];
+    const ids: string[] = [];
+    for (const command of commands) {
+      if (
+        !isRecord(command) ||
+        !hasOnlyKeys(command, commandKeys) ||
         !nonEmptyString(command["id"]) ||
         !["pnpm", "node", "git"].includes(String(command["executable"])) ||
         !Array.isArray(command["args"]) ||
@@ -545,6 +563,16 @@ export function validateMilestoneProposal(
       ) {
         errors.push(
           "Each verification command must use the versioned argv schema.",
+        );
+      } else if (
+        !legacy &&
+        !(command["parser"] === "pnpm-verify"
+          ? Array.isArray(command["expectedArtifactKinds"]) &&
+            command["expectedArtifactKinds"].length === 0
+          : stringArray(command["expectedArtifactKinds"], 1))
+      ) {
+        errors.push(
+          "Each verification command must declare expectedArtifactKinds: nonempty unique kinds for exit-code commands and exactly [] for pnpm-verify.",
         );
       } else {
         ids.push(command["id"]);
@@ -567,7 +595,7 @@ export function validateMilestoneProposal(
     );
   }
 
-  if (!legacy) {
+  if (!isOriginalLegacy) {
     const vertical = value["verticalSlice"];
     if (
       !isRecord(vertical) ||
@@ -671,8 +699,38 @@ export function assertMilestoneProposal(value: unknown): MilestoneProposal {
   return result.value;
 }
 
+function validCandidateIdentity(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    hasOnlyKeys(value, [
+      "baseCommit",
+      "commit",
+      "tree",
+      "clean",
+      "changedEntriesDigest",
+    ]) &&
+    commitId(value["baseCommit"]) &&
+    commitId(value["commit"]) &&
+    commitId(value["tree"]) &&
+    typeof value["clean"] === "boolean" &&
+    sha256(value["changedEntriesDigest"])
+  );
+}
+
+function validVerificationSummaryEnvelope(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    value["schemaVersion"] === VERIFICATION_SUMMARY_SCHEMA_VERSION &&
+    (value["candidate"] === null ||
+      validCandidateIdentity(value["candidate"])) &&
+    (value["authoritativeResultSha256"] === null ||
+      sha256(value["authoritativeResultSha256"]))
+  );
+}
+
 export function validateReviewerReport(
   value: unknown,
+  options: { readonly allowLegacy?: boolean } = {},
 ): ValidationResult<ReviewerReport> {
   const errors: string[] = [];
   if (!isRecord(value)) {
@@ -685,14 +743,42 @@ export function validateReviewerReport(
       "summary",
       "findings",
       "checks",
+      "verifiedBaseCommit",
+      "verifiedHeadCommit",
+      "verifiedTree",
+      "verificationResultSha256",
       "attempt",
       "threadId",
       "reviewedAt",
     ])
   )
     errors.push("Review has unknown fields.");
-  if (value["schemaVersion"] !== REVIEW_SCHEMA_VERSION)
+  const legacy = value["schemaVersion"] === REVIEW_LEGACY_SCHEMA_VERSION;
+  if (
+    value["schemaVersion"] !== REVIEW_SCHEMA_VERSION &&
+    !(legacy && options.allowLegacy === true)
+  )
     errors.push(`Review schemaVersion must be ${REVIEW_SCHEMA_VERSION}.`);
+  if (legacy && options.allowLegacy === true) {
+    if (
+      value["verifiedBaseCommit"] !== undefined ||
+      value["verifiedHeadCommit"] !== undefined ||
+      value["verifiedTree"] !== undefined ||
+      value["verificationResultSha256"] !== undefined
+    )
+      errors.push(
+        "Legacy review cannot carry verified-candidate identity fields.",
+      );
+  } else {
+    if (
+      !commitId(value["verifiedBaseCommit"]) ||
+      !commitId(value["verifiedHeadCommit"]) ||
+      !commitId(value["verifiedTree"])
+    )
+      errors.push("Review verified-candidate identity commits are invalid.");
+    if (!sha256(value["verificationResultSha256"]))
+      errors.push("Review verificationResultSha256 is invalid.");
+  }
   if (!["approve", "reject", "escalate"].includes(String(value["decision"])))
     errors.push("Review decision is invalid.");
   if (!nonEmptyString(value["summary"]))
@@ -745,8 +831,11 @@ export function validateReviewerReport(
   };
 }
 
-export function assertReviewerReport(value: unknown): ReviewerReport {
-  const result = validateReviewerReport(value);
+export function assertReviewerReport(
+  value: unknown,
+  options: { readonly allowLegacy?: boolean } = {},
+): ReviewerReport {
+  const result = validateReviewerReport(value, options);
   if (!result.valid || !result.value)
     throw new Error(`Invalid reviewer report: ${result.errors.join(" ")}`);
   return result.value;
@@ -1371,14 +1460,20 @@ export function validateOrchestratorState(
         errors.push(
           `Milestone ${proposalResult.value.id} has invalid next action.`,
         );
-      if (!Array.isArray(milestone["verificationSummaries"]))
+      if (
+        !Array.isArray(milestone["verificationSummaries"]) ||
+        milestone["verificationSummaries"].some(
+          (summary) => !validVerificationSummaryEnvelope(summary),
+        )
+      )
         errors.push(
           `Milestone ${proposalResult.value.id} lacks verification summaries.`,
         );
       if (
         !Array.isArray(milestone["reviewerDecisions"]) ||
         milestone["reviewerDecisions"].some(
-          (report) => !validateReviewerReport(report).valid,
+          (report) =>
+            !validateReviewerReport(report, { allowLegacy: true }).valid,
         )
       )
         errors.push(
@@ -1732,7 +1827,7 @@ export function validateVerificationManifest(
           (tier) =>
             tier === "periodic" || !VERIFICATION_TIERS.includes(tier as never),
         ) ||
-        !stringArray(command["expectedArtifactKinds"])
+        !stringArray(command["expectedArtifactKinds"], 1)
       ) {
         errors.push("Manifest contains an invalid focused command.");
         continue;
@@ -1832,7 +1927,7 @@ export function validateInvariantSuiteRegistry(
       entry["triggerPaths"].some((path) => !safeRelativePath(path)) ||
       !stringArray(entry["argv"], 2) ||
       !["pnpm", "node", "git"].includes(String(entry["argv"]?.[0])) ||
-      !stringArray(entry["expectedArtifactKinds"]) ||
+      !stringArray(entry["expectedArtifactKinds"], 1) ||
       (entry["testFile"] === undefined) !==
         (entry["testTitle"] === undefined) ||
       (entry["testFile"] !== undefined &&
@@ -2000,6 +2095,8 @@ export function validateVerificationTierResult(
     "fullClosureCheckIds",
     "commands",
     "exactVerification",
+    "candidateFinal",
+    "identityDrift",
     "reviewRequired",
     "telemetryManifestPath",
     "startedAt",
@@ -2007,9 +2104,23 @@ export function validateVerificationTierResult(
     "durationMs",
   ] as const;
   const candidate = value["candidate"];
+  const candidateFinal = value["candidateFinal"];
+  const identityDrift = value["identityDrift"];
   const validStatus = ["PASS", "NOT_READY", "FAIL", "ERROR"].includes(
     String(value["status"]),
   );
+  const candidateShape = (record: unknown): record is Record<string, unknown> =>
+    isRecord(record) &&
+    hasOnlyKeys(record, [
+      "baseCommit",
+      "gitCommit",
+      "gitTree",
+      "workingTreeDirty",
+    ]) &&
+    commitId(record["baseCommit"]) &&
+    commitId(record["gitCommit"]) &&
+    commitId(record["gitTree"]) &&
+    typeof record["workingTreeDirty"] === "boolean";
   if (
     !hasOnlyKeys(value, resultKeys) ||
     resultKeys.some((key) => !(key in value)) ||
@@ -2019,17 +2130,16 @@ export function validateVerificationTierResult(
     !validStatus ||
     ![0, 1, 2, 3].includes(Number(value["exitCode"])) ||
     value["authoritative"] !== false ||
-    !isRecord(candidate) ||
-    !hasOnlyKeys(candidate, [
-      "baseCommit",
-      "gitCommit",
-      "gitTree",
-      "workingTreeDirty",
-    ]) ||
-    !commitId(candidate["baseCommit"]) ||
-    !commitId(candidate["gitCommit"]) ||
-    !commitId(candidate["gitTree"]) ||
-    typeof candidate["workingTreeDirty"] !== "boolean" ||
+    !candidateShape(candidate) ||
+    !candidateShape(candidateFinal) ||
+    !isRecord(identityDrift) ||
+    !hasOnlyKeys(identityDrift, ["detected", "fields"]) ||
+    typeof identityDrift["detected"] !== "boolean" ||
+    !stringArray(identityDrift["fields"]) ||
+    (identityDrift["detected"] === false &&
+      (identityDrift["fields"] as readonly string[]).length !== 0) ||
+    (identityDrift["detected"] === true &&
+      (identityDrift["fields"] as readonly string[]).length === 0) ||
     !stringArray(value["changedPaths"]) ||
     !nonEmptyString(value["invariantSuiteId"]) ||
     !sha256(value["invariantSuiteSha256"]) ||
@@ -2069,6 +2179,26 @@ export function validateVerificationTierResult(
     );
   if (value["reviewRequired"] !== (value["tier"] === "milestone"))
     errors.push("Only milestone verification can require independent review.");
+  if (
+    isRecord(identityDrift) &&
+    identityDrift["detected"] === true &&
+    (value["status"] !== "ERROR" || value["exitCode"] !== 3)
+  )
+    errors.push(
+      "Tier candidate identity drift must report status ERROR exit 3.",
+    );
+  if (
+    isRecord(identityDrift) &&
+    identityDrift["detected"] === false &&
+    isRecord(candidate) &&
+    isRecord(candidateFinal) &&
+    ["baseCommit", "gitCommit", "gitTree", "workingTreeDirty"].some(
+      (key) => candidate[key] !== candidateFinal[key],
+    )
+  )
+    errors.push(
+      "Tier candidateFinal must equal candidate when no drift is reported.",
+    );
 
   const countsValid = (counts: unknown): boolean =>
     isRecord(counts) &&

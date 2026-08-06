@@ -39,20 +39,24 @@ describe("safe pnpm launcher resolution", () => {
 });
 
 describe("command telemetry", () => {
-  it("turns a telemetry persistence failure into an ERROR result", async () => {
+  async function runWithFailingTelemetry(
+    script: string,
+    failure = "simulated telemetry disk failure",
+  ) {
     const directory = await mkdtemp(
       join(tmpdir(), "milestone-loop-command-telemetry-"),
     );
     temporaryDirectories.push(directory);
     const recordCommand = vi.fn(async () => {
-      throw new Error("simulated telemetry disk failure");
+      throw new Error(failure);
     });
     const result = await runCommand(
       {
         id: "telemetry-failure",
         executable: "node",
-        args: ["-e", "process.exit(0)"],
+        args: ["-e", script],
         parser: "exit-code",
+        ...(script.includes("setTimeout") ? { timeoutMs: 500 } : {}),
       },
       {
         workingDirectory: directory,
@@ -62,10 +66,17 @@ describe("command telemetry", () => {
         telemetry: { store: { recordCommand } },
       },
     );
+    return { result, recordCommand };
+  }
+
+  it("preserves a PASS result when telemetry persistence fails", async () => {
+    const { result, recordCommand } =
+      await runWithFailingTelemetry("process.exit(0)");
     expect(result).toMatchObject({
-      status: "ERROR",
+      status: "PASS",
       exitCode: 0,
-      message:
+      message: "Command exited zero.",
+      telemetryError:
         "Telemetry write failed for telemetry-failure: simulated telemetry disk failure",
     });
     expect(recordCommand).toHaveBeenCalledWith(
@@ -76,4 +87,76 @@ describe("command telemetry", () => {
       }),
     );
   });
+
+  it("preserves FAIL and TIMEOUT results when telemetry persistence fails", async () => {
+    const failed = await runWithFailingTelemetry("process.exit(2)");
+    expect(failed.result).toMatchObject({
+      status: "FAIL",
+      exitCode: 2,
+      telemetryError: expect.stringContaining("Telemetry write failed"),
+    });
+    const timedOut = await runWithFailingTelemetry(
+      "setTimeout(() => process.exit(0), 30000)",
+    );
+    expect(timedOut.result).toMatchObject({
+      status: "TIMEOUT",
+      telemetryError: expect.stringContaining("Telemetry write failed"),
+    });
+  }, 20_000);
+
+  it("redacts secrets from the telemetry diagnostic", async () => {
+    const { result } = await runWithFailingTelemetry(
+      "process.exit(0)",
+      "disk full for CODEX_TOKEN=super-secret-credential-value",
+    );
+    expect(result.status).toBe("PASS");
+    expect(result.telemetryError).not.toContain(
+      "super-secret-credential-value",
+    );
+  });
+});
+
+describe("command artifact persistence", () => {
+  it("settles with a fail-closed ERROR summary when artifact writes fail", async () => {
+    const directory = await mkdtemp(
+      join(tmpdir(), "milestone-loop-command-artifacts-"),
+    );
+    temporaryDirectories.push(directory);
+    const artifactDirectory = join(directory, "evidence");
+    // A directory squatting on the stdout log path makes the close-handler
+    // writeFile fail after the child has already exited zero.
+    await mkdir(join(artifactDirectory, "artifact-crash.stdout.log"), {
+      recursive: true,
+    });
+    const recordCommand = vi.fn(async () => undefined as never);
+    const result = await runCommand(
+      {
+        id: "artifact-crash",
+        executable: "node",
+        args: ["-e", "process.exit(0)"],
+        parser: "exit-code",
+      },
+      {
+        workingDirectory: directory,
+        artifactDirectory,
+        timeoutMs: 10_000,
+        trustedControllerCommand: true,
+        telemetry: { store: { recordCommand } },
+      },
+    );
+    expect(result).toMatchObject({
+      status: "ERROR",
+      exitCode: 0,
+      message: expect.stringContaining(
+        "Command artifacts could not be persisted:",
+      ),
+    });
+    expect(recordCommand).toHaveBeenCalledWith(
+      expect.objectContaining({
+        commandId: "artifact-crash",
+        status: "ERROR",
+        failureClassification: "infrastructure",
+      }),
+    );
+  }, 20_000);
 });

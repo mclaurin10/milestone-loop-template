@@ -2034,6 +2034,7 @@ async function evaluateShadowFixtureMatrix(input: {
   readonly worktree: PreparedWorktree;
   readonly manifest: VerificationManifest;
   readonly policy: Awaited<ReturnType<typeof loadVerificationScopePolicy>>;
+  readonly protectedAuthorityPaths?: readonly string[];
 }): Promise<FixtureMatrixResult> {
   const fixtureRoot = resolve(
     input.worktree.path,
@@ -2080,6 +2081,9 @@ async function evaluateShadowFixtureMatrix(input: {
       policy: input.policy.value,
       policySha256: input.policy.sha256,
       packageGraph: graph,
+      ...(input.protectedAuthorityPaths
+        ? { protectedAuthorityPaths: input.protectedAuthorityPaths }
+        : {}),
     };
     const first = recommendAffectedScope(recommendationInput);
     const second = recommendAffectedScope(recommendationInput);
@@ -2274,18 +2278,13 @@ async function executeCheck(input: {
       bytes: validated.receiptBytes,
     };
     testCounts = await countsFromReceiptArtifacts(validated.artifacts);
-  } else if (
-    input.worktree.side === "after" &&
-    input.definition.expectedArtifactKinds.length > 0
-  ) {
+  } else if (input.worktree.side === "after") {
     throw new Error(
       `After benchmark check ${input.definition.id} omitted its required receipt.`,
     );
   } else {
     receiptAbsenceReason =
-      input.worktree.side === "before"
-        ? "The pre-D032 command did not own a benchmark-compatible receipt."
-        : "The command contract declares no required command-owned artifact kind.";
+      "The pre-D032 command did not own a benchmark-compatible receipt.";
   }
   const stdout = await retainedFileReference(
     input.mainRepositoryRoot,
@@ -3157,9 +3156,10 @@ export async function runLoopBenchmark(
   const outputRoot = resolve(root, "artifacts", "benchmarks", id);
   await mkdir(resolve(root, "artifacts", "benchmarks"), { recursive: true });
   await mkdir(outputRoot, { recursive: false });
-  const [matrix, manifest] = await Promise.all([
+  const [matrix, manifest, mainConfig] = await Promise.all([
     loadBenchmarkMatrix(root),
     loadVerificationManifest(root),
+    loadConfig(root),
   ]);
   if (matrix.value.id !== manifest.value.requiredBenchmarkMatrixId)
     throw new Error(
@@ -3307,6 +3307,7 @@ export async function runLoopBenchmark(
       worktree: after,
       manifest: manifest.value,
       policy,
+      protectedAuthorityPaths: mainConfig.protectedPaths,
     });
     unknown = await unknownExpansion({
       worktree: after,

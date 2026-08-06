@@ -15,7 +15,7 @@
         "scripts/verify.mjs"
       ],
       "argv": ["pnpm", "verify", "--", "--stage", "contract-integrity"],
-      "expectedArtifactKinds": []
+      "expectedArtifactKinds": ["focused-verify-result"]
     },
     {
       "id": "architecture-ownership",
@@ -40,7 +40,7 @@
         "packages/foundation/src/index.test.ts",
         "--fileParallelism=false"
       ],
-      "expectedArtifactKinds": []
+      "expectedArtifactKinds": ["invariant-vitest-report"]
     },
     {
       "id": "fixed-tick-action-neutrality",
@@ -54,7 +54,7 @@
         "packages/simulation/src/index.test.ts",
         "--fileParallelism=false"
       ],
-      "expectedArtifactKinds": []
+      "expectedArtifactKinds": ["invariant-vitest-report"]
     },
     {
       "id": "save-replay-smoke-integrity",
@@ -72,7 +72,7 @@
         "packages/persistence/src/index.test.ts",
         "--fileParallelism=false"
       ],
-      "expectedArtifactKinds": []
+      "expectedArtifactKinds": ["invariant-vitest-report"]
     },
     {
       "id": "standard-origin-neutrality",
@@ -93,7 +93,7 @@
         "--testNamePattern",
         "is chunk deterministic and gives human, bot, and replay callers identical economics"
       ],
-      "expectedArtifactKinds": []
+      "expectedArtifactKinds": ["invariant-vitest-report"]
     },
     {
       "id": "node-worker-technical-parity",
@@ -108,7 +108,7 @@
         "packages/simulation/"
       ],
       "argv": ["pnpm", "verify:bootstrap:simulation"],
-      "expectedArtifactKinds": []
+      "expectedArtifactKinds": ["node-worker-technical-parity-report"]
     },
     {
       "id": "public-protocol-compatibility",
@@ -137,7 +137,7 @@
         "tools/milestone-orchestrator/src/path-safety.test.ts",
         "--fileParallelism=false"
       ],
-      "expectedArtifactKinds": []
+      "expectedArtifactKinds": ["invariant-vitest-report"]
     }
   ]
 }

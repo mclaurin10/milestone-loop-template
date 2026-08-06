@@ -54,7 +54,9 @@
     "loop:reconcile-status": "tsx tools/milestone-orchestrator/src/cli.ts reconcile-status",
     "loop:dry-run": "tsx tools/milestone-orchestrator/src/cli.ts dry-run",
     "loop:canary": "tsx tools/milestone-orchestrator/src/cli.ts canary",
-    "loop:demo-safety": "tsx tools/milestone-orchestrator/src/cli.ts demo-safety"
+    "loop:demo-safety": "tsx tools/milestone-orchestrator/src/cli.ts demo-safety",
+    "loop:retention:plan": "tsx tools/milestone-orchestrator/src/cli.ts retention-plan",
+    "loop:retention:apply": "tsx tools/milestone-orchestrator/src/cli.ts retention-apply"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

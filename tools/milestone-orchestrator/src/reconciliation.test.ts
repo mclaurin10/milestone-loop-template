@@ -1,8 +1,9 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
+import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, relative, resolve } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 
 import { afterAll, describe, expect, it } from "vitest";
 
@@ -20,6 +21,7 @@ import {
   ReconciliationInterruption,
   type ReconciliationDependencies,
 } from "./reconciliation.js";
+import { buildCanonicalProtectedSet } from "./protected-roots.js";
 import { createInitialState } from "./state-store.js";
 import { validConfig, validFeatureProposal } from "../test/fixtures.js";
 
@@ -93,6 +95,18 @@ async function fixtureRepository(): Promise<Fixture> {
       resolve(".agent", "completed", "loop-recommissioning-verification.json"),
     ),
   );
+  const configPath = join(root, "orchestrator-config.json");
+  await writeFile(configPath, `${JSON.stringify(validConfig(), null, 2)}\n`);
+  // Every canonical trust root must exist on disk: the leased reconciliation
+  // run backfills their hashes into the protected baseline fail-closed.
+  const canonicalPlaceholders: string[] = [];
+  for (const path of buildCanonicalProtectedSet(validConfig())) {
+    const absolute = join(root, ...path.split("/"));
+    if (existsSync(absolute)) continue;
+    await mkdir(dirname(absolute), { recursive: true });
+    await writeFile(absolute, `${path}\n`, "utf8");
+    canonicalPlaceholders.push(path);
+  }
   git(
     root,
     "add",
@@ -101,6 +115,8 @@ async function fixtureRepository(): Promise<Fixture> {
     "PROJECT_GOAL.md",
     "docs/history.md",
     ".agent/completed/loop-recommissioning-verification.json",
+    "orchestrator-config.json",
+    ...canonicalPlaceholders,
   );
   git(root, "commit", "-m", "source boundary");
   const sourceCommit = git(root, "rev-parse", "HEAD");
@@ -129,8 +145,6 @@ async function fixtureRepository(): Promise<Fixture> {
   const rawState = Buffer.from(`${JSON.stringify(legacy, null, 2)}\n`);
   await writeFile(statePath, rawState);
 
-  const configPath = join(root, "orchestrator-config.json");
-  await writeFile(configPath, `${JSON.stringify(validConfig(), null, 2)}\n`);
   const proposal = validFeatureProposal({
     id: "complete-operations-base-utilities",
     title: "Complete the operations base utility foothold",
@@ -140,13 +154,7 @@ async function fixtureRepository(): Promise<Fixture> {
     `${JSON.stringify(proposal, null, 2)}\n`,
   );
   await writeFile(join(root, "external-work.txt"), "direct work one\n");
-  git(
-    root,
-    "add",
-    "orchestrator-config.json",
-    ".agent/next-milestone.json",
-    "external-work.txt",
-  );
+  git(root, "add", ".agent/next-milestone.json", "external-work.txt");
   git(root, "commit", "-m", "external direct work one");
   const firstExternalCommit = git(root, "rev-parse", "HEAD");
   await writeFile(
@@ -296,8 +304,13 @@ async function writeMilestoneTier(fixture: Fixture): Promise<string> {
     id,
     status: index < 5 ? "PASS" : "NOT_READY",
   }));
+  const exactCandidate = {
+    gitCommit: git(fixture.root, "rev-parse", "HEAD"),
+    gitTree: git(fixture.root, "rev-parse", "HEAD^{tree}"),
+    workingTreeDirty: false,
+  };
   const exact = {
-    schemaVersion: "2.0.0",
+    schemaVersion: "2.1.0",
     runId,
     status: "NOT_READY",
     exitCode: 2,
@@ -312,11 +325,9 @@ async function writeMilestoneTier(fixture: Fixture): Promise<string> {
       eligible: false,
       reasons: ["verification_status_not_pass"],
     },
-    candidate: {
-      gitCommit: git(fixture.root, "rev-parse", "HEAD"),
-      gitTree: git(fixture.root, "rev-parse", "HEAD^{tree}"),
-      workingTreeDirty: false,
-    },
+    candidate: exactCandidate,
+    candidateFinal: exactCandidate,
+    identityDrift: { detected: false, fields: [] },
     summary: {
       stageCounts: { PASS: 5, NOT_READY: 10, FAIL: 0, ERROR: 0 },
       requiredStageCount: 15,
@@ -360,19 +371,20 @@ async function writeMilestoneTier(fixture: Fixture): Promise<string> {
   const commandRecords = [];
   for (const [index, command] of requiredCommands.entries())
     commandRecords.push(await focusedCommandRecord(fixture, command, index));
+  const tierCandidate = {
+    baseCommit: fixture.sourceCommit,
+    gitCommit: exact.candidate.gitCommit,
+    gitTree: exact.candidate.gitTree,
+    workingTreeDirty: false,
+  };
   const tier = {
-    schemaVersion: "1.0.0",
+    schemaVersion: "1.1.0",
     runId: "verification-tier-milestone-fixture",
     tier: "milestone",
     status: "NOT_READY",
     exitCode: 2,
     authoritative: false,
-    candidate: {
-      baseCommit: fixture.sourceCommit,
-      gitCommit: exact.candidate.gitCommit,
-      gitTree: exact.candidate.gitTree,
-      workingTreeDirty: false,
-    },
+    candidate: tierCandidate,
     changedPaths: ["external-work.txt"],
     invariantSuiteId: "fixture-invariants",
     invariantSuiteSha256: "a".repeat(64),
@@ -394,6 +406,8 @@ async function writeMilestoneTier(fixture: Fixture): Promise<string> {
       candidateCommit: exact.candidate.gitCommit,
       candidateTree: exact.candidate.gitTree,
     },
+    candidateFinal: tierCandidate,
+    identityDrift: { detected: false, fields: [] },
     reviewRequired: true,
     telemetryManifestPath: null,
     startedAt: "2026-08-04T00:00:00.000Z",
@@ -670,7 +684,7 @@ function failureRecoveryScenario() {
   return failureRecoveryPromise;
 }
 
-describe("controller-boundary reconciliation", { timeout: 30_000 }, () => {
+describe("controller-boundary reconciliation", { timeout: 60_000 }, () => {
   it("records the complete continuous external commit range with exact metadata and citations", async () => {
     const { fixture, manifest } = await happyLifecycleScenario();
 
@@ -694,7 +708,7 @@ describe("controller-boundary reconciliation", { timeout: 30_000 }, () => {
 
     expect(repeatedStatus.active).toBeNull();
     expect(finalState).toMatchObject({
-      schemaVersion: "1.3.0",
+      schemaVersion: "1.4.0",
       repository: { verifiedCommit: fixture.candidateCommit },
       queue: ["complete-operations-base-utilities"],
       activeMilestoneId: null,

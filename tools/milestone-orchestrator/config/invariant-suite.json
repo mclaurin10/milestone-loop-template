@@ -15,7 +15,7 @@
         "scripts/verify.mjs"
       ],
       "argv": ["pnpm", "verify", "--", "--stage", "contract-integrity"],
-      "expectedArtifactKinds": []
+      "expectedArtifactKinds": ["focused-verify-result"]
     },
     {
       "id": "orchestrator-schema-integrity",
@@ -29,7 +29,7 @@
         "tools/milestone-orchestrator/src/schema.test.ts",
         "--fileParallelism=false"
       ],
-      "expectedArtifactKinds": []
+      "expectedArtifactKinds": ["invariant-vitest-report"]
     },
     {
       "id": "orchestrator-policy-integrity",
@@ -43,7 +43,7 @@
         "tools/milestone-orchestrator/src/policy.test.ts",
         "--fileParallelism=false"
       ],
-      "expectedArtifactKinds": []
+      "expectedArtifactKinds": ["invariant-vitest-report"]
     },
     {
       "id": "fail-closed-evidence",
@@ -60,7 +60,7 @@
         "tools/milestone-orchestrator/src/verifier.test.ts",
         "--fileParallelism=false"
       ],
-      "expectedArtifactKinds": []
+      "expectedArtifactKinds": ["invariant-vitest-report"]
     }
   ]
 }

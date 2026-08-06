@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 
 import type {
+  CandidateIdentity,
   MilestoneProposal,
   ProjectProfile,
   ReviewerReport,
@@ -35,19 +36,20 @@ export function reviewerApproves(report: ReviewerReport): boolean {
 function reviewPrompt(
   project: ProjectProfile,
   proposal: MilestoneProposal,
-  baseCommit: string,
-  headCommit: string,
+  verified: CandidateIdentity,
+  verificationResultSha256: string,
   verification: VerificationSummary,
 ): string {
   return [
     "You are an independent, read-only reviewer. You did not implement this milestone and must not modify the repository.",
     `Read ${project.authorityFile}, AGENTS.md, the approved proposal, architecture documentation, and the actual committed diff.`,
-    `Review the exact range ${baseCommit}..${headCommit}.`,
+    `Review the exact range ${verified.baseCommit}..${verified.commit}.`,
+    `Pinned machine-verified candidate: base commit ${verified.baseCommit}, head commit ${verified.commit}, tree ${verified.tree}, authoritative verification result sha256 ${verificationResultSha256}.`,
     `Approved proposal: ${JSON.stringify(proposal)}.`,
     `Machine verification summary: ${JSON.stringify(verification)}.`,
     "Check acceptance evidence, architectural compliance, test quality, suspicious shortcuts, scope reduction, protected-test weakening, and unhandled regressions.",
     "Do not trust the worker's prose as evidence. A high/critical finding, any false check, or missing trustworthy evidence requires reject or escalate.",
-    "Return only the structured review object requested by the output schema.",
+    "Return only the structured review object requested by the output schema; repeat every pinned identity field exactly as given.",
   ].join("\n\n");
 }
 
@@ -57,8 +59,8 @@ export async function requestReview(input: {
   readonly proposal: MilestoneProposal;
   readonly verification: VerificationSummary;
   readonly workspacePath: string;
-  readonly baseCommit: string;
-  readonly headCommit: string;
+  readonly verifiedCandidate: CandidateIdentity;
+  readonly verificationResultSha256: string;
   readonly attempt: number;
   readonly artifactDirectory: string;
   readonly timeoutMs: number;
@@ -70,8 +72,8 @@ export async function requestReview(input: {
     prompt: reviewPrompt(
       input.project,
       input.proposal,
-      input.baseCommit,
-      input.headCommit,
+      input.verifiedCandidate,
+      input.verificationResultSha256,
       input.verification,
     ),
     workingDirectory: input.workspacePath,
@@ -89,6 +91,15 @@ export async function requestReview(input: {
   const parsed = assertReviewerReport(
     JSON.parse(turn.finalResponse) as unknown,
   );
+  if (
+    parsed.verifiedBaseCommit !== input.verifiedCandidate.baseCommit ||
+    parsed.verifiedHeadCommit !== input.verifiedCandidate.commit ||
+    parsed.verifiedTree !== input.verifiedCandidate.tree ||
+    parsed.verificationResultSha256 !== input.verificationResultSha256
+  )
+    throw new Error(
+      "Reviewer returned identities outside the pinned verified candidate.",
+    );
   const report: ReviewerReport = {
     ...parsed,
     attempt: input.attempt,

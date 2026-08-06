@@ -95,6 +95,12 @@ interface FixtureResult {
     reasons: string[];
   };
   candidate: { gitCommit: string; gitTree: string; workingTreeDirty: boolean };
+  candidateFinal: {
+    gitCommit: string;
+    gitTree: string;
+    workingTreeDirty: boolean;
+  };
+  identityDrift: { detected: boolean; fields: string[] };
   summary: {
     requiredStageCount: number;
     stageCounts: Record<FixtureStatus, number>;
@@ -258,7 +264,7 @@ function commandLog(stageId: string, commandId: string, index: number): string {
 
 function milestoneProposal(id: string): MilestoneProposal {
   return {
-    schemaVersion: "1.0.0",
+    schemaVersion: "1.2.0",
     id,
     title: "Incremental readiness fixture",
     kind: "tooling",
@@ -281,14 +287,25 @@ function milestoneProposal(id: string): MilestoneProposal {
         executable: "pnpm",
         args: ["verify"],
         parser: "pnpm-verify",
+        expectedArtifactKinds: [],
       },
     ],
-    expectedArtifacts: ["verification/verification-summary.json"],
     terminalConditions: ["Reject unsafe evidence."],
     estimatedFileCount: 1,
     requiresBrowserInspection: false,
     requiresHeadlessEvaluation: false,
     hiddenValidation: { requested: false },
+    verticalSlice: {
+      mode: "not-applicable",
+      userGoal: null,
+      publicActionKinds: [],
+      sharedRuleOwners: [],
+      standardCompositionOwner: null,
+      persistenceReplayEvidence: [],
+      nodeWorkerParityEvidence: [],
+      inspectableConsequence: null,
+      exception: null,
+    },
   };
 }
 
@@ -311,6 +328,9 @@ function commandSummary(
     parser: "pnpm-verify",
     parsedArtifactPath: null,
     message: "Command exited 2.",
+    receipt: null,
+    receiptAbsenceReason:
+      "Receipt validation is owned by the verification caller.",
     ...overrides,
   };
 }
@@ -484,7 +504,7 @@ async function createFixture(input: {
   }
   const commit = "a".repeat(40);
   const result: FixtureResult = {
-    schemaVersion: "2.0.0",
+    schemaVersion: "2.1.0",
     runId,
     status: input.status,
     exitCode: input.status === "PASS" ? 0 : 2,
@@ -508,6 +528,12 @@ async function createFixture(input: {
       gitTree: "c".repeat(40),
       workingTreeDirty: false,
     },
+    candidateFinal: {
+      gitCommit: commit,
+      gitTree: "c".repeat(40),
+      workingTreeDirty: false,
+    },
+    identityDrift: { detected: false, fields: [] },
     summary: {
       requiredStageCount: stages.length,
       stageCounts: counts(stages),
@@ -680,8 +706,12 @@ async function prepareCommittedFixture(
   git(fixture.workspace, "add", "change.txt");
   git(fixture.workspace, "commit", "-m", "increment");
   const candidateCommit = git(fixture.workspace, "rev-parse", "HEAD");
+  const candidateTree = git(fixture.workspace, "rev-parse", "HEAD^{tree}");
   fixture.commit = candidateCommit;
   fixture.result.candidate.gitCommit = candidateCommit;
+  fixture.result.candidate.gitTree = candidateTree;
+  fixture.result.candidateFinal.gitCommit = candidateCommit;
+  fixture.result.candidateFinal.gitTree = candidateTree;
   await fixture.persist();
   return { baseCommit, candidateCommit };
 }
@@ -811,7 +841,23 @@ describe("authoritative verifier result parsing", () => {
         readinessHistoryMode: "durable-records",
         previouslyPassingStageIds: ["unit-domain"],
       },
+      candidate: {
+        baseCommit,
+        commit: git(fixture.workspace, "rev-parse", "HEAD"),
+        tree: git(fixture.workspace, "rev-parse", "HEAD^{tree}"),
+        clean: true,
+      },
     });
+    expect(summary.candidate?.changedEntriesDigest).toMatch(/^[a-f0-9]{64}$/);
+    expect(summary.authoritativeResultSha256).toBe(
+      createHash("sha256")
+        .update(
+          await readFile(
+            join(artifactDirectory, "authoritative-verify-result.json"),
+          ),
+        )
+        .digest("hex"),
+    );
     const persisted = JSON.parse(
       await readFile(
         join(artifactDirectory, "verification-summary.json"),
@@ -830,6 +876,63 @@ describe("authoritative verifier result parsing", () => {
       },
     });
   }, 15_000);
+
+  it.each([
+    {
+      name: "a clean commit",
+      mutate: async (workspace: string) => {
+        await writeFile(join(workspace, "drift.txt"), "external\n", "utf8");
+        git(workspace, "add", "drift.txt");
+        git(workspace, "commit", "-m", "external drift");
+      },
+    },
+    {
+      name: "a dirty edit",
+      mutate: async (workspace: string) => {
+        await writeFile(join(workspace, "drift.txt"), "dirty\n", "utf8");
+      },
+    },
+  ])(
+    "fails closed when verification introduces $name into the attempt",
+    async ({ mutate }) => {
+      const controllerRunId = "controller-drift";
+      const milestoneId = "drift-fixture";
+      const fixture = await createFixture({
+        profile: "readiness",
+        status: "NOT_READY",
+        runId: `${controllerRunId}-${milestoneId}-a1-verify`,
+      });
+      const { baseCommit } = await prepareCommittedFixture(fixture);
+      const summary = await verifyMilestone({
+        runId: controllerRunId,
+        proposal: milestoneProposal(milestoneId),
+        attempt: 1,
+        workspacePath: fixture.workspace,
+        baseCommit,
+        config: await loadConfig(process.cwd()),
+        protectedFiles: [],
+        artifactDirectory: join(
+          fixture.workspace,
+          "artifacts",
+          "drift-evidence",
+        ),
+        readinessHistory: {
+          mode: "durable-records",
+          previouslyPassingStageIds: ["unit-domain"],
+        },
+        executeCommand: async () => {
+          await mutate(fixture.workspace);
+          return commandSummary();
+        },
+      });
+      expect(summary).toMatchObject({
+        status: "FAIL",
+        failureKind: "policy",
+        summary: "Verification changed tracked attempt state or HEAD.",
+      });
+    },
+    20_000,
+  );
 
   it("preserves a raw TIMEOUT even when exit 2 and result.json are present", async () => {
     const controllerRunId = "controller-timeout";
@@ -918,6 +1021,53 @@ describe("authoritative verifier result parsing", () => {
       name: "malformed schema",
       mutate: (fixture) => {
         fixture.result.schemaVersion = "1.0.0";
+      },
+    },
+    {
+      name: "prior result schema without end identity",
+      mutate: (fixture) => {
+        fixture.result.schemaVersion = "2.0.0";
+        delete (fixture.result as unknown as Record<string, unknown>)[
+          "candidateFinal"
+        ];
+        delete (fixture.result as unknown as Record<string, unknown>)[
+          "identityDrift"
+        ];
+      },
+    },
+    {
+      name: "missing candidateFinal",
+      mutate: (fixture) => {
+        delete (fixture.result as unknown as Record<string, unknown>)[
+          "candidateFinal"
+        ];
+      },
+    },
+    {
+      name: "drifted candidateFinal commit",
+      mutate: (fixture) => {
+        fixture.result.candidateFinal.gitCommit = "b".repeat(40);
+      },
+    },
+    {
+      name: "drifted candidateFinal tree",
+      mutate: (fixture) => {
+        fixture.result.candidateFinal.gitTree = "e".repeat(40);
+      },
+    },
+    {
+      name: "dirty candidateFinal",
+      mutate: (fixture) => {
+        fixture.result.candidateFinal.workingTreeDirty = true;
+      },
+    },
+    {
+      name: "detected identity drift",
+      mutate: (fixture) => {
+        fixture.result.identityDrift = {
+          detected: true,
+          fields: ["gitCommit"],
+        };
       },
     },
     {
@@ -1175,4 +1325,385 @@ describe("authoritative verifier result parsing", () => {
       );
     },
   );
+});
+
+describe("milestone verifier command receipts", () => {
+  function receiptProposal(id: string): MilestoneProposal {
+    const base = milestoneProposal(id);
+    return {
+      ...base,
+      verificationCommands: [
+        {
+          id: "focused-check",
+          executable: "pnpm",
+          args: ["test:orchestrator"],
+          parser: "exit-code",
+          expectedArtifactKinds: ["orchestrator-vitest-report"],
+        },
+        ...base.verificationCommands,
+      ],
+    };
+  }
+
+  async function writeFixtureReceipt(
+    evidenceDirectory: string,
+    input: {
+      stageId: string;
+      commandId: string;
+      artifacts?: readonly FixtureArtifact[] | [];
+    },
+  ): Promise<void> {
+    await mkdir(evidenceDirectory, { recursive: true });
+    const contents = '{"status":"PASS"}\n';
+    await writeFile(join(evidenceDirectory, "report.json"), contents, "utf8");
+    const artifacts = input.artifacts ?? [
+      {
+        path: "report.json",
+        kind: "orchestrator-vitest-report",
+        bytes: Buffer.byteLength(contents),
+        sha256: createHash("sha256").update(contents).digest("hex"),
+      },
+    ];
+    await writeFile(
+      join(evidenceDirectory, "result.json"),
+      `${JSON.stringify({
+        schemaVersion: "1.0.0",
+        stageId: input.stageId,
+        commandId: input.commandId,
+        status: "PASS",
+        checks: [
+          {
+            id: "fixture-check",
+            status: "PASS",
+            summary: "Fixture check passed.",
+          },
+        ],
+        artifacts,
+      })}\n`,
+      "utf8",
+    );
+  }
+
+  async function runReceiptFixture(input: {
+    milestoneId: string;
+    attempt?: number;
+    proposalOverride?: MilestoneProposal;
+    onFocusedCommand?: (options: {
+      environment: Readonly<Record<string, string>> | undefined;
+      stageId: string;
+    }) => Promise<void>;
+  }): Promise<{
+    summary: Awaited<ReturnType<typeof verifyMilestone>>;
+    environments: Map<string, Readonly<Record<string, string>> | undefined>;
+    expectedStageId: string;
+    artifactDirectory: string;
+  }> {
+    const controllerRunId = "controller-receipts";
+    const attempt = input.attempt ?? 1;
+    const fixture = await createFixture({
+      profile: "readiness",
+      status: "NOT_READY",
+      runId: `${controllerRunId}-${input.milestoneId}-a${attempt}-verify`,
+    });
+    const { baseCommit, candidateCommit } =
+      await prepareCommittedFixture(fixture);
+    const expectedStageId = `milestone-verify-${controllerRunId}-${input.milestoneId}-a${attempt}-verify-${candidateCommit.slice(0, 12)}`;
+    const artifactDirectory = join(
+      fixture.workspace,
+      "artifacts",
+      "receipt-evidence",
+    );
+    const environments = new Map<
+      string,
+      Readonly<Record<string, string>> | undefined
+    >();
+    const summary = await verifyMilestone({
+      runId: controllerRunId,
+      proposal: input.proposalOverride ?? receiptProposal(input.milestoneId),
+      attempt,
+      workspacePath: fixture.workspace,
+      baseCommit,
+      config: await loadConfig(process.cwd()),
+      protectedFiles: [],
+      artifactDirectory,
+      readinessHistory: {
+        mode: "durable-records",
+        previouslyPassingStageIds: ["unit-domain"],
+      },
+      executeCommand: async (command, options) => {
+        environments.set(command.id, options.extraEnvironment);
+        if (command.id === "focused-check") {
+          await input.onFocusedCommand?.({
+            environment: options.extraEnvironment,
+            stageId: expectedStageId,
+          });
+          return commandSummary({
+            id: "focused-check",
+            parser: "exit-code",
+            status: "PASS",
+            exitCode: 0,
+            message: "Command exited zero.",
+          });
+        }
+        return commandSummary();
+      },
+    });
+    return { summary, environments, expectedStageId, artifactDirectory };
+  }
+
+  it("binds receipts to the candidate-scoped stage and validates them on PASS", async () => {
+    const { summary, environments, expectedStageId, artifactDirectory } =
+      await runReceiptFixture({
+        milestoneId: "receipt-happy",
+        onFocusedCommand: async ({ environment }) => {
+          if (!environment?.["LOOP_VERIFY_COMMAND_ARTIFACT_DIR"])
+            throw new Error("Focused command received no evidence directory.");
+          await writeFixtureReceipt(
+            environment["LOOP_VERIFY_COMMAND_ARTIFACT_DIR"],
+            {
+              stageId: environment["LOOP_VERIFY_STAGE_ID"] ?? "",
+              commandId: environment["LOOP_VERIFY_COMMAND_ID"] ?? "",
+            },
+          );
+        },
+      });
+    const focusedEnvironment = environments.get("focused-check");
+    expect(focusedEnvironment).toMatchObject({
+      LOOP_VERIFY_STAGE_ID: expectedStageId,
+      LOOP_VERIFY_COMMAND_ID: "focused-check",
+      LOOP_VERIFY_COMMAND_ARTIFACT_DIR: join(
+        artifactDirectory,
+        "commands",
+        "01-focused-check",
+        "evidence",
+      ),
+    });
+    expect(environments.get("authoritative-verification")).toBeUndefined();
+    expect(summary.status).toBe("PASS");
+    expect(summary.commands[0]).toMatchObject({
+      id: "focused-check",
+      status: "PASS",
+      receipt: {
+        path: "commands/01-focused-check/evidence/result.json",
+        bytes: expect.any(Number) as number,
+      },
+      receiptAbsenceReason: null,
+    });
+    expect(summary.commands[0]?.receipt?.sha256).toMatch(/^[a-f0-9]{64}$/);
+    expect(summary.commands[1]).toMatchObject({
+      receipt: null,
+      receiptAbsenceReason:
+        "Authoritative pnpm verify evidence is the independently parsed result tree.",
+    });
+  }, 20_000);
+
+  it("never passes a zero-exit focused command without a receipt", async () => {
+    const { summary } = await runReceiptFixture({
+      milestoneId: "receipt-missing",
+    });
+    expect(summary.commands[0]).toMatchObject({
+      id: "focused-check",
+      status: "ERROR",
+      receipt: null,
+      receiptAbsenceReason:
+        "Passing check focused-check did not write its required command-owned receipt.",
+    });
+    expect(summary).toMatchObject({
+      status: "FAIL",
+      failureKind: "infrastructure",
+    });
+  }, 20_000);
+
+  it.each([
+    {
+      name: "a stale stage id from a prior attempt",
+      receipt: (stageId: string) => ({
+        stageId: stageId.replace("-a1-verify-", "-a0-verify-"),
+        commandId: "focused-check",
+      }),
+    },
+    {
+      name: "a foreign command id",
+      receipt: (stageId: string) => ({
+        stageId,
+        commandId: "another-command",
+      }),
+    },
+    {
+      name: "a hollow receipt with no artifacts",
+      receipt: (stageId: string) => ({
+        stageId,
+        commandId: "focused-check",
+        artifacts: [] as const,
+      }),
+    },
+  ])(
+    "rejects $name as an infrastructure error",
+    async ({ receipt }) => {
+      const { summary } = await runReceiptFixture({
+        milestoneId: "receipt-invalid",
+        onFocusedCommand: async ({ environment, stageId }) => {
+          const directory = environment?.["LOOP_VERIFY_COMMAND_ARTIFACT_DIR"];
+          if (!directory)
+            throw new Error("Focused command received no evidence directory.");
+          await writeFixtureReceipt(directory, receipt(stageId));
+        },
+      });
+      expect(summary.commands[0]).toMatchObject({
+        id: "focused-check",
+        status: "ERROR",
+        receipt: null,
+      });
+      expect(summary.commands[0]?.message).toMatch(
+        /identity, checks, artifacts, or schema is invalid/,
+      );
+      expect(summary).toMatchObject({
+        status: "FAIL",
+        failureKind: "infrastructure",
+      });
+    },
+    20_000,
+  );
+
+  it("fails closed when a verification command tampers a protected trust root", async () => {
+    const fixture = await createFixture({
+      profile: "readiness",
+      status: "NOT_READY",
+      runId: "controller-tamper-tamper-check-a1-verify",
+    });
+    git(fixture.workspace, "init", "-b", "main");
+    git(fixture.workspace, "config", "user.name", "Verifier Test");
+    git(fixture.workspace, "config", "user.email", "verifier@example.invalid");
+    await writeFile(
+      join(fixture.workspace, ".gitignore"),
+      "artifacts/\n",
+      "utf8",
+    );
+    await writeFile(join(fixture.workspace, "change.txt"), "base\n", "utf8");
+    const frozenBytes = "frozen verifier input\n";
+    await writeFile(join(fixture.workspace, "frozen.txt"), frozenBytes, "utf8");
+    git(fixture.workspace, "add", ".gitignore", "change.txt", "frozen.txt");
+    git(fixture.workspace, "commit", "-m", "base");
+    const baseCommit = git(fixture.workspace, "rev-parse", "HEAD");
+    await writeFile(
+      join(fixture.workspace, "change.txt"),
+      "readiness increment\n",
+      "utf8",
+    );
+    git(fixture.workspace, "add", "change.txt");
+    git(fixture.workspace, "commit", "-m", "increment");
+    fixture.commit = git(fixture.workspace, "rev-parse", "HEAD");
+    await fixture.persist();
+
+    await expect(
+      verifyMilestone({
+        runId: "controller-tamper",
+        proposal: receiptProposal("tamper-check"),
+        attempt: 1,
+        workspacePath: fixture.workspace,
+        baseCommit,
+        config: await loadConfig(process.cwd()),
+        protectedFiles: [
+          {
+            path: "frozen.txt",
+            sha256: createHash("sha256").update(frozenBytes).digest("hex"),
+          },
+        ],
+        artifactDirectory: join(
+          fixture.workspace,
+          "artifacts",
+          "tamper-evidence",
+        ),
+        executeCommand: async (command) => {
+          if (command.id === "focused-check") {
+            // Simulate a command that patches a protected verifier input
+            // while identity endpoints will still compare equal later.
+            await writeFile(
+              join(fixture.workspace, "frozen.txt"),
+              "tampered verifier input\n",
+              "utf8",
+            );
+            return commandSummary({
+              id: "focused-check",
+              parser: "exit-code",
+              status: "PASS",
+              exitCode: 0,
+              message: "Command exited zero.",
+            });
+          }
+          return commandSummary();
+        },
+      }),
+    ).rejects.toThrow(/Protected file changed: frozen\.txt/);
+  }, 20_000);
+
+  it("keeps a failing focused command a product failure without a receipt", async () => {
+    const controllerRunId = "controller-receipts";
+    const milestoneId = "receipt-product-fail";
+    const fixture = await createFixture({
+      profile: "readiness",
+      status: "NOT_READY",
+      runId: `${controllerRunId}-${milestoneId}-a1-verify`,
+    });
+    const { baseCommit } = await prepareCommittedFixture(fixture);
+    const summary = await verifyMilestone({
+      runId: controllerRunId,
+      proposal: receiptProposal(milestoneId),
+      attempt: 1,
+      workspacePath: fixture.workspace,
+      baseCommit,
+      config: await loadConfig(process.cwd()),
+      protectedFiles: [],
+      artifactDirectory: join(fixture.workspace, "artifacts", "product-fail"),
+      readinessHistory: {
+        mode: "durable-records",
+        previouslyPassingStageIds: ["unit-domain"],
+      },
+      executeCommand: async (command) =>
+        command.id === "focused-check"
+          ? commandSummary({
+              id: "focused-check",
+              parser: "exit-code",
+              status: "FAIL",
+              exitCode: 1,
+              message: "Command exited 1.",
+            })
+          : commandSummary(),
+    });
+    expect(summary.commands[0]).toMatchObject({
+      status: "FAIL",
+      receipt: null,
+      receiptAbsenceReason:
+        "The command did not pass; failing commands retain no receipt.",
+    });
+    expect(summary).toMatchObject({ status: "FAIL", failureKind: "product" });
+  }, 20_000);
+
+  it("fails closed on a legacy proposal instead of migrating it", async () => {
+    const milestoneId = "receipt-legacy";
+    const fixture = await createFixture({
+      profile: "readiness",
+      status: "NOT_READY",
+    });
+    const { baseCommit } = await prepareCommittedFixture(fixture);
+    const summary = await verifyMilestone({
+      runId: "controller-legacy",
+      proposal: { ...milestoneProposal(milestoneId), schemaVersion: "1.0.0" },
+      attempt: 1,
+      workspacePath: fixture.workspace,
+      baseCommit,
+      config: await loadConfig(process.cwd()),
+      protectedFiles: [],
+      artifactDirectory: join(fixture.workspace, "artifacts", "legacy-gate"),
+      executeCommand: async () => {
+        throw new Error("Legacy proposals must never execute commands.");
+      },
+    });
+    expect(summary).toMatchObject({
+      status: "FAIL",
+      failureKind: "policy",
+      commands: [],
+    });
+    expect(summary.summary).toContain("Re-plan the milestone");
+  }, 20_000);
 });

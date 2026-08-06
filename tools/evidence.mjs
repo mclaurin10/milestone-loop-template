@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { unlinkSync, writeFileSync } from "node:fs";
 import { mkdir, readFile, stat, unlink, writeFile } from "node:fs/promises";
-import { basename, relative, resolve } from "node:path";
+import { basename, isAbsolute, relative, resolve } from "node:path";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
 
@@ -458,72 +458,82 @@ export async function evidenceContext(defaultStageId, defaultCommandId) {
 
 export async function beginDirectTelemetry(context, input = {}) {
   if (process.env.LOOP_TELEMETRY_PARENT_MANAGED === "1") return null;
-  const { TelemetryStore } =
-    await import("./milestone-orchestrator/src/telemetry-store.ts");
-  const identity = commandIdentity();
-  const timestamp = new Date().toISOString().replaceAll(/[^0-9]/g, "");
-  const runId =
-    process.env.MILESTONE_LOOP_TELEMETRY_RUN_ID ??
-    `direct-${safeName(context.commandId)}-${timestamp}-${process.pid}-${randomUUID().slice(0, 8)}`;
-  const store = await TelemetryStore.open({
-    repositoryRoot: context.repositoryRoot,
-    directory: resolve(
-      context.repositoryRoot,
-      "artifacts",
-      "loop-telemetry",
-      "direct",
+  try {
+    const { TelemetryStore } =
+      await import("./milestone-orchestrator/src/telemetry-store.ts");
+    const identity = commandIdentity();
+    const timestamp = new Date().toISOString().replaceAll(/[^0-9]/g, "");
+    const runId =
+      process.env.MILESTONE_LOOP_TELEMETRY_RUN_ID ??
+      `direct-${safeName(context.commandId)}-${timestamp}-${process.pid}-${randomUUID().slice(0, 8)}`;
+    const store = await TelemetryStore.open({
+      repositoryRoot: context.repositoryRoot,
+      directory: resolve(
+        context.repositoryRoot,
+        "artifacts",
+        "loop-telemetry",
+        "direct",
+        runId,
+      ),
       runId,
-    ),
-    runId,
-    source: "direct",
-  });
-  const candidate = {
-    baseCommit: null,
-    commit:
-      typeof identity.gitCommit === "string" &&
-      /^[0-9a-f]{40}$/.test(identity.gitCommit)
-        ? identity.gitCommit
-        : null,
-    tree:
-      typeof identity.gitTree === "string" &&
-      /^[0-9a-f]{40}$/.test(identity.gitTree)
-        ? identity.gitTree
-        : null,
-    dirty:
-      typeof identity.gitStatus === "string" && identity.gitStatus.length > 0,
-  };
-  const span = await store.beginPhase({
-    phase: input.phase ?? "verification",
-    eventType: input.eventType ?? "direct-command",
-    candidate,
-  });
-  if (context.manualEvidence) {
-    context.manualEvidence.telemetry = {
-      runId,
-      manifestPath: slash(
-        relative(
-          context.repositoryRoot,
-          resolve(
+      source: "direct",
+    });
+    const candidate = {
+      baseCommit: null,
+      commit:
+        typeof identity.gitCommit === "string" &&
+        /^[0-9a-f]{40}$/.test(identity.gitCommit)
+          ? identity.gitCommit
+          : null,
+      tree:
+        typeof identity.gitTree === "string" &&
+        /^[0-9a-f]{40}$/.test(identity.gitTree)
+          ? identity.gitTree
+          : null,
+      dirty:
+        typeof identity.gitStatus === "string" && identity.gitStatus.length > 0,
+    };
+    const span = await store.beginPhase({
+      phase: input.phase ?? "verification",
+      eventType: input.eventType ?? "direct-command",
+      candidate,
+    });
+    if (context.manualEvidence) {
+      context.manualEvidence.telemetry = {
+        runId,
+        manifestPath: slash(
+          relative(
             context.repositoryRoot,
-            "artifacts",
-            "loop-telemetry",
-            "direct",
-            runId,
-            "manifest.json",
+            resolve(
+              context.repositoryRoot,
+              "artifacts",
+              "loop-telemetry",
+              "direct",
+              runId,
+              "manifest.json",
+            ),
           ),
         ),
-      ),
+      };
+    }
+    return {
+      store,
+      span,
+      context,
+      candidate,
+      commandId: context.commandId,
+      argv: input.argv ?? process.argv,
+      checkSetId: input.checkSetId ?? context.stageId,
     };
+  } catch (error) {
+    // Telemetry availability is non-semantic for evidence commands: the
+    // command outcome is owned by the command itself, so a failed telemetry
+    // begin degrades to "no telemetry" instead of failing the command.
+    process.stderr.write(
+      `Telemetry begin failed (non-semantic): ${error instanceof Error ? error.message : String(error)}\n`,
+    );
+    return null;
   }
-  return {
-    store,
-    span,
-    context,
-    candidate,
-    commandId: context.commandId,
-    argv: input.argv ?? process.argv,
-    checkSetId: input.checkSetId ?? context.stageId,
-  };
 }
 
 export async function finishDirectTelemetry(handle, input) {
@@ -613,6 +623,45 @@ export async function artifactDeclaration(artifactDirectory, path, kind) {
 }
 
 export async function writeReceipt(context, checks, artifactInputs) {
+  if (!Array.isArray(checks) || checks.length === 0)
+    throw new Error("Receipts must declare at least one passing check.");
+  const checkIds = new Set();
+  for (const check of checks) {
+    if (!check || typeof check.id !== "string" || check.id.trim() === "")
+      throw new Error("Every receipt check needs a nonempty id.");
+    if (checkIds.has(check.id))
+      throw new Error(`Receipt check ids must be unique: ${check.id}.`);
+    checkIds.add(check.id);
+    if (typeof check.summary !== "string" || check.summary.trim() === "")
+      throw new Error(`Receipt check ${check.id} needs a nonempty summary.`);
+  }
+  if (!Array.isArray(artifactInputs) || artifactInputs.length === 0)
+    throw new Error(
+      "Receipts must declare at least one command-owned artifact.",
+    );
+  const declaredPaths = new Set();
+  for (const input of artifactInputs) {
+    if (!input || typeof input.path !== "string" || input.path.trim() === "")
+      throw new Error("Every receipt artifact needs a nonempty path.");
+    if (typeof input.kind !== "string" || input.kind.trim() === "")
+      throw new Error(`Receipt artifact ${input.path} needs a nonempty kind.`);
+    const contained = relative(
+      context.artifactDirectory,
+      resolve(context.artifactDirectory, input.path),
+    );
+    if (!contained || contained.startsWith("..") || isAbsolute(contained))
+      throw new Error(
+        `Receipt artifact escapes the artifact directory: ${input.path}.`,
+      );
+    const normalized = slash(contained);
+    if (normalized === "result.json")
+      throw new Error(
+        "Receipt artifacts cannot claim the receipt file result.json.",
+      );
+    if (declaredPaths.has(normalized))
+      throw new Error(`Receipt artifact paths must be unique: ${input.path}.`);
+    declaredPaths.add(normalized);
+  }
   const artifacts = [];
   for (const input of artifactInputs) {
     artifacts.push(

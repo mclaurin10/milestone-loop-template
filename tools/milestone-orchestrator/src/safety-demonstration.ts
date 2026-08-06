@@ -1,15 +1,25 @@
 import { createHash, randomUUID } from "node:crypto";
+import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { CONTROLLER_TRUST_ROOT_SUBTREES } from "./contracts.js";
 import type { MilestoneRecord, OrchestratorConfig } from "./contracts.js";
 import { canaryMilestone } from "./canary.js";
+import {
+  DEFAULT_VERIFICATION_MANIFEST_PATH,
+  loadVerificationManifest,
+} from "./config.js";
 import {
   createMilestoneRecord,
   transitionMilestone,
 } from "./milestone-state.js";
 import { enforceDiffPolicy } from "./policy.js";
+import {
+  assertManifestProtectedPathsCovered,
+  buildCanonicalProtectedSet,
+} from "./protected-roots.js";
 import { recoveryAction, decideRetry } from "./retry-policy.js";
 import {
   StateStore,
@@ -146,13 +156,76 @@ export async function demonstrateSafety(input: {
   if (stopped.action !== "escalate")
     throw new Error("Retry limit did not stop the synthetic milestone.");
 
-  const protectedDiff = enforceDiffPolicy(
-    [input.config.project.authorityFile],
-    proposal,
-    input.config.protectedPaths,
+  const canonicalProtectedSet = buildCanonicalProtectedSet(input.config);
+  const protectedRejections = canonicalProtectedSet.map((path) => {
+    const caseVariant =
+      path.toUpperCase() === path ? path.toLowerCase() : path.toUpperCase();
+    const literal = enforceDiffPolicy([path], proposal, canonicalProtectedSet);
+    const folded = enforceDiffPolicy(
+      [caseVariant],
+      proposal,
+      canonicalProtectedSet,
+    );
+    return { path, caseVariant, literal, folded };
+  });
+  const unrejected = protectedRejections.filter(
+    (probe) =>
+      probe.literal.allowed ||
+      probe.literal.protectedChanges.length !== 1 ||
+      probe.folded.allowed ||
+      probe.folded.protectedChanges.length !== 1,
   );
-  if (protectedDiff.allowed || protectedDiff.protectedChanges.length !== 1)
-    throw new Error("Protected-file injection was not rejected.");
+  if (canonicalProtectedSet.length === 0 || unrejected.length > 0)
+    throw new Error(
+      `Protected-file injection was not rejected for: [${unrejected
+        .map((probe) => probe.path)
+        .join(", ")}].`,
+    );
+
+  // A brand-new file under a protected subtree has no literal entry in the
+  // protected set; only the subtree fence can reject it.
+  const subtreeRejections = CONTROLLER_TRUST_ROOT_SUBTREES.map((subtree) => {
+    const probePath = `${subtree}/src/__safety_demo_new_file__.ts`;
+    const outcome = enforceDiffPolicy(
+      [probePath],
+      proposal,
+      canonicalProtectedSet,
+    );
+    return { subtree, probePath, outcome };
+  });
+  const unfencedSubtrees = subtreeRejections.filter(
+    (probe) =>
+      probe.outcome.allowed || probe.outcome.protectedChanges.length !== 1,
+  );
+  if (subtreeRejections.length === 0 || unfencedSubtrees.length > 0)
+    throw new Error(
+      `Protected-subtree injection was not rejected for: [${unfencedSubtrees
+        .map((probe) => probe.probePath)
+        .join(", ")}].`,
+    );
+
+  const manifestPath = resolve(
+    input.repositoryRoot,
+    DEFAULT_VERIFICATION_MANIFEST_PATH,
+  );
+  const manifestScenario = existsSync(manifestPath)
+    ? await (async () => {
+        const manifest = await loadVerificationManifest(input.repositoryRoot);
+        assertManifestProtectedPathsCovered(
+          manifest.value,
+          canonicalProtectedSet,
+        );
+        return {
+          checked: true as const,
+          requiredProtectedPaths: manifest.value.requiredProtectedPaths,
+          canonicalProtectedSet,
+        };
+      })()
+    : {
+        checked: false as const,
+        reason: "No verification manifest is commissioned at the default path.",
+        canonicalProtectedSet,
+      };
 
   const artifactPath = resolve(
     input.artifactDirectory,
@@ -190,7 +263,17 @@ export async function demonstrateSafety(input: {
       {
         id: "protected-file-rejection",
         status: "PASS",
-        evidence: protectedDiff,
+        evidence: protectedRejections,
+      },
+      {
+        id: "protected-subtree-rejection",
+        status: "PASS",
+        evidence: subtreeRejections,
+      },
+      {
+        id: "manifest-trust-root-coverage",
+        status: "PASS",
+        evidence: manifestScenario,
       },
     ],
     artifactPath,

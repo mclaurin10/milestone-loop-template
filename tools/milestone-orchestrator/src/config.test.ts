@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { loadConfig } from "./config.js";
+import { buildCanonicalProtectedSet } from "./protected-roots.js";
 import { validConfig } from "../test/fixtures.js";
 
 const temporaryDirectories: string[] = [];
@@ -15,8 +16,8 @@ afterEach(async () => {
 });
 
 describe("orchestrator configuration migration", () => {
-  it.each(["1.0.0", "1.1.0", "1.2.0"])(
-    "migrates %s to 1.3.0 without changing policy facts",
+  it.each(["1.0.0", "1.1.0", "1.2.0", "1.3.0"])(
+    "migrates %s to 1.4.0 without changing policy facts",
     async (schemaVersion) => {
       const root = await mkdtemp(join(tmpdir(), "milestone-loop-config-"));
       temporaryDirectories.push(root);
@@ -25,6 +26,13 @@ describe("orchestrator configuration migration", () => {
       const legacy = {
         ...current,
         schemaVersion,
+        protectedPaths: [
+          "PROJECT_GOAL.md",
+          "evals/ACCEPTANCE.md",
+          "evals/acceptance-manifest.json",
+          "evals/HIDDEN_VALIDATION_PROTOCOL.md",
+          "evals/immutable-contract-lock.json",
+        ],
       } as Record<string, unknown>;
       if (schemaVersion === "1.0.0") delete legacy["evidenceRetention"];
       delete legacy["project"];
@@ -33,7 +41,7 @@ describe("orchestrator configuration migration", () => {
       const loaded = await loadConfig(root, path);
       expect(loaded).toEqual({
         ...current,
-        schemaVersion: "1.3.0",
+        schemaVersion: "1.4.0",
         evidenceRetention: current.evidenceRetention,
         project: {
           name: "Example Project",
@@ -43,8 +51,26 @@ describe("orchestrator configuration migration", () => {
             categoryPatterns: [],
           },
         },
-        protectedPaths: [...current.protectedPaths, "legacy-config.json"],
+        protectedPaths: buildCanonicalProtectedSet(current, [
+          "legacy-config.json",
+        ]),
       });
     },
   );
+
+  it("rejects a current-version config that drops a controller trust root", async () => {
+    const root = await mkdtemp(join(tmpdir(), "milestone-loop-config-"));
+    temporaryDirectories.push(root);
+    const path = join(root, "stripped-config.json");
+    const stripped = {
+      ...validConfig(),
+      protectedPaths: validConfig().protectedPaths.filter(
+        (entry) => entry !== "scripts/verify.mjs",
+      ),
+    };
+    await writeFile(path, `${JSON.stringify(stripped, null, 2)}\n`);
+    await expect(loadConfig(root, path)).rejects.toThrow(
+      /omits mandatory frozen authority/,
+    );
+  });
 });

@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { isAbsolute } from "node:path";
 
 import {
+  CONTROLLER_TRUST_ROOT_SUBTREES,
   type MilestoneProposal,
   type OrchestratorConfig,
   type OrchestratorState,
@@ -9,6 +10,7 @@ import {
   type PolicyFinding,
   type ProjectProfile,
 } from "./contracts.js";
+import { protectedSubtreeContaining } from "./protected-roots.js";
 import { validateMilestoneProposal } from "./schema.js";
 import { verificationCommandSafetyError } from "./command-policy.js";
 
@@ -43,6 +45,20 @@ export function globMatches(pattern: string, candidate: string): boolean {
 
 function patternsOverlap(left: string, right: string): boolean {
   return globMatches(left, right) || globMatches(right, left);
+}
+
+export function protectedPathMatches(
+  protectedPath: string,
+  candidate: string,
+): boolean {
+  return globMatches(protectedPath.toLowerCase(), candidate.toLowerCase());
+}
+
+function protectedPatternsOverlap(
+  scope: string,
+  protectedPath: string,
+): boolean {
+  return patternsOverlap(scope.toLowerCase(), protectedPath.toLowerCase());
 }
 
 function normalizedObjective(value: string): string {
@@ -228,7 +244,7 @@ export function evaluateProposal(
         path,
       );
     for (const protectedPath of config.protectedPaths) {
-      if (patternsOverlap(normalized, protectedPath))
+      if (protectedPatternsOverlap(normalized, protectedPath))
         addsFinding(
           findings,
           "PROTECTED_SCOPE",
@@ -236,8 +252,20 @@ export function evaluateProposal(
           path,
         );
     }
+    for (const subtree of CONTROLLER_TRUST_ROOT_SUBTREES) {
+      if (
+        protectedPatternsOverlap(normalized, subtree) ||
+        protectedPatternsOverlap(normalized, `${subtree}/**`)
+      )
+        addsFinding(
+          findings,
+          "PROTECTED_SCOPE",
+          `Permitted scope overlaps the protected controller subtree ${subtree}/.`,
+          path,
+        );
+    }
     for (const protectedFile of state.repository.protectedFiles) {
-      if (patternsOverlap(normalized, protectedFile.path))
+      if (protectedPatternsOverlap(normalized, protectedFile.path))
         addsFinding(
           findings,
           "PROTECTED_BASELINE_SCOPE",
@@ -492,8 +520,10 @@ export function enforceDiffPolicy(
   protectedPaths: readonly string[],
 ): DiffPolicyResult {
   const normalizedChanges = changedPaths.map(normalizePath);
-  const protectedChanges = normalizedChanges.filter((path) =>
-    protectedPaths.some((pattern) => globMatches(pattern, path)),
+  const protectedChanges = normalizedChanges.filter(
+    (path) =>
+      protectedPaths.some((pattern) => protectedPathMatches(pattern, path)) ||
+      protectedSubtreeContaining(path) !== null,
   );
   const outOfScopeChanges = normalizedChanges.filter(
     (path) =>

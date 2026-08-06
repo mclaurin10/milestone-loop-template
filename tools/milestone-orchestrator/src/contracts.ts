@@ -1,8 +1,11 @@
 export const LEGACY_MILESTONE_SCHEMA_VERSION = "1.0.0" as const;
-export const MILESTONE_SCHEMA_VERSION = "1.1.0" as const;
-export const STATE_SCHEMA_VERSION = "1.3.0" as const;
-export const CONFIG_SCHEMA_VERSION = "1.3.0" as const;
-export const REVIEW_SCHEMA_VERSION = "1.0.0" as const;
+export const PREVIOUS_MILESTONE_SCHEMA_VERSION = "1.1.0" as const;
+export const MILESTONE_SCHEMA_VERSION = "1.2.0" as const;
+export const STATE_SCHEMA_VERSION = "1.4.0" as const;
+export const CONFIG_SCHEMA_VERSION = "1.4.0" as const;
+export const REVIEW_LEGACY_SCHEMA_VERSION = "1.0.0" as const;
+export const REVIEW_SCHEMA_VERSION = "1.1.0" as const;
+export const VERIFICATION_SUMMARY_SCHEMA_VERSION = "1.1.0" as const;
 export const RECONCILIATION_SCHEMA_VERSION = "1.0.0" as const;
 export const RECONCILIATION_REVIEW_SCHEMA_VERSION = "1.0.0" as const;
 export const CONTROLLER_ARCHIVE_SCHEMA_VERSION = "1.0.0" as const;
@@ -10,7 +13,7 @@ export const AGENT_POLICY_SCHEMA_VERSION = "1.0.0" as const;
 export const AGENT_INVOCATION_SCHEMA_VERSION = "1.0.0" as const;
 export const WORKSPACE_CLEANUP_SCHEMA_VERSION = "1.0.0" as const;
 export const EVIDENCE_RETENTION_SCHEMA_VERSION = "1.0.0" as const;
-export const VERIFICATION_TIER_SCHEMA_VERSION = "1.0.0" as const;
+export const VERIFICATION_TIER_SCHEMA_VERSION = "1.1.0" as const;
 export const VERIFICATION_MANIFEST_SCHEMA_VERSION =
   "verification-manifest.v1" as const;
 
@@ -123,11 +126,36 @@ export const READINESS_VERIFICATION_STAGE_IDS = [
   "contract-integrity",
 ] as const;
 
+export const CONTROLLER_TRUST_ROOT_PATHS = [
+  "AGENTS.md",
+  ".agent/readiness-profile-activated.json",
+  "scripts/verify.mjs",
+  "pnpm-lock.yaml",
+  "package.json",
+  "tools/milestone-orchestrator/config/invariant-suite.json",
+] as const;
+
+// Directory subtrees whose entire contents are verifier-equivalent: the
+// controller runs from the target checkout, so a permitted edit anywhere in
+// its source or config is enforced on the next run. Subtrees are enforced at
+// the proposal/diff boundary (any changed path under them is a protected
+// change, including newly created files); the per-file hash baseline covers
+// only literal protected paths.
+export const CONTROLLER_TRUST_ROOT_SUBTREES = [
+  "tools/milestone-orchestrator",
+] as const;
+
+// The verification manifest is protected when commissioned: loadConfig
+// appends DEFAULT_VERIFICATION_MANIFEST_PATH to the enforced protected set
+// whenever the file exists, so editing or deleting a commissioned manifest
+// trips the diff fence and the recorded hash baseline.
+
 export const REQUIRED_PROTECTED_PATHS = [
   "evals/ACCEPTANCE.md",
   "evals/acceptance-manifest.json",
   "evals/HIDDEN_VALIDATION_PROTOCOL.md",
   "evals/immutable-contract-lock.json",
+  ...CONTROLLER_TRUST_ROOT_PATHS,
 ] as const;
 
 export const MILESTONE_STATUSES = [
@@ -172,6 +200,9 @@ export interface VerificationCommand {
   readonly executable: "pnpm" | "node" | "git";
   readonly args: readonly string[];
   readonly parser: VerificationParser;
+  // Required at milestone schema 1.2.0 (nonempty for exit-code, exactly []
+  // for pnpm-verify); absent only on persisted legacy proposals.
+  readonly expectedArtifactKinds?: readonly string[];
   readonly timeoutMs?: number;
 }
 
@@ -373,6 +404,16 @@ export interface VerificationTierResult {
   readonly fullClosureCheckIds: readonly string[];
   readonly commands: readonly VerificationTierCommandRecord[];
   readonly exactVerification: ExactVerificationIndex | null;
+  readonly candidateFinal: {
+    readonly baseCommit: string;
+    readonly gitCommit: string;
+    readonly gitTree: string;
+    readonly workingTreeDirty: boolean;
+  };
+  readonly identityDrift: {
+    readonly detected: boolean;
+    readonly fields: readonly string[];
+  };
   readonly reviewRequired: boolean;
   readonly telemetryManifestPath: string | null;
   readonly startedAt: string;
@@ -412,7 +453,9 @@ export interface VerticalSliceContract {
 
 export interface MilestoneProposal {
   readonly schemaVersion:
-    typeof LEGACY_MILESTONE_SCHEMA_VERSION | typeof MILESTONE_SCHEMA_VERSION;
+    | typeof LEGACY_MILESTONE_SCHEMA_VERSION
+    | typeof PREVIOUS_MILESTONE_SCHEMA_VERSION
+    | typeof MILESTONE_SCHEMA_VERSION;
   readonly id: string;
   readonly title: string;
   readonly kind: MilestoneKind;
@@ -424,7 +467,9 @@ export interface MilestoneProposal {
   readonly acceptanceCriteria: readonly AcceptanceCriterion[];
   readonly requiredTests: readonly string[];
   readonly verificationCommands: readonly VerificationCommand[];
-  readonly expectedArtifacts: readonly string[];
+  // Required on legacy proposals (1.0.0 / 1.1.0); removed at 1.2.0 — its
+  // values named controller-produced files a command could never prove.
+  readonly expectedArtifacts?: readonly string[];
   readonly terminalConditions: readonly string[];
   readonly estimatedFileCount: number;
   readonly requiresBrowserInspection: boolean;
@@ -485,6 +530,9 @@ export interface CommandExecutionSummary {
   readonly parser: VerificationParser;
   readonly parsedArtifactPath: string | null;
   readonly message: string;
+  readonly receipt: VerificationReceiptReference | null;
+  readonly receiptAbsenceReason: string | null;
+  readonly telemetryError?: string;
 }
 
 export type AuthoritativeVerificationDisposition =
@@ -528,8 +576,16 @@ export interface AuthoritativeVerificationSummary {
 export type VerificationDisposition =
   AuthoritativeVerificationDisposition | "rejected";
 
+export interface CandidateIdentity {
+  readonly baseCommit: string;
+  readonly commit: string;
+  readonly tree: string;
+  readonly clean: boolean;
+  readonly changedEntriesDigest: string;
+}
+
 export interface VerificationSummary {
-  readonly schemaVersion: "1.0.0";
+  readonly schemaVersion: typeof VERIFICATION_SUMMARY_SCHEMA_VERSION;
   readonly attempt: number;
   readonly status: "PASS" | "FAIL" | "ERROR";
   readonly disposition: VerificationDisposition;
@@ -539,6 +595,8 @@ export interface VerificationSummary {
   readonly finishedAt: string;
   readonly commands: readonly CommandExecutionSummary[];
   readonly authoritative: AuthoritativeVerificationSummary | null;
+  readonly candidate: CandidateIdentity | null;
+  readonly authoritativeResultSha256: string | null;
   readonly changedPaths: readonly string[];
   readonly artifactPaths: readonly string[];
 }
@@ -560,11 +618,16 @@ export interface ReviewerChecks {
 }
 
 export interface ReviewerReport {
-  readonly schemaVersion: typeof REVIEW_SCHEMA_VERSION;
+  readonly schemaVersion:
+    typeof REVIEW_LEGACY_SCHEMA_VERSION | typeof REVIEW_SCHEMA_VERSION;
   readonly decision: "approve" | "reject" | "escalate";
   readonly summary: string;
   readonly findings: readonly ReviewFinding[];
   readonly checks: ReviewerChecks;
+  readonly verifiedBaseCommit?: string;
+  readonly verifiedHeadCommit?: string;
+  readonly verifiedTree?: string;
+  readonly verificationResultSha256?: string;
   readonly attempt?: number;
   readonly threadId?: string;
   readonly reviewedAt?: string;
