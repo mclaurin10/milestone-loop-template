@@ -1,6 +1,6 @@
 # Current Execution Plan
 
-**Status:** WP2b implementation and verification complete; cohesive commit pending
+**Status:** WP2b complete at `057f16bc14ec28bda36e762d503ee1d4252a898d`
 **Updated:** 2026-08-06
 **Owner:** autonomous loop
 
@@ -223,10 +223,15 @@ integration slice.
   no repository timeout or assertion was changed. `pnpm loop:demo-safety`
   passed with report
   `artifacts/orchestrator/runs/safety-demonstration/safety-demonstration-20260806215546754-eb6dd114.json`.
+- 2026-08-06: Cohesive WP2b implementation committed as
+  `057f16bc14ec28bda36e762d503ee1d4252a898d` (tree
+  `55b6e7a8b97c941663228246617998743589f3b9`). The tracked tree was clean after
+  commit; the unrelated untracked human plan remained untouched.
 
 ## Next Action
 
-Audit the exact diff and protected authorities, add the completed WP2b autonomy
-entry, stage only the bounded implementation/documentation files, and create
-the cohesive verified commit while leaving the unrelated untracked human plan
-untouched. Then record the commit identity in a narrow repository handoff.
+Do not implement further work under this completed plan. Resume the operating
+loop from repository authority, inspect the remaining WP2 cleanup/retention
+side-effect gaps, and replace this file with one bounded executable plan before
+changing production code. Preserve the WP5 Linux race-evidence boundary and do
+not treat WP2b evidence as autonomous readiness.

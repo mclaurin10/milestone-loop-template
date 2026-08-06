@@ -47,8 +47,8 @@ impossible multi-thousand-second durations for unchanged 60-second tests; every
 affected case passed awake under its original limit, and the successful broad
 runs used only a temporary OS awake guard, not altered repository timeouts.
 
-**Commit.** Pending the final cohesive WP2b commit from this exact verified
-tree.
+**Commit.** `057f16bc14ec28bda36e762d503ee1d4252a898d` (tree
+`55b6e7a8b97c941663228246617998743589f3b9`).
 
 **Known gaps.** Later WP2 increments still own terminal cleanup and retention
 side-effect journaling; this change uses but does not make those subsystems
