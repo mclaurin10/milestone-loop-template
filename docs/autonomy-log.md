@@ -3,6 +3,59 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-06 — WP2d recoverable approval-bound retention apply
+
+**Objective.** Authenticate the complete operator-approved retention plan,
+publish one canonical deletion intent before any apply artifact or evidence
+removal, and make interrupted application converge without transferring
+authority to journal text or changing terminal workspace-cleanup semantics.
+
+**Outcome.** State schema `1.8.0` adds a strict global `retention-apply`
+operation bound to the full plan hash, exact input generation/revision,
+repository/controller/retention identity, complete dirty-worktree fingerprint,
+configured and real roots, observed inventories, ordered target manifest
+identities, canonical full-hash apply paths, progress, and deterministic
+timestamps. Strict plan schema `1.2.0` and a fresh preflight reject partial or
+non-canonical envelopes, changed bytes, configuration/root/citation/recency/
+suspension drift, and target identity changes before deletion. Each target
+enters durable delete-started state before the unchanged contained removal
+primitive. The synced JSONL journal and exact result are derived evidence only:
+recovery completes canonical prefixes and torn appends, adopts absence only
+from state authorization, preserves conflicting paths with a durable blocked
+diagnostic, and completes through one reducer. Explicit apply and leased
+orchestrator startup share this recovery path before other state mutation.
+Status and doctor schema `1.6.0` classify progress without recovery or
+mutation. Terminal workspace-cleanup production code and policy are unchanged.
+
+**Verification.** Under Node `24.18.0` and pnpm `11.15.1`, focused retention
+apply passed 19/19, operation/schema/store/doctor passed 48/48, leased startup
+recovery passed, and synchronized recovery contenders serialized through the
+controller lease. Hard process loss at all nine declared boundaries converged
+to identical normalized state, journal, and result digests in
+`artifacts/manual/wp2d-retention-apply/fault-matrix.json`. Final receipt-owning
+typecheck, lint, and format checks passed at
+`artifacts/manual/typecheck-21684/`, `artifacts/manual/lint-21048/`, and
+`artifacts/manual/format-check-22956/`. The complete orchestrator aggregate
+passed 390/390 at `artifacts/manual/test-orchestrator-11316/result.json`; the
+full unit aggregate passed 403/403 at
+`artifacts/manual/test-unit-19776/result.json`; and `pnpm loop:demo-safety`
+passed at
+`artifacts/orchestrator/runs/safety-demonstration/safety-demonstration-20260807050845281-8bd6533b.json`.
+Two broad attempts exceeded undersized outer shell wrappers and were treated as
+invalid. A later complete attempt correctly exposed one stale plan-schema
+assertion plus a Windows test-fixture `ENOTEMPTY`; both were fixed without
+changing production cleanup, the focused lifecycle file passed 9/9, and only
+the subsequent complete green aggregates are cited.
+
+**Commit.** `c556e112113da4b565f13a9a5337aeb9df2dd344` (tree
+`3365a5aa21057b2337c921f02d0cccad4a531a49`).
+
+**Known gaps.** WP3 still owns process containment, and WP5 owns Linux
+publication/race evidence. Product-domain verification placeholders,
+calibration, and every frozen autonomous-readiness and human-verification gate
+remain open. These Windows controller results do not claim unsupported-platform
+coverage, product completion, or autonomous readiness.
+
 ## 2026-08-06 — WP2c recoverable terminal workspace cleanup
 
 **Objective.** Publish one exact terminal workspace-cleanup intent before

@@ -1,6 +1,6 @@
 # Current Execution Plan
 
-**Status:** WP2d implementation and verification complete; cohesive commit pending
+**Status:** WP2d complete and committed at `c556e112113da4b565f13a9a5337aeb9df2dd344`
 **Updated:** 2026-08-06
 **Owner:** autonomous loop
 
@@ -252,11 +252,16 @@ calibration, and any supported-platform or autonomous-readiness claim.
   temporary-directory `ENOTEMPTY`; the assertion and bounded test-harness
   retry were fixed, the lifecycle file passed 9/9, and only the subsequent
   complete aggregates are cited.
+- 2026-08-06: The cohesive WP2d implementation was committed as
+  `c556e112113da4b565f13a9a5337aeb9df2dd344` (tree
+  `3365a5aa21057b2337c921f02d0cccad4a531a49`). The unrelated staged
+  `Implementation-ready improvement plan 8-5-26.txt` remained outside the
+  commit at its original blob `d0abdd24f404d9dc335818c355e39f7cfc531300`.
 
 ## Next Action
 
-Run the final exact-runtime static receipts, inspect the complete diff and
-immutable hashes, then commit only the bounded WP2d implementation while
-leaving `Implementation-ready improvement plan 8-5-26.txt` staged and
-unchanged. Record the implementation commit in the repository-backed handoff;
-do not claim autonomous readiness.
+This plan is complete. A future increment must inspect the frozen goal, this
+handoff, the latest logs, and the clean controller diff before replacing this
+plan with one bounded executable plan. WP3 process containment and WP5 Linux
+publication/race evidence remain separate future work. Do not infer product
+completion or autonomous readiness from WP2d.
