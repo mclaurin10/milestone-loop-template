@@ -3,6 +3,60 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-06 — WP2c recoverable terminal workspace cleanup
+
+**Objective.** Publish one exact terminal workspace-cleanup intent before
+dependency removal, failed-run diagnostic publication, or recursive workspace
+deletion, then make uninterrupted and restarted cleanup converge through one
+canonical completion reducer without changing evidence-retention semantics.
+
+**Outcome.** State schema `1.7.0` extends the exclusive pending-operation union
+with `workspace-cleanup`, bound to the exact canonical generation/revision,
+run/milestone/attempt, repository/target identity, standalone workspace and
+creation marker, recorded and observed commits, cleanup policy, pinned
+timestamps, and exact diagnostic hashes/sizes. Startup recovery runs under the
+controller lease before ordinary terminal cleanup and advances through explicit
+dependency, archive, and workspace-delete phases. Preserve policy never adopts
+a missing workspace; delete policy adopts one only after durable authorization;
+and failed deletion requires an exact complete archive. Failed cleanup pins the
+actual observed descendant independently from the last recorded candidate,
+because candidate drift may be the failure being archived. Ambiguous roots,
+links, substitutions, Git or diagnostic drift, premature disappearance, and
+partial/conflicting archives remain preserved with a durable blocked
+diagnostic. Status and doctor schema `1.5.0` classify the operation and next
+safe action without recovery or mutation. Approval-bound evidence retention is
+unchanged.
+
+**Verification.** Under Node `24.18.0` and pnpm `11.15.1`, synchronized
+post-delete recovery produced zero semantic differences and hard process loss
+converged at all 15 declared boundaries across completed deletion, completed
+preservation, and failed diagnostic deletion. Structured records are
+`artifacts/manual/wp2c-workspace-cleanup/post-delete-convergence.json` and
+`artifacts/manual/wp2c-workspace-cleanup/fault-matrix.json`. Blocked-state,
+candidate-drift, diagnostic-drift, archive-conflict, concurrent lease, and
+status/doctor byte-digest cases passed. Receipt-owning typecheck, lint, and
+format passed at `artifacts/manual/typecheck-18532/`,
+`artifacts/manual/lint-4720/`, and
+`artifacts/manual/format-check-23228/`. The complete orchestrator aggregate
+passed 379/379 at `artifacts/manual/test-orchestrator-19060/result.json`; the
+full unit aggregate passed 392/392 at
+`artifacts/manual/test-unit-14056/result.json`; and `pnpm loop:demo-safety`
+passed at
+`artifacts/orchestrator/runs/safety-demonstration/safety-demonstration-20260807005440748-4cc540e4.json`.
+One broad attempt was invalidated by an outer shell timeout and a later complete
+attempt correctly exposed a failed-workspace HEAD-policy defect; neither is
+cited as passing evidence, and the successful aggregates ran after the fix
+under a temporary OS keep-awake guard with repository test limits unchanged.
+
+**Commit.** `0557e66a5fa0763896fee9c4319d6d8939ed8254` (tree
+`0508a5f4c759c327d60714c5295f77d13fbd2fc1`).
+
+**Known gaps.** WP2d still owns approval-bound evidence-retention application
+intent/authentication and interrupted deletion convergence. Linux cleanup
+publication/race evidence remains a WP5 CI deliverable. This Windows result
+does not claim unsupported-platform coverage or autonomous readiness, and the
+adopting product verification placeholders remain honestly non-passing.
+
 ## 2026-08-06 — WP2b recoverable target integration
 
 **Objective.** Publish one exact approved target-integration intent before any

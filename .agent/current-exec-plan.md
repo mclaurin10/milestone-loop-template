@@ -1,6 +1,6 @@
 # Current Execution Plan
 
-**Status:** WP2c verification complete; implementation commit and handoff record next
+**Status:** WP2c complete at `0557e66a5fa0763896fee9c4319d6d8939ed8254`; repository handoff recorded
 **Updated:** 2026-08-06
 **Owner:** autonomous loop
 
@@ -109,7 +109,7 @@ increment and must not be mixed into this cleanup slice.
        phase, migration, unrelated-mutation fence, double-resume, concurrent lease,
        substitution/link/archive-conflict, deterministic convergence, and byte-
        digest non-mutation tests.
-8. [ ] Run focused repeated cleanup-loss cases and the affected operation,
+8. [x] Run focused repeated cleanup-loss cases and the affected operation,
        state, lifecycle, identity, path-safety, status/doctor/CLI, retention, and
        reconciliation suites. Run exact-runtime static and broad checks, inspect
        retained evidence, update contracts/logs, and commit only the cohesive WP2c
@@ -237,9 +237,16 @@ increment and must not be mixed into this cleanup slice.
   cleanup loss points. The artifacts are
   `artifacts/manual/wp2c-workspace-cleanup/post-delete-convergence.json` and
   `artifacts/manual/wp2c-workspace-cleanup/fault-matrix.json`.
+- 2026-08-06: Committed the cohesive verified implementation as
+  `0557e66a5fa0763896fee9c4319d6d8939ed8254` (tree
+  `0508a5f4c759c327d60714c5295f77d13fbd2fc1`). The only remaining working-tree
+  entry is the preserved unrelated untracked human plan.
 
 ## Next Action
 
-Inspect the final diff and immutable-path status, commit the cohesive WP2c
-implementation, then mark this plan complete and write the repository-backed
-autonomy handoff. WP2d remains the next independent retention increment.
+WP2d remains the next independent increment: publish an exact authenticated
+retention-apply operation before any approved evidence deletion, preserve the
+existing fresh-plan/hash approval semantics, and converge the append journal
+under the controller lease. Replace this completed plan with a new bounded
+executable plan before changing production code. Do not combine that work with
+WP3 containment, WP5 Linux evidence, product systems, or a readiness claim.
