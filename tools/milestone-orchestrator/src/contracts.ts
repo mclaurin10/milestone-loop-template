@@ -527,7 +527,12 @@ export interface StreamCaptureReport {
 
 export interface SupervisionTerminationReport {
   readonly attempted: readonly string[];
-  readonly succeeded: boolean;
+  /**
+   * Whether the direct child's exit was observed after termination was
+   * initiated. This proves only root death - descendants may survive a
+   * failed tree kill; per-attempt outcomes live in `detail`.
+   */
+  readonly rootExitObserved: boolean;
   readonly detail: string | null;
 }
 
@@ -538,6 +543,12 @@ export interface SupervisionReport {
   readonly termination: SupervisionTerminationReport | null;
   readonly streamsClosed: boolean;
   readonly drainTimedOut: boolean;
+  /**
+   * Set when a per-stream cap breach arrived while draining after the root
+   * had already exited: the drain was cut off immediately, stragglers were
+   * swept where the platform allows, and the command settled.
+   */
+  readonly drainCutoff: "output-limit" | null;
   readonly drainSweep: string | null;
   readonly stdout: StreamCaptureReport;
   readonly stderr: StreamCaptureReport;

@@ -248,7 +248,9 @@ export async function runCommand(
         : supervision.timedOut
           ? `Command timed out after ${timeoutMs} ms.`
           : supervision.outputLimitExceeded
-            ? `Command exceeded the ${outputLimitBytes}-byte per-stream output limit; output was truncated and the process tree terminated.`
+            ? supervision.terminationReason === "output-limit"
+              ? `Command exceeded the ${outputLimitBytes}-byte per-stream output limit; output was truncated and the process tree terminated.`
+              : `Command exceeded the ${outputLimitBytes}-byte per-stream output limit while draining after exit; output was truncated and remaining streams were cut off.`
             : exitCode === 0
               ? "Command exited zero."
               : `Command exited ${exitCode}${signal ? ` with signal ${signal}` : ""}.`,

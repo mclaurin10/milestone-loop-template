@@ -3,6 +3,33 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-07 — Supervisor drain cutoff and honest termination facts (WP3a review fix)
+
+**Decision.** Independent review of the WP3a supervisor found three defects,
+fixed as follows. (1) A per-stream cap breach that arrives while the runner
+is draining after root exit now cuts the drain off immediately: the straggler
+sweep runs at the breach (POSIX group SIGKILL; recorded as unavailable on
+Windows behind a dead root), streams are destroyed, and the command settles
+with a new `drainCutoff: "output-limit"` disposition — a breaching writer
+that then closes its pipes can no longer skip the sweep, and the previous
+behavior (`outputLimitExceeded` set with no termination action) is a tested
+regression. (2) The spawn call is wrapped so a synchronous throw resolves an
+ERROR-shaped result with `spawnError` set, restoring the never-rejects
+contract end to end. (3) `termination.succeeded` was renamed to
+`rootExitObserved` because that is all it ever proved: root exit after kill
+initiation. No field claims tree-wide termination success; per-attempt
+outcomes stay in `detail`, and tree-level assurance remains test-proven
+(grandchild liveness polls), not runtime-claimed. The runner's breach
+message distinguishes pre-exit tree termination from a post-exit drain
+cutoff. Alternatives rejected: fabricating a termination record for a root
+that exited naturally (misrepresents what acted), waiting out the drain
+window on a post-exit breach (delays settle for no benefit and loses the
+sweep when writers close first), and keeping a boolean named `succeeded`
+with documentation-only caveats.
+
+**Affected files.** `tools/milestone-orchestrator/src/process-supervisor.ts`
+and tests, `command-runner.ts` and tests, `contracts.ts`.
+
 ## 2026-08-07 — Bounded process supervisor for controller commands (WP3a)
 
 **Decision.** All controller-spawned verification commands run through one

@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { delimiter, join } from "node:path";
@@ -9,9 +10,45 @@ import { resolvePnpmScript, runCommand } from "./command-runner.js";
 
 const temporaryDirectories: string[] = [];
 
+// Windows releases directory handles asynchronously after a child process is
+// terminated; retry the transient codes the production stores retry.
+async function removeDirectoryWithRetry(directory: string): Promise<void> {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      await rm(directory, { recursive: true, force: true });
+      return;
+    } catch (error) {
+      const code =
+        error instanceof Error && "code" in error
+          ? (error as NodeJS.ErrnoException).code
+          : undefined;
+      if (
+        attempt >= 8 ||
+        !code ||
+        !["EACCES", "EBUSY", "ENOTEMPTY", "EPERM"].includes(code)
+      )
+        throw error;
+      await new Promise((resolve) => setTimeout(resolve, 25 * (attempt + 1)));
+    }
+  }
+}
+
+async function waitForProcessDeath(pid: number): Promise<void> {
+  const deadline = Date.now() + 5_000;
+  for (;;) {
+    try {
+      process.kill(pid, 0);
+    } catch {
+      return;
+    }
+    if (Date.now() > deadline) return;
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+}
+
 afterEach(async () => {
   for (const directory of temporaryDirectories.splice(0))
-    await rm(directory, { recursive: true, force: true });
+    await removeDirectoryWithRetry(directory);
 });
 
 describe("safe pnpm launcher resolution", () => {
@@ -184,6 +221,69 @@ describe("bounded supervised execution", () => {
     expect(text).toContain("[output truncated: retained");
     expect(text).not.toContain("super-secret-flood-value");
     expect(text).toContain("FAKE_TOKEN=[REDACTED]");
+  }, 45_000);
+
+  it("cuts off a descendant that floods the inherited pipe after exit", async () => {
+    const directory = await mkdtemp(
+      join(tmpdir(), "milestone-loop-command-drain-flood-"),
+    );
+    temporaryDirectories.push(directory);
+    const pidFile = join(directory, "holder.pid");
+    // The detached holder polls for its parent's death, so the flood starts
+    // strictly after the runner has entered the post-exit drain phase.
+    const holderScript =
+      "require('fs').writeFileSync(process.env.LOOP_TEST_PIDFILE, String(process.pid));" +
+      "const parentPid = Number(process.env.LOOP_TEST_PARENT_PID);" +
+      "const flood = () => setInterval(() => { const line = 'd'.repeat(1023) + '\\n'; for (let i = 0; i < 32; i += 1) process.stdout.write(line); }, 5);" +
+      "const watch = setInterval(() => { try { process.kill(parentPid, 0); } catch { clearInterval(watch); flood(); } }, 50);";
+    const parentScript =
+      "const { spawn } = require('node:child_process');" +
+      `const holder = spawn(process.execPath, ['-e', ${JSON.stringify(holderScript)}], { stdio: ['ignore', 'inherit', 'inherit'], detached: true, env: { ...process.env, LOOP_TEST_PARENT_PID: String(process.pid) } });` +
+      "holder.unref();" +
+      "holder.once('spawn', () => setTimeout(() => process.exit(0), 100));";
+    let holderPid: number | null = null;
+    try {
+      const result = await runCommand(
+        {
+          id: "drain-flood",
+          executable: "node",
+          args: ["-e", parentScript],
+          parser: "exit-code",
+        },
+        {
+          workingDirectory: directory,
+          artifactDirectory: join(directory, "evidence"),
+          timeoutMs: 30_000,
+          outputLimitBytes: 16_384,
+          killGraceMs: 8_000,
+          extraEnvironment: { LOOP_TEST_PIDFILE: pidFile },
+          trustedControllerCommand: true,
+        },
+      );
+      holderPid = Number.parseInt(await readFile(pidFile, "utf8"), 10);
+      expect(result.exitCode).toBe(0);
+      expect(result.status).toBe("ERROR");
+      expect(result.message).toContain("while draining after exit");
+      expect(result.supervision?.outputLimitExceeded).toBe(true);
+      expect(result.supervision?.terminationReason).toBeNull();
+      expect(result.supervision?.drainCutoff).toBe("output-limit");
+      expect(result.supervision?.drainTimedOut).toBe(false);
+      const written = await readFile(result.stdoutPath);
+      expect(written.length).toBeLessThanOrEqual(16_384 + 256);
+    } finally {
+      if (holderPid === null && existsSync(pidFile))
+        holderPid = Number.parseInt(await readFile(pidFile, "utf8"), 10);
+      if (holderPid !== null && Number.isSafeInteger(holderPid)) {
+        try {
+          process.kill(holderPid, "SIGKILL");
+        } catch {
+          // Already dead (POSIX sweep) or inaccessible - cleanup only.
+        }
+        // The holder's working directory is the temp dir; wait for it to
+        // actually die so removal cannot race its handle release.
+        await waitForProcessDeath(holderPid);
+      }
+    }
   }, 45_000);
 });
 

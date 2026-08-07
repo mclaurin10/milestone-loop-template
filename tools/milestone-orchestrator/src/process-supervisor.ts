@@ -158,6 +158,7 @@ export function superviseCommand(
     const terminationAttempted: string[] = [];
     let terminationDetail: string | null = null;
     let drainTimedOut = false;
+    let drainCutoff: "output-limit" | null = null;
     let drainSweep: string | null = null;
     let spawnError: Error | null = null;
     let exitSeen = false;
@@ -204,13 +205,46 @@ export function superviseCommand(
           windowsHide: spawnOptions.windowsHide,
           detached: spawnOptions.detached,
         }));
-    const child = spawnChild(options.executable, options.args, {
-      cwd: options.cwd,
-      env: { ...options.env },
-      stdio: ["ignore", "pipe", "pipe"],
-      windowsHide: true,
-      detached: process.platform !== "win32",
-    });
+    let child: SupervisedChildLike;
+    try {
+      child = spawnChild(options.executable, options.args, {
+        cwd: options.cwd,
+        env: { ...options.env },
+        stdio: ["ignore", "pipe", "pipe"],
+        windowsHide: true,
+        detached: process.platform !== "win32",
+      });
+    } catch (error) {
+      // A synchronous spawn throw must resolve like every other failure -
+      // this promise never rejects.
+      const emptyStream: StreamCaptureReport = {
+        bytesCaptured: 0,
+        totalBytesObserved: 0,
+        truncated: false,
+        capBytes: options.outputLimitBytes,
+      };
+      resolveResult({
+        exitCode: null,
+        signal: null,
+        spawnError: error instanceof Error ? error : new Error(String(error)),
+        stdout: Buffer.alloc(0),
+        stderr: Buffer.alloc(0),
+        supervision: {
+          timedOut: false,
+          outputLimitExceeded: false,
+          terminationReason: null,
+          termination: null,
+          streamsClosed: false,
+          drainTimedOut: false,
+          drainCutoff: null,
+          drainSweep: null,
+          stdout: emptyStream,
+          stderr: emptyStream,
+          duplicateSettleSignals: [],
+        },
+      });
+      return;
+    }
 
     const settle = (origin: string): void => {
       if (phase === "settled") {
@@ -249,12 +283,13 @@ export function superviseCommand(
           termination: terminationInitiated
             ? {
                 attempted: [...terminationAttempted],
-                succeeded: exitSeen,
+                rootExitObserved: exitSeen,
                 detail: terminationDetail,
               }
             : null,
           streamsClosed: stdoutClosed && stderrClosed,
           drainTimedOut,
+          drainCutoff,
           drainSweep,
           stdout: captureReport(
             stdoutCapture,
@@ -386,6 +421,28 @@ export function superviseCommand(
       graceTimer = setTimeout(escalate, options.killGraceMs);
     };
 
+    const sweepStragglers = (): void => {
+      if (process.platform === "win32") {
+        // The root is dead; taskkill /T cannot enumerate its survivors.
+        drainSweep = "unavailable-win32";
+        return;
+      }
+      if (typeof child.pid !== "number") {
+        drainSweep = "unavailable-no-pid";
+        return;
+      }
+      drainSweep = "posix-group-sigkill";
+      try {
+        process.kill(-child.pid, "SIGKILL");
+      } catch (error) {
+        const code =
+          error instanceof Error && "code" in error
+            ? String((error as NodeJS.ErrnoException).code)
+            : String(error);
+        drainSweep = `posix-group-sigkill-failed:${code}`;
+      }
+    };
+
     const onData = (
       capture: StreamCapture,
       chunk: Buffer,
@@ -405,13 +462,28 @@ export function superviseCommand(
       capture.chunks.push(chunk);
       capture.retainedBytes += chunk.length;
       capture.truncated = true;
-      if (!outputLimitExceeded) {
-        outputLimitExceeded = true;
+      if (outputLimitExceeded) return;
+      outputLimitExceeded = true;
+      if (phase === "running") {
         recordDetail(
           `${streamName} exceeded ${options.outputLimitBytes} bytes`,
         );
         initiateTermination("output-limit");
+        return;
       }
+      if (phase === "draining") {
+        // The root already exited, so there is no tree to terminate; cut the
+        // drain off immediately - a breaching writer that then closes its
+        // pipes must never skip the straggler sweep.
+        drainCutoff = "output-limit";
+        sweepStragglers();
+        settle("drain-output-limit");
+        return;
+      }
+      // Terminating already: the kill is in flight; record the breach only.
+      recordDetail(
+        `${streamName} exceeded ${options.outputLimitBytes} bytes during termination`,
+      );
     };
 
     child.stdout?.on("data", (chunk: Buffer) =>
@@ -432,21 +504,7 @@ export function superviseCommand(
         drainTimer = setTimeout(() => {
           if (phase === "settled") return;
           drainTimedOut = true;
-          if (process.platform === "win32") {
-            // The root is dead; taskkill /T cannot enumerate its survivors.
-            drainSweep = "unavailable-win32";
-          } else if (typeof child.pid === "number") {
-            drainSweep = "posix-group-sigkill";
-            try {
-              process.kill(-child.pid, "SIGKILL");
-            } catch (error) {
-              const code =
-                error instanceof Error && "code" in error
-                  ? String((error as NodeJS.ErrnoException).code)
-                  : String(error);
-              drainSweep = `posix-group-sigkill-failed:${code}`;
-            }
-          }
+          sweepStragglers();
           settle("drain-timer");
         }, options.killGraceMs);
       }

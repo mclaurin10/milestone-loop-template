@@ -67,18 +67,46 @@ function killPidBestEffort(pid: number): void {
   }
 }
 
+// Windows releases directory handles asynchronously after a child process is
+// terminated; retry the transient codes the production stores retry.
+async function removeDirectoryWithRetry(directory: string): Promise<void> {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      await rm(directory, { recursive: true, force: true });
+      return;
+    } catch (error) {
+      const code =
+        error instanceof Error && "code" in error
+          ? (error as NodeJS.ErrnoException).code
+          : undefined;
+      if (
+        attempt >= 8 ||
+        !code ||
+        !["EACCES", "EBUSY", "ENOTEMPTY", "EPERM"].includes(code)
+      )
+        throw error;
+      await new Promise((resolve) => setTimeout(resolve, 25 * (attempt + 1)));
+    }
+  }
+}
+
 afterEach(async () => {
+  const killed: number[] = [];
   for (const pidFile of spawnedPidFiles.splice(0)) {
     if (!existsSync(pidFile)) continue;
     try {
       const pid = Number.parseInt(await readFile(pidFile, "utf8"), 10);
-      if (Number.isSafeInteger(pid)) killPidBestEffort(pid);
+      if (Number.isSafeInteger(pid)) {
+        killPidBestEffort(pid);
+        killed.push(pid);
+      }
     } catch {
       // Fixture cleanup must never fail the suite.
     }
   }
+  for (const pid of killed) await pollUntil(() => !isProcessAlive(pid), 5_000);
   for (const directory of temporaryDirectories.splice(0))
-    await rm(directory, { recursive: true, force: true });
+    await removeDirectoryWithRetry(directory);
 });
 
 async function scratchDirectory(prefix: string): Promise<string> {
@@ -204,7 +232,7 @@ describe("bounded process supervision", () => {
     expect(result.supervision.timedOut).toBe(true);
     expect(result.supervision.terminationReason).toBe("timeout");
     expect(result.supervision.termination).not.toBeNull();
-    expect(result.supervision.termination?.succeeded).toBe(true);
+    expect(result.supervision.termination?.rootExitObserved).toBe(true);
     if (process.platform === "win32") {
       expect(result.supervision.termination?.attempted[0]).toBe(
         "taskkill-tree-force",
@@ -335,7 +363,7 @@ describe("bounded process supervision", () => {
       expect(result.supervision.termination?.attempted).toContain(
         "posix-group-sigkill",
       );
-      expect(result.supervision.termination?.succeeded).toBe(true);
+      expect(result.supervision.termination?.rootExitObserved).toBe(true);
       expect(Date.now() - startedAt).toBeLessThan(10_000);
     },
     20_000,
@@ -490,7 +518,7 @@ describe("deterministic supervision state machine (scripted child)", () => {
     });
     expect(result.supervision.timedOut).toBe(true);
     expect(result.supervision.terminationReason).toBe("timeout");
-    expect(result.supervision.termination?.succeeded).toBe(false);
+    expect(result.supervision.termination?.rootExitObserved).toBe(false);
     expect(result.supervision.termination?.detail).toContain(
       "termination abandoned: exit never observed",
     );
@@ -514,6 +542,75 @@ describe("deterministic supervision state machine (scripted child)", () => {
     child.emit("exit", 0, null);
     await new Promise((resolve) => setImmediate(resolve));
     expect(result.supervision.duplicateSettleSignals).toEqual([]);
+  }, 15_000);
+
+  it("cuts the drain off and sweeps when a cap breach arrives after exit", async () => {
+    const child = new FakeChild();
+    const resultPromise = superviseFake(child, {
+      outputLimitBytes: 100,
+      killGraceMs: 5_000,
+    });
+    child.emit("exit", 0, null);
+    const breachedAt = Date.now();
+    child.stdout.emitData(Buffer.from(`${"z".repeat(50)}\n`.repeat(6)));
+    const result = await resultPromise;
+    // Settled at the breach, not the 5s drain window.
+    expect(Date.now() - breachedAt).toBeLessThan(2_000);
+    expect(result.exitCode).toBe(0);
+    expect(result.supervision.outputLimitExceeded).toBe(true);
+    expect(result.supervision.terminationReason).toBeNull();
+    expect(result.supervision.termination).toBeNull();
+    expect(result.supervision.drainCutoff).toBe("output-limit");
+    expect(result.supervision.drainTimedOut).toBe(false);
+    if (process.platform === "win32") {
+      expect(result.supervision.drainSweep).toBe("unavailable-win32");
+    } else {
+      expect(result.supervision.drainSweep).toMatch(/^posix-group-sigkill/);
+    }
+    expect(result.supervision.stdout.truncated).toBe(true);
+    expect(child.stdout.destroyed).toBe(true);
+    expect(result.supervision.duplicateSettleSignals).toEqual([]);
+  }, 15_000);
+
+  it("resolves instead of rejecting when spawn throws synchronously", async () => {
+    const result = await superviseCommand({
+      executable: "fake-executable",
+      args: [],
+      cwd: process.cwd(),
+      env: {},
+      timeoutMs: 1_000,
+      killGraceMs: 100,
+      outputLimitBytes: 100,
+      spawnFunction: () => {
+        throw new Error("sync spawn failure");
+      },
+    });
+    expect(result.spawnError?.message).toBe("sync spawn failure");
+    expect(result.exitCode).toBeNull();
+    expect(result.supervision.termination).toBeNull();
+    expect(result.supervision.streamsClosed).toBe(false);
+    expect(result.supervision.duplicateSettleSignals).toEqual([]);
+  }, 15_000);
+
+  it("reports root-exit observation without claiming tree-kill success", async () => {
+    const child = new FakeChild();
+    const resultPromise = superviseFake(child, {
+      timeoutMs: 100,
+      killGraceMs: 400,
+    });
+    // Fallback direct kill fells only the root after the tree strike failed
+    // (dead-pid taskkill / ESRCH group kill): the root exits between
+    // escalation (~500ms) and abandonment (~900ms) while descendants would
+    // survive - the record must not call that "succeeded".
+    setTimeout(() => {
+      child.emit("exit", null, "SIGTERM");
+      child.stdout.emitClose();
+      child.stderr.emitClose();
+    }, 600);
+    const result = await resultPromise;
+    expect(result.supervision.timedOut).toBe(true);
+    expect(result.supervision.termination?.rootExitObserved).toBe(true);
+    expect(result.supervision.termination).not.toHaveProperty("succeeded");
   }, 15_000);
 
   it("truncates a scripted flood at the newline boundary and terminates", async () => {
