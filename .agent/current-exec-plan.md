@@ -1,6 +1,6 @@
 # Current Execution Plan
 
-**Status:** In progress — WP3a bounded process supervisor
+**Status:** WP3a complete and committed at `e06baf4b658713961825edc7996884308bc8c582`
 **Updated:** 2026-08-07
 **Owner:** autonomous loop
 
@@ -113,9 +113,9 @@ supported-platform or autonomous-readiness claim.
        `signal: null` timeouts, grace-knob reuse, drain-timeout status,
        residuals), CONTRACT.md §4 supervision paragraph, config README.
        Autonomy-log entry follows final verification.
-8. [ ] Run focused, affected, and broad receipt-owning verification under the
-       pinned runtime; verify the untracked human file is byte-identical and
-       excluded; commit the cohesive increment.
+8. [x] Ran focused, affected, and broad receipt-owning verification under
+       the pinned runtime; verified the untracked human file byte-identical
+       and excluded; committed the cohesive increment as `e06baf4`.
 
 ## Acceptance Criteria
 
@@ -211,6 +211,15 @@ supported-platform or autonomous-readiness claim.
 
 ## Next Action
 
-Execute step 2: contracts and config schema changes for `1.5.0` with the two
-new supervision limits, then run the full suite to prove the mechanical step
-is green standalone.
+This plan is complete; the WP3a increment is committed at
+`e06baf4b658713961825edc7996884308bc8c582` (tree
+`6d8307b9e9923eafff13fa734931fde1e88b47b5`) and recorded in
+`docs/autonomy-log.md` and `docs/decision-log.md`. A future increment must
+inspect the frozen goal, this handoff, the latest logs, and the clean
+controller diff before replacing this plan with one bounded executable plan.
+Remaining WP3 slices: contained candidate execution with an execution
+provider and pinned OCI contract, and conversion of the
+`scripts/verify.mjs`/`tools/evidence.mjs` spawn layers to the shared
+supervisor. WP5 owns Linux publication/race evidence and the first real
+execution of the POSIX supervision paths. Do not infer product completion or
+autonomous readiness from WP3a.

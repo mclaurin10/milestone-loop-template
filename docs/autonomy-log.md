@@ -3,6 +3,70 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-07 — WP3a bounded process supervisor
+
+**Objective.** Give every controller-spawned verification command a bounded,
+deterministic supervision boundary: capped and redacted output, complete
+process-tree termination on timeout or cap breach, a bounded post-exit
+stream-drain window, and an exactly-once settle with a hard upper bound —
+the first bounded WP3 process-containment slice (audit CR-02,
+improvement-plan §WP3.5, P0 sweep P1.1/R-01).
+
+**Outcome.** New `process-supervisor.ts` owns spawn, bounded per-stream
+capture, termination, drain, and settle; `runCommand` keeps its public API,
+policy, redaction, artifact, hashing, telemetry, and status semantics and
+adopts the supervisor, so all orchestrator call sites inherit supervision.
+Output beyond `limits.commandOutputLimitBytes` (default 64 MiB per stream)
+is counted but never retained; a breach tree-kills and fails in the existing
+infrastructure lane with newline-boundary truncation and a marker covered by
+the recorded hash. Windows termination is force-first
+`taskkill /pid <pid> /T /F` while the tree is intact with `child.kill()`
+fallback; POSIX uses detached process-group SIGTERM escalating to SIGKILL
+after `limits.commandKillGraceMs` (default 5000 ms). Settle is exactly-once
+with an abandonment backstop bounding it by `timeoutMs + 2 x killGraceMs`.
+Config schema is `1.5.0` with in-memory migration injecting the two new
+limits; summaries carry a full `supervision` record. Probed platform facts
+(recorded in the decision log): non-detached Node grandchildren die with
+their parent via libuv's kill-on-close job object, while detached ones
+escape it, survive, and hold inherited pipes open — the reproduced CR-02
+hang, which now settles through the drain window; the tree-kill proof
+therefore uses a detached (job-object-escaping) grandchild reaped by the
+intact-tree taskkill.
+
+**Verification.** Under Node `24.18.0` and pnpm `11.15.1`: focused
+supervisor/runner/config suites passed 29 with 2 skipped (POSIX-only,
+flagged WP5); affected verifier/reconciliation/tier suites passed 86/86.
+Receipt-owning gates: typecheck `artifacts/manual/typecheck-21180/`, lint
+`artifacts/manual/lint-22928/`, format `artifacts/manual/format-check-13364/`,
+complete orchestrator aggregate 410 tests (408 passed, 2 skipped WP5,
+0 failed) at `artifacts/manual/test-orchestrator-3096/orchestrator-report.json`,
+complete unit aggregate 423 tests (421 passed, 2 skipped WP5, 0 failed) at
+`artifacts/manual/test-unit-10224/result.json`, `pnpm loop:demo-safety` PASS
+at
+`artifacts/orchestrator/runs/safety-demonstration/safety-demonstration-20260807154534494-b6b8565c.json`,
+and a clean `git diff --check`. Two earlier complete aggregates failed only
+on the pre-existing `target-integration-recovery` post-fast-forward test
+exceeding its 120s budget (90.9s at the 2026-08-06 baseline; 102.3s isolated
+and 120.2s/122.4s in-suite on 2026-08-07; its code paths do not touch this
+increment); its duration budget was raised to 300s with measurements
+recorded in-file and no assertion changed, and only the subsequent complete
+green aggregates are cited. The unrelated untracked human file remained at
+blob `d0abdd24f404d9dc335818c355e39f7cfc531300` and outside the commit.
+
+**Commit.** `e06baf4b658713961825edc7996884308bc8c582` (tree
+`6d8307b9e9923eafff13fa734931fde1e88b47b5`).
+
+**Known gaps.** POSIX supervision paths (group kill, escalation, drain
+sweep) are written but first execute in WP5 Linux CI — no unsupported-
+platform claim is made. Descendants reparented before the kill, PID reuse,
+Windows post-exit stragglers behind a dead root, and setsid-detached POSIX
+daemons remain recorded escape residuals owned by the WP3 container slice,
+which also still owns contained candidate execution, execution-provider
+identity, and `scripts/verify.mjs`/`tools/evidence.mjs` spawn conversion.
+Product-domain verification placeholders, calibration, and every frozen
+autonomous-readiness and human-verification gate remain open; nothing here
+claims product completion or autonomous readiness.
+
 ## 2026-08-06 — WP2d recoverable approval-bound retention apply
 
 **Objective.** Authenticate the complete operator-approved retention plan,
