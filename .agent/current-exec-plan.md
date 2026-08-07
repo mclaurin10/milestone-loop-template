@@ -1,6 +1,6 @@
 # Current Execution Plan
 
-**Status:** In progress — WP3a review-fix (supervisor drain breach, sync spawn, termination semantics)
+**Status:** WP3a review-fix complete and committed at `eab0cd6` (tree `11e115cf0188929afb1c5e6357b616541c4fc75d`)
 **Updated:** 2026-08-07
 **Owner:** autonomous loop
 
@@ -109,4 +109,14 @@ config suites; affected suites; broad receipt-owning gates).
 
 ## Next Action
 
-Execute step 1 (contracts rename + `drainCutoff`), then the supervisor fix.
+This plan is complete; all three review findings are fixed, regression-
+covered, verified, and committed at `eab0cd6`, recorded in
+`docs/autonomy-log.md` and `docs/decision-log.md`. A future increment must
+inspect the frozen goal, this handoff, the latest logs, and the clean
+controller diff before replacing this plan with one bounded executable plan.
+Remaining WP3 slices: contained candidate execution (execution provider,
+pinned OCI contract) and conversion of the
+`scripts/verify.mjs`/`tools/evidence.mjs` spawn layers to the shared
+supervisor. WP5 owns Linux publication/race evidence and the first real
+execution of the POSIX supervision paths. Do not infer product completion or
+autonomous readiness from this work.

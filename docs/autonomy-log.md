@@ -3,6 +3,54 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-07 — WP3a review fix: drain cutoff, spawn resolve, honest termination
+
+**Objective.** Close three independent review findings against the WP3a
+supervisor at `e06baf4`: an inert post-exit output-limit breach (high), a
+synchronous spawn throw rejecting past the never-rejects contract (medium),
+and `termination.succeeded` overstating what root exit proves (medium).
+
+**Outcome.** A cap breach during the post-exit drain now cuts the drain off
+at the breach: the straggler sweep runs immediately (POSIX group SIGKILL;
+recorded unavailable on Windows behind a dead root), streams are destroyed,
+and the command settles with `drainCutoff: "output-limit"` — a breaching
+writer that then closes its pipes can no longer skip the sweep, and the
+runner reports the post-exit breach without claiming tree termination.
+Synchronous spawn throws resolve an ERROR-shaped result with `spawnError`
+set. The termination report now records `rootExitObserved` plus per-attempt
+detail and never claims tree-wide success. Findings 1 and 2 were reproduced
+by deterministic probes against the prior commit before fixing; all three
+have regressions (scripted-child drain cutoff, scripted-child spawn throw,
+fallback-root-kill semantics, and a real detached holder that polls for
+parent death and floods the inherited pipe strictly after exit through
+`runCommand`).
+
+**Verification.** Under Node `24.18.0` and pnpm `11.15.1`: focused
+supervisor/runner suites 27 passed / 2 skipped (WP5 POSIX). One first-run
+aggregate failure was the new fixture's own cleanup racing Windows
+asynchronous handle release (EBUSY removing the killed holder's working
+directory); both process-test suites now poll killed fixtures to death and
+retry the same transient removal codes the production stores retry, and only
+the subsequent complete green aggregates are cited. Final-tree receipts:
+typecheck `artifacts/manual/typecheck-17492/`, lint
+`artifacts/manual/lint-20652/`, format `artifacts/manual/format-check-24620/`,
+orchestrator aggregate 414 tests (412 passed, 2 skipped WP5, 0 failed) at
+`artifacts/manual/test-orchestrator-10784/orchestrator-report.json`, unit
+aggregate 427 tests (425 passed, 2 skipped WP5, 0 failed) at
+`artifacts/manual/test-unit-7280/`, `pnpm loop:demo-safety` PASS at
+`artifacts/orchestrator/runs/safety-demonstration/safety-demonstration-20260807190106966-4c6cc48e.json`,
+clean `git diff --check`. The unrelated untracked human file remained at
+blob `d0abdd24f404d9dc335818c355e39f7cfc531300` and outside the commit.
+
+**Commit.** `eab0cd6` (tree `11e115cf0188929afb1c5e6357b616541c4fc75d`).
+
+**Known gaps.** Unchanged from WP3a: POSIX supervision paths first execute
+in WP5 Linux CI; reparented-descendant/PID-reuse escapes, Windows post-exit
+stragglers behind a dead root, and setsid-detached POSIX daemons remain
+recorded residuals owned by the WP3 container slice, alongside contained
+candidate execution and the `scripts/verify.mjs`/`tools/evidence.mjs` spawn
+conversion. No product-completion or autonomous-readiness claim.
+
 ## 2026-08-07 — WP3a bounded process supervisor
 
 **Objective.** Give every controller-spawned verification command a bounded,
