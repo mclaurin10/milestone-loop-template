@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.4.0",
+  "schemaVersion": "1.5.0",
   "project": {
     "name": "<YOUR_PROJECT_NAME>",
     "authorityFile": "<YOUR_AUTHORITY_FILE>.md",
@@ -77,7 +77,9 @@
     "plannerProposalAttempts": 2,
     "maximumPermittedPaths": 12,
     "maximumAcceptanceCriteria": 12,
-    "maximumEstimatedFiles": 30
+    "maximumEstimatedFiles": 30,
+    "commandOutputLimitBytes": 67108864,
+    "commandKillGraceMs": 5000
   },
   "protectedPaths": [
     "<YOUR_AUTHORITY_FILE>.md",

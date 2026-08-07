@@ -164,6 +164,19 @@ the command's `expectedArtifactKinds` is an infrastructure error, never a
 pass. `pnpm-verify` commands are exempt because their evidence is the
 independently parsed authoritative result tree.
 
+Every orchestrator-spawned command additionally runs under a bounded process
+supervisor (`process-supervisor.ts`): per-stream output is capped by
+`limits.commandOutputLimitBytes` (a breach terminates the process tree and is
+an infrastructure `ERROR` with an explicit truncation disposition), timeout
+and breach kill the complete tree (Windows intact-tree
+`taskkill /pid <pid> /T /F`; POSIX detached-group SIGTERM escalating to
+SIGKILL after `limits.commandKillGraceMs`), redaction runs before any log
+byte reaches disk, and settle is exactly-once with a hard bound of
+`timeoutMs + 2 x killGraceMs` even when every kill attempt fails. The
+command summary records the complete `supervision` disposition (termination
+attempts, stream closure, drain, truncation counts). A `TIMEOUT` remains
+non-passing and telemetry classifications are unchanged.
+
 ## 5. Verification manifest
 
 `.agent/completed/loop-recommissioning-verification.json` is the check

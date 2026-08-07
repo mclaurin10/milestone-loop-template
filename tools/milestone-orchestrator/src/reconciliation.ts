@@ -128,6 +128,8 @@ export interface ReconciliationDependencies {
     readonly artifactDirectory: string;
     readonly manifestPath: string;
     readonly timeoutMs: number;
+    readonly outputLimitBytes?: number;
+    readonly killGraceMs?: number;
   }) => Promise<string>;
   readonly supportingArtifacts?: (input: {
     readonly repositoryRoot: string;
@@ -896,6 +898,8 @@ async function defaultMilestoneTier(input: {
   readonly artifactDirectory: string;
   readonly manifestPath: string;
   readonly timeoutMs: number;
+  readonly outputLimitBytes?: number;
+  readonly killGraceMs?: number;
 }): Promise<string> {
   await ensureContainedDirectory(input.repositoryRoot, input.artifactDirectory);
   const result = await runCommand(
@@ -910,6 +914,12 @@ async function defaultMilestoneTier(input: {
       workingDirectory: input.repositoryRoot,
       artifactDirectory: resolve(input.artifactDirectory, "milestone-command"),
       timeoutMs: input.timeoutMs,
+      ...(input.outputLimitBytes !== undefined
+        ? { outputLimitBytes: input.outputLimitBytes }
+        : {}),
+      ...(input.killGraceMs !== undefined
+        ? { killGraceMs: input.killGraceMs }
+        : {}),
     },
   );
   if (result.exitCode !== 2 || result.signal !== null)
@@ -1235,6 +1245,8 @@ export class ReconciliationController {
       artifactDirectory,
       manifestPath: manifest.path,
       timeoutMs: this.config.limits.commandMs,
+      outputLimitBytes: this.config.limits.commandOutputLimitBytes,
+      killGraceMs: this.config.limits.commandKillGraceMs,
     });
     const validated = await validateReconciliationMilestoneTier({
       repositoryRoot: this.repositoryRoot,

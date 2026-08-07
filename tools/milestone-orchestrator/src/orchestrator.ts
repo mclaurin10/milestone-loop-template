@@ -2706,6 +2706,8 @@ export class MilestoneOrchestrator {
         workingDirectory: milestone.workspace.path,
         artifactDirectory: directory,
         timeoutMs: this.phaseTimeout(this.config.limits.commandMs),
+        outputLimitBytes: this.config.limits.commandOutputLimitBytes,
+        killGraceMs: this.config.limits.commandKillGraceMs,
         trustedControllerCommand: true,
         ...(telemetry
           ? {

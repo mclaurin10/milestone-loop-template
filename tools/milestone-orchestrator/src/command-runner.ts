@@ -1,4 +1,3 @@
-import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
@@ -9,6 +8,11 @@ import type {
   VerificationCommand,
 } from "./contracts.js";
 import { assertSafeVerificationCommand } from "./command-policy.js";
+import {
+  DEFAULT_COMMAND_KILL_GRACE_MS,
+  DEFAULT_COMMAND_OUTPUT_LIMIT_BYTES,
+  superviseCommand,
+} from "./process-supervisor.js";
 import { redactSensitiveText, safeAgentEnvironment } from "./redaction.js";
 import type {
   CommandTelemetryMeasurement,
@@ -63,6 +67,8 @@ export interface CommandRunnerOptions {
   readonly workingDirectory: string;
   readonly artifactDirectory: string;
   readonly timeoutMs: number;
+  readonly outputLimitBytes?: number;
+  readonly killGraceMs?: number;
   readonly extraEnvironment?: Readonly<Record<string, string>>;
   readonly trustedControllerCommand?: boolean;
   readonly telemetry?: {
@@ -180,119 +186,132 @@ export async function runCommand(
       process.hrtime.bigint(),
     );
   }
-  return new Promise((resolveResult) => {
-    const stdout: Buffer[] = [];
-    const stderr: Buffer[] = [];
-    let spawnError: Error | null = null;
-    let timedOut = false;
-    const child = spawn(resolved.executable, resolved.args, {
-      cwd: options.workingDirectory,
-      env: {
-        ...safeAgentEnvironment(),
-        ...options.extraEnvironment,
-        ...(options.telemetry ? { LOOP_TELEMETRY_PARENT_MANAGED: "1" } : {}),
-      },
-      stdio: ["ignore", "pipe", "pipe"],
-      windowsHide: true,
-    });
-    child.stdout.on("data", (chunk: Buffer) => stdout.push(chunk));
-    child.stderr.on("data", (chunk: Buffer) => stderr.push(chunk));
-    child.once("error", (error) => {
-      spawnError = error;
-    });
-    const timeout = setTimeout(() => {
-      timedOut = true;
-      child.kill("SIGTERM");
-    }, command.timeoutMs ?? options.timeoutMs);
-    child.once("close", async (exitCode, signal) => {
-      clearTimeout(timeout);
-      try {
-        const finishedAt = new Date();
-        const stdoutText = redactSensitiveText(
-          Buffer.concat(stdout).toString("utf8"),
-        );
-        const stderrText = redactSensitiveText(
-          Buffer.concat(stderr).toString("utf8"),
-        );
-        await writeFile(stdoutPath, stdoutText, "utf8");
-        await writeFile(stderrPath, stderrText, "utf8");
-        const status = spawnError
-          ? "ERROR"
-          : timedOut
-            ? "TIMEOUT"
-            : exitCode === 0
-              ? "PASS"
-              : "FAIL";
-        const summary: CommandExecutionSummary = {
-          id: command.id,
-          displayCommand: `${command.executable} ${command.args.join(" ")}`,
-          status,
-          exitCode,
-          signal,
-          startedAt: startedAt.toISOString(),
-          finishedAt: finishedAt.toISOString(),
-          durationMs: finishedAt.getTime() - startedAt.getTime(),
-          stdoutPath,
-          stderrPath,
-          stdoutSha256: hash(stdoutText),
-          stderrSha256: hash(stderrText),
-          parser: command.parser,
-          parsedArtifactPath: null,
-          message: spawnError
-            ? `Could not start command: ${spawnError.message}`
-            : timedOut
-              ? `Command timed out after ${command.timeoutMs ?? options.timeoutMs} ms.`
-              : exitCode === 0
-                ? "Command exited zero."
-                : `Command exited ${exitCode}${signal ? ` with signal ${signal}` : ""}.`,
-          receipt: null,
-          receiptAbsenceReason: RUNNER_RECEIPT_ABSENCE_REASON,
-        };
-        resolveResult(
-          await recordTelemetry(
-            command,
-            options,
-            summary,
-            startedMonotonic,
-            process.hrtime.bigint(),
-          ),
-        );
-      } catch (error) {
-        // Fail closed: a lost artifact must never crash the controller or
-        // leave the command promise unsettled.
-        const message = redactSensitiveText(
-          error instanceof Error ? error.message : String(error),
-        );
-        const failedAt = new Date();
-        const summary: CommandExecutionSummary = {
-          id: command.id,
-          displayCommand: `${command.executable} ${command.args.join(" ")}`,
-          status: "ERROR",
-          exitCode,
-          signal,
-          startedAt: startedAt.toISOString(),
-          finishedAt: failedAt.toISOString(),
-          durationMs: failedAt.getTime() - startedAt.getTime(),
-          stdoutPath,
-          stderrPath,
-          stdoutSha256: hash(""),
-          stderrSha256: hash(""),
-          parser: command.parser,
-          parsedArtifactPath: null,
-          message: `Command artifacts could not be persisted: ${message}`,
-          receipt: null,
-          receiptAbsenceReason: RUNNER_RECEIPT_ABSENCE_REASON,
-        };
-        resolveResult(
-          await recordTelemetry(
-            command,
-            options,
-            summary,
-            startedMonotonic,
-            process.hrtime.bigint(),
-          ),
-        );
-      }
-    });
+  const timeoutMs = command.timeoutMs ?? options.timeoutMs;
+  const outputLimitBytes =
+    options.outputLimitBytes ?? DEFAULT_COMMAND_OUTPUT_LIMIT_BYTES;
+  const supervised = await superviseCommand({
+    executable: resolved.executable,
+    args: resolved.args,
+    cwd: options.workingDirectory,
+    env: {
+      ...safeAgentEnvironment(),
+      ...options.extraEnvironment,
+      ...(options.telemetry ? { LOOP_TELEMETRY_PARENT_MANAGED: "1" } : {}),
+    },
+    timeoutMs,
+    killGraceMs: options.killGraceMs ?? DEFAULT_COMMAND_KILL_GRACE_MS,
+    outputLimitBytes,
   });
+  const { supervision, spawnError, exitCode, signal } = supervised;
+  try {
+    const finishedAt = new Date();
+    const stdoutText = renderStreamText(
+      supervised.stdout,
+      supervision.stdout.bytesCaptured,
+      supervision.stdout.totalBytesObserved,
+      supervision.stdout.truncated,
+    );
+    const stderrText = renderStreamText(
+      supervised.stderr,
+      supervision.stderr.bytesCaptured,
+      supervision.stderr.totalBytesObserved,
+      supervision.stderr.truncated,
+    );
+    await writeFile(stdoutPath, stdoutText, "utf8");
+    await writeFile(stderrPath, stderrText, "utf8");
+    const status = spawnError
+      ? "ERROR"
+      : supervision.timedOut
+        ? "TIMEOUT"
+        : supervision.outputLimitExceeded
+          ? "ERROR"
+          : exitCode === 0
+            ? "PASS"
+            : "FAIL";
+    const summary: CommandExecutionSummary = {
+      id: command.id,
+      displayCommand: `${command.executable} ${command.args.join(" ")}`,
+      status,
+      exitCode,
+      signal,
+      startedAt: startedAt.toISOString(),
+      finishedAt: finishedAt.toISOString(),
+      durationMs: finishedAt.getTime() - startedAt.getTime(),
+      stdoutPath,
+      stderrPath,
+      stdoutSha256: hash(stdoutText),
+      stderrSha256: hash(stderrText),
+      parser: command.parser,
+      parsedArtifactPath: null,
+      message: spawnError
+        ? `Could not start command: ${spawnError.message}`
+        : supervision.timedOut
+          ? `Command timed out after ${timeoutMs} ms.`
+          : supervision.outputLimitExceeded
+            ? `Command exceeded the ${outputLimitBytes}-byte per-stream output limit; output was truncated and the process tree terminated.`
+            : exitCode === 0
+              ? "Command exited zero."
+              : `Command exited ${exitCode}${signal ? ` with signal ${signal}` : ""}.`,
+      receipt: null,
+      receiptAbsenceReason: RUNNER_RECEIPT_ABSENCE_REASON,
+      supervision,
+    };
+    return await recordTelemetry(
+      command,
+      options,
+      summary,
+      startedMonotonic,
+      process.hrtime.bigint(),
+    );
+  } catch (error) {
+    // Fail closed: a lost artifact must never crash the controller or
+    // leave the command promise unsettled.
+    const message = redactSensitiveText(
+      error instanceof Error ? error.message : String(error),
+    );
+    const failedAt = new Date();
+    const summary: CommandExecutionSummary = {
+      id: command.id,
+      displayCommand: `${command.executable} ${command.args.join(" ")}`,
+      status: "ERROR",
+      exitCode,
+      signal,
+      startedAt: startedAt.toISOString(),
+      finishedAt: failedAt.toISOString(),
+      durationMs: failedAt.getTime() - startedAt.getTime(),
+      stdoutPath,
+      stderrPath,
+      stdoutSha256: hash(""),
+      stderrSha256: hash(""),
+      parser: command.parser,
+      parsedArtifactPath: null,
+      message: `Command artifacts could not be persisted: ${message}`,
+      receipt: null,
+      receiptAbsenceReason: RUNNER_RECEIPT_ABSENCE_REASON,
+      supervision,
+    };
+    return await recordTelemetry(
+      command,
+      options,
+      summary,
+      startedMonotonic,
+      process.hrtime.bigint(),
+    );
+  }
+}
+
+function renderStreamText(
+  raw: Buffer,
+  bytesCaptured: number,
+  totalBytesObserved: number,
+  truncated: boolean,
+): string {
+  // Redaction runs over the complete retained capture before any byte
+  // reaches disk; the truncation marker is appended afterwards so the
+  // recorded hash covers exactly the written file.
+  const redacted = redactSensitiveText(raw.toString("utf8"));
+  if (!truncated) return redacted;
+  const separator =
+    redacted.length === 0 || redacted.endsWith("\n") ? "" : "\n";
+  return `${redacted}${separator}[output truncated: retained ${bytesCaptured} of ${totalBytesObserved} observed bytes]\n`;
 }

@@ -1,4 +1,5 @@
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { delimiter, join } from "node:path";
 
@@ -114,6 +115,76 @@ describe("command telemetry", () => {
       "super-secret-credential-value",
     );
   });
+});
+
+describe("bounded supervised execution", () => {
+  it("records supervision facts on an ordinary passing command", async () => {
+    const directory = await mkdtemp(
+      join(tmpdir(), "milestone-loop-command-supervised-"),
+    );
+    temporaryDirectories.push(directory);
+    const result = await runCommand(
+      {
+        id: "supervised-pass",
+        executable: "node",
+        args: ["-e", "process.stdout.write('ok'); process.exit(0);"],
+        parser: "exit-code",
+      },
+      {
+        workingDirectory: directory,
+        artifactDirectory: join(directory, "evidence"),
+        timeoutMs: 10_000,
+        trustedControllerCommand: true,
+      },
+    );
+    expect(result.status).toBe("PASS");
+    expect(result.supervision).toMatchObject({
+      timedOut: false,
+      outputLimitExceeded: false,
+      terminationReason: null,
+      streamsClosed: true,
+    });
+  }, 20_000);
+
+  it("bounds, redacts, and fails closed on an output flood", async () => {
+    const directory = await mkdtemp(
+      join(tmpdir(), "milestone-loop-command-flood-"),
+    );
+    temporaryDirectories.push(directory);
+    const floodScript =
+      "const line = 'FAKE_TOKEN=super-secret-flood-value-' + 'x'.repeat(80) + '\\n';" +
+      "setInterval(() => { for (let i = 0; i < 128; i += 1) process.stdout.write(line); }, 1);";
+    const result = await runCommand(
+      {
+        id: "output-flood",
+        executable: "node",
+        args: ["-e", floodScript],
+        parser: "exit-code",
+      },
+      {
+        workingDirectory: directory,
+        artifactDirectory: join(directory, "evidence"),
+        timeoutMs: 30_000,
+        outputLimitBytes: 65_536,
+        killGraceMs: 1_000,
+        trustedControllerCommand: true,
+      },
+    );
+    expect(result.status).toBe("ERROR");
+    expect(result.message).toContain("65536-byte per-stream output limit");
+    expect(result.supervision?.outputLimitExceeded).toBe(true);
+    expect(result.supervision?.terminationReason).toBe("output-limit");
+    expect(result.supervision?.stdout.truncated).toBe(true);
+    const written = await readFile(result.stdoutPath);
+    expect(written.length).toBeLessThanOrEqual(65_536 + 256);
+    expect(createHash("sha256").update(written).digest("hex")).toBe(
+      result.stdoutSha256,
+    );
+    const text = written.toString("utf8");
+    expect(text).toContain("[output truncated: retained");
+    expect(text).not.toContain("super-secret-flood-value");
+    expect(text).toContain("FAKE_TOKEN=[REDACTED]");
+  }, 45_000);
 });
 
 describe("command artifact persistence", () => {

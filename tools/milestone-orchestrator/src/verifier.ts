@@ -1197,6 +1197,8 @@ export async function verifyMilestone(input: {
       workingDirectory: input.workspacePath,
       artifactDirectory: resolve(commandRoot, "logs"),
       timeoutMs: input.config.limits.commandMs,
+      outputLimitBytes: input.config.limits.commandOutputLimitBytes,
+      killGraceMs: input.config.limits.commandKillGraceMs,
       // pnpm-verify commands are deliberately not env-injected: the aggregate
       // owns its children's evidence environment, and its receipt is the
       // independently parsed authoritative result tree.

@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.4.0",
+  "schemaVersion": "1.5.0",
   "project": {
     "name": "Ski Tycoon",
     "authorityFile": "SKI_TYCOON_GOAL.md",
@@ -87,7 +87,9 @@
     "plannerProposalAttempts": 2,
     "maximumPermittedPaths": 12,
     "maximumAcceptanceCriteria": 12,
-    "maximumEstimatedFiles": 30
+    "maximumEstimatedFiles": 30,
+    "commandOutputLimitBytes": 67108864,
+    "commandKillGraceMs": 5000
   },
   "protectedPaths": [
     "SKI_TYCOON_GOAL.md",

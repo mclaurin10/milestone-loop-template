@@ -3,7 +3,11 @@ import { existsSync } from "node:fs";
 import { lstat, readFile, realpath } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
 
-import { REQUIRED_PROTECTED_PATHS } from "./contracts.js";
+import {
+  DEFAULT_COMMAND_KILL_GRACE_MS,
+  DEFAULT_COMMAND_OUTPUT_LIMIT_BYTES,
+  REQUIRED_PROTECTED_PATHS,
+} from "./contracts.js";
 import type {
   InvariantSuiteRegistry,
   OrchestratorConfig,
@@ -135,7 +139,7 @@ function migrateConfig(value: unknown): unknown {
     typeof value !== "object" ||
     value === null ||
     Array.isArray(value) ||
-    !["1.0.0", "1.1.0", "1.2.0", "1.3.0"].includes(
+    !["1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0"].includes(
       String((value as Record<string, unknown>)["schemaVersion"]),
     )
   )
@@ -146,9 +150,15 @@ function migrateConfig(value: unknown): unknown {
         (path): path is string => typeof path === "string",
       )
     : [];
+  const legacyLimits =
+    typeof legacy["limits"] === "object" &&
+    legacy["limits"] !== null &&
+    !Array.isArray(legacy["limits"])
+      ? (legacy["limits"] as Record<string, unknown>)
+      : {};
   return {
     ...legacy,
-    schemaVersion: "1.4.0",
+    schemaVersion: "1.5.0",
     evidenceRetention:
       legacy["schemaVersion"] === "1.0.0"
         ? {
@@ -163,6 +173,11 @@ function migrateConfig(value: unknown): unknown {
         minimumCategories: 4,
         categoryPatterns: [],
       },
+    },
+    limits: {
+      commandOutputLimitBytes: DEFAULT_COMMAND_OUTPUT_LIMIT_BYTES,
+      commandKillGraceMs: DEFAULT_COMMAND_KILL_GRACE_MS,
+      ...legacyLimits,
     },
     protectedPaths: [
       ...new Set([...legacyProtectedPaths, ...REQUIRED_PROTECTED_PATHS]),

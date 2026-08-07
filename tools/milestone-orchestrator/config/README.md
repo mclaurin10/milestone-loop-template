@@ -11,7 +11,7 @@ repository itself (workspace = the orchestrator package only), so the
 orchestrator test suite runs green out of the box. Adopting projects replace
 their contents, guided by the templates.
 
-## default.json (`OrchestratorConfig`, schema 1.3.0)
+## default.json (`OrchestratorConfig`, schema 1.5.0)
 
 - `project.name` — interpolated into the planner/worker/reviewer prompt
   preambles ("You are the read-only Planner for the _<name>_ autonomous
@@ -26,7 +26,12 @@ their contents, guided by the templates.
   breadth check until you configure it.
 - `agentPolicy` — Codex SDK pin, per-role models and reasoning efforts, and
   worker-escalation policy.
-- `limits` — hard loop budgets (attempts, wall clock, invocations, tokens).
+- `limits` — hard loop budgets (attempts, wall clock, invocations, tokens)
+  plus per-command supervision bounds: `commandMs` (timeout),
+  `commandOutputLimitBytes` (retained bytes per stdio stream before the
+  command is terminated and marked infrastructure-failed with an explicit
+  truncation disposition), and `commandKillGraceMs` (the grace interval
+  between termination phases and the post-exit stream-drain window).
 - `protectedPaths` — frozen files the diff policy refuses to let a worker
   touch. Must include `project.authorityFile`, the `evals/` contract files,
   and the mandatory controller trust roots (`AGENTS.md`,
@@ -44,9 +49,10 @@ their contents, guided by the templates.
   enforced set automatically while it exists.
 
 Config schema migrations live in `src/config.ts` (`migrateConfig`); 1.0.0 →
-1.3.0 configs are migrated in memory to 1.4.0 with generic defaults for new
-sections, and the migration additively unions the mandatory protected trust
-roots into `protectedPaths` (protections are only ever strengthened).
+1.4.0 configs are migrated in memory to 1.5.0 with generic defaults for new
+sections (including the supervision limits added at 1.5.0), and the migration
+additively unions the mandatory protected trust roots into `protectedPaths`
+(protections are only ever strengthened).
 The environment variable `MILESTONE_LOOP_CONFIG` overrides the config path.
 
 Production-build wiring is package-owned rather than part of `default.json`.

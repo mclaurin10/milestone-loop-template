@@ -270,6 +270,8 @@ export function validConfig(
       maximumPermittedPaths: 12,
       maximumAcceptanceCriteria: 12,
       maximumEstimatedFiles: 30,
+      commandOutputLimitBytes: 67_108_864,
+      commandKillGraceMs: 5_000,
     },
     protectedPaths: [
       "PROJECT_GOAL.md",

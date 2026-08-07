@@ -218,7 +218,11 @@ function differingFields(
 describe("target integration crash recovery", () => {
   it(
     "converges post-fast-forward process loss through the canonical reducer",
-    { timeout: 120_000 },
+    // Real crash-worker convergence measured 90.9s (2026-08-06 baseline
+    // aggregate) to 122.4s (2026-08-07 aggregates) on the supported Windows
+    // host; the prior 120s budget left no headroom on a loaded host. The
+    // assertions are unchanged - this is duration budget only.
+    { timeout: 300_000 },
     async () => {
       const evidenceDirectory = await mkdtemp(
         join(tmpdir(), "milestone-loop-target-baseline-"),

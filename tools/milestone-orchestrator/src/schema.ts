@@ -1934,6 +1934,8 @@ export function validateOrchestratorConfig(
     "maximumPermittedPaths",
     "maximumAcceptanceCriteria",
     "maximumEstimatedFiles",
+    "commandOutputLimitBytes",
+    "commandKillGraceMs",
   ];
   if (
     !isRecord(limits) ||

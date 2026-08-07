@@ -3,6 +3,68 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-07 — Bounded process supervisor for controller commands (WP3a)
+
+**Decision.** All controller-spawned verification commands run through one
+shared supervisor (`process-supervisor.ts`) adopted by
+`command-runner.ts#runCommand`. Output is retained in memory up to a
+configured per-stream cap (`limits.commandOutputLimitBytes`, default 64 MiB),
+then redacted and written once; bytes past the cap are counted but never
+retained, a breach terminates the process tree and fails the command in the
+existing infrastructure lane, and the truncation disposition (retained and
+observed byte counts plus a marker line covered by the recorded SHA-256) is
+explicit. Timeout and breach own the complete tree: Windows issues a
+force-first `taskkill /pid <pid> /T /F` while the tree is intact, then falls
+back to `child.kill()`; POSIX spawns the child detached as a process-group
+leader and sends group SIGTERM escalating to group SIGKILL after
+`limits.commandKillGraceMs` (default 5000 ms). Settle is exactly-once and
+hard-bounded (`timeoutMs + 2 x killGraceMs`) through a drain window for
+streams held open after exit and an abandonment backstop when no exit is ever
+observed; a drain-expired command keeps its exit-code status with
+`streamsClosed: false`/`drainTimedOut: true` recorded because receipts, not
+stdout logs, gate semantic PASS. The summary carries a full `supervision`
+record. Config schema is `1.5.0`; older configs migrate with defaults
+injected.
+
+**Why.** Audit CR-02 (P1/high): the runner buffered output without bound,
+sent SIGTERM to the direct child only, and settled only on stream `close`, so
+a SIGTERM-ignoring child or a pipe-holding descendant hung the controller and
+a flood exhausted memory. Probing on Node 24.18.0/win32 (2026-08-07) fixed
+two platform facts the design relies on: a non-detached Node grandchild dies
+with its parent through libuv's kill-on-close job object, while a detached
+grandchild escapes the job object, survives, and holds the inherited pipe
+open indefinitely — the exact hang shape. Windows kill ordering is
+force-first because `taskkill /T` walks live parent chains (a dead root
+enumerates nothing) and WM_CLOSE is meaningless for hidden console children;
+the summary's `signal` on Windows timeouts is therefore `null` with the
+taskkill exit code, which no consumer misreads (all gate on `signal === null`
+plus a specific exit code). Bounded in-memory capture-then-redact was chosen
+over the improvement plan's stream-to-file mechanism so no unredacted byte
+ever reaches disk; the plan's properties (bounded memory, bounded logs,
+recorded disposition) are preserved, and truncation trims to a newline
+boundary so a split secret prefix is never retained. The drain and abandon
+windows reuse `commandKillGraceMs` rather than adding a third knob because
+required config keys are expensive across the strict schema. Alternatives
+rejected: Windows Job Objects (native bindings; owned by the container
+slice), graceful-then-tree ordering on Windows (orphans grandchildren before
+`/T` can see them), automatic local fallback on kill failure (records the
+failure instead), and failing drain-expired exit-0 commands (receipts already
+gate PASS; stragglers are recorded, and common toolchains leave benign ones).
+
+**Known residuals.** Descendants reparented before the kill and PID reuse can
+escape `taskkill /T`; a straggler that outlives the drain window on Windows
+cannot be swept through a dead root; a fully detached (setsid) POSIX daemon
+escapes group kills. All are recorded dispositions, strictly narrower than
+the prior unbounded behavior, and owned by the WP3 container slice. POSIX
+supervision paths are written but first execute in WP5 Linux CI; the skipped
+tests are flagged `WP5`.
+
+**Affected files.** `tools/milestone-orchestrator/src/process-supervisor.ts`
+(new) and its tests, `command-runner.ts`, `contracts.ts`, `schema.ts`,
+`config.ts`, `verifier.ts`, `reconciliation.ts`, `orchestrator.ts`,
+`test/fixtures.ts`, `config/default.json`, `config/default.template.json`,
+`examples/ski-tycoon/default.json`, `config/README.md`, `CONTRACT.md`.
+
 ## 2026-08-06 — State-owned approval-bound retention apply (WP2d)
 
 **Decision.** State schema `1.8.0` extends the exclusive pending-operation

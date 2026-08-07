@@ -1,267 +1,216 @@
 # Current Execution Plan
 
-**Status:** WP2d complete and committed at `c556e112113da4b565f13a9a5337aeb9df2dd344`
-**Updated:** 2026-08-06
+**Status:** In progress — WP3a bounded process supervisor
+**Updated:** 2026-08-07
 **Owner:** autonomous loop
 
 ## Objective
 
-Make approval-bound evidence-retention application a recoverable canonical
-operation. Publish one exact `retention-apply` intent, authenticated by the
-operator-approved plan SHA-256 and bound to the complete candidate, controller,
-configuration, root, and deletion identities, before creating apply artifacts
-or deleting evidence. Recover every authorized deletion and the append journal
-under the controller lease through one state-owned phase machine and one pure
-completion reducer.
+Give every controller-spawned verification command a bounded, deterministic
+supervision boundary. One shared process supervisor must own spawn, bounded
+output capture, timeout, process-tree termination, stream drain, and an
+exactly-once settle for `command-runner.ts#runCommand` — the single async
+spawn choke point used by the verifier, verification tiers, orchestrator
+workspace preparation, invariant suite, reconciliation, and benchmark paths.
 
-This is the fourth and final bounded WP2 side-effect slice. Recoverable
-workspace creation, target integration, and terminal workspace cleanup are
-complete at `3f6d8e916a7139c71d7aa1e6b99e2bfe10ff1844`,
-`057f16bc14ec28bda36e762d503ee1d4252a898d`, and
-`0557e66a5fa0763896fee9c4319d6d8939ed8254` respectively.
+This is the first bounded WP3 process-containment slice. It closes the
+documented supervision defect (audit CR-02, improvement-plan §WP3.5,
+P0 sweep P1.1/R-01): unbounded in-memory stdout/stderr buffering, SIGTERM to
+the direct child only with no escalation and no tree/group ownership, and a
+settle path that waits solely on stream `close`, so a SIGTERM-ignoring child
+or a grandchild holding an inherited pipe hangs the controller and an output
+flood exhausts controller memory.
 
-Explicit non-goals are WP3 process containment, WP5 Linux publication/race
-evidence, any change to terminal workspace-cleanup policy or deletion
-semantics, automatic evidence deletion from `loop:run`, product-domain work,
-calibration, and any supported-platform or autonomous-readiness claim.
+Explicit non-goals: the OCI/container executor and execution-provider
+identity fields (later WP3 slices); `scripts/verify.mjs` (protected path) and
+`tools/evidence.mjs`/`tools/production-build.mjs` spawnSync conversion
+(follow-up slice); `codex-gateway.ts` (in-process SDK; Worker sandbox
+configuration unchanged per WP3); any WP2 retention or workspace-cleanup
+semantic change; Linux execution evidence (WP5 CI); calibration; any
+supported-platform or autonomous-readiness claim.
 
 ## Goal Constraints
 
-- Preserve the frozen authority and original acceptance suite, exact Node and
-  pnpm pins, Planner/Worker/Reviewer separation, standalone workspaces,
-  canonical state-generation CAS, the single exclusive pending-operation
-  authority, and every readiness and human-verification gate.
-- Keep the public two-step approval contract: `loop:retention:plan` writes a
-  standalone plan and SHA-256 token; only an exact
-  `loop:retention:apply -- --plan <path> --sha256 <hex>` may authorize its
-  targets. Controller startup and ordinary runs remain plan-only.
-- Before intent publication, strictly authenticate the complete plan envelope
-  and re-check the candidate, configuration, controller state, roots,
-  citations, recency, inventory suspension, manifest identities, and deletion
-  containment. Known divergence must refuse without state or evidence change.
-- After intent publication, canonical state is the only deletion authority.
-  A journal line, missing path, prior result, plan pathname, or hash-prefix
-  directory alone can never authorize adoption or removal.
-- Pin the full plan hash (not a prefix), exact plan byte length/path, exact
-  dirty-worktree fingerprint, input state generation/revision, repository and
-  controller identity, configured and real artifact roots, ordered deletion
-  identities, journal/result paths, progress, and timestamps.
-- Durably enter a per-target delete-started state before calling the existing
-  contained recursive-removal primitive. Preserve that primitive and terminal
-  workspace-cleanup behavior unchanged.
-- Treat the JSONL journal as deterministic derived evidence. Resume only an
-  exact canonical prefix (including a torn final append), durably sync appended
-  bytes, reject conflicting/extra/reordered/forged entries without overwriting,
-  and derive missing-target adoption exclusively from the canonical phase.
-- Recovery runs under the controller lease before protected-root top-up,
-  target reconciliation, terminal cleanup scanning, or any other state
-  mutation. One pure reducer owns `lastPrunedAt`, `lastReportPath`, and intent
-  removal.
-- Status and doctor must classify a pending retention apply and its exact next
-  safe action without acquiring a lease, refreshing Git indexes, creating
-  directories, repairing state/artifacts, appending journal bytes, deleting
-  evidence, or recovering.
+- Preserve the frozen authority, original acceptance suite, exact Node
+  `24.18.0` and pnpm `11.15.1` pins, Planner/Worker/Reviewer separation, and
+  every readiness and human-verification gate. No protected path changes.
+- Timeout remains non-passing (`TIMEOUT` status and `timeout` telemetry
+  classification). PASS/FAIL/ERROR semantics and receipt gating are
+  unchanged; an output-limit breach becomes `ERROR` in the existing
+  infrastructure lane with its disposition recorded.
+- Redaction must precede every disk write; no unredacted output byte may
+  reach an artifact, including truncated floods. Recorded SHA-256 values
+  cover exactly the written bytes.
+- Logs are diagnostic evidence: truncation must be explicit (disposition,
+  retained/observed byte counts, marker line), never silent discard.
+- The supervisor may not weaken the existing single-settle guarantee on
+  artifact-write failure (P0.11) and must extend it to every termination and
+  drain race.
+- The unrelated untracked human file
+  `Implementation-ready improvement plan 8-5-26.txt` (blob
+  `d0abdd24f404d9dc335818c355e39f7cfc531300`) stays byte-identical and
+  outside the commit.
 
 ## Baseline Evidence
 
-- Resumed at requested handoff
-  `cf255c979252071cd40966fe2c7781130d1fc8b9`. The named unrelated human file
-  `Implementation-ready improvement plan 8-5-26.txt` is the sole worktree
-  entry. Despite the handoff describing it as untracked, its current index
-  state is an added entry (`d0abdd24f404d9dc335818c355e39f7cfc531300`);
-  its bytes and index state must remain untouched and outside this increment's
-  commit.
-- The four authority-file SHA-256 values exactly match both baseline and active
-  values in `evals/immutable-contract-lock.json`; calibration remains open and
-  unstarted.
-- `evidence-retention.ts#applyEvidenceRetentionPlan` validates the explicit
-  plan hash and a fresh plan, then creates a hash-prefix apply directory,
-  appends `deleting`, recursively removes a run, and appends `deleted` without
-  any canonical pending operation or state publication.
-- A pre-created syntactically valid `deleting` line currently authorizes a
-  missing run. The existing positive resume test constructs exactly that
-  unauthenticated state, so filesystem text rather than state lineage decides
-  whether disappearance is adopted.
-- Journal parsing ignores a malformed final line but never trims or completes
-  it. If recovery must append another entry, that torn suffix becomes interior
-  corruption on the next read. Appends are not explicitly flushed to durable
-  storage, and entries are not bound to an operation ID, plan hash, ordinal, or
-  exact canonical sequence.
-- Plan validation accepts only a partial envelope shape, candidate identity
-  reduces all branch dirtiness to one boolean, and fresh eligibility matches a
-  planned deletion by run ID rather than exact path and manifest timestamp.
-  A plan can therefore remain superficially matching while dirty bytes or
-  deletion fields change.
-- Successful apply writes `apply-result.json` but never advances
-  `evidenceRetention.lastPrunedAt` or `lastReportPath`. Startup recovery,
-  `loop:status`, and `loop:doctor` know only the three earlier pending-operation
-  kinds and cannot recover or classify retention apply.
-- Under Node `24.18.0` and pnpm `11.15.1`, the existing focused baseline passes
-  23/23:
-  `pnpm exec vitest run tools/milestone-orchestrator/src/evidence-retention.test.ts tools/milestone-orchestrator/src/cli.test.ts --reporter=verbose`.
-  It covers happy-path journal retry but injects no hard process loss and treats
-  an unauthenticated journal as valid recovery authority.
+- Resumed at handoff `16e452c07e8cb360cc71acc60b3b47a89ab30543` (WP2d
+  complete). Immutable lock verified: all four authority SHA-256 values match
+  baseline == active; calibration open, unstarted.
+- `command-runner.ts:184-206`: unbounded `Buffer[]` capture; timeout fires
+  `child.kill("SIGTERM")` on the direct child only; no force-kill timer; the
+  repo contains no `detached`, process-group, Job Object, or `taskkill`
+  usage anywhere (verified by sweep). Settle waits on `close` only.
+- `scripts/verify.mjs:1405-1412` is the only SIGKILL escalation in the repo
+  and still targets the direct child; it is a protected path and out of
+  scope here.
+- `CommandExecutionSummary` (contracts.ts:518) is a TypeScript contract only;
+  no runtime JSON schema validates it (no `stdoutSha256` match in schema.ts).
+  All `signal` consumers (reconciliation.ts:915, benchmark.ts:2433,
+  verifier.ts:1294, verification-tier.ts:482) gate on `signal === null` plus
+  a specific exit code.
+- Config `limits` (schema.ts:1922-1943) requires exactly the 13 known keys as
+  positive integers; `CONFIG_SCHEMA_VERSION` is exact-match `1.4.0`;
+  `config.ts:133` migrates 1.0.0–1.3.0 → 1.4.0. Full limits objects exist in
+  exactly: `config/default.json`, `config/default.template.json`,
+  `examples/ski-tycoon/default.json`, `test/fixtures.ts:259`.
+- Under Node `v24.18.0` and pnpm `11.15.1` the focused baseline passes 11/11:
+  `pnpm exec vitest run tools/milestone-orchestrator/src/command-runner.test.ts tools/milestone-orchestrator/src/config.test.ts --reporter=verbose`
+  (2026-08-07). No existing test covers a grandchild, ignored termination,
+  inherited-pipe hang, or output flood.
 
 ## Steps
 
-1. [x] Read the frozen authority, agent/plan contracts, completed WP2c plan,
-       latest autonomy and decision logs, exact handoff diff, immutable lock,
-       retention plan/apply code and tests, operation/state/schema machinery,
-       CLI/startup ordering, status/doctor paths, and contained deletion helper.
-       Confirm exact runtime and reproduce the focused baseline.
-2. [x] Add focused regressions for forged journal authorization, changed dirty
-       bytes, non-canonical plan fields, premature target disappearance, torn
-       append continuation, conflicting journal/result artifacts, and hard loss
-       around state, append, delete, result, and completion boundaries.
-3. [x] Advance state schema once and extend the exclusive operation union with
-       a strict global `retention-apply` intent, context validation, legal
-       progress transitions, block reducer, completion reducer, lineage/CAS
-       enforcement, JSON schema, and 1.7 migration while preserving every prior
-       operation unchanged.
-4. [x] Make retention plans strict and byte-authenticated: capture an exact
-       dirty-worktree fingerprint, validate the complete envelope and canonical
-       section relationships, derive canonical deletion targets, preflight every
-       target/root, and publish intent only after the existing hash and fresh-plan
-       fences all pass.
-5. [x] Implement read-only retention-operation classification plus contained,
-       idempotent recovery actions. Advance canonical delete-started state before
-       each removal; safely complete only exact JSONL prefixes; adopt absence only
-       from that state; materialize one exact deterministic result; and finish
-       through the canonical reducer.
-6. [x] Route both explicit apply and leased orchestrator startup through the
-       shared recovery path. Add strict pending-operation path checks and expose
-       retention classification/progress/preserved paths/next action in status
-       and doctor without mutation.
-7. [x] Run repeated fault/convergence and affected retention, operation, schema,
-       state-lineage, CLI, startup, cleanup, target/workspace recovery,
-       reconciliation, lease, path-safety, and diagnostic read-only tests. Run
-       exact-runtime static and broad receipt-owning checks, inspect evidence,
-       update contracts/logs, and commit only the cohesive WP2d increment.
+1. [x] Inspect authority, contracts, logs, lock, runner/config/schema code and
+       tests; reproduce the focused baseline under the exact pinned runtime.
+2. [x] Contracts and config: `CONFIG_SCHEMA_VERSION` 1.5.0; required
+       `commandOutputLimitBytes` and `commandKillGraceMs` limits;
+       `SupervisionReport` type and optional `supervision` summary field;
+       schema `limitKeys`; `migrateConfig` 1.4.0→1.5.0 default injection; the
+       four limits objects; config tests and README. Focused gate 18/18.
+3. [x] Implement `process-supervisor.ts` (state machine
+       RUNNING→TERMINATING(graceful→forced)→DRAINING→SETTLED, single settle
+       guard, abandonment backstop ≤ timeout + 2×grace, Windows force-first
+       `taskkill /T /F` while the tree is intact, POSIX detached-group
+       SIGTERM→SIGKILL, bounded per-stream capture with newline-boundary
+       truncation) plus pure truncation unit tests and a scripted-child
+       spawn seam for the drain/abandon paths real processes cannot
+       reproduce on every platform.
+4. [x] Convert `runCommand` to the supervisor with unchanged public API and
+       status semantics; existing `command-runner.test.ts` passed
+       unmodified (6/6) alongside the supervisor suite.
+5. [x] Adversarial real-process tests: detached-grandchild tree-kill proof
+       (job-object escapee reaped by intact-tree taskkill), output flood
+       through `runCommand` (bounded redacted log, ERROR, hash-covered
+       truncation marker), detached-holder inherited-pipe drain settle (the
+       reproduced CR-02 hang), timeout preservation, spawn error,
+       settle-race stress ×5; POSIX escalation and group-sweep tests written
+       but skipIf win32 and flagged WP5.
+6. [x] Wired `verifier.ts`, `reconciliation.ts` (including the
+       `executeMilestoneTier` seam shape), and `orchestrator.ts` to the two
+       config limits; affected suites passed 86/86.
+7. [x] Decision-log entry (capture design deviation, Windows force-first
+       ordering, probed job-object/detached-holder platform facts, Windows
+       `signal: null` timeouts, grace-knob reuse, drain-timeout status,
+       residuals), CONTRACT.md §4 supervision paragraph, config README.
+       Autonomy-log entry follows final verification.
+8. [ ] Run focused, affected, and broad receipt-owning verification under the
+       pinned runtime; verify the untracked human file is byte-identical and
+       excluded; commit the cohesive increment.
 
 ## Acceptance Criteria
 
-- No apply directory, journal/result byte, or evidence deletion occurs before a
-  canonical `retention-apply` intent bound to the exact approved plan and input
-  state generation.
-- Wrong hashes, legacy/partial/non-canonical plan envelopes, changed candidate
-  commit/tree/index/worktree bytes, controller/config/root drift, new citations
-  or recency, suspensions, unsafe paths, and manifest/path/timestamp mismatch all
-  refuse before the first deletion when observed before intent.
-- Every removal is preceded by durable delete-started authorization for its
-  exact ordered target. Missing evidence without that phase is blocked and
-  preserved diagnostically; forged or legacy journal text never changes the
-  decision.
-- Hard process loss at every declared intent, state-progress, journal append,
-  recursive removal, result, and completion boundary converges to the same
-  normalized canonical state, exact journal bytes, and exact result bytes as an
-  uninterrupted apply.
-- An exact torn journal suffix is completed as its canonical append; conflicting,
-  reordered, extra, linked, or substituted journal/result/root/target state is
-  never overwritten or deleted and produces a durable manual-reconciliation
-  diagnostic with preserved paths.
-- Repeated or contending recovery under the lease does not repeat semantic
-  completion, change pinned timestamps, create a second authority, delete an
-  unapproved target, or mutate unrelated controller state. Completion records
-  the exact result in evidence-retention state through one reducer.
-- Existing plan-only run startup, approval CLI syntax, citation/recency/
-  suspension rules, contained removal behavior, terminal workspace cleanup,
-  earlier pending-operation recovery, reconciliation, and protected-file
-  behavior remain passing and fail-closed.
-- Status and doctor report the pending operation and safe next action while
-  state, refs, index, worktree, object database, artifact roots, journal, and
-  result byte digests remain unchanged.
+- Existing suites pass with `command-runner.test.ts` and all call-site tests
+  unmodified (config fixtures excepted).
+- A grandchild holding inherited pipes can no longer hang the controller:
+  settle within the drain window of child exit, and a hard settle bound of
+  `timeoutMs + 2×killGraceMs` holds even when every kill attempt fails, with
+  the disposition durably recorded.
+- On Windows timeout or cap breach with an intact tree, grandchildren are
+  dead within a bounded liveness poll after settle, with a durable
+  termination record (method, escalation, outcome).
+- Retained output per stream never exceeds the configured cap; a flood
+  yields `ERROR`/infrastructure, a truncation disposition with byte counts,
+  a bounded log file, no unredacted bytes, and hashes matching the files.
+- TIMEOUT/PASS/FAIL/ERROR and telemetry classifications are otherwise
+  unchanged; real runs carry a `supervision` record.
+- Config 1.5.0 validates both new keys; 1.0.0–1.4.0 configs migrate with
+  defaults injected; the state-schema stream is untouched.
+- `scripts/verify.mjs`, `tools/evidence.mjs`, `codex-gateway.ts`, protected
+  paths, and WP2 retention/cleanup semantics are unchanged.
 
 ## Verification
 
 - Exact runtime for every project command:
   `$env:Path = "$(Resolve-Path '.tools/node-v24.18.0-win-x64');$env:Path"`;
   confirm Node `v24.18.0` and pnpm `11.15.1`.
-- Focused: retention plan/apply and operation reducers; state runtime/JSON
-  schemas and 1.7 migration; strict candidate/plan identity; child-process fault
-  matrix; synchronized recovery contenders; CLI/startup; status/doctor
-  byte-digest non-mutation.
-- Affected: operation intent/lineage, state generation/store, controller lease,
-  orchestrator lifecycle and cleanup, workspace-create/cleanup and target-
-  integrate recovery, reconciliation, path safety, artifact inventory, config,
-  safety demonstration, and all CLI diagnostics.
-- Static and broad: `pnpm typecheck`, `pnpm lint`, `pnpm format:check`,
-  `pnpm test:orchestrator`, `pnpm test:unit`, `pnpm loop:demo-safety`, and
+- Focused: `pnpm exec vitest run tools/milestone-orchestrator/src/process-supervisor.test.ts tools/milestone-orchestrator/src/command-runner.test.ts tools/milestone-orchestrator/src/config.test.ts --reporter=verbose`
+- Affected: verifier, verification-tier, orchestrator (+cleanup, identity,
+  retention-recovery), invariant-suite, reconciliation, benchmark, schema,
+  cli suites.
+- Broad receipt-owning: `pnpm typecheck`, `pnpm lint`, `pnpm format:check`,
+  `pnpm test:orchestrator`, `pnpm test:unit`, `pnpm loop:demo-safety`,
   `git diff --check`.
-- No browser/visual evidence is required for this non-visual controller
-  increment. Linux hard-loss/race publication evidence remains a WP5 CI
-  deliverable and cannot be inferred from Windows results.
+- No browser evidence (non-visual controller change). POSIX supervisor paths
+  are recorded as written-but-unexecuted pending WP5 Linux CI; no
+  unsupported-platform result is claimed.
 
 ## Risks and Recovery
 
-- Evidence deletion is irreversible. Resolve every target to an exact absolute
-  child of its pinned configured/real root, validate the whole approved set
-  before intent, revalidate remaining targets immediately before progress, and
-  never delete from a journal-only or ambiguous classification.
-- The current working tree is intentionally dirty because of the unrelated
-  staged human file. The candidate fingerprint must preserve and compare that
-  exact state without editing, unstaging, committing, or using cleanliness as a
-  shortcut.
-- State saves create ignored mirror/artifact bytes and private Git objects;
-  candidate identity must cover branch-visible changes while remaining stable
-  across canonical private-state generations and approved retention artifacts.
-- Fresh planning against a pending intent would cite the intent's own target
-  IDs. Recovery must evaluate eligibility against the otherwise unchanged
-  pre-operation semantic state, while state lineage and exclusive transitions
-  prove that removing the intent field is only an observational projection.
-- JSONL append recovery may repair only bytes that are an exact prefix of the
-  canonical operation-derived sequence. Never truncate or replace conflicting
-  bytes merely to obtain progress.
-- Before intent publication, rollback to `cf255c9` is ordinary source-control
-  recovery. After intent or deletion, finish or manually reconcile through the
-  WP2d operation; never hand-edit canonical state, fabricate journal lines,
-  recreate deleted runs, or remove conflicting evidence.
+- `taskkill /T` walks a live snapshot: pre-kill reparented orphans and PID
+  reuse can escape. Mitigated by force-first ordering while the tree is
+  intact; the complete fix (Job Objects / containers) is a documented later
+  WP3 slice. Residuals are recorded, not hidden.
+- A Windows straggler that survives past-exit drain cannot be tree-killed
+  through a dead root; the controller now settles with the disposition
+  recorded instead of hanging — strictly better than the baseline.
+- POSIX group-kill code is dead on this host until WP5 CI; tests exist but
+  are skipped on win32 and flagged, so no green result implies Linux
+  correctness.
+- Worst-case in-memory capture is 2×cap per command (128 MiB at defaults) —
+  bounded, matching the repo's existing spawnSync `maxBuffer` ceiling.
+- Timing flakes: termination proofs use deterministic flood triggers and
+  deadline polls, not timer races; the stress test degrades to
+  invariant-only assertions if flaky.
+- Rollback before commit is ordinary source control on top of `16e452c`. No
+  canonical state, retention, or cleanup semantics are touched, so no
+  operation-intent recovery interaction exists.
 
 ## Progress and Evidence
 
-- 2026-08-06: Resumed at exact handoff
-  `cf255c979252071cd40966fe2c7781130d1fc8b9`, confirmed immutable hashes and
-  exact Node/pnpm pins, and preserved the unrelated staged human file.
-- 2026-08-06: Existing retention/CLI baseline passed 23/23 in 14.00s. Inspection
-  localized the unsafe authority transfer to the unbound append journal and
-  identified strict-plan, dirty-candidate, state-completion, startup recovery,
-  and read-only diagnostic gaps.
-- 2026-08-06: State schema `1.8.0` now carries a strict global
-  `retention-apply` operation. Plan schema `1.2.0` binds exact candidate bytes;
-  the full plan hash, state generation/revision, roots, target identities,
-  canonical apply paths, phases, progress, and deterministic timestamps remain
-  state-owned through completion. The append-only journal and result are exact
-  derived evidence, never deletion authority. Explicit apply and leased
-  startup share one recovery implementation, and status/doctor classify it
-  read-only. The contained removal primitive and terminal workspace-cleanup
-  implementation were not changed.
-- 2026-08-06: Focused retention apply passed 19/19; operation/schema/store/
-  doctor passed 48/48; real orchestrator startup recovery passed; the
-  synchronized two-contender case passed; and all nine declared hard-loss
-  boundaries converged to identical normalized state, journal, and result
-  digests in
-  `artifacts/manual/wp2d-retention-apply/fault-matrix.json`.
-- 2026-08-06: Final receipt-owning typecheck, lint, and format checks passed at
-  `artifacts/manual/typecheck-21684/`, `artifacts/manual/lint-21048/`, and
-  `artifacts/manual/format-check-22956/`. The complete orchestrator aggregate
-  passed 390/390 at `artifacts/manual/test-orchestrator-11316/`; the full unit
-  aggregate passed 403/403 at `artifacts/manual/test-unit-19776/`; and
-  `pnpm loop:demo-safety` passed at
-  `artifacts/orchestrator/runs/safety-demonstration/safety-demonstration-20260807050845281-8bd6533b.json`.
-  Two outer wrapper timeouts were treated as invalid evidence. A later complete
-  aggregate correctly exposed one stale `1.1.0` plan assertion and a Windows
-  temporary-directory `ENOTEMPTY`; the assertion and bounded test-harness
-  retry were fixed, the lifecycle file passed 9/9, and only the subsequent
-  complete aggregates are cited.
-- 2026-08-06: The cohesive WP2d implementation was committed as
-  `c556e112113da4b565f13a9a5337aeb9df2dd344` (tree
-  `3365a5aa21057b2337c921f02d0cccad4a531a49`). The unrelated staged
-  `Implementation-ready improvement plan 8-5-26.txt` remained outside the
-  commit at its original blob `d0abdd24f404d9dc335818c355e39f7cfc531300`.
+- 2026-08-07: Resumed at `16e452c`, verified the immutable lock (4/4 hashes
+  baseline == active), pinned runtime, and the untracked human file blob
+  `d0abdd24f404d9dc335818c355e39f7cfc531300`. Reproduced the focused baseline
+  11/11 green. Mapped every child-process site (two async spawners, ~30
+  spawnSync sites, zero tree/group/kill-escalation machinery) and confirmed
+  the supervision defect and its documented authority trail.
+- 2026-08-07: Probed platform facts on Node 24.18.0/win32 before finalizing
+  fixtures: a non-detached Node grandchild dies with its parent via libuv's
+  kill-on-close job object (and the supervisor-side pipe closes with it),
+  while a `detached: true` grandchild escapes the job object, survives, and
+  holds the inherited pipe open indefinitely — the reproduced CR-02 hang.
+  Both adversarial fixtures therefore use detached grandchildren.
+- 2026-08-07: Supervisor, runner conversion, config 1.5.0, call-site wiring,
+  and docs landed. Focused suites 29 passed / 2 skipped (WP5 POSIX);
+  affected verifier/reconciliation/tier suites 86/86.
+- 2026-08-07: Two complete orchestrator aggregates failed solely on the
+  pre-existing `target-integration-recovery` post-fast-forward test
+  exceeding its 120s budget (measured 90.9s at the 2026-08-06 baseline,
+  102.3s isolated and 120.2s/122.4s in-suite today; that file's code paths
+  do not touch this increment). Its duration budget was raised to 300s with
+  the measurements recorded in-file; no assertion changed. The subsequent
+  complete aggregate passed 410 tests (408 passed, 2 skipped WP5, 0 failed)
+  at `artifacts/manual/test-orchestrator-3096/orchestrator-report.json`.
+- 2026-08-07: Receipt-owning gates all passed under the exact runtime:
+  typecheck `artifacts/manual/typecheck-21180/`, lint
+  `artifacts/manual/lint-22928/`, format `artifacts/manual/format-check-13364/`,
+  unit aggregate 423 tests (421 passed, 2 skipped WP5, 0 failed) at
+  `artifacts/manual/test-unit-10224/result.json`, safety demonstration PASS at
+  `artifacts/orchestrator/runs/safety-demonstration/safety-demonstration-20260807154534494-b6b8565c.json`,
+  and a clean `git diff --check`. The untracked human file remains at blob
+  `d0abdd24f404d9dc335818c355e39f7cfc531300`.
 
 ## Next Action
 
-This plan is complete. A future increment must inspect the frozen goal, this
-handoff, the latest logs, and the clean controller diff before replacing this
-plan with one bounded executable plan. WP3 process containment and WP5 Linux
-publication/race evidence remain separate future work. Do not infer product
-completion or autonomous readiness from WP2d.
+Execute step 2: contracts and config schema changes for `1.5.0` with the two
+new supervision limits, then run the full suite to prove the mechanical step
+is green standalone.

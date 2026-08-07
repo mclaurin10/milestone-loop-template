@@ -2,7 +2,7 @@ export const LEGACY_MILESTONE_SCHEMA_VERSION = "1.0.0" as const;
 export const PREVIOUS_MILESTONE_SCHEMA_VERSION = "1.1.0" as const;
 export const MILESTONE_SCHEMA_VERSION = "1.2.0" as const;
 export const STATE_SCHEMA_VERSION = "1.8.0" as const;
-export const CONFIG_SCHEMA_VERSION = "1.4.0" as const;
+export const CONFIG_SCHEMA_VERSION = "1.5.0" as const;
 export const REVIEW_LEGACY_SCHEMA_VERSION = "1.0.0" as const;
 export const REVIEW_SCHEMA_VERSION = "1.1.0" as const;
 export const VERIFICATION_SUMMARY_SCHEMA_VERSION = "1.1.0" as const;
@@ -17,6 +17,9 @@ export const EVIDENCE_RETENTION_SCHEMA_VERSION = "1.0.0" as const;
 export const VERIFICATION_TIER_SCHEMA_VERSION = "1.1.0" as const;
 export const VERIFICATION_MANIFEST_SCHEMA_VERSION =
   "verification-manifest.v1" as const;
+
+export const DEFAULT_COMMAND_OUTPUT_LIMIT_BYTES = 67_108_864;
+export const DEFAULT_COMMAND_KILL_GRACE_MS = 5_000;
 
 export const AGENT_ROLES = [
   "planner",
@@ -515,6 +518,32 @@ export interface PolicyDecision {
   readonly findings: readonly PolicyFinding[];
 }
 
+export interface StreamCaptureReport {
+  readonly bytesCaptured: number;
+  readonly totalBytesObserved: number;
+  readonly truncated: boolean;
+  readonly capBytes: number;
+}
+
+export interface SupervisionTerminationReport {
+  readonly attempted: readonly string[];
+  readonly succeeded: boolean;
+  readonly detail: string | null;
+}
+
+export interface SupervisionReport {
+  readonly timedOut: boolean;
+  readonly outputLimitExceeded: boolean;
+  readonly terminationReason: "timeout" | "output-limit" | null;
+  readonly termination: SupervisionTerminationReport | null;
+  readonly streamsClosed: boolean;
+  readonly drainTimedOut: boolean;
+  readonly drainSweep: string | null;
+  readonly stdout: StreamCaptureReport;
+  readonly stderr: StreamCaptureReport;
+  readonly duplicateSettleSignals: readonly string[];
+}
+
 export interface CommandExecutionSummary {
   readonly id: string;
   readonly displayCommand: string;
@@ -534,6 +563,7 @@ export interface CommandExecutionSummary {
   readonly receipt: VerificationReceiptReference | null;
   readonly receiptAbsenceReason: string | null;
   readonly telemetryError?: string;
+  readonly supervision?: SupervisionReport;
 }
 
 export type AuthoritativeVerificationDisposition =
@@ -1238,6 +1268,8 @@ export interface OrchestratorLimits {
   readonly maximumPermittedPaths: number;
   readonly maximumAcceptanceCriteria: number;
   readonly maximumEstimatedFiles: number;
+  readonly commandOutputLimitBytes: number;
+  readonly commandKillGraceMs: number;
 }
 
 export interface ProjectProfile {

@@ -16,16 +16,21 @@ afterEach(async () => {
 });
 
 describe("orchestrator configuration migration", () => {
-  it.each(["1.0.0", "1.1.0", "1.2.0", "1.3.0"])(
-    "migrates %s to 1.4.0 without changing policy facts",
+  it.each(["1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0"])(
+    "migrates %s to 1.5.0 without changing policy facts",
     async (schemaVersion) => {
       const root = await mkdtemp(join(tmpdir(), "milestone-loop-config-"));
       temporaryDirectories.push(root);
       const path = join(root, "legacy-config.json");
       const current = validConfig();
+      const legacyLimits = { ...current.limits } as Record<string, unknown>;
+      // Configs before 1.5.0 never carried the supervision limits.
+      delete legacyLimits["commandOutputLimitBytes"];
+      delete legacyLimits["commandKillGraceMs"];
       const legacy = {
         ...current,
         schemaVersion,
+        limits: legacyLimits,
         protectedPaths: [
           "PROJECT_GOAL.md",
           "evals/ACCEPTANCE.md",
@@ -41,8 +46,13 @@ describe("orchestrator configuration migration", () => {
       const loaded = await loadConfig(root, path);
       expect(loaded).toEqual({
         ...current,
-        schemaVersion: "1.4.0",
+        schemaVersion: "1.5.0",
         evidenceRetention: current.evidenceRetention,
+        limits: {
+          ...current.limits,
+          commandOutputLimitBytes: 67_108_864,
+          commandKillGraceMs: 5_000,
+        },
         project: {
           name: "Example Project",
           authorityFile: "PROJECT_GOAL.md",
