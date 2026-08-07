@@ -4,6 +4,9 @@ import type {
   IsolatedWorkspaceRecord,
   OrchestratorState,
   PendingOperation,
+  RetentionApplyDiagnostic,
+  RetentionApplyOperation,
+  RetentionApplyPhase,
   TargetIntegrateDiagnostic,
   TargetIntegrateOperation,
   TargetIntegratePhase,
@@ -57,6 +60,47 @@ const CLEANUP_PHASE_TRANSITIONS: Readonly<
   "workspace-deleted": ["blocked"],
   blocked: [],
 };
+
+function retentionPhaseTransitionAllowed(
+  before: RetentionApplyOperation,
+  after: RetentionApplyOperation,
+): boolean {
+  if (after.phase === "blocked")
+    return (
+      before.phase !== "blocked" &&
+      after.completedDeletionCount === before.completedDeletionCount
+    );
+  if (before.phase === "intent-persisted" && before.deletions.length > 0)
+    return (
+      after.phase === "deletion-started" && after.completedDeletionCount === 0
+    );
+  if (before.phase === "intent-persisted" && before.deletions.length === 0)
+    return (
+      after.phase === "result-written" && after.completedDeletionCount === 0
+    );
+  if (before.phase === "deletion-started")
+    return (
+      after.phase === "deletion-finished" &&
+      after.completedDeletionCount === before.completedDeletionCount + 1
+    );
+  if (
+    before.phase === "deletion-finished" &&
+    before.completedDeletionCount < before.deletions.length
+  )
+    return (
+      after.phase === "deletion-started" &&
+      after.completedDeletionCount === before.completedDeletionCount
+    );
+  if (
+    before.phase === "deletion-finished" &&
+    before.completedDeletionCount === before.deletions.length
+  )
+    return (
+      after.phase === "result-written" &&
+      after.completedDeletionCount === before.completedDeletionCount
+    );
+  return false;
+}
 
 function milestoneForOperation(
   state: OrchestratorState,
@@ -717,6 +761,154 @@ export function completeWorkspaceCleanupOperation(
   };
 }
 
+export function assertRetentionApplyContext(
+  state: OrchestratorState,
+  operation: RetentionApplyOperation,
+): void {
+  if (
+    state.repository.root !== operation.repositoryRoot ||
+    state.repository.targetBranch !== operation.targetBranch ||
+    state.repository.verifiedCommit !== operation.verifiedCommit
+  )
+    throw new Error(
+      `Retention-apply operation ${operation.id} does not match repository identity.`,
+    );
+  if (
+    state.run.status !== operation.runStatus ||
+    state.run.id !== operation.runId ||
+    operation.runStatus === "running" ||
+    operation.runStatus === "escalated" ||
+    state.reconciliation.active !== null
+  )
+    throw new Error(
+      `Retention-apply operation ${operation.id} does not match an inactive controller.`,
+    );
+  if (
+    state.evidenceRetention.initializedAt !==
+      operation.retentionInitializedAt ||
+    state.evidenceRetention.lastPrunedAt !== operation.previousLastPrunedAt ||
+    state.evidenceRetention.lastReportPath !== operation.previousLastReportPath
+  )
+    throw new Error(
+      `Retention-apply operation ${operation.id} does not match retention state.`,
+    );
+  if (operation.inputStateRevision > state.revision)
+    throw new Error(
+      `Retention-apply operation ${operation.id} names a future input revision.`,
+    );
+}
+
+export function setRetentionApplyOperation(
+  state: OrchestratorState,
+  operation: RetentionApplyOperation,
+): OrchestratorState {
+  if (state.pendingOperation !== null)
+    throw new Error(
+      `Cannot start retention-apply operation ${operation.id}; operation ${state.pendingOperation.id} is already pending.`,
+    );
+  if (
+    operation.phase !== "intent-persisted" ||
+    operation.completedDeletionCount !== 0 ||
+    operation.diagnostic !== null
+  )
+    throw new Error(
+      "A new retention-apply operation must begin at intent-persisted.",
+    );
+  if (operation.inputStateRevision !== state.revision)
+    throw new Error(
+      `Retention-apply operation ${operation.id} is not bound to input revision ${state.revision}.`,
+    );
+  assertRetentionApplyContext(state, operation);
+  return { ...state, pendingOperation: operation };
+}
+
+export function advanceRetentionApplyOperation(
+  state: OrchestratorState,
+  operationId: string,
+  phase: Exclude<RetentionApplyPhase, "intent-persisted" | "blocked">,
+  completedDeletionCount: number,
+  updatedAt: string,
+): OrchestratorState {
+  const operation = state.pendingOperation;
+  if (
+    !operation ||
+    operation.kind !== "retention-apply" ||
+    operation.id !== operationId
+  )
+    throw new Error(`Retention-apply operation ${operationId} is not pending.`);
+  const advanced: RetentionApplyOperation = {
+    ...operation,
+    phase,
+    completedDeletionCount,
+    updatedAt,
+    diagnostic: null,
+  };
+  if (!retentionPhaseTransitionAllowed(operation, advanced))
+    throw new Error(
+      `Retention-apply operation ${operationId} cannot advance from ${operation.phase}/${operation.completedDeletionCount} to ${phase}/${completedDeletionCount}.`,
+    );
+  assertRetentionApplyContext(state, operation);
+  return { ...state, pendingOperation: advanced };
+}
+
+export function blockRetentionApplyOperation(
+  state: OrchestratorState,
+  operationId: string,
+  diagnostic: RetentionApplyDiagnostic,
+): OrchestratorState {
+  const operation = state.pendingOperation;
+  if (
+    !operation ||
+    operation.kind !== "retention-apply" ||
+    operation.id !== operationId
+  )
+    throw new Error(`Retention-apply operation ${operationId} is not pending.`);
+  if (operation.phase === "blocked")
+    throw new Error(
+      `Retention-apply operation ${operationId} is already blocked.`,
+    );
+  assertRetentionApplyContext(state, operation);
+  return {
+    ...state,
+    pendingOperation: {
+      ...operation,
+      phase: "blocked",
+      updatedAt: diagnostic.observedAt,
+      diagnostic,
+    },
+  };
+}
+
+export function completeRetentionApplyOperation(
+  state: OrchestratorState,
+  operationId: string,
+): OrchestratorState {
+  const operation = state.pendingOperation;
+  if (
+    !operation ||
+    operation.kind !== "retention-apply" ||
+    operation.id !== operationId
+  )
+    throw new Error(`Retention-apply operation ${operationId} is not pending.`);
+  if (
+    operation.phase !== "result-written" ||
+    operation.completedDeletionCount !== operation.deletions.length
+  )
+    throw new Error(
+      `Retention-apply operation ${operationId} cannot complete from ${operation.phase}/${operation.completedDeletionCount}.`,
+    );
+  assertRetentionApplyContext(state, operation);
+  return {
+    ...state,
+    evidenceRetention: {
+      ...state.evidenceRetention,
+      lastPrunedAt: operation.completionAt,
+      lastReportPath: operation.resultPath,
+    },
+    pendingOperation: null,
+  };
+}
+
 function setPendingOperation(
   state: OrchestratorState,
   operation: PendingOperation,
@@ -728,6 +920,8 @@ function setPendingOperation(
       return setTargetIntegrateOperation(state, operation);
     case "workspace-cleanup":
       return setWorkspaceCleanupOperation(state, operation);
+    case "retention-apply":
+      return setRetentionApplyOperation(state, operation);
   }
 }
 
@@ -742,6 +936,8 @@ function completePendingOperation(
       return completeTargetIntegrateOperation(state, operation.id);
     case "workspace-cleanup":
       return completeWorkspaceCleanupOperation(state, operation.id);
+    case "retention-apply":
+      return completeRetentionApplyOperation(state, operation.id);
   }
 }
 
@@ -766,6 +962,11 @@ function phaseTransitionAllowed(
         after.kind === "workspace-cleanup" &&
         CLEANUP_PHASE_TRANSITIONS[before.phase].includes(after.phase)
       );
+    case "retention-apply":
+      return (
+        after.kind === "retention-apply" &&
+        retentionPhaseTransitionAllowed(before, after)
+      );
   }
 }
 
@@ -782,13 +983,22 @@ function assertPendingOperationContext(
       return;
     case "workspace-cleanup":
       assertWorkspaceCleanupContext(state, operation);
+      return;
+    case "retention-apply":
+      assertRetentionApplyContext(state, operation);
   }
 }
 
 function withoutMutableOperationFields(operation: PendingOperation) {
   return Object.fromEntries(
     Object.entries(operation).filter(
-      ([key]) => !["phase", "updatedAt", "diagnostic"].includes(key),
+      ([key]) =>
+        ![
+          "phase",
+          "completedDeletionCount",
+          "updatedAt",
+          "diagnostic",
+        ].includes(key),
     ),
   );
 }

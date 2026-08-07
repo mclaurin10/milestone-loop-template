@@ -33,8 +33,12 @@ import {
   inspectWorkspaceCleanupOperation,
   type WorkspaceCleanupRecoveryClassification,
 } from "./workspace-cleanup-operation.js";
+import {
+  inspectRetentionApplyOperation,
+  type RetentionApplyRecoveryClassification,
+} from "./retention-apply-operation.js";
 
-export const DOCTOR_SCHEMA_VERSION = "1.5.0" as const;
+export const DOCTOR_SCHEMA_VERSION = "1.6.0" as const;
 
 type CheckStatus = "pass" | "attention";
 
@@ -117,6 +121,17 @@ export interface DoctorDiagnostic {
             readonly preservedPaths: readonly string[];
             readonly nextSafeAction: string;
           }
+        | {
+            readonly id: string;
+            readonly kind: "retention-apply";
+            readonly phase: string;
+            readonly classification: RetentionApplyRecoveryClassification;
+            readonly completedDeletionCount: number;
+            readonly deletionCount: number;
+            readonly currentPath: string | null;
+            readonly preservedPaths: readonly string[];
+            readonly nextSafeAction: string;
+          }
         | null;
       readonly outcome:
         | "valid"
@@ -126,6 +141,7 @@ export interface DoctorDiagnostic {
         | "workspace-operation-pending"
         | "target-operation-pending"
         | "cleanup-operation-pending"
+        | "retention-operation-pending"
         | "invalid-or-unreadable"
         | "not-checked";
     };
@@ -297,6 +313,27 @@ async function stateOutcome(
             nextSafeAction: recovery.nextSafeAction,
           },
           outcome: "cleanup-operation-pending",
+        };
+      }
+      if (state.pendingOperation.kind === "retention-apply") {
+        const recovery = await inspectRetentionApplyOperation(
+          state.pendingOperation,
+        );
+        return {
+          status: "attention",
+          ...details,
+          pendingOperation: {
+            id: state.pendingOperation.id,
+            kind: state.pendingOperation.kind,
+            phase: state.pendingOperation.phase,
+            classification: recovery.classification,
+            completedDeletionCount: recovery.completedDeletionCount,
+            deletionCount: recovery.deletionCount,
+            currentPath: recovery.currentDeletion?.path ?? null,
+            preservedPaths: recovery.preservedPaths,
+            nextSafeAction: recovery.nextSafeAction,
+          },
+          outcome: "retention-operation-pending",
         };
       }
       const recovery = await inspectTargetIntegrationOperation(

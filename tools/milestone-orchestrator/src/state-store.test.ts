@@ -714,7 +714,7 @@ describe("atomic state persistence", () => {
 
     const readOnly = new StateStore(directory, "state.json");
     await expect(readOnly.load()).resolves.toMatchObject({
-      schemaVersion: "1.7.0",
+      schemaVersion: "1.8.0",
       revision: 0,
       pendingOperation: null,
     });
@@ -725,7 +725,7 @@ describe("atomic state persistence", () => {
     expect(migrated).not.toBeNull();
     const saved = await mutable.save(migrated!);
     expect(saved).toMatchObject({
-      schemaVersion: "1.7.0",
+      schemaVersion: "1.8.0",
       revision: 1,
       pendingOperation: null,
     });
@@ -751,11 +751,11 @@ describe("atomic state persistence", () => {
     };
     expect(migrateOrchestratorState(prior)).toEqual({
       ...prior,
-      schemaVersion: "1.7.0",
+      schemaVersion: "1.8.0",
     });
   });
 
-  it("preserves an existing 1.6 pending operation while advancing to 1.7", () => {
+  it("preserves an existing 1.6 pending operation while advancing to 1.8", () => {
     const prior = {
       ...validState(resolve(process.cwd(), "state-1.6-migration-fixture")),
       schemaVersion: "1.6.0",
@@ -767,7 +767,23 @@ describe("atomic state persistence", () => {
     };
     expect(migrateOrchestratorState(prior)).toEqual({
       ...prior,
+      schemaVersion: "1.8.0",
+    });
+  });
+
+  it("preserves an existing 1.7 cleanup operation while advancing to 1.8", () => {
+    const prior = {
+      ...validState(resolve(process.cwd(), "state-1.7-migration-fixture")),
       schemaVersion: "1.7.0",
+      pendingOperation: {
+        kind: "workspace-cleanup",
+        id: "preserved-cleanup-operation",
+        phase: "workspace-delete-started",
+      },
+    };
+    expect(migrateOrchestratorState(prior)).toEqual({
+      ...prior,
+      schemaVersion: "1.8.0",
     });
   });
 
@@ -802,7 +818,7 @@ describe("atomic state persistence", () => {
     delete (legacy["run"] as Record<string, unknown>)["agentInvocations"];
     await writeFile(store.path, `${JSON.stringify(legacy)}\n`, "utf8");
     await expect(store.load()).resolves.toMatchObject({
-      schemaVersion: "1.7.0",
+      schemaVersion: "1.8.0",
       pendingOperation: null,
       run: { agentInvocations: [] },
       evidenceRetention: {
@@ -873,7 +889,7 @@ describe("atomic state persistence", () => {
     await writeFile(store.path, `${JSON.stringify(legacy)}\n`, "utf8");
 
     await expect(store.load()).resolves.toMatchObject({
-      schemaVersion: "1.7.0",
+      schemaVersion: "1.8.0",
       pendingOperation: null,
       evidenceRetention: {
         initializedAt: null,
@@ -921,7 +937,7 @@ describe("atomic state persistence", () => {
     await writeFile(store.path, `${JSON.stringify(legacy)}\n`, "utf8");
 
     await expect(store.load()).resolves.toMatchObject({
-      schemaVersion: "1.7.0",
+      schemaVersion: "1.8.0",
       pendingOperation: null,
       revision: current.revision,
       repository: current.repository,
@@ -974,7 +990,7 @@ describe("atomic state persistence", () => {
 
     const migrated = await store.load();
     expect(migrated).toMatchObject({
-      schemaVersion: "1.7.0",
+      schemaVersion: "1.8.0",
       pendingOperation: null,
     });
     const summaries = migrated?.milestones[0]?.verificationSummaries;

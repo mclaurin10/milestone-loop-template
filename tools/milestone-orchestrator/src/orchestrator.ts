@@ -18,6 +18,7 @@ import type {
   ProjectProfile,
   ProposalProvenance,
   ReadinessHistoryEvidence,
+  RetentionApplyOperation,
   ReviewerReport,
   RunState,
   TargetIntegrateOperation,
@@ -100,6 +101,12 @@ import { strictlyContained } from "./path-safety.js";
 import { requestPlan } from "./planner.js";
 import { redactSensitiveText, redactSensitiveValue } from "./redaction.js";
 import { requestReview, reviewerApproves } from "./reviewer.js";
+import {
+  inspectRetentionApplyOperation,
+  recoverRetentionApplyOperation,
+  type RetentionApplyHooks,
+  type RetentionApplyRecoveryInspection,
+} from "./retention-apply-operation.js";
 import { authoritativeStageSetsAreConsistent } from "./readiness-completion.js";
 export { humanPlaytestStopReason } from "./readiness-completion.js";
 import {
@@ -166,6 +173,7 @@ export interface OrchestratorDependencies {
   readonly workspaceCreateHooks?: WorkspaceCreateHooks;
   readonly targetIntegrationHooks?: TargetIntegrationHooks;
   readonly workspaceCleanupHooks?: WorkspaceCleanupHooks;
+  readonly retentionApplyHooks?: RetentionApplyHooks;
   readonly evidencePlanner?: typeof planManagedEvidenceRuns;
   readonly evidenceDiscovery?: typeof discoverManagedEvidenceRuns;
   readonly telemetryStoreOpen?: typeof TelemetryStore.open;
@@ -185,11 +193,13 @@ export interface OrchestratorInspection {
     readonly operation:
       | WorkspaceCreateOperation
       | TargetIntegrateOperation
-      | WorkspaceCleanupOperation;
+      | WorkspaceCleanupOperation
+      | RetentionApplyOperation;
     readonly recovery:
       | WorkspaceCreateRecoveryInspection
       | TargetIntegrationRecoveryInspection
-      | WorkspaceCleanupRecoveryInspection;
+      | WorkspaceCleanupRecoveryInspection
+      | RetentionApplyRecoveryInspection;
   } | null;
   readonly protectedIntegrity:
     "verified" | "uninitialized" | { readonly driftedPaths: readonly string[] };
@@ -637,6 +647,7 @@ export class MilestoneOrchestrator {
   private readonly workspaceCreateHooks: WorkspaceCreateHooks;
   private readonly targetIntegrationHooks: TargetIntegrationHooks;
   private readonly workspaceCleanupHooks: WorkspaceCleanupHooks;
+  private readonly retentionApplyHooks: RetentionApplyHooks;
   private readonly evidencePlanner: typeof planManagedEvidenceRuns;
   private readonly evidenceDiscovery: typeof discoverManagedEvidenceRuns;
   private readonly telemetryStoreOpen: typeof TelemetryStore.open;
@@ -657,6 +668,7 @@ export class MilestoneOrchestrator {
     workspaceCreateHooks: WorkspaceCreateHooks;
     targetIntegrationHooks: TargetIntegrationHooks;
     workspaceCleanupHooks: WorkspaceCleanupHooks;
+    retentionApplyHooks: RetentionApplyHooks;
     evidencePlanner: typeof planManagedEvidenceRuns;
     evidenceDiscovery: typeof discoverManagedEvidenceRuns;
     telemetryStoreOpen: typeof TelemetryStore.open;
@@ -704,6 +716,7 @@ export class MilestoneOrchestrator {
         }
       },
     };
+    this.retentionApplyHooks = input.retentionApplyHooks;
     this.evidencePlanner = input.evidencePlanner;
     this.evidenceDiscovery = input.evidenceDiscovery;
     this.telemetryStoreOpen = input.telemetryStoreOpen;
@@ -811,6 +824,7 @@ export class MilestoneOrchestrator {
       workspaceCreateHooks: dependencies.workspaceCreateHooks ?? {},
       targetIntegrationHooks: dependencies.targetIntegrationHooks ?? {},
       workspaceCleanupHooks: dependencies.workspaceCleanupHooks ?? {},
+      retentionApplyHooks: dependencies.retentionApplyHooks ?? {},
       evidencePlanner: dependencies.evidencePlanner ?? planManagedEvidenceRuns,
       evidenceDiscovery:
         dependencies.evidenceDiscovery ?? discoverManagedEvidenceRuns,
@@ -913,9 +927,13 @@ export class MilestoneOrchestrator {
                 ? await inspectTargetIntegrationOperation(
                     state.pendingOperation,
                   )
-                : await inspectWorkspaceCleanupOperation(
-                    state.pendingOperation,
-                  ),
+                : state.pendingOperation.kind === "workspace-cleanup"
+                  ? await inspectWorkspaceCleanupOperation(
+                      state.pendingOperation,
+                    )
+                  : await inspectRetentionApplyOperation(
+                      state.pendingOperation,
+                    ),
         }
       : null;
     return {
@@ -1068,14 +1086,49 @@ export class MilestoneOrchestrator {
         throw new Error(
           `Pending workspace-cleanup operation ${operation.id} has non-canonical controller paths.`,
         );
+    } else if (operation?.kind === "retention-apply") {
+      const verificationRoot = resolve(
+        this.repositoryRoot,
+        this.config.evidenceRetention.artifactRoot,
+      );
+      const controllerRoot = resolve(
+        this.repositoryRoot,
+        this.config.artifactRoot,
+      );
+      const applyDirectory = resolve(
+        this.repositoryRoot,
+        "artifacts",
+        "orchestrator",
+        "retention",
+        "apply",
+        operation.planSha256,
+      );
+      if (
+        operation.repositoryRoot !== this.repositoryRoot ||
+        operation.verificationArtifactRoot !== verificationRoot ||
+        operation.controllerArtifactRoot !== controllerRoot ||
+        operation.applyDirectory !== applyDirectory ||
+        operation.journalPath !== resolve(applyDirectory, "journal.jsonl") ||
+        operation.resultPath !== resolve(applyDirectory, "apply-result.json")
+      )
+        throw new Error(
+          `Pending retention-apply operation ${operation.id} has non-canonical controller paths.`,
+        );
     }
     const retentionReport = this.stateValue.evidenceRetention.lastReportPath;
+    const retentionControlRoot = resolve(
+      this.repositoryRoot,
+      "artifacts",
+      "orchestrator",
+      "retention",
+    );
     if (
       retentionReport &&
       !strictlyContained(
         resolve(this.repositoryRoot, this.config.artifactRoot),
         retentionReport,
-      )
+      ) &&
+      !strictlyContained(retentionControlRoot, retentionReport)
     )
       throw new Error(
         "Stored evidence-retention report escapes its configured root.",
@@ -1851,6 +1904,18 @@ export class MilestoneOrchestrator {
       await this.recoverPendingTargetIntegration();
     else if (this.stateValue.pendingOperation?.kind === "workspace-cleanup")
       await this.recoverPendingWorkspaceCleanup();
+    else if (this.stateValue.pendingOperation?.kind === "retention-apply")
+      await recoverRetentionApplyOperation({
+        state: this.stateValue,
+        config: this.config,
+        persist: async (next) => {
+          await this.persist(next);
+          return this.stateValue;
+        },
+        now: () => iso(this.now),
+        planner: this.evidencePlanner,
+        hooks: this.retentionApplyHooks,
+      });
   }
 
   private async initializeEvidenceRetention(): Promise<void> {

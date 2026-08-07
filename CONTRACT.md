@@ -249,15 +249,15 @@ rejection of every canonical path including case variants.
   `loop:status`/`loop:dry-run` are read-only and lease-free; their state load
   cannot authorize publication or repair the mirror. Normal branch pushes do
   not include either private ref.
-- Recoverable workspace creation: state schema `1.7.0` permits exactly one
+- Recoverable workspace creation: state schema `1.8.0` permits exactly one
   exclusive pending operation. A `workspace-create` intent is published by
   state CAS before any directory creation or `git clone` and binds the operation ID,
   run/milestone/attempt, exact input generation and revision, target base,
   controller-derived branch, temporary/final paths, timestamps, phase, and
-  fixed recovery policy. Canonical `1.4.0`/`1.5.0`/`1.6.0` generations migrate
-  virtually for read-only compatibility and are written as `1.7.0` by the next
-  successful CAS save. While an intent is pending, unrelated state mutations
-  fail closed.
+  fixed recovery policy. Canonical `1.4.0`/`1.5.0`/`1.6.0`/`1.7.0`
+  generations migrate virtually for read-only compatibility and are written
+  as `1.8.0` by the next successful CAS save. While an intent is pending,
+  unrelated state mutations fail closed.
   The clone is created with no hardlinks under a unique contained temporary
   path, converted to a clean standalone remote-free repository, and published
   to the stable final path without replacing an existing entry. Leased startup
@@ -310,13 +310,25 @@ rejection of every canonical path including case variants.
 - Approval-bound evidence retention: `loop:run` never deletes evidence —
   controller startup only writes a retention _plan_
   (`evidence-retention.json` in the run directory). Deletion requires
-  `loop:retention:plan` (standalone plan + sha256 approval token) followed
-  by `loop:retention:apply -- --plan <path> --sha256 <hex>`, which runs
-  under the controller lease, re-verifies the candidate, configuration,
-  roots, citations, and suspensions against a fresh plan, refuses the
-  whole plan on any divergence, and journals every deletion for
-  interruption-safe resumption. Terminal milestone workspace cleanup is the
-  separate automatic, intent-first temporary-workspace policy above.
+  `loop:retention:plan` (standalone plan + sha256 approval token) followed by
+  `loop:retention:apply -- --plan <path> --sha256 <hex>`. The leased apply
+  authenticates the complete strict `1.2.0` plan bytes and exact dirty-worktree
+  fingerprint, re-verifies controller/candidate/configuration/root/citation/
+  suspension and exact target identities against a fresh plan, and refuses
+  known pre-intent divergence without state, apply-artifact, or deletion side
+  effects. It publishes one global `retention-apply` intent bound to the full
+  plan hash and canonical input generation before creating the full-hash apply
+  directory or removing evidence. Each exact target enters durable
+  delete-started state before the unchanged contained recursive-removal
+  primitive runs. The synced JSONL journal and deterministic result are derived
+  evidence: recovery completes only an exact canonical prefix, adopts absence
+  only from delete-started state, preserves conflicts with a durable blocked
+  diagnostic, and completes through one reducer that owns retention state and
+  intent removal. Leased startup performs this recovery before protected-root
+  top-up, target reconciliation, and terminal cleanup. Status and doctor expose
+  progress and the next safe action without mutation. Terminal milestone
+  workspace cleanup is the separate automatic, intent-first temporary-workspace
+  policy above.
 
 ## Adoption checklist
 

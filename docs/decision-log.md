@@ -3,6 +3,44 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-06 — State-owned approval-bound retention apply (WP2d)
+
+**Decision.** State schema `1.8.0` extends the exclusive pending-operation
+union with one global `retention-apply` intent. A strict plan `1.2.0` captures
+the exact committed candidate and a SHA-256 fingerprint of tracked, staged,
+unstaged, and non-ignored untracked bytes. After the operator approves the
+complete plan bytes, apply revalidates controller state, candidate,
+configuration, roots, citations, suspensions, and exact target manifests,
+then publishes an intent bound to the full plan hash and canonical input
+generation before creating apply evidence or deleting a run. Every target
+enters durable delete-started state first. The JSONL journal and deterministic
+result are synced, exact operation-derived evidence; neither a journal line,
+missing path, plan pathname, nor prior result is authority. Recovery completes
+only an exact canonical prefix, blocks and preserves conflicts, and adopts a
+missing target only from delete-started state. Explicit apply and leased
+startup use the same recovery path before other controller mutation, while one
+pure reducer records retention completion and removes the intent. Status and
+doctor remain read-only. The existing contained recursive-removal helper and
+terminal workspace-cleanup semantics are unchanged.
+
+**Why.** The former hash-approved command still transferred authorization to
+unbound filesystem text: a forged `deleting` line could make a missing run
+look resumable, a torn final append became interior corruption on the next
+write, and process loss after deletion or result publication had no canonical
+state phase to recover. Partial plan validation and a dirty boolean also failed
+to bind exact approved bytes. State-first per-target authorization makes every
+irreversible removal attributable, while deterministic derived evidence makes
+all declared crash boundaries converge without introducing a second log
+authority. Alternatives rejected: journal-owned recovery, hash-prefix apply
+directories, adopting any missing approved path, truncating conflicting JSONL,
+overwriting result conflicts, weakening freshness checks after intent, adding
+automatic deletion to `loop:run`, or changing workspace-cleanup policy.
+
+**Affected files.** Retention plan/apply contracts and tests, state contracts,
+runtime/JSON schema and migration, operation reducers and lineage checks,
+orchestrator startup/CLI/status/doctor routing, crash/recovery workers and
+evidence, `README.md`, and `CONTRACT.md`.
+
 ## 2026-08-06 — Intent-first terminal workspace cleanup (WP2c)
 
 **Decision.** State schema `1.7.0` extends the exclusive pending-operation

@@ -151,7 +151,7 @@ report `NOT_READY`, never pass.
    pushes do not include either private ref.
 
    Isolated clone creation is a durable state operation, not a direct
-   filesystem call. State schema `1.7.0` records one exclusive pending
+   filesystem call. State schema `1.8.0` records one exclusive pending
    operation; a `workspace-create` intent is bound to the exact input state
    generation before any directory or clone side effect. The clone is built
    under a unique controller-derived `.create-<hash>` path, made standalone and
@@ -182,8 +182,8 @@ report `NOT_READY`, never pass.
    or unexpected state is preserved with a durable blocked diagnostic. A
    reviewer approval without the operation never authorizes implicit target
    adoption. `loop:status` and `loop:doctor` classify recovery read-only.
-   Canonical `1.4.0`/`1.5.0`/`1.6.0` state is migrated virtually on read and
-   becomes `1.7.0` on its next successful CAS publication.
+   Canonical `1.4.0`/`1.5.0`/`1.6.0`/`1.7.0` state is migrated virtually on
+   read and becomes `1.8.0` on its next successful CAS publication.
 
    Terminal workspace cleanup is also an exclusive durable state operation.
    A strict `workspace-cleanup` intent pins the exact state generation,
@@ -204,11 +204,19 @@ report `NOT_READY`, never pass.
    delete: `pnpm loop:retention:plan` writes a standalone plan under
    `artifacts/orchestrator/retention/plans/` and prints its sha256;
    `pnpm loop:retention:apply -- --plan <path> --sha256 <hex>` verifies the
-   hash, takes the controller lease, re-checks the candidate, configuration,
-   citations, and suspensions against a fresh plan, refuses the whole plan
-   on any divergence, and deletes with a resumable journal under
-   `artifacts/orchestrator/retention/apply/`. Terminal milestone _workspace_
-   cleanup (`src/workspace-cleanup-operation.ts`) is a separate automatic
+   strict `1.2.0` plan bytes, exact dirty-worktree fingerprint, candidate,
+   configuration, roots, citations, target manifests, and suspensions against
+   a fresh plan. It then publishes one `retention-apply` intent bound to the
+   full approved hash and canonical state generation before creating apply
+   artifacts or deleting evidence. Every removal requires a durable
+   per-target delete-started phase. The full-hash apply directory contains an
+   exact deterministic result and a synced JSONL journal that is derived
+   evidence only: restart completes an exact canonical prefix but never treats
+   journal text or a missing path as authority. Leased startup recovers the
+   operation before other state mutation; conflicts are preserved and durably
+   blocked, while one reducer records completion. Status and doctor classify
+   progress read-only. Terminal milestone _workspace_ cleanup
+   (`src/workspace-cleanup-operation.ts`) remains a separate automatic
    temporary-workspace policy governed by the durable operation above.
 
 ## Extension points

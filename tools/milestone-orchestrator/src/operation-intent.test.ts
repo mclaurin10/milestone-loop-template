@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import type {
   OrchestratorState,
+  RetentionApplyOperation,
   TargetIntegrateOperation,
   WorkspaceCreateOperation,
   WorkspaceCleanupOperation,
@@ -14,16 +15,20 @@ import type {
 import { createMilestoneRecord } from "./milestone-state.js";
 import {
   advanceTargetIntegrateOperation,
+  advanceRetentionApplyOperation,
   advanceWorkspaceCleanupOperation,
   advanceWorkspaceCreateOperation,
   assertPendingOperationStateTransition,
   blockTargetIntegrateOperation,
+  blockRetentionApplyOperation,
   blockWorkspaceCleanupOperation,
   blockWorkspaceCreateOperation,
   completeTargetIntegrateOperation,
+  completeRetentionApplyOperation,
   completeWorkspaceCleanupOperation,
   completeWorkspaceCreateOperation,
   setTargetIntegrateOperation,
+  setRetentionApplyOperation,
   setWorkspaceCleanupOperation,
   setWorkspaceCreateOperation,
 } from "./operation-intent.js";
@@ -377,6 +382,77 @@ function terminalCleanupState(root: string): {
   };
 }
 
+function retentionApplyState(root: string): {
+  readonly state: OrchestratorState;
+  readonly operation: RetentionApplyOperation;
+} {
+  const state = validState(root);
+  const verificationRoot = resolve(root, "artifacts", "verification");
+  const controllerRoot = resolve(root, "artifacts", "orchestrator", "runs");
+  const applyDirectory = resolve(
+    root,
+    "artifacts",
+    "orchestrator",
+    "retention",
+    "apply",
+    "f".repeat(64),
+  );
+  return {
+    state,
+    operation: {
+      schemaVersion: "1.0.0",
+      kind: "retention-apply",
+      id: `retention-apply-${"f".repeat(64)}`,
+      inputStateGeneration: "b".repeat(40),
+      inputStateRevision: state.revision,
+      repositoryRoot: resolve(root),
+      targetBranch: state.repository.targetBranch,
+      verifiedCommit: state.repository.verifiedCommit,
+      runStatus: state.run.status,
+      runId: state.run.id,
+      retentionInitializedAt: state.evidenceRetention.initializedAt!,
+      previousLastPrunedAt: state.evidenceRetention.lastPrunedAt,
+      previousLastReportPath: state.evidenceRetention.lastReportPath,
+      planPath: resolve(root, "artifacts", "retention-plan.json"),
+      planSha256: "f".repeat(64),
+      planBytes: 123,
+      planGeneratedAt: NOW,
+      candidate: {
+        commit: state.repository.verifiedCommit,
+        tree: "c".repeat(40),
+        dirty: false,
+        worktreeSha256: "d".repeat(64),
+      },
+      keepRecentRuns: 1,
+      verificationArtifactRoot: verificationRoot,
+      verificationArtifactRootRealpath: verificationRoot,
+      verificationObservedRunIds: ["old-verification"],
+      controllerArtifactRoot: controllerRoot,
+      controllerArtifactRootRealpath: controllerRoot,
+      controllerObservedRunIds: [],
+      applyDirectory,
+      journalPath: resolve(applyDirectory, "journal.jsonl"),
+      resultPath: resolve(applyDirectory, "apply-result.json"),
+      deletions: [
+        {
+          ordinal: 0,
+          root: "verification",
+          runId: "old-verification",
+          path: resolve(verificationRoot, "old-verification"),
+          finishedAt: NOW,
+        },
+      ],
+      phase: "intent-persisted",
+      completedDeletionCount: 0,
+      createdAt: NOW,
+      updatedAt: NOW,
+      completionAt: NOW,
+      recoveryPolicy: "validate-resume-or-preserve",
+      diagnostic: null,
+    },
+  };
+}
+
 describe("workspace-create operation intent", () => {
   it("sets, advances, and clears only through the canonical reducers", () => {
     const root = resolve(process.cwd(), "operation-fixture");
@@ -644,6 +720,103 @@ describe("workspace-cleanup operation intent", () => {
       diagnostic: { classification: "premature-workspace-missing" },
     });
     expect(blocked.milestones[0]?.workspace?.cleanup.status).toBe("pending");
+    expect(validateOrchestratorState(blocked)).toMatchObject({ valid: true });
+  });
+});
+
+describe("retention-apply operation intent", () => {
+  it("owns delete authorization, progress, and retention completion", () => {
+    const fixture = retentionApplyState(
+      resolve(process.cwd(), "retention-operation-fixture"),
+    );
+    let next = setRetentionApplyOperation(fixture.state, fixture.operation);
+    expect(() =>
+      assertPendingOperationStateTransition(
+        fixture.state,
+        next,
+        fixture.operation.inputStateGeneration,
+      ),
+    ).not.toThrow();
+    expect(validateOrchestratorState(next)).toMatchObject({ valid: true });
+    next = advanceRetentionApplyOperation(
+      next,
+      fixture.operation.id,
+      "deletion-started",
+      0,
+      NOW,
+    );
+    next = advanceRetentionApplyOperation(
+      next,
+      fixture.operation.id,
+      "deletion-finished",
+      1,
+      NOW,
+    );
+    next = advanceRetentionApplyOperation(
+      next,
+      fixture.operation.id,
+      "result-written",
+      1,
+      NOW,
+    );
+    const beforeCompletion = next;
+    next = completeRetentionApplyOperation(next, fixture.operation.id);
+    expect(() =>
+      assertPendingOperationStateTransition(
+        beforeCompletion,
+        next,
+        fixture.operation.inputStateGeneration,
+      ),
+    ).not.toThrow();
+    expect(next).toMatchObject({
+      pendingOperation: null,
+      evidenceRetention: {
+        lastPrunedAt: NOW,
+        lastReportPath: fixture.operation.resultPath,
+      },
+    });
+    expect(validateOrchestratorState(next)).toMatchObject({ valid: true });
+  });
+
+  it("blocks ambiguity and fences unrelated state mutation", () => {
+    const fixture = retentionApplyState(
+      resolve(process.cwd(), "retention-operation-fixture"),
+    );
+    const pending = setRetentionApplyOperation(
+      fixture.state,
+      fixture.operation,
+    );
+    const advanced = advanceRetentionApplyOperation(
+      pending,
+      fixture.operation.id,
+      "deletion-started",
+      0,
+      NOW,
+    );
+    expect(() =>
+      assertPendingOperationStateTransition(
+        pending,
+        { ...advanced, queue: ["unrelated"] },
+        fixture.operation.inputStateGeneration,
+      ),
+    ).toThrow(/exclusively owns state mutation/);
+    const blocked = blockRetentionApplyOperation(
+      pending,
+      fixture.operation.id,
+      {
+        classification: "journal-conflict",
+        message: "The journal is not an exact operation-derived prefix.",
+        observedAt: NOW,
+        preservedPaths: [fixture.operation.journalPath],
+        quarantinePath: null,
+      },
+    );
+    expect(blocked.pendingOperation).toMatchObject({
+      kind: "retention-apply",
+      phase: "blocked",
+      diagnostic: { classification: "journal-conflict" },
+    });
+    expect(blocked.evidenceRetention).toEqual(fixture.state.evidenceRetention);
     expect(validateOrchestratorState(blocked)).toMatchObject({ valid: true });
   });
 });

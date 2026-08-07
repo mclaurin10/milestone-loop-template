@@ -440,7 +440,7 @@ describe("versioned orchestrator schemas", () => {
       expect(schema.$schema).toContain("2020-12");
       expect(schema.$id).toContain(
         file === "state.schema.json"
-          ? "1.7.0"
+          ? "1.8.0"
           : file === "milestone.schema.json"
             ? "1.2.0"
             : file === "review.schema.json"

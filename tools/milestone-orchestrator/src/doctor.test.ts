@@ -1,5 +1,12 @@
 import { spawnSync } from "node:child_process";
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  mkdtemp,
+  mkdir,
+  readFile,
+  realpath,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
@@ -91,7 +98,7 @@ describe("read-only orchestrator doctor", () => {
     );
 
     expect(diagnostic).toEqual({
-      schemaVersion: "1.5.0",
+      schemaVersion: "1.6.0",
       diagnostic: "orchestrator-doctor",
       status: "ready",
       readOnly: true,
@@ -365,5 +372,130 @@ describe("read-only orchestrator doctor", () => {
       pendingOperation: null,
       outcome: "reconciliation-active",
     });
+  });
+
+  it("classifies retention apply without changing state, journal, or targets", async () => {
+    const fixture = await repositoryFixture();
+    const baseState = validState(fixture.root);
+    const verificationRoot = join(fixture.root, "artifacts");
+    const controllerRoot = join(
+      fixture.root,
+      "artifacts",
+      "orchestrator",
+      "runs",
+    );
+    const target = join(verificationRoot, "old-verification");
+    await mkdir(target, { recursive: true });
+    await writeJson(join(target, "result.json"), {
+      schemaVersion: "1.0.0",
+      runId: "old-verification",
+      finishedAt: "2026-08-01T00:00:00.000Z",
+    });
+    await mkdir(controllerRoot, { recursive: true });
+    const planSha256 = "f".repeat(64);
+    const applyDirectory = join(
+      fixture.root,
+      "artifacts",
+      "orchestrator",
+      "retention",
+      "apply",
+      planSha256,
+    );
+    await writeJson(fixture.statePath, {
+      ...baseState,
+      pendingOperation: {
+        schemaVersion: "1.0.0",
+        kind: "retention-apply",
+        id: `retention-apply-${planSha256}`,
+        inputStateGeneration: "b".repeat(40),
+        inputStateRevision: 0,
+        repositoryRoot: fixture.root,
+        targetBranch: "main",
+        verifiedCommit: baseState.repository.verifiedCommit,
+        runStatus: "idle",
+        runId: null,
+        retentionInitializedAt: baseState.evidenceRetention.initializedAt,
+        previousLastPrunedAt: null,
+        previousLastReportPath: null,
+        planPath: join(
+          fixture.root,
+          "artifacts",
+          "orchestrator",
+          "retention",
+          "plans",
+          "plan.json",
+        ),
+        planSha256,
+        planBytes: 100,
+        planGeneratedAt: "2026-08-02T00:00:00.000Z",
+        candidate: {
+          commit: baseState.repository.verifiedCommit,
+          tree: "c".repeat(40),
+          dirty: false,
+          worktreeSha256: "d".repeat(64),
+        },
+        keepRecentRuns: 20,
+        verificationArtifactRoot: verificationRoot,
+        verificationArtifactRootRealpath: await realpath(verificationRoot),
+        verificationObservedRunIds: ["old-verification"],
+        controllerArtifactRoot: controllerRoot,
+        controllerArtifactRootRealpath: await realpath(controllerRoot),
+        controllerObservedRunIds: [],
+        applyDirectory,
+        journalPath: join(applyDirectory, "journal.jsonl"),
+        resultPath: join(applyDirectory, "apply-result.json"),
+        deletions: [
+          {
+            ordinal: 0,
+            root: "verification",
+            runId: "old-verification",
+            path: target,
+            finishedAt: "2026-08-01T00:00:00.000Z",
+          },
+        ],
+        phase: "intent-persisted",
+        completedDeletionCount: 0,
+        createdAt: "2026-08-02T01:00:00.000Z",
+        updatedAt: "2026-08-02T01:00:00.000Z",
+        completionAt: "2026-08-02T01:00:00.000Z",
+        recoveryPolicy: "validate-resume-or-preserve",
+        diagnostic: null,
+      },
+    });
+    const [stateBefore, targetBefore] = await Promise.all([
+      readFile(fixture.statePath),
+      readFile(join(target, "result.json")),
+    ]);
+    const diagnostic = await runDoctorDiagnostic(
+      { repositoryRoot: fixture.root },
+      {
+        environment: {
+          ...pinnedEnvironment,
+          CODEX_API_KEY: "available-but-private",
+        },
+        nodeVersion: "24.18.0",
+        gitProbe: () => ({ clean: true }),
+        headProbe: () => storedHead,
+      },
+    );
+    expect(diagnostic.checks.state).toMatchObject({
+      status: "attention",
+      pendingOperation: {
+        kind: "retention-apply",
+        phase: "intent-persisted",
+        classification: "resume-delete",
+        completedDeletionCount: 0,
+        deletionCount: 1,
+        currentPath: target,
+        nextSafeAction: "publish-delete-authorization",
+      },
+      outcome: "retention-operation-pending",
+    });
+    const [stateAfter, targetAfter] = await Promise.all([
+      readFile(fixture.statePath),
+      readFile(join(target, "result.json")),
+    ]);
+    expect(stateAfter).toEqual(stateBefore);
+    expect(targetAfter).toEqual(targetBefore);
   });
 });

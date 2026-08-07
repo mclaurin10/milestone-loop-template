@@ -27,7 +27,12 @@ const temporaryDirectories: string[] = [];
 
 afterEach(async () => {
   for (const directory of temporaryDirectories.splice(0))
-    await rm(directory, { recursive: true, force: true });
+    await rm(directory, {
+      recursive: true,
+      force: true,
+      maxRetries: 5,
+      retryDelay: 100,
+    });
 });
 
 function git(repository: string, ...args: string[]): string {
@@ -720,7 +725,7 @@ describe("evidence retention at run start", () => {
         unknown
       >;
       expect(plan).toMatchObject({
-        schemaVersion: "1.1.0",
+        schemaVersion: "1.2.0",
         mode: "plan",
         verificationRuns: {
           mode: "plan",

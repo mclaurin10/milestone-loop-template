@@ -1,4 +1,4 @@
-import { isAbsolute } from "node:path";
+import { isAbsolute, resolve } from "node:path";
 
 import {
   AGENT_INVOCATION_SCHEMA_VERSION,
@@ -13,6 +13,7 @@ import {
   MILESTONE_STATUSES,
   NEXT_ACTIONS,
   OPERATION_INTENT_SCHEMA_VERSION,
+  RETENTION_APPLY_PHASES,
   RECONCILIATION_PHASES,
   RECONCILIATION_REVIEW_CHECK_IDS,
   RECONCILIATION_REVIEW_SCHEMA_VERSION,
@@ -600,6 +601,245 @@ function validWorkspaceCleanupOperation(value: unknown): boolean {
       (path) =>
         path !== value["workspacePath"] &&
         path !== value["diagnosticArchivePath"],
+    ) ||
+    diagnostic["quarantinePath"] !== null
+  )
+    return false;
+  return value["updatedAt"] === diagnostic["observedAt"];
+}
+
+function validRetentionApplyOperation(value: unknown): boolean {
+  if (
+    !isRecord(value) ||
+    !hasOnlyKeys(value, [
+      "schemaVersion",
+      "kind",
+      "id",
+      "inputStateGeneration",
+      "inputStateRevision",
+      "repositoryRoot",
+      "targetBranch",
+      "verifiedCommit",
+      "runStatus",
+      "runId",
+      "retentionInitializedAt",
+      "previousLastPrunedAt",
+      "previousLastReportPath",
+      "planPath",
+      "planSha256",
+      "planBytes",
+      "planGeneratedAt",
+      "candidate",
+      "keepRecentRuns",
+      "verificationArtifactRoot",
+      "verificationArtifactRootRealpath",
+      "verificationObservedRunIds",
+      "controllerArtifactRoot",
+      "controllerArtifactRootRealpath",
+      "controllerObservedRunIds",
+      "applyDirectory",
+      "journalPath",
+      "resultPath",
+      "deletions",
+      "phase",
+      "completedDeletionCount",
+      "createdAt",
+      "updatedAt",
+      "completionAt",
+      "recoveryPolicy",
+      "diagnostic",
+    ]) ||
+    value["schemaVersion"] !== OPERATION_INTENT_SCHEMA_VERSION ||
+    value["kind"] !== "retention-apply" ||
+    !/^retention-apply-[a-f0-9]{64}$/.test(String(value["id"])) ||
+    !/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(
+      String(value["inputStateGeneration"]),
+    ) ||
+    !nonnegativeInteger(value["inputStateRevision"]) ||
+    !nonEmptyString(value["repositoryRoot"]) ||
+    !isAbsolute(value["repositoryRoot"]) ||
+    !nonEmptyString(value["targetBranch"]) ||
+    !commitId(value["verifiedCommit"]) ||
+    !["idle", "stopped"].includes(String(value["runStatus"])) ||
+    (value["runId"] !== null && !nonEmptyString(value["runId"])) ||
+    !timestampOrNull(value["retentionInitializedAt"]) ||
+    value["retentionInitializedAt"] === null ||
+    !timestampOrNull(value["previousLastPrunedAt"]) ||
+    (value["previousLastReportPath"] !== null &&
+      (!nonEmptyString(value["previousLastReportPath"]) ||
+        !isAbsolute(value["previousLastReportPath"]))) ||
+    !nonEmptyString(value["planPath"]) ||
+    !isAbsolute(value["planPath"]) ||
+    !sha256(value["planSha256"]) ||
+    !nonnegativeInteger(value["planBytes"]) ||
+    value["planBytes"] === 0 ||
+    !timestampOrNull(value["planGeneratedAt"]) ||
+    value["planGeneratedAt"] === null ||
+    !isRecord(value["candidate"]) ||
+    !hasOnlyKeys(value["candidate"], [
+      "commit",
+      "tree",
+      "dirty",
+      "worktreeSha256",
+    ]) ||
+    !commitId(value["candidate"]["commit"]) ||
+    !commitId(value["candidate"]["tree"]) ||
+    typeof value["candidate"]["dirty"] !== "boolean" ||
+    !sha256(value["candidate"]["worktreeSha256"]) ||
+    value["candidate"]["commit"] !== value["verifiedCommit"] ||
+    !nonnegativeInteger(value["keepRecentRuns"]) ||
+    !nonEmptyString(value["verificationArtifactRoot"]) ||
+    !isAbsolute(value["verificationArtifactRoot"]) ||
+    !strictlyContained(
+      value["repositoryRoot"],
+      value["verificationArtifactRoot"],
+    ) ||
+    !nonEmptyString(value["verificationArtifactRootRealpath"]) ||
+    !isAbsolute(value["verificationArtifactRootRealpath"]) ||
+    !strictlyContained(
+      value["repositoryRoot"],
+      value["verificationArtifactRootRealpath"],
+    ) ||
+    !stringArray(value["verificationObservedRunIds"]) ||
+    new Set(value["verificationObservedRunIds"]).size !==
+      value["verificationObservedRunIds"].length ||
+    !nonEmptyString(value["controllerArtifactRoot"]) ||
+    !isAbsolute(value["controllerArtifactRoot"]) ||
+    !strictlyContained(
+      value["repositoryRoot"],
+      value["controllerArtifactRoot"],
+    ) ||
+    !nonEmptyString(value["controllerArtifactRootRealpath"]) ||
+    !isAbsolute(value["controllerArtifactRootRealpath"]) ||
+    !strictlyContained(
+      value["repositoryRoot"],
+      value["controllerArtifactRootRealpath"],
+    ) ||
+    !stringArray(value["controllerObservedRunIds"]) ||
+    new Set(value["controllerObservedRunIds"]).size !==
+      value["controllerObservedRunIds"].length ||
+    value["verificationArtifactRoot"] === value["controllerArtifactRoot"] ||
+    !nonEmptyString(value["applyDirectory"]) ||
+    !isAbsolute(value["applyDirectory"]) ||
+    !strictlyContained(value["repositoryRoot"], value["applyDirectory"]) ||
+    value["id"] !== `retention-apply-${String(value["planSha256"])}` ||
+    resolve(String(value["applyDirectory"])) !==
+      resolve(
+        String(value["repositoryRoot"]),
+        "artifacts",
+        "orchestrator",
+        "retention",
+        "apply",
+        String(value["planSha256"]),
+      ) ||
+    !nonEmptyString(value["journalPath"]) ||
+    !isAbsolute(value["journalPath"]) ||
+    resolve(value["journalPath"]) !==
+      resolve(value["applyDirectory"], "journal.jsonl") ||
+    !nonEmptyString(value["resultPath"]) ||
+    !isAbsolute(value["resultPath"]) ||
+    resolve(value["resultPath"]) !==
+      resolve(value["applyDirectory"], "apply-result.json") ||
+    !Array.isArray(value["deletions"]) ||
+    !RETENTION_APPLY_PHASES.includes(value["phase"] as never) ||
+    !nonnegativeInteger(value["completedDeletionCount"]) ||
+    Number(value["completedDeletionCount"]) > value["deletions"].length ||
+    !timestampOrNull(value["createdAt"]) ||
+    value["createdAt"] === null ||
+    !timestampOrNull(value["updatedAt"]) ||
+    value["updatedAt"] === null ||
+    !timestampOrNull(value["completionAt"]) ||
+    value["completionAt"] === null ||
+    String(value["updatedAt"]) < String(value["createdAt"]) ||
+    String(value["completionAt"]) < String(value["createdAt"]) ||
+    value["recoveryPolicy"] !== "validate-resume-or-preserve"
+  )
+    return false;
+
+  for (const [ordinal, deletion] of value["deletions"].entries()) {
+    if (
+      !isRecord(deletion) ||
+      !hasOnlyKeys(deletion, [
+        "ordinal",
+        "root",
+        "runId",
+        "path",
+        "finishedAt",
+      ]) ||
+      deletion["ordinal"] !== ordinal ||
+      !["verification", "controller"].includes(String(deletion["root"])) ||
+      !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(String(deletion["runId"])) ||
+      !nonEmptyString(deletion["path"]) ||
+      !isAbsolute(deletion["path"]) ||
+      !timestampOrNull(deletion["finishedAt"]) ||
+      deletion["finishedAt"] === null
+    )
+      return false;
+    const root =
+      deletion["root"] === "verification"
+        ? value["verificationArtifactRoot"]
+        : value["controllerArtifactRoot"];
+    if (
+      resolve(String(deletion["path"])) !==
+      resolve(String(root), String(deletion["runId"]))
+    )
+      return false;
+  }
+  if (
+    new Set(
+      value["deletions"].map(
+        (deletion) =>
+          `${String(deletion["root"])}:${String(deletion["runId"])}`,
+      ),
+    ).size !== value["deletions"].length
+  )
+    return false;
+  if (
+    value["phase"] === "intent-persisted" &&
+    value["completedDeletionCount"] !== 0
+  )
+    return false;
+  if (
+    value["phase"] === "deletion-started" &&
+    Number(value["completedDeletionCount"]) >= value["deletions"].length
+  )
+    return false;
+  if (
+    value["phase"] === "result-written" &&
+    Number(value["completedDeletionCount"]) !== value["deletions"].length
+  )
+    return false;
+
+  const diagnostic = value["diagnostic"];
+  if ((value["phase"] === "blocked") !== (diagnostic !== null)) return false;
+  if (diagnostic === null) return true;
+  if (
+    !isRecord(diagnostic) ||
+    !hasOnlyKeys(diagnostic, [
+      "classification",
+      "message",
+      "observedAt",
+      "preservedPaths",
+      "quarantinePath",
+    ]) ||
+    ![
+      "candidate-drift",
+      "config-drift",
+      "eligibility-drift",
+      "journal-conflict",
+      "premature-run-missing",
+      "result-conflict",
+      "retention-root-unsafe",
+      "run-path-unsafe",
+    ].includes(String(diagnostic["classification"])) ||
+    !nonEmptyString(diagnostic["message"]) ||
+    !timestampOrNull(diagnostic["observedAt"]) ||
+    diagnostic["observedAt"] === null ||
+    !stringArray(diagnostic["preservedPaths"]) ||
+    diagnostic["preservedPaths"].some(
+      (path) =>
+        !isAbsolute(path) ||
+        !strictlyContained(String(value["repositoryRoot"]), path),
     ) ||
     diagnostic["quarantinePath"] !== null
   )
@@ -2133,10 +2373,43 @@ export function validateOrchestratorState(
     pendingOperation !== null &&
     !validWorkspaceCreateOperation(pendingOperation) &&
     !validTargetIntegrateOperation(pendingOperation) &&
-    !validWorkspaceCleanupOperation(pendingOperation)
+    !validWorkspaceCleanupOperation(pendingOperation) &&
+    !validRetentionApplyOperation(pendingOperation)
   ) {
     errors.push("State pending operation is invalid.");
   } else if (isRecord(pendingOperation)) {
+    if (pendingOperation["kind"] === "retention-apply") {
+      const retention = value["evidenceRetention"];
+      if (
+        !isRecord(repository) ||
+        repository["root"] !== pendingOperation["repositoryRoot"] ||
+        repository["targetBranch"] !== pendingOperation["targetBranch"] ||
+        repository["verifiedCommit"] !== pendingOperation["verifiedCommit"] ||
+        !isRecord(run) ||
+        run["status"] !== pendingOperation["runStatus"] ||
+        run["id"] !== pendingOperation["runId"] ||
+        !isRecord(retention) ||
+        retention["initializedAt"] !==
+          pendingOperation["retentionInitializedAt"] ||
+        retention["lastPrunedAt"] !==
+          pendingOperation["previousLastPrunedAt"] ||
+        retention["lastReportPath"] !==
+          pendingOperation["previousLastReportPath"] ||
+        !isRecord(reconciliation) ||
+        reconciliation["active"] !== null ||
+        Number(pendingOperation["inputStateRevision"]) >
+          Number(value["revision"])
+      )
+        errors.push(
+          "State retention-apply operation does not match its inactive controller context.",
+        );
+      return {
+        valid: errors.length === 0,
+        value:
+          errors.length === 0 ? (value as unknown as OrchestratorState) : null,
+        errors,
+      };
+    }
     const milestone = Array.isArray(milestones)
       ? milestones.find(
           (entry) =>

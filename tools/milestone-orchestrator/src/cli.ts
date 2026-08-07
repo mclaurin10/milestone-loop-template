@@ -11,10 +11,7 @@ import {
   releaseLeaseWithoutMasking,
 } from "./controller-lease.js";
 import { runDoctorDiagnostic } from "./doctor.js";
-import {
-  applyEvidenceRetentionPlan,
-  buildEvidenceRetentionPlan,
-} from "./evidence-retention.js";
+import { buildEvidenceRetentionPlan } from "./evidence-retention.js";
 import { runLiveModelPolicyCheck } from "./model-policy-check.js";
 import {
   MilestoneOrchestrator,
@@ -23,6 +20,7 @@ import {
 } from "./orchestrator.js";
 import { ReconciliationController } from "./reconciliation.js";
 import { redactSensitiveValue } from "./redaction.js";
+import { applyEvidenceRetentionPlan } from "./retention-apply-operation.js";
 import { demonstrateSafety } from "./safety-demonstration.js";
 import { atomicWriteJson, StateStore } from "./state-store.js";
 
@@ -253,21 +251,14 @@ async function main(): Promise<void> {
     });
     let retentionFailed = false;
     try {
-      const state = await new StateStore(
-        root,
-        config.statePath,
-      ).loadForMutation();
-      if (!state)
-        throw new Error(
-          "Retention apply requires initialized controller state.",
-        );
+      const store = new StateStore(root, config.statePath);
       output(
         await applyEvidenceRetentionPlan({
           repositoryRoot: root,
           planPath: resolve(root, args.plan!),
           expectedSha256: args.sha256!,
           config,
-          state,
+          store,
           now: new Date().toISOString(),
         }),
         args.json,

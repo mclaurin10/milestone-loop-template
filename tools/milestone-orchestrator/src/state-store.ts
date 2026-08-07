@@ -451,9 +451,11 @@ export function migrateOrchestratorState(value: unknown): unknown {
   if (migrated["schemaVersion"] === "1.6.0") {
     migrated = {
       ...migrated,
-      schemaVersion: STATE_SCHEMA_VERSION,
+      schemaVersion: "1.7.0",
     };
   }
+  if (migrated["schemaVersion"] === "1.7.0")
+    migrated = { ...migrated, schemaVersion: STATE_SCHEMA_VERSION };
   return migrated;
 }
 

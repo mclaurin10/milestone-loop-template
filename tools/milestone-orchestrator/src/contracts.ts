@@ -1,7 +1,7 @@
 export const LEGACY_MILESTONE_SCHEMA_VERSION = "1.0.0" as const;
 export const PREVIOUS_MILESTONE_SCHEMA_VERSION = "1.1.0" as const;
 export const MILESTONE_SCHEMA_VERSION = "1.2.0" as const;
-export const STATE_SCHEMA_VERSION = "1.7.0" as const;
+export const STATE_SCHEMA_VERSION = "1.8.0" as const;
 export const CONFIG_SCHEMA_VERSION = "1.4.0" as const;
 export const REVIEW_LEGACY_SCHEMA_VERSION = "1.0.0" as const;
 export const REVIEW_SCHEMA_VERSION = "1.1.0" as const;
@@ -828,10 +828,94 @@ export interface WorkspaceCleanupOperation {
   readonly diagnostic: WorkspaceCleanupDiagnostic | null;
 }
 
+export const RETENTION_APPLY_PHASES = [
+  "intent-persisted",
+  "deletion-started",
+  "deletion-finished",
+  "result-written",
+  "blocked",
+] as const;
+export type RetentionApplyPhase = (typeof RETENTION_APPLY_PHASES)[number];
+
+export type RetentionApplyRootName = "verification" | "controller";
+
+export interface RetentionCandidateIdentity {
+  readonly commit: string;
+  readonly tree: string;
+  readonly dirty: boolean;
+  readonly worktreeSha256: string;
+}
+
+export interface RetentionApplyDeletion {
+  readonly ordinal: number;
+  readonly root: RetentionApplyRootName;
+  readonly runId: string;
+  readonly path: string;
+  readonly finishedAt: string;
+}
+
+export type RetentionApplyBlockedClassification =
+  | "candidate-drift"
+  | "config-drift"
+  | "eligibility-drift"
+  | "journal-conflict"
+  | "premature-run-missing"
+  | "result-conflict"
+  | "retention-root-unsafe"
+  | "run-path-unsafe";
+
+export interface RetentionApplyDiagnostic {
+  readonly classification: RetentionApplyBlockedClassification;
+  readonly message: string;
+  readonly observedAt: string;
+  readonly preservedPaths: readonly string[];
+  readonly quarantinePath: null;
+}
+
+export interface RetentionApplyOperation {
+  readonly schemaVersion: typeof OPERATION_INTENT_SCHEMA_VERSION;
+  readonly kind: "retention-apply";
+  readonly id: string;
+  readonly inputStateGeneration: string;
+  readonly inputStateRevision: number;
+  readonly repositoryRoot: string;
+  readonly targetBranch: string;
+  readonly verifiedCommit: string;
+  readonly runStatus: OrchestratorState["run"]["status"];
+  readonly runId: string | null;
+  readonly retentionInitializedAt: string;
+  readonly previousLastPrunedAt: string | null;
+  readonly previousLastReportPath: string | null;
+  readonly planPath: string;
+  readonly planSha256: string;
+  readonly planBytes: number;
+  readonly planGeneratedAt: string;
+  readonly candidate: RetentionCandidateIdentity;
+  readonly keepRecentRuns: number;
+  readonly verificationArtifactRoot: string;
+  readonly verificationArtifactRootRealpath: string;
+  readonly verificationObservedRunIds: readonly string[];
+  readonly controllerArtifactRoot: string;
+  readonly controllerArtifactRootRealpath: string;
+  readonly controllerObservedRunIds: readonly string[];
+  readonly applyDirectory: string;
+  readonly journalPath: string;
+  readonly resultPath: string;
+  readonly deletions: readonly RetentionApplyDeletion[];
+  readonly phase: RetentionApplyPhase;
+  readonly completedDeletionCount: number;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+  readonly completionAt: string;
+  readonly recoveryPolicy: "validate-resume-or-preserve";
+  readonly diagnostic: RetentionApplyDiagnostic | null;
+}
+
 export type PendingOperation =
   | WorkspaceCreateOperation
   | TargetIntegrateOperation
-  | WorkspaceCleanupOperation;
+  | WorkspaceCleanupOperation
+  | RetentionApplyOperation;
 
 export type WorkspaceCleanupReason =
   | "legacy-pre-policy"

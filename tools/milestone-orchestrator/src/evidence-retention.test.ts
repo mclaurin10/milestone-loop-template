@@ -16,12 +16,13 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import type { OrchestratorState } from "./contracts.js";
 import {
-  applyEvidenceRetentionPlan,
   buildEvidenceRetentionPlan,
   discoverManagedEvidenceRuns,
   planManagedEvidenceRuns,
   type EvidenceRetentionPlan,
 } from "./evidence-retention.js";
+import { applyEvidenceRetentionPlan } from "./retention-apply-operation.js";
+import { StateStore } from "./state-store.js";
 import {
   validConfig,
   validReconciliationRecord,
@@ -330,6 +331,7 @@ describe("approval-bound retention apply", { timeout: 60_000 }, () => {
     readonly root: string;
     readonly config: ReturnType<typeof validConfig>;
     readonly state: OrchestratorState;
+    readonly store: StateStore;
     readonly plan: EvidenceRetentionPlan;
     readonly planPath: string;
     readonly sha256: string;
@@ -343,8 +345,9 @@ describe("approval-bound retention apply", { timeout: 60_000 }, () => {
     git(root, "init", "-b", "main");
     git(root, "config", "user.name", "Retention Apply Test");
     git(root, "config", "user.email", "retention@example.invalid");
+    await writeFile(join(root, ".gitignore"), "artifacts/\n");
     await writeFile(join(root, "record.md"), "Baseline evidence: cited-run\n");
-    git(root, "add", "record.md");
+    git(root, "add", ".gitignore", "record.md");
     git(root, "commit", "-m", "apply fixture base");
 
     const verificationRoot = join(root, "artifacts");
@@ -384,13 +387,29 @@ describe("approval-bound retention apply", { timeout: 60_000 }, () => {
       now: "2026-08-02T00:00:00.000Z",
       planner: trustedPlanner,
     });
-    const planPath = join(root, "retention-plan.json");
+    const planPath = join(
+      root,
+      "artifacts",
+      "orchestrator",
+      "retention",
+      "plans",
+      "fixture",
+      "plan.json",
+    );
+    await mkdir(join(planPath, ".."), { recursive: true });
     const planBytes = `${JSON.stringify(plan, null, 2)}\n`;
     await writeFile(planPath, planBytes, "utf8");
+    const store = new StateStore(
+      root,
+      config.statePath,
+      () => "2026-08-02T01:00:00.000Z",
+    );
+    await store.initialize(state);
     return {
       root,
       config,
       state,
+      store,
       plan,
       planPath,
       sha256: createHash("sha256").update(planBytes).digest("hex"),
@@ -409,7 +428,7 @@ describe("approval-bound retention apply", { timeout: 60_000 }, () => {
       planPath: fixture.planPath,
       expectedSha256: fixture.sha256,
       config: fixture.config,
-      state: fixture.state,
+      store: fixture.store,
       now: "2026-08-02T01:00:00.000Z",
       planner: trustedPlanner,
     });
@@ -462,6 +481,45 @@ describe("approval-bound retention apply", { timeout: 60_000 }, () => {
         ),
       ),
     ).toMatchObject({ planSha256: fixture.sha256 });
+    const [completedState, journalBefore] = await Promise.all([
+      fixture.store.load(),
+      readFile(result.journalPath),
+    ]);
+    const repeated = await applyEvidenceRetentionPlan({
+      repositoryRoot: fixture.root,
+      planPath: fixture.planPath,
+      expectedSha256: fixture.sha256,
+      config: fixture.config,
+      store: fixture.store,
+      now: "2026-08-02T02:00:00.000Z",
+      planner: trustedPlanner,
+    });
+    expect(repeated).toEqual(result);
+    expect((await fixture.store.load())?.revision).toBe(
+      completedState?.revision,
+    );
+    expect(await readFile(result.journalPath)).toEqual(journalBefore);
+
+    const resultPath = join(result.applyDirectory, "apply-result.json");
+    await writeFile(
+      resultPath,
+      `${JSON.stringify({ ...result, deleted: [] }, null, 2)}\n`,
+      "utf8",
+    );
+    await expect(
+      applyEvidenceRetentionPlan({
+        repositoryRoot: fixture.root,
+        planPath: fixture.planPath,
+        expectedSha256: fixture.sha256,
+        config: fixture.config,
+        store: fixture.store,
+        now: "2026-08-02T03:00:00.000Z",
+        planner: trustedPlanner,
+      }),
+    ).rejects.toThrow(/exact approved result or journal/);
+    expect((await fixture.store.load())?.revision).toBe(
+      completedState?.revision,
+    );
   });
 
   async function expectNothingDeleted(fixture: ApplyFixture): Promise<void> {
@@ -479,7 +537,7 @@ describe("approval-bound retention apply", { timeout: 60_000 }, () => {
         planPath: fixture.planPath,
         expectedSha256: "0".repeat(64),
         config: fixture.config,
-        state: fixture.state,
+        store: fixture.store,
         now: "2026-08-02T01:00:00.000Z",
         planner: trustedPlanner,
       }),
@@ -498,31 +556,98 @@ describe("approval-bound retention apply", { timeout: 60_000 }, () => {
         planPath: fixture.planPath,
         expectedSha256: fixture.sha256,
         config: fixture.config,
-        state: fixture.state,
+        store: fixture.store,
         now: "2026-08-02T01:00:00.000Z",
         planner: trustedPlanner,
       }),
-    ).rejects.toThrow(/candidate advanced/);
+    ).rejects.toThrow(/candidate bytes advanced/);
+    await expectNothingDeleted(fixture);
+  });
+
+  it("refuses when already-dirty tracked bytes change without changing status", async () => {
+    const fixture = await applyFixture();
+    await writeFile(
+      join(fixture.root, "record.md"),
+      "Baseline evidence: cited-run\nDirty version one.\n",
+    );
+    const plan = await buildEvidenceRetentionPlan({
+      repositoryRoot: fixture.root,
+      config: fixture.config,
+      state: fixture.state,
+      now: "2026-08-02T00:30:00.000Z",
+      planner: trustedPlanner,
+    });
+    const bytes = `${JSON.stringify(plan, null, 2)}\n`;
+    await writeFile(fixture.planPath, bytes, "utf8");
+    const sha256 = createHash("sha256").update(bytes).digest("hex");
+    await writeFile(
+      join(fixture.root, "record.md"),
+      "Baseline evidence: cited-run\nDirty version two.\n",
+    );
+    await expect(
+      applyEvidenceRetentionPlan({
+        repositoryRoot: fixture.root,
+        planPath: fixture.planPath,
+        expectedSha256: sha256,
+        config: fixture.config,
+        store: fixture.store,
+        now: "2026-08-02T01:00:00.000Z",
+        planner: trustedPlanner,
+      }),
+    ).rejects.toThrow(/candidate bytes advanced/);
+    await expectNothingDeleted(fixture);
+  });
+
+  it("rejects a hash-approved plan with a non-canonical deletion path", async () => {
+    const fixture = await applyFixture();
+    const malformed = structuredClone(fixture.plan) as unknown as {
+      verificationRuns: {
+        plannedDeletions: { id: string; path: string; finishedAt: string }[];
+      };
+    };
+    malformed.verificationRuns.plannedDeletions[0]!.path = join(
+      fixture.verificationRoot,
+      "recent-run",
+    );
+    const bytes = `${JSON.stringify(malformed, null, 2)}\n`;
+    await writeFile(fixture.planPath, bytes, "utf8");
+    const sha256 = createHash("sha256").update(bytes).digest("hex");
+    await expect(
+      applyEvidenceRetentionPlan({
+        repositoryRoot: fixture.root,
+        planPath: fixture.planPath,
+        expectedSha256: sha256,
+        config: fixture.config,
+        store: fixture.store,
+        now: "2026-08-02T01:00:00.000Z",
+        planner: trustedPlanner,
+      }),
+    ).rejects.toThrow(/canonical mode:plan 1\.2\.0/);
     await expectNothingDeleted(fixture);
   });
 
   it("refuses when a planned run became cited", async () => {
     const fixture = await applyFixture();
-    const cited: OrchestratorState = {
+    await fixture.store.save({
       ...fixture.state,
-      run: { ...fixture.state.run, id: "prune-run" },
-    };
+      evidenceRetention: {
+        ...fixture.state.evidenceRetention,
+        legacyRunIds: ["prune-run"],
+      },
+    });
     await expect(
       applyEvidenceRetentionPlan({
         repositoryRoot: fixture.root,
         planPath: fixture.planPath,
         expectedSha256: fixture.sha256,
         config: fixture.config,
-        state: cited,
+        store: fixture.store,
         now: "2026-08-02T01:00:00.000Z",
         planner: trustedPlanner,
       }),
-    ).rejects.toThrow(/run-became-cited: verification:prune-run/);
+    ).rejects.toThrow(
+      /exact target is no longer eligible.*verification:prune-run/,
+    );
     await expectNothingDeleted(fixture);
   });
 
@@ -538,11 +663,13 @@ describe("approval-bound retention apply", { timeout: 60_000 }, () => {
         planPath: fixture.planPath,
         expectedSha256: fixture.sha256,
         config: fixture.config,
-        state: fixture.state,
+        store: fixture.store,
         now: "2026-08-02T01:00:00.000Z",
         planner: trustedPlanner,
       }),
-    ).rejects.toThrow(/run-became-recent: verification:prune-run/);
+    ).rejects.toThrow(
+      /exact target is no longer eligible.*verification:prune-run/,
+    );
     expect(await exists(join(fixture.verificationRoot, "prune-run"))).toBe(
       true,
     );
@@ -560,11 +687,13 @@ describe("approval-bound retention apply", { timeout: 60_000 }, () => {
         planPath: fixture.planPath,
         expectedSha256: fixture.sha256,
         config: fixture.config,
-        state: fixture.state,
+        store: fixture.store,
         now: "2026-08-02T01:00:00.000Z",
         planner: trustedPlanner,
       }),
-    ).rejects.toThrow(/run-missing: verification:prune-run/);
+    ).rejects.toThrow(
+      /exact target is no longer eligible.*verification:prune-run/,
+    );
     expect(
       await exists(join(fixture.controllerRoot, "old-controller-run")),
     ).toBe(true);
@@ -572,58 +701,98 @@ describe("approval-bound retention apply", { timeout: 60_000 }, () => {
 
   it("refuses when suspension appeared after approval", async () => {
     const fixture = await applyFixture();
-    const escalated: OrchestratorState = {
+    await fixture.store.save({
       ...fixture.state,
-      run: { ...fixture.state.run, status: "escalated" },
-    };
+      run: {
+        ...fixture.state.run,
+        id: "escalated-run",
+        status: "escalated",
+        startedAt: "2026-08-01T23:00:00.000Z",
+        finishedAt: "2026-08-02T00:00:00.000Z",
+        stopReason: "Escalated history is unresolved.",
+        artifactDirectory: join(fixture.controllerRoot, "escalated-run"),
+      },
+      nextAllowedAction: "stop",
+    });
     await expect(
       applyEvidenceRetentionPlan({
         repositoryRoot: fixture.root,
         planPath: fixture.planPath,
         expectedSha256: fixture.sha256,
         config: fixture.config,
-        state: escalated,
+        store: fixture.store,
         now: "2026-08-02T01:00:00.000Z",
         planner: trustedPlanner,
       }),
-    ).rejects.toThrow(/suspension-appeared.*unresolved-escalated-history/);
+    ).rejects.toThrow(/escalated controller history is unresolved/);
     await expectNothingDeleted(fixture);
   });
 
   it("refuses while a reconciliation is active or a run is live", async () => {
     const fixture = await applyFixture();
+    const reconciliation = validReconciliationRecord();
     const reconciling: OrchestratorState = {
       ...fixture.state,
-      reconciliation: { active: validReconciliationRecord(), history: [] },
+      controllerHistory: [
+        {
+          schemaVersion: "1.0.0",
+          id: reconciliation.sourceArchiveId,
+          rawSourceState: reconciliation.sourceState,
+          sourceStateSchemaVersion: "1.2.0",
+          sourceRevision: fixture.state.revision,
+          priorVerifiedCommit: fixture.state.repository.verifiedCommit,
+          priorRun: structuredClone(fixture.state.run) as unknown as Readonly<
+            Record<string, unknown>
+          >,
+          priorQueue: fixture.state.queue,
+          priorActiveMilestoneId: fixture.state.activeMilestoneId,
+          priorNextAllowedAction: fixture.state.nextAllowedAction,
+          archivedAt: "2026-08-04T00:00:00.000Z",
+          reason: "external-integration-reconciliation",
+        },
+      ],
+      reconciliation: { active: reconciliation, history: [] },
+      nextAllowedAction: "reconcile",
     };
+    await fixture.store.save(reconciling);
     await expect(
       applyEvidenceRetentionPlan({
         repositoryRoot: fixture.root,
         planPath: fixture.planPath,
         expectedSha256: fixture.sha256,
         config: fixture.config,
-        state: reconciling,
+        store: fixture.store,
         now: "2026-08-02T01:00:00.000Z",
         planner: trustedPlanner,
       }),
     ).rejects.toThrow(/reconciliation is active/);
 
-    const running: OrchestratorState = {
-      ...fixture.state,
-      run: { ...fixture.state.run, status: "running" },
-    };
+    const liveFixture = await applyFixture();
+    await liveFixture.store.save({
+      ...liveFixture.state,
+      run: {
+        ...liveFixture.state.run,
+        id: "live-run",
+        status: "running",
+        startedAt: "2026-08-02T00:30:00.000Z",
+        deadlineAt: "2026-08-03T00:30:00.000Z",
+        artifactDirectory: join(liveFixture.controllerRoot, "live-run"),
+      },
+      nextAllowedAction: "plan",
+    });
     await expect(
       applyEvidenceRetentionPlan({
-        repositoryRoot: fixture.root,
-        planPath: fixture.planPath,
-        expectedSha256: fixture.sha256,
-        config: fixture.config,
-        state: running,
+        repositoryRoot: liveFixture.root,
+        planPath: liveFixture.planPath,
+        expectedSha256: liveFixture.sha256,
+        config: liveFixture.config,
+        store: liveFixture.store,
         now: "2026-08-02T01:00:00.000Z",
         planner: trustedPlanner,
       }),
     ).rejects.toThrow(/run is active/);
     await expectNothingDeleted(fixture);
+    await expectNothingDeleted(liveFixture);
   });
 
   it("refuses when the retention configuration changed", async () => {
@@ -636,15 +805,15 @@ describe("approval-bound retention apply", { timeout: 60_000 }, () => {
         config: validConfig({
           evidenceRetention: { artifactRoot: "artifacts", keepRecentRuns: 2 },
         }),
-        state: fixture.state,
+        store: fixture.store,
         now: "2026-08-02T01:00:00.000Z",
         planner: trustedPlanner,
       }),
-    ).rejects.toThrow(/config-changed/);
+    ).rejects.toThrow(/configuration changed/);
     await expectNothingDeleted(fixture);
   });
 
-  it("resumes an interrupted apply idempotently and tolerates a torn journal tail", async () => {
+  it("rejects a forged journal that has no canonical delete authorization", async () => {
     const fixture = await applyFixture();
     const applyDirectory = join(
       fixture.root,
@@ -652,7 +821,7 @@ describe("approval-bound retention apply", { timeout: 60_000 }, () => {
       "orchestrator",
       "retention",
       "apply",
-      fixture.sha256.slice(0, 16),
+      fixture.sha256,
     );
     const journalPath = join(applyDirectory, "journal.jsonl");
     await mkdir(applyDirectory, { recursive: true });
@@ -667,42 +836,140 @@ describe("approval-bound retention apply", { timeout: 60_000 }, () => {
       })}\n`,
       "utf8",
     );
-    await rm(join(fixture.verificationRoot, "prune-run"), {
-      recursive: true,
-      force: true,
+    await expect(
+      applyEvidenceRetentionPlan({
+        repositoryRoot: fixture.root,
+        planPath: fixture.planPath,
+        expectedSha256: fixture.sha256,
+        config: fixture.config,
+        store: fixture.store,
+        now: "2026-08-02T01:00:00.000Z",
+        planner: trustedPlanner,
+      }),
+    ).rejects.toThrow(/journal.*conflict/i);
+    await expectNothingDeleted(fixture);
+    const blocked = await fixture.store.load();
+    expect(blocked?.pendingOperation).toMatchObject({
+      kind: "retention-apply",
+      phase: "blocked",
+      diagnostic: { classification: "journal-conflict" },
     });
+  });
 
-    const first = await applyEvidenceRetentionPlan({
-      repositoryRoot: fixture.root,
-      planPath: fixture.planPath,
-      expectedSha256: fixture.sha256,
-      config: fixture.config,
-      state: fixture.state,
-      now: "2026-08-02T01:00:00.000Z",
-      planner: trustedPlanner,
-    });
-    expect(first.deleted.map((entry) => entry.id).sort()).toEqual([
-      "old-controller-run",
-      "prune-run",
-    ]);
+  it("blocks and preserves a conflicting result before the remaining deletion", async () => {
+    const fixture = await applyFixture();
+    await expect(
+      applyEvidenceRetentionPlan({
+        repositoryRoot: fixture.root,
+        planPath: fixture.planPath,
+        expectedSha256: fixture.sha256,
+        config: fixture.config,
+        store: fixture.store,
+        now: "2026-08-02T01:00:00.000Z",
+        planner: trustedPlanner,
+        hooks: {
+          fault: (point) => {
+            if (point === "after-deletion-finished-state")
+              throw new Error("simulated result-boundary loss");
+          },
+        },
+      }),
+    ).rejects.toThrow(/simulated result-boundary loss/);
+    const interrupted = await fixture.store.load();
+    const operation = interrupted?.pendingOperation;
+    if (!operation || operation.kind !== "retention-apply")
+      throw new Error("Expected a pending retention operation.");
+    await writeFile(operation.resultPath, "{}\n", "utf8");
+
+    await expect(
+      applyEvidenceRetentionPlan({
+        repositoryRoot: fixture.root,
+        planPath: fixture.planPath,
+        expectedSha256: fixture.sha256,
+        config: fixture.config,
+        store: fixture.store,
+        now: "2026-08-02T02:00:00.000Z",
+        planner: trustedPlanner,
+      }),
+    ).rejects.toThrow(/result.*conflict/i);
     expect(
       await exists(join(fixture.controllerRoot, "old-controller-run")),
-    ).toBe(false);
+    ).toBe(true);
+    expect(await readFile(operation.resultPath, "utf8")).toBe("{}\n");
+    expect((await fixture.store.load())?.pendingOperation).toMatchObject({
+      kind: "retention-apply",
+      phase: "blocked",
+      completedDeletionCount: 1,
+      diagnostic: { classification: "result-conflict" },
+    });
+  });
 
-    await appendFile(journalPath, '{"event":"del', "utf8");
-    const second = await applyEvidenceRetentionPlan({
+  it("resumes canonical delete-started state through a torn journal suffix", async () => {
+    const fixture = await applyFixture();
+    await expect(
+      applyEvidenceRetentionPlan({
+        repositoryRoot: fixture.root,
+        planPath: fixture.planPath,
+        expectedSha256: fixture.sha256,
+        config: fixture.config,
+        store: fixture.store,
+        now: "2026-08-02T01:00:00.000Z",
+        planner: trustedPlanner,
+        hooks: {
+          fault: (point) => {
+            if (point === "after-journal-deleting")
+              throw new Error("simulated hard loss");
+          },
+        },
+      }),
+    ).rejects.toThrow(/simulated hard loss/);
+    const interrupted = await fixture.store.load();
+    const operation = interrupted?.pendingOperation;
+    expect(operation).toMatchObject({
+      kind: "retention-apply",
+      phase: "deletion-started",
+      completedDeletionCount: 0,
+    });
+    if (!operation || operation.kind !== "retention-apply")
+      throw new Error("Expected a pending retention operation.");
+    const deletion = operation.deletions[0]!;
+    const tornLine = `${JSON.stringify({
+      schemaVersion: "1.0.0",
+      operationId: operation.id,
+      planSha256: operation.planSha256,
+      event: "deleted",
+      ordinal: deletion.ordinal,
+      root: deletion.root,
+      runId: deletion.runId,
+      path: deletion.path,
+      at: operation.completionAt,
+    })}\n`;
+    await appendFile(operation.journalPath, tornLine.slice(0, 23), "utf8");
+
+    const result = await applyEvidenceRetentionPlan({
       repositoryRoot: fixture.root,
       planPath: fixture.planPath,
       expectedSha256: fixture.sha256,
       config: fixture.config,
-      state: fixture.state,
+      store: fixture.store,
       now: "2026-08-02T02:00:00.000Z",
       planner: trustedPlanner,
     });
-    expect(second.deleted).toEqual([]);
-    expect(second.skippedJournaledRunIds).toEqual([
-      "controller:old-controller-run",
-      "verification:prune-run",
+    expect(result.deleted.map((entry) => entry.id).sort()).toEqual([
+      "old-controller-run",
+      "prune-run",
     ]);
+    const journal = (await readFile(result.journalPath, "utf8"))
+      .trim()
+      .split("\n")
+      .map((line) => JSON.parse(line) as Record<string, unknown>);
+    expect(journal).toHaveLength(4);
+    expect(journal.map((entry) => entry["event"])).toEqual([
+      "deleting",
+      "deleted",
+      "deleting",
+      "deleted",
+    ]);
+    expect((await fixture.store.load())?.pendingOperation).toBeNull();
   });
 });

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://milestone-loop.local/schemas/orchestrator-state-1.7.0.json",
+  "$id": "https://milestone-loop.local/schemas/orchestrator-state-1.8.0.json",
   "title": "Example Project Orchestrator State",
   "type": "object",
   "additionalProperties": false,
@@ -23,7 +23,7 @@
     "updatedAt"
   ],
   "properties": {
-    "schemaVersion": { "const": "1.7.0" },
+    "schemaVersion": { "const": "1.8.0" },
     "revision": { "type": "integer", "minimum": 0 },
     "repository": { "type": "object" },
     "queue": {
@@ -118,7 +118,8 @@
         { "type": "null" },
         { "$ref": "#/$defs/workspaceCreateOperation" },
         { "$ref": "#/$defs/targetIntegrateOperation" },
-        { "$ref": "#/$defs/workspaceCleanupOperation" }
+        { "$ref": "#/$defs/workspaceCleanupOperation" },
+        { "$ref": "#/$defs/retentionApplyOperation" }
       ]
     },
     "nextAllowedAction": {
@@ -545,6 +546,199 @@
                     "state-workspace-inconsistent",
                     "workspace-identity-drift",
                     "workspace-root-unsafe"
+                  ]
+                },
+                "message": { "type": "string", "minLength": 1 },
+                "observedAt": { "type": "string", "format": "date-time" },
+                "preservedPaths": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": { "type": "string", "minLength": 1 }
+                },
+                "quarantinePath": { "type": "null" }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "retentionApplyOperation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "kind",
+        "id",
+        "inputStateGeneration",
+        "inputStateRevision",
+        "repositoryRoot",
+        "targetBranch",
+        "verifiedCommit",
+        "runStatus",
+        "runId",
+        "retentionInitializedAt",
+        "previousLastPrunedAt",
+        "previousLastReportPath",
+        "planPath",
+        "planSha256",
+        "planBytes",
+        "planGeneratedAt",
+        "candidate",
+        "keepRecentRuns",
+        "verificationArtifactRoot",
+        "verificationArtifactRootRealpath",
+        "verificationObservedRunIds",
+        "controllerArtifactRoot",
+        "controllerArtifactRootRealpath",
+        "controllerObservedRunIds",
+        "applyDirectory",
+        "journalPath",
+        "resultPath",
+        "deletions",
+        "phase",
+        "completedDeletionCount",
+        "createdAt",
+        "updatedAt",
+        "completionAt",
+        "recoveryPolicy",
+        "diagnostic"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "kind": { "const": "retention-apply" },
+        "id": {
+          "type": "string",
+          "pattern": "^retention-apply-[a-f0-9]{64}$"
+        },
+        "inputStateGeneration": {
+          "type": "string",
+          "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$"
+        },
+        "inputStateRevision": { "type": "integer", "minimum": 0 },
+        "repositoryRoot": { "type": "string", "minLength": 1 },
+        "targetBranch": { "type": "string", "minLength": 1 },
+        "verifiedCommit": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "runStatus": { "enum": ["idle", "stopped"] },
+        "runId": { "type": ["string", "null"] },
+        "retentionInitializedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "previousLastPrunedAt": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        },
+        "previousLastReportPath": { "type": ["string", "null"] },
+        "planPath": { "type": "string", "minLength": 1 },
+        "planSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "planBytes": { "type": "integer", "minimum": 1 },
+        "planGeneratedAt": { "type": "string", "format": "date-time" },
+        "candidate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["commit", "tree", "dirty", "worktreeSha256"],
+          "properties": {
+            "commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+            "tree": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+            "dirty": { "type": "boolean" },
+            "worktreeSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        },
+        "keepRecentRuns": { "type": "integer", "minimum": 0 },
+        "verificationArtifactRoot": { "type": "string", "minLength": 1 },
+        "verificationArtifactRootRealpath": {
+          "type": "string",
+          "minLength": 1
+        },
+        "verificationObservedRunIds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+          }
+        },
+        "controllerArtifactRoot": { "type": "string", "minLength": 1 },
+        "controllerArtifactRootRealpath": {
+          "type": "string",
+          "minLength": 1
+        },
+        "controllerObservedRunIds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+          }
+        },
+        "applyDirectory": { "type": "string", "minLength": 1 },
+        "journalPath": { "type": "string", "minLength": 1 },
+        "resultPath": { "type": "string", "minLength": 1 },
+        "deletions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["ordinal", "root", "runId", "path", "finishedAt"],
+            "properties": {
+              "ordinal": { "type": "integer", "minimum": 0 },
+              "root": { "enum": ["verification", "controller"] },
+              "runId": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+              },
+              "path": { "type": "string", "minLength": 1 },
+              "finishedAt": { "type": "string", "format": "date-time" }
+            }
+          }
+        },
+        "phase": {
+          "enum": [
+            "intent-persisted",
+            "deletion-started",
+            "deletion-finished",
+            "result-written",
+            "blocked"
+          ]
+        },
+        "completedDeletionCount": { "type": "integer", "minimum": 0 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "completionAt": { "type": "string", "format": "date-time" },
+        "recoveryPolicy": { "const": "validate-resume-or-preserve" },
+        "diagnostic": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "classification",
+                "message",
+                "observedAt",
+                "preservedPaths",
+                "quarantinePath"
+              ],
+              "properties": {
+                "classification": {
+                  "enum": [
+                    "candidate-drift",
+                    "config-drift",
+                    "eligibility-drift",
+                    "journal-conflict",
+                    "premature-run-missing",
+                    "result-conflict",
+                    "retention-root-unsafe",
+                    "run-path-unsafe"
                   ]
                 },
                 "message": { "type": "string", "minLength": 1 },

@@ -1,22 +1,16 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import {
-  appendFile,
-  lstat,
-  mkdir,
-  readFile,
-  readdir,
-  realpath,
-} from "node:fs/promises";
+import { lstatSync, readFileSync, readlinkSync } from "node:fs";
+import { lstat, mkdir, readFile, readdir, realpath } from "node:fs/promises";
 import { resolve } from "node:path";
 
-import type { OrchestratorConfig, OrchestratorState } from "./contracts.js";
+import type {
+  OrchestratorConfig,
+  OrchestratorState,
+  RetentionCandidateIdentity,
+} from "./contracts.js";
 import { readArtifactInventoryRetentionGuard } from "./artifact-inventory.js";
-import {
-  assertExistingContainedPath,
-  removeContainedPath,
-} from "./path-safety.js";
-import { atomicWriteJson } from "./state-store.js";
+import { assertExistingContainedPath } from "./path-safety.js";
 
 export interface ManagedEvidenceRun {
   readonly id: string;
@@ -257,36 +251,91 @@ export async function planManagedEvidenceRuns(input: {
   };
 }
 
-export interface RetentionCandidate {
-  readonly commit: string;
-  readonly tree: string;
+export type RetentionCandidate = RetentionCandidateIdentity;
+
+function gitCandidateOutput(
+  repositoryRoot: string,
+  args: readonly string[],
+): Buffer {
+  const result = spawnSync("git", ["-C", repositoryRoot, ...args], {
+    encoding: "buffer",
+    env: { ...process.env, GIT_OPTIONAL_LOCKS: "0" },
+    maxBuffer: 64 * 1024 * 1024,
+    windowsHide: true,
+  });
+  if (result.error || result.status !== 0)
+    throw new Error(
+      `Cannot capture the retention candidate identity (git ${args.join(" ")}): ${result.error?.message ?? result.stderr.toString("utf8").trim()}.`,
+    );
+  return result.stdout;
+}
+
+function retentionWorktreeFingerprint(repositoryRoot: string): {
   readonly dirty: boolean;
+  readonly worktreeSha256: string;
+} {
+  const status = gitCandidateOutput(repositoryRoot, [
+    "status",
+    "--porcelain=v2",
+    "-z",
+    "--untracked-files=all",
+  ]);
+  const diff = gitCandidateOutput(repositoryRoot, [
+    "diff",
+    "--binary",
+    "--no-ext-diff",
+    "--full-index",
+    "HEAD",
+    "--",
+  ]);
+  const untrackedOutput = gitCandidateOutput(repositoryRoot, [
+    "ls-files",
+    "--others",
+    "--exclude-standard",
+    "-z",
+  ]);
+  const untracked = untrackedOutput
+    .toString("utf8")
+    .split("\0")
+    .filter((path) => path.length > 0)
+    .sort();
+  const hash = createHash("sha256")
+    .update("retention-candidate-v1\0")
+    .update(status)
+    .update("\0diff\0")
+    .update(diff);
+  for (const path of untracked) {
+    const absolute = resolve(repositoryRoot, path);
+    const metadata = lstatSync(absolute);
+    hash.update("\0untracked\0").update(path).update("\0");
+    if (metadata.isSymbolicLink())
+      hash.update("symlink\0").update(readlinkSync(absolute));
+    else if (metadata.isFile())
+      hash.update("file\0").update(readFileSync(absolute));
+    else hash.update(`other:${metadata.mode}\0`);
+  }
+  return {
+    dirty: status.length > 0,
+    worktreeSha256: hash.digest("hex"),
+  };
 }
 
 export function captureRetentionCandidate(
   repositoryRoot: string,
 ): RetentionCandidate {
-  const output = (args: readonly string[]): string => {
-    const result = spawnSync("git", ["-C", repositoryRoot, ...args], {
-      encoding: "utf8",
-      windowsHide: true,
-    });
-    if (result.error || result.status !== 0)
-      throw new Error(
-        `Cannot capture the retention candidate identity (git ${args.join(" ")}): ${result.error?.message ?? result.stderr.trim()}.`,
-      );
-    return result.stdout;
-  };
-  const commit = output(["rev-parse", "HEAD"]).trim();
-  const tree = output(["rev-parse", "HEAD^{tree}"]).trim();
+  const commit = gitCandidateOutput(repositoryRoot, ["rev-parse", "HEAD"])
+    .toString("utf8")
+    .trim();
+  const tree = gitCandidateOutput(repositoryRoot, ["rev-parse", "HEAD^{tree}"])
+    .toString("utf8")
+    .trim();
   if (!/^[0-9a-f]{40}$/.test(commit) || !/^[0-9a-f]{40}$/.test(tree))
     throw new Error("Retention candidate identity is malformed.");
-  const status = output(["status", "--porcelain=v1", "--untracked-files=all"]);
-  return { commit, tree, dirty: status.trim().length > 0 };
+  return { commit, tree, ...retentionWorktreeFingerprint(repositoryRoot) };
 }
 
 export interface EvidenceRetentionPlan {
-  readonly schemaVersion: "1.1.0";
+  readonly schemaVersion: "1.2.0";
   readonly mode: "plan";
   readonly generatedAt: string;
   readonly candidate: RetentionCandidate;
@@ -344,7 +393,7 @@ export async function buildEvidenceRetentionPlan(input: {
     }),
   ]);
   return {
-    schemaVersion: "1.1.0",
+    schemaVersion: "1.2.0",
     mode: "plan",
     generatedAt: input.now,
     candidate,
@@ -359,333 +408,180 @@ export async function buildEvidenceRetentionPlan(input: {
   };
 }
 
-function validPlannedDeletion(
-  value: unknown,
-): value is PlannedEvidenceDeletion {
+function record(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function onlyKeys(
+  value: Record<string, unknown>,
+  keys: readonly string[],
+): boolean {
+  const actual = Object.keys(value).sort();
   return (
-    typeof value === "object" &&
-    value !== null &&
-    !Array.isArray(value) &&
-    typeof (value as Record<string, unknown>)["id"] === "string" &&
-    typeof (value as Record<string, unknown>)["path"] === "string" &&
-    typeof (value as Record<string, unknown>)["finishedAt"] === "string"
+    actual.length === keys.length &&
+    actual.every((key, index) => key === [...keys].sort()[index])
   );
 }
 
-function validPlanSection(value: unknown): value is EvidenceRetentionReport {
-  if (typeof value !== "object" || value === null || Array.isArray(value))
-    return false;
-  const record = value as Record<string, unknown>;
+function timestamp(value: unknown): value is string {
+  return typeof value === "string" && Number.isFinite(Date.parse(value));
+}
+
+function runIdArray(value: unknown): value is string[] {
   return (
-    record["schemaVersion"] === "1.1.0" &&
-    record["mode"] === "plan" &&
-    typeof record["artifactRoot"] === "string" &&
-    typeof record["artifactRootRealpath"] === "string" &&
-    typeof record["suspended"] === "boolean" &&
-    Array.isArray(record["observedRunIds"]) &&
-    Array.isArray(record["citedRunIds"]) &&
-    Array.isArray(record["recentRunIds"]) &&
-    Array.isArray(record["suspensionReasons"]) &&
-    Array.isArray(record["plannedDeletions"]) &&
-    record["plannedDeletions"].every(validPlannedDeletion)
+    Array.isArray(value) &&
+    value.every((entry) => typeof entry === "string" && safeRunId(entry)) &&
+    new Set(value).size === value.length
   );
+}
+
+function validPlanSection(
+  value: unknown,
+  expected: {
+    readonly manifestKind: EvidenceManifestKind;
+    readonly generatedAt: string;
+    readonly keepRecentRuns: number;
+  },
+): value is EvidenceRetentionReport {
+  if (!record(value)) return false;
+  const keys = [
+    "schemaVersion",
+    "mode",
+    "artifactRoot",
+    "artifactRootRealpath",
+    "manifestKind",
+    "keepRecentRuns",
+    "observedRunIds",
+    "legacyRunIds",
+    "citedRunIds",
+    "recentRunIds",
+    "eligibleRunIds",
+    "plannedDeletions",
+    "suspended",
+    "suspensionReasons",
+    "generatedAt",
+  ] as const;
+  if (
+    !onlyKeys(value, keys) ||
+    value["schemaVersion"] !== "1.1.0" ||
+    value["mode"] !== "plan" ||
+    typeof value["artifactRoot"] !== "string" ||
+    typeof value["artifactRootRealpath"] !== "string" ||
+    value["manifestKind"] !== expected.manifestKind ||
+    value["keepRecentRuns"] !== expected.keepRecentRuns ||
+    value["generatedAt"] !== expected.generatedAt ||
+    !runIdArray(value["observedRunIds"]) ||
+    !runIdArray(value["legacyRunIds"]) ||
+    !runIdArray(value["citedRunIds"]) ||
+    !runIdArray(value["recentRunIds"]) ||
+    !runIdArray(value["eligibleRunIds"]) ||
+    typeof value["suspended"] !== "boolean" ||
+    !Array.isArray(value["suspensionReasons"]) ||
+    value["suspensionReasons"].some(
+      (reason) =>
+        ![
+          "candidate-controller-mismatch",
+          "active-reconciliation",
+          "unresolved-escalated-history",
+          "unknown-reference",
+        ].includes(String(reason)),
+    ) ||
+    new Set(value["suspensionReasons"]).size !==
+      value["suspensionReasons"].length ||
+    value["suspended"] !== value["suspensionReasons"].length > 0 ||
+    !Array.isArray(value["plannedDeletions"])
+  )
+    return false;
+  const observedRunIds = value["observedRunIds"] as string[];
+  const legacyRunIds = value["legacyRunIds"] as string[];
+  const citedRunIds = value["citedRunIds"] as string[];
+  const recentRunIds = value["recentRunIds"] as string[];
+  const eligibleRunIds = value["eligibleRunIds"] as string[];
+  const observed = new Set(observedRunIds);
+  if (
+    [...legacyRunIds, ...citedRunIds, ...recentRunIds, ...eligibleRunIds].some(
+      (id) => !observed.has(id),
+    ) ||
+    eligibleRunIds.some(
+      (id) =>
+        legacyRunIds.includes(id) ||
+        citedRunIds.includes(id) ||
+        recentRunIds.includes(id),
+    )
+  )
+    return false;
+  for (const deletion of value["plannedDeletions"]) {
+    if (
+      !record(deletion) ||
+      !onlyKeys(deletion, ["id", "path", "finishedAt"]) ||
+      typeof deletion["id"] !== "string" ||
+      !safeRunId(deletion["id"]) ||
+      typeof deletion["path"] !== "string" ||
+      resolve(deletion["path"]) !==
+        resolve(value["artifactRoot"], deletion["id"]) ||
+      !timestamp(deletion["finishedAt"])
+    )
+      return false;
+  }
+  const plannedIds = value["plannedDeletions"].map((deletion) =>
+    String((deletion as Record<string, unknown>)["id"]),
+  );
+  return value["suspended"]
+    ? plannedIds.length === 0
+    : JSON.stringify(plannedIds) === JSON.stringify(eligibleRunIds);
 }
 
 export function assertEvidenceRetentionPlan(
   value: unknown,
 ): EvidenceRetentionPlan {
-  if (typeof value !== "object" || value === null || Array.isArray(value))
-    throw new Error("Retention plan is not an object.");
-  const record = value as Record<string, unknown>;
-  const candidate = record["candidate"] as Record<string, unknown> | null;
-  const config = record["config"] as Record<string, unknown> | null;
+  if (!record(value)) throw new Error("Retention plan is not an object.");
+  const candidate = value["candidate"];
+  const controller = value["controller"];
+  const config = value["config"];
   if (
-    record["schemaVersion"] !== "1.1.0" ||
-    record["mode"] !== "plan" ||
-    typeof record["generatedAt"] !== "string" ||
-    typeof candidate !== "object" ||
-    candidate === null ||
-    typeof candidate["commit"] !== "string" ||
-    typeof candidate["tree"] !== "string" ||
+    !onlyKeys(value, [
+      "schemaVersion",
+      "mode",
+      "generatedAt",
+      "candidate",
+      "controller",
+      "config",
+      "verificationRuns",
+      "controllerRuns",
+    ]) ||
+    value["schemaVersion"] !== "1.2.0" ||
+    value["mode"] !== "plan" ||
+    !timestamp(value["generatedAt"]) ||
+    !record(candidate) ||
+    !onlyKeys(candidate, ["commit", "tree", "dirty", "worktreeSha256"]) ||
+    !/^[a-f0-9]{40}$/.test(String(candidate["commit"])) ||
+    !/^[a-f0-9]{40}$/.test(String(candidate["tree"])) ||
     typeof candidate["dirty"] !== "boolean" ||
-    typeof config !== "object" ||
-    config === null ||
+    !/^[a-f0-9]{64}$/.test(String(candidate["worktreeSha256"])) ||
+    !record(controller) ||
+    !onlyKeys(controller, ["verifiedCommit", "runStatus", "runId"]) ||
+    !/^[a-f0-9]{40}$/.test(String(controller["verifiedCommit"])) ||
+    !["idle", "running", "stopped", "escalated"].includes(
+      String(controller["runStatus"]),
+    ) ||
+    (controller["runId"] !== null && typeof controller["runId"] !== "string") ||
+    !record(config) ||
+    !onlyKeys(config, ["keepRecentRuns"]) ||
     !Number.isSafeInteger(config["keepRecentRuns"]) ||
-    !validPlanSection(record["verificationRuns"]) ||
-    !validPlanSection(record["controllerRuns"])
+    Number(config["keepRecentRuns"]) < 0 ||
+    !validPlanSection(value["verificationRuns"], {
+      manifestKind: "verification-result",
+      generatedAt: value["generatedAt"],
+      keepRecentRuns: Number(config["keepRecentRuns"]),
+    }) ||
+    !validPlanSection(value["controllerRuns"], {
+      manifestKind: "controller-run-summary",
+      generatedAt: value["generatedAt"],
+      keepRecentRuns: Number(config["keepRecentRuns"]),
+    })
   )
     throw new Error(
-      "Retention plan is not a valid mode:plan 1.1.0 envelope; regenerate it with loop:retention:plan.",
+      "Retention plan is not a canonical mode:plan 1.2.0 envelope; regenerate it with loop:retention:plan.",
     );
-  return value as EvidenceRetentionPlan;
-}
-
-type RetentionRootName = "verification" | "controller";
-
-interface RetentionJournalEntry {
-  readonly event: "deleting" | "deleted";
-  readonly root: RetentionRootName;
-  readonly runId: string;
-  readonly path: string;
-  readonly at: string;
-}
-
-async function readRetentionJournal(
-  journalPath: string,
-): Promise<readonly RetentionJournalEntry[]> {
-  let contents: string;
-  try {
-    contents = await readFile(journalPath, "utf8");
-  } catch (error) {
-    if (
-      error instanceof Error &&
-      "code" in error &&
-      (error as NodeJS.ErrnoException).code === "ENOENT"
-    )
-      return [];
-    throw error;
-  }
-  const lines = contents.split(/\r?\n/).filter((line) => line.trim() !== "");
-  const entries: RetentionJournalEntry[] = [];
-  for (const [index, line] of lines.entries()) {
-    try {
-      const parsed = JSON.parse(line) as Record<string, unknown>;
-      if (
-        (parsed["event"] !== "deleting" && parsed["event"] !== "deleted") ||
-        (parsed["root"] !== "verification" &&
-          parsed["root"] !== "controller") ||
-        typeof parsed["runId"] !== "string" ||
-        typeof parsed["path"] !== "string" ||
-        typeof parsed["at"] !== "string"
-      )
-        throw new Error("Journal entry shape is invalid.");
-      entries.push(parsed as unknown as RetentionJournalEntry);
-    } catch (error) {
-      // Only a torn final line from an interrupted append is tolerated.
-      if (index === lines.length - 1) break;
-      throw new Error(
-        `Retention apply journal is corrupted at line ${index + 1}: ${error instanceof Error ? error.message : String(error)}`,
-        { cause: error },
-      );
-    }
-  }
-  return entries;
-}
-
-export interface EvidenceRetentionApplyResult {
-  readonly schemaVersion: "1.0.0";
-  readonly planPath: string;
-  readonly planSha256: string;
-  readonly applyDirectory: string;
-  readonly journalPath: string;
-  readonly deleted: readonly {
-    readonly root: RetentionRootName;
-    readonly id: string;
-    readonly path: string;
-  }[];
-  readonly skippedJournaledRunIds: readonly string[];
-  readonly finishedAt: string;
-}
-
-// Deletion happens only here: the operator approves an exact plan file by
-// hash, every fence re-checks the world it described, and any divergence
-// refuses the whole plan before anything is removed.
-export async function applyEvidenceRetentionPlan(input: {
-  readonly repositoryRoot: string;
-  readonly planPath: string;
-  readonly expectedSha256: string;
-  readonly config: OrchestratorConfig;
-  readonly state: OrchestratorState;
-  readonly now: string;
-  readonly planner?: typeof planManagedEvidenceRuns;
-}): Promise<EvidenceRetentionApplyResult> {
-  const planBytes = await readFile(input.planPath);
-  const planSha256 = createHash("sha256").update(planBytes).digest("hex");
-  const expected = input.expectedSha256.toLowerCase();
-  if (planSha256 !== expected)
-    throw new Error(
-      `Retention plan hash mismatch: the approved token ${expected} does not match the plan file (${planSha256}); nothing was deleted.`,
-    );
-  const plan = assertEvidenceRetentionPlan(
-    JSON.parse(planBytes.toString("utf8")),
-  );
-  if (input.state.reconciliation.active !== null)
-    throw new Error(
-      "Retention apply refuses while a controller reconciliation is active; nothing was deleted.",
-    );
-  if (input.state.run.status === "running")
-    throw new Error(
-      "Retention apply refuses while a controller run is active; nothing was deleted.",
-    );
-  if (
-    input.config.evidenceRetention.keepRecentRuns !== plan.config.keepRecentRuns
-  )
-    throw new Error(
-      `Retention apply refused: config-changed (keepRecentRuns is now ${input.config.evidenceRetention.keepRecentRuns}, the plan was approved at ${plan.config.keepRecentRuns}); re-plan and re-approve.`,
-    );
-  const candidate = captureRetentionCandidate(input.repositoryRoot);
-  if (
-    candidate.commit !== plan.candidate.commit ||
-    candidate.tree !== plan.candidate.tree ||
-    candidate.dirty !== plan.candidate.dirty
-  )
-    throw new Error(
-      "Retention apply refused: the repository candidate advanced since the plan was approved; re-plan and re-approve.",
-    );
-  const fresh = await buildEvidenceRetentionPlan({
-    repositoryRoot: input.repositoryRoot,
-    config: input.config,
-    state: input.state,
-    now: input.now,
-    ...(input.planner ? { planner: input.planner } : {}),
-  });
-  const applyDirectory = resolve(
-    input.repositoryRoot,
-    "artifacts",
-    "orchestrator",
-    "retention",
-    "apply",
-    expected.slice(0, 16),
-  );
-  const journalPath = resolve(applyDirectory, "journal.jsonl");
-  const journal = await readRetentionJournal(journalPath);
-  const journaled = (event: RetentionJournalEntry["event"]): Set<string> =>
-    new Set(
-      journal
-        .filter((entry) => entry.event === event)
-        .map((entry) => `${entry.root}:${entry.runId}`),
-    );
-  const journaledDeleting = journaled("deleting");
-  const journaledDeleted = journaled("deleted");
-
-  const sections: readonly {
-    readonly root: RetentionRootName;
-    readonly planned: EvidenceRetentionReport;
-    readonly current: EvidenceRetentionReport;
-    readonly containmentRoot: string;
-  }[] = [
-    {
-      root: "verification",
-      planned: plan.verificationRuns,
-      current: fresh.verificationRuns,
-      containmentRoot: resolve(
-        input.repositoryRoot,
-        input.config.evidenceRetention.artifactRoot,
-      ),
-    },
-    {
-      root: "controller",
-      planned: plan.controllerRuns,
-      current: fresh.controllerRuns,
-      containmentRoot: resolve(input.repositoryRoot, input.config.artifactRoot),
-    },
-  ];
-
-  const refusals: string[] = [];
-  const skipped: string[] = [];
-  const deletions: {
-    readonly root: RetentionRootName;
-    readonly containmentRoot: string;
-    readonly planned: PlannedEvidenceDeletion;
-  }[] = [];
-  for (const section of sections) {
-    if (
-      section.current.artifactRootRealpath !==
-      section.planned.artifactRootRealpath
-    )
-      refusals.push(
-        `${section.root} artifact root moved (${section.planned.artifactRootRealpath} -> ${section.current.artifactRootRealpath})`,
-      );
-    if (section.current.suspended)
-      refusals.push(
-        `suspension-appeared on the ${section.root} root: ${section.current.suspensionReasons.join(", ")}`,
-      );
-  }
-  if (refusals.length === 0)
-    for (const section of sections) {
-      for (const planned of section.planned.plannedDeletions) {
-        const key = `${section.root}:${planned.id}`;
-        if (journaledDeleted.has(key)) {
-          skipped.push(key);
-          continue;
-        }
-        if (section.current.citedRunIds.includes(planned.id)) {
-          refusals.push(`run-became-cited: ${key}`);
-          continue;
-        }
-        if (section.current.recentRunIds.includes(planned.id)) {
-          refusals.push(`run-became-recent: ${key}`);
-          continue;
-        }
-        if (!section.current.observedRunIds.includes(planned.id)) {
-          if (journaledDeleting.has(key)) {
-            // An interrupted deletion is resumed, not refused.
-            deletions.push({
-              root: section.root,
-              containmentRoot: section.containmentRoot,
-              planned,
-            });
-            continue;
-          }
-          refusals.push(`run-missing: ${key}`);
-          continue;
-        }
-        if (
-          !section.current.plannedDeletions.some(
-            (entry) => entry.id === planned.id,
-          )
-        ) {
-          refusals.push(`run-no-longer-eligible: ${key}`);
-          continue;
-        }
-        deletions.push({
-          root: section.root,
-          containmentRoot: section.containmentRoot,
-          planned,
-        });
-      }
-    }
-  if (refusals.length > 0)
-    throw new Error(
-      `Retention apply refused; nothing was deleted. The world diverged from the approved plan: ${refusals.join("; ")}. Re-plan and re-approve.`,
-    );
-
-  await mkdir(applyDirectory, { recursive: true });
-  const deleted: { root: RetentionRootName; id: string; path: string }[] = [];
-  for (const deletion of deletions) {
-    const entry = {
-      root: deletion.root,
-      runId: deletion.planned.id,
-      path: deletion.planned.path,
-      at: input.now,
-    };
-    await appendFile(
-      journalPath,
-      `${JSON.stringify({ event: "deleting", ...entry })}\n`,
-      "utf8",
-    );
-    await removeContainedPath(deletion.containmentRoot, deletion.planned.path);
-    await appendFile(
-      journalPath,
-      `${JSON.stringify({ event: "deleted", ...entry })}\n`,
-      "utf8",
-    );
-    deleted.push({
-      root: deletion.root,
-      id: deletion.planned.id,
-      path: deletion.planned.path,
-    });
-  }
-  const result: EvidenceRetentionApplyResult = {
-    schemaVersion: "1.0.0",
-    planPath: resolve(input.planPath),
-    planSha256,
-    applyDirectory,
-    journalPath,
-    deleted,
-    skippedJournaledRunIds: skipped.sort(),
-    finishedAt: input.now,
-  };
-  await atomicWriteJson(resolve(applyDirectory, "apply-result.json"), result);
-  return result;
+  return value as unknown as EvidenceRetentionPlan;
 }
