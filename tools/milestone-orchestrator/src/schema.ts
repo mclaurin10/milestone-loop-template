@@ -27,6 +27,7 @@ import {
   VERIFICATION_SUMMARY_SCHEMA_VERSION,
   VERIFICATION_TIERS,
   VERIFICATION_TIER_SCHEMA_VERSION,
+  WORKSPACE_CLEANUP_PHASES,
   WORKSPACE_CLEANUP_SCHEMA_VERSION,
   WORKSPACE_CREATE_PHASES,
   type InvariantSuiteRegistry,
@@ -398,6 +399,208 @@ function validTargetIntegrateOperation(value: unknown): boolean {
     (diagnostic["targetHead"] !== null &&
       !commitId(diagnostic["targetHead"])) ||
     !stringArray(diagnostic["preservedPaths"]) ||
+    diagnostic["quarantinePath"] !== null
+  )
+    return false;
+  return value["updatedAt"] === diagnostic["observedAt"];
+}
+
+function validWorkspaceCleanupOperation(value: unknown): boolean {
+  if (
+    !isRecord(value) ||
+    !hasOnlyKeys(value, [
+      "schemaVersion",
+      "kind",
+      "id",
+      "runId",
+      "milestoneId",
+      "attempt",
+      "inputStateGeneration",
+      "inputStateRevision",
+      "repositoryRoot",
+      "workspaceRoot",
+      "artifactRoot",
+      "targetBranch",
+      "verifiedCommit",
+      "workspacePath",
+      "workspaceBranch",
+      "workspaceBaseCommit",
+      "recordedHeadCommit",
+      "observedHeadCommit",
+      "workspaceCreatedAt",
+      "workspaceCreateOperationId",
+      "workspaceStatusSha256",
+      "reason",
+      "runArtifactDirectory",
+      "diagnosticArchivePath",
+      "diagnosticFiles",
+      "phase",
+      "createdAt",
+      "updatedAt",
+      "requestedAt",
+      "completionAt",
+      "recoveryPolicy",
+      "diagnostic",
+    ]) ||
+    value["schemaVersion"] !== OPERATION_INTENT_SCHEMA_VERSION ||
+    value["kind"] !== "workspace-cleanup" ||
+    !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(String(value["id"])) ||
+    !nonEmptyString(value["runId"]) ||
+    !nonEmptyString(value["milestoneId"]) ||
+    !positiveInteger(value["attempt"]) ||
+    !/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(
+      String(value["inputStateGeneration"]),
+    ) ||
+    !nonnegativeInteger(value["inputStateRevision"]) ||
+    !nonEmptyString(value["repositoryRoot"]) ||
+    !isAbsolute(value["repositoryRoot"]) ||
+    !nonEmptyString(value["workspaceRoot"]) ||
+    !isAbsolute(value["workspaceRoot"]) ||
+    !strictlyContained(value["repositoryRoot"], value["workspaceRoot"]) ||
+    !nonEmptyString(value["artifactRoot"]) ||
+    !isAbsolute(value["artifactRoot"]) ||
+    !strictlyContained(value["repositoryRoot"], value["artifactRoot"]) ||
+    !nonEmptyString(value["targetBranch"]) ||
+    !commitId(value["verifiedCommit"]) ||
+    !nonEmptyString(value["workspacePath"]) ||
+    !isAbsolute(value["workspacePath"]) ||
+    !strictlyContained(value["workspaceRoot"], value["workspacePath"]) ||
+    !nonEmptyString(value["workspaceBranch"]) ||
+    !commitId(value["workspaceBaseCommit"]) ||
+    (value["recordedHeadCommit"] !== null &&
+      !commitId(value["recordedHeadCommit"])) ||
+    !commitId(value["observedHeadCommit"]) ||
+    !timestampOrNull(value["workspaceCreatedAt"]) ||
+    value["workspaceCreatedAt"] === null ||
+    !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(
+      String(value["workspaceCreateOperationId"]),
+    ) ||
+    !sha256(value["workspaceStatusSha256"]) ||
+    ![
+      "completed-delete-workspace",
+      "completed-preserve-workspace",
+      "failed-delete-after-diagnostics",
+      "failed-preserve-workspace",
+    ].includes(String(value["reason"])) ||
+    (value["runArtifactDirectory"] !== null &&
+      (!nonEmptyString(value["runArtifactDirectory"]) ||
+        !isAbsolute(value["runArtifactDirectory"]) ||
+        !strictlyContained(
+          value["artifactRoot"],
+          value["runArtifactDirectory"],
+        ))) ||
+    (value["diagnosticArchivePath"] !== null &&
+      (!nonEmptyString(value["diagnosticArchivePath"]) ||
+        !isAbsolute(value["diagnosticArchivePath"]) ||
+        value["runArtifactDirectory"] === null ||
+        !strictlyContained(
+          value["runArtifactDirectory"],
+          value["diagnosticArchivePath"],
+        ))) ||
+    !Array.isArray(value["diagnosticFiles"]) ||
+    value["diagnosticFiles"].some(
+      (file) =>
+        !isRecord(file) ||
+        !hasOnlyKeys(file, ["name", "sha256", "bytes"]) ||
+        !["git-status.txt", "workspace.diff", "recent-git-log.txt"].includes(
+          String(file["name"]),
+        ) ||
+        !sha256(file["sha256"]) ||
+        !nonnegativeInteger(file["bytes"]),
+    ) ||
+    new Set(
+      value["diagnosticFiles"].map((file) =>
+        isRecord(file) ? file["name"] : null,
+      ),
+    ).size !== value["diagnosticFiles"].length ||
+    !WORKSPACE_CLEANUP_PHASES.includes(value["phase"] as never) ||
+    !timestampOrNull(value["createdAt"]) ||
+    value["createdAt"] === null ||
+    !timestampOrNull(value["updatedAt"]) ||
+    value["updatedAt"] === null ||
+    !timestampOrNull(value["requestedAt"]) ||
+    value["requestedAt"] === null ||
+    !timestampOrNull(value["completionAt"]) ||
+    value["completionAt"] === null ||
+    String(value["updatedAt"]) < String(value["createdAt"]) ||
+    String(value["completionAt"]) < String(value["createdAt"]) ||
+    String(value["completionAt"]) < String(value["requestedAt"]) ||
+    value["recoveryPolicy"] !== "validate-adopt-or-preserve"
+  )
+    return false;
+
+  const reason = value["reason"];
+  const phase = value["phase"];
+  const requiresArchive = reason === "failed-delete-after-diagnostics";
+  if (
+    requiresArchive !== (value["diagnosticArchivePath"] !== null) ||
+    requiresArchive !== (value["diagnosticFiles"].length === 3)
+  )
+    return false;
+  if (
+    (reason === "completed-preserve-workspace" ||
+      reason === "failed-preserve-workspace") &&
+    ![
+      "intent-persisted",
+      "dependency-removal-started",
+      "dependencies-removed",
+      "blocked",
+    ].includes(String(phase))
+  )
+    return false;
+  if (
+    reason === "completed-delete-workspace" &&
+    ![
+      "intent-persisted",
+      "workspace-delete-started",
+      "workspace-deleted",
+      "blocked",
+    ].includes(String(phase))
+  )
+    return false;
+  if (
+    requiresArchive &&
+    ![
+      "intent-persisted",
+      "archive-started",
+      "archive-ready",
+      "workspace-delete-started",
+      "workspace-deleted",
+      "blocked",
+    ].includes(String(phase))
+  )
+    return false;
+
+  const diagnostic = value["diagnostic"];
+  if ((phase === "blocked") !== (diagnostic !== null)) return false;
+  if (diagnostic === null) return true;
+  if (
+    !isRecord(diagnostic) ||
+    !hasOnlyKeys(diagnostic, [
+      "classification",
+      "message",
+      "observedAt",
+      "preservedPaths",
+      "quarantinePath",
+    ]) ||
+    ![
+      "archive-conflict",
+      "archive-root-unsafe",
+      "diagnostic-source-drift",
+      "premature-workspace-missing",
+      "state-workspace-inconsistent",
+      "workspace-identity-drift",
+      "workspace-root-unsafe",
+    ].includes(String(diagnostic["classification"])) ||
+    !nonEmptyString(diagnostic["message"]) ||
+    !timestampOrNull(diagnostic["observedAt"]) ||
+    diagnostic["observedAt"] === null ||
+    !stringArray(diagnostic["preservedPaths"]) ||
+    diagnostic["preservedPaths"].some(
+      (path) =>
+        path !== value["workspacePath"] &&
+        path !== value["diagnosticArchivePath"],
+    ) ||
     diagnostic["quarantinePath"] !== null
   )
     return false;
@@ -1929,7 +2132,8 @@ export function validateOrchestratorState(
   if (
     pendingOperation !== null &&
     !validWorkspaceCreateOperation(pendingOperation) &&
-    !validTargetIntegrateOperation(pendingOperation)
+    !validTargetIntegrateOperation(pendingOperation) &&
+    !validWorkspaceCleanupOperation(pendingOperation)
   ) {
     errors.push("State pending operation is invalid.");
   } else if (isRecord(pendingOperation)) {
@@ -1943,7 +2147,6 @@ export function validateOrchestratorState(
       : undefined;
     const commonMismatch =
       !isRecord(milestone) ||
-      value["activeMilestoneId"] !== pendingOperation["milestoneId"] ||
       milestone["attempts"] !== pendingOperation["attempt"] ||
       !isRecord(repository) ||
       repository["root"] !== pendingOperation["repositoryRoot"] ||
@@ -1956,6 +2159,7 @@ export function validateOrchestratorState(
       errors.push("State pending operation does not match its active attempt.");
     } else if (pendingOperation["kind"] === "workspace-create") {
       if (
+        value["activeMilestoneId"] !== pendingOperation["milestoneId"] ||
         milestone["status"] !== "running" ||
         milestone["workspace"] !== null ||
         milestone["nextAllowedAction"] !== "resume-worker" ||
@@ -1975,6 +2179,7 @@ export function validateOrchestratorState(
       const checks = isRecord(review) ? review["checks"] : null;
       const findings = isRecord(review) ? review["findings"] : null;
       if (
+        value["activeMilestoneId"] !== pendingOperation["milestoneId"] ||
         milestone["status"] !== "reviewing" ||
         milestone["nextAllowedAction"] !== "review" ||
         value["nextAllowedAction"] !== "review" ||
@@ -2015,6 +2220,42 @@ export function validateOrchestratorState(
       )
         errors.push(
           "State target-integrate operation does not match its approved attempt.",
+        );
+    } else if (pendingOperation["kind"] === "workspace-cleanup") {
+      const workspace = milestone["workspace"];
+      const cleanup = isRecord(workspace) ? workspace["cleanup"] : null;
+      const reason = pendingOperation["reason"];
+      const completedReason =
+        reason === "completed-delete-workspace" ||
+        reason === "completed-preserve-workspace";
+      const failedReason =
+        reason === "failed-delete-after-diagnostics" ||
+        reason === "failed-preserve-workspace";
+      if (
+        (milestone["status"] === "completed" && !completedReason) ||
+        (milestone["status"] === "escalated" && !failedReason) ||
+        (milestone["status"] !== "completed" &&
+          milestone["status"] !== "escalated") ||
+        !isRecord(workspace) ||
+        workspace["path"] !== pendingOperation["workspacePath"] ||
+        workspace["branch"] !== pendingOperation["workspaceBranch"] ||
+        workspace["baseCommit"] !== pendingOperation["workspaceBaseCommit"] ||
+        workspace["headCommit"] !== pendingOperation["recordedHeadCommit"] ||
+        workspace["createdAt"] !== pendingOperation["workspaceCreatedAt"] ||
+        !isRecord(cleanup) ||
+        cleanup["status"] !== "pending" ||
+        cleanup["reason"] !== reason ||
+        cleanup["requestedAt"] !== pendingOperation["requestedAt"] ||
+        cleanup["completedAt"] !== null ||
+        cleanup["nodeModulesRemovedAt"] !== null ||
+        cleanup["diagnosticArchivePath"] !==
+          pendingOperation["diagnosticArchivePath"] ||
+        cleanup["error"] !== null ||
+        repository["verifiedCommit"] !== pendingOperation["verifiedCommit"] ||
+        run["artifactDirectory"] !== pendingOperation["runArtifactDirectory"]
+      )
+        errors.push(
+          "State workspace-cleanup operation does not match its terminal workspace.",
         );
     }
   }

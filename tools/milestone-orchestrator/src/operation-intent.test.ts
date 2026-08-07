@@ -9,16 +9,22 @@ import type {
   OrchestratorState,
   TargetIntegrateOperation,
   WorkspaceCreateOperation,
+  WorkspaceCleanupOperation,
 } from "./contracts.js";
 import { createMilestoneRecord } from "./milestone-state.js";
 import {
   advanceTargetIntegrateOperation,
+  advanceWorkspaceCleanupOperation,
   advanceWorkspaceCreateOperation,
+  assertPendingOperationStateTransition,
   blockTargetIntegrateOperation,
+  blockWorkspaceCleanupOperation,
   blockWorkspaceCreateOperation,
   completeTargetIntegrateOperation,
+  completeWorkspaceCleanupOperation,
   completeWorkspaceCreateOperation,
   setTargetIntegrateOperation,
+  setWorkspaceCleanupOperation,
   setWorkspaceCreateOperation,
 } from "./operation-intent.js";
 import { validateOrchestratorState } from "./schema.js";
@@ -266,6 +272,111 @@ function approvedIntegrationState(root: string): {
   };
 }
 
+function terminalCleanupState(root: string): {
+  readonly state: OrchestratorState;
+  readonly operation: WorkspaceCleanupOperation;
+} {
+  const initial = validState(root);
+  const proposal = validProposal({ id: "cleanup-intent" });
+  const milestone = createMilestoneRecord(proposal, NOW);
+  const workspacePath = resolve(
+    root,
+    "artifacts",
+    "workspaces",
+    "cleanup-run-cleanup-intent",
+  );
+  const workspaceBranch = "milestone-loop/cleanup-run/cleanup-intent";
+  const runArtifactDirectory = resolve(
+    root,
+    "artifacts",
+    "orchestrator",
+    "runs",
+    "cleanup-run",
+  );
+  const state: OrchestratorState = {
+    ...initial,
+    milestones: [
+      {
+        ...milestone,
+        status: "completed",
+        attempts: 1,
+        workspace: {
+          isolation: "standalone-local-clone-branch",
+          path: workspacePath,
+          branch: workspaceBranch,
+          baseCommit: "a".repeat(40),
+          headCommit: "c".repeat(40),
+          createdAt: NOW,
+          preserved: true,
+          cleanup: {
+            schemaVersion: "1.0.0",
+            status: "active",
+            reason: null,
+            requestedAt: null,
+            completedAt: null,
+            nodeModulesRemovedAt: null,
+            diagnosticArchivePath: null,
+            error: null,
+          },
+        },
+        timestamps: {
+          ...milestone.timestamps,
+          startedAt: NOW,
+          completedAt: NOW,
+          updatedAt: NOW,
+        },
+        nextAllowedAction: "plan",
+      },
+    ],
+    run: {
+      ...initial.run,
+      id: "cleanup-run",
+      status: "running",
+      startedAt: NOW,
+      deadlineAt: "2026-08-07T00:00:00.000Z",
+      artifactDirectory: runArtifactDirectory,
+    },
+    nextAllowedAction: "plan",
+  };
+  return {
+    state,
+    operation: {
+      schemaVersion: "1.0.0",
+      kind: "workspace-cleanup",
+      id: "workspace-cleanup-12345678",
+      runId: "cleanup-run",
+      milestoneId: proposal.id,
+      attempt: 1,
+      inputStateGeneration: "b".repeat(40),
+      inputStateRevision: state.revision,
+      repositoryRoot: resolve(root),
+      workspaceRoot: resolve(root, "artifacts", "workspaces"),
+      artifactRoot: resolve(root, "artifacts", "orchestrator", "runs"),
+      targetBranch: "main",
+      verifiedCommit: "a".repeat(40),
+      workspacePath,
+      workspaceBranch,
+      workspaceBaseCommit: "a".repeat(40),
+      recordedHeadCommit: "c".repeat(40),
+      observedHeadCommit: "c".repeat(40),
+      workspaceCreatedAt: NOW,
+      workspaceCreateOperationId: "workspace-create-source",
+      workspaceStatusSha256: "d".repeat(64),
+      reason: "completed-delete-workspace",
+      runArtifactDirectory,
+      diagnosticArchivePath: null,
+      diagnosticFiles: [],
+      phase: "intent-persisted",
+      createdAt: NOW,
+      updatedAt: NOW,
+      requestedAt: NOW,
+      completionAt: NOW,
+      recoveryPolicy: "validate-adopt-or-preserve",
+      diagnostic: null,
+    },
+  };
+}
+
 describe("workspace-create operation intent", () => {
   it("sets, advances, and clears only through the canonical reducers", () => {
     const root = resolve(process.cwd(), "operation-fixture");
@@ -448,6 +559,91 @@ describe("target-integrate operation intent", () => {
     });
     expect(blocked.repository).toEqual(fixture.state.repository);
     expect(blocked.milestones).toEqual(fixture.state.milestones);
+    expect(validateOrchestratorState(blocked)).toMatchObject({ valid: true });
+  });
+});
+
+describe("workspace-cleanup operation intent", () => {
+  it("owns intent publication, destructive phases, and semantic completion", () => {
+    const fixture = terminalCleanupState(
+      resolve(process.cwd(), "cleanup-operation-fixture"),
+    );
+    let next = setWorkspaceCleanupOperation(fixture.state, fixture.operation);
+    expect(next.milestones[0]?.workspace?.cleanup).toMatchObject({
+      status: "pending",
+      reason: "completed-delete-workspace",
+      requestedAt: NOW,
+    });
+    expect(validateOrchestratorState(next)).toMatchObject({ valid: true });
+    next = advanceWorkspaceCleanupOperation(
+      next,
+      fixture.operation.id,
+      "workspace-delete-started",
+      NOW,
+    );
+    next = advanceWorkspaceCleanupOperation(
+      next,
+      fixture.operation.id,
+      "workspace-deleted",
+      NOW,
+    );
+    next = completeWorkspaceCleanupOperation(next, fixture.operation.id);
+    expect(next).toMatchObject({
+      pendingOperation: null,
+      milestones: [
+        {
+          workspace: {
+            preserved: false,
+            cleanup: {
+              status: "deleted",
+              completedAt: NOW,
+              nodeModulesRemovedAt: NOW,
+            },
+          },
+        },
+      ],
+    });
+    expect(validateOrchestratorState(next)).toMatchObject({ valid: true });
+  });
+
+  it("durably blocks ambiguity and fences unrelated state mutation", () => {
+    const fixture = terminalCleanupState(
+      resolve(process.cwd(), "cleanup-operation-fixture"),
+    );
+    const pending = setWorkspaceCleanupOperation(
+      fixture.state,
+      fixture.operation,
+    );
+    const advanced = advanceWorkspaceCleanupOperation(
+      pending,
+      fixture.operation.id,
+      "workspace-delete-started",
+      NOW,
+    );
+    expect(() =>
+      assertPendingOperationStateTransition(
+        pending,
+        { ...advanced, queue: ["cleanup-intent"] },
+        fixture.operation.inputStateGeneration,
+      ),
+    ).toThrow(/exclusively owns state mutation/);
+    const blocked = blockWorkspaceCleanupOperation(
+      pending,
+      fixture.operation.id,
+      {
+        classification: "premature-workspace-missing",
+        message: "Workspace disappeared before deletion was authorized.",
+        observedAt: NOW,
+        preservedPaths: [],
+        quarantinePath: null,
+      },
+    );
+    expect(blocked.pendingOperation).toMatchObject({
+      kind: "workspace-cleanup",
+      phase: "blocked",
+      diagnostic: { classification: "premature-workspace-missing" },
+    });
+    expect(blocked.milestones[0]?.workspace?.cleanup.status).toBe("pending");
     expect(validateOrchestratorState(blocked)).toMatchObject({ valid: true });
   });
 });

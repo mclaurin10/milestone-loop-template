@@ -10,6 +10,9 @@ import type {
   WorkspaceCreateDiagnostic,
   WorkspaceCreateOperation,
   WorkspaceCreatePhase,
+  WorkspaceCleanupDiagnostic,
+  WorkspaceCleanupOperation,
+  WorkspaceCleanupPhase,
 } from "./contracts.js";
 import { requiredVerticalConsumerAfterCompletion } from "./milestone-state.js";
 import { humanPlaytestStopReason } from "./readiness-completion.js";
@@ -34,6 +37,24 @@ const TARGET_PHASE_TRANSITIONS: Readonly<
   "target-update-started": ["target-updated", "blocked"],
   "target-updated": ["outcome-integrated", "blocked"],
   "outcome-integrated": ["blocked"],
+  blocked: [],
+};
+
+const CLEANUP_PHASE_TRANSITIONS: Readonly<
+  Record<WorkspaceCleanupPhase, readonly WorkspaceCleanupPhase[]>
+> = {
+  "intent-persisted": [
+    "dependency-removal-started",
+    "archive-started",
+    "workspace-delete-started",
+    "blocked",
+  ],
+  "dependency-removal-started": ["dependencies-removed", "blocked"],
+  "dependencies-removed": ["blocked"],
+  "archive-started": ["archive-ready", "blocked"],
+  "archive-ready": ["workspace-delete-started", "blocked"],
+  "workspace-delete-started": ["workspace-deleted", "blocked"],
+  "workspace-deleted": ["blocked"],
   blocked: [],
 };
 
@@ -437,6 +458,333 @@ export function completeTargetIntegrateOperation(
   };
 }
 
+function cleanupMilestoneForOperation(
+  state: OrchestratorState,
+  operation: WorkspaceCleanupOperation,
+) {
+  const milestone = state.milestones.find(
+    (entry) => entry.proposal.id === operation.milestoneId,
+  );
+  if (!milestone)
+    throw new Error(
+      `Workspace-cleanup operation ${operation.id} names an unknown milestone.`,
+    );
+  return milestone;
+}
+
+export function assertWorkspaceCleanupContext(
+  state: OrchestratorState,
+  operation: WorkspaceCleanupOperation,
+): void {
+  const milestone = cleanupMilestoneForOperation(state, operation);
+  const workspace = milestone.workspace;
+  if (
+    state.run.id === null ||
+    state.run.id !== operation.runId ||
+    state.run.artifactDirectory !== operation.runArtifactDirectory ||
+    milestone.attempts !== operation.attempt ||
+    !workspace ||
+    workspace.path !== operation.workspacePath ||
+    workspace.branch !== operation.workspaceBranch ||
+    workspace.baseCommit !== operation.workspaceBaseCommit ||
+    workspace.headCommit !== operation.recordedHeadCommit ||
+    workspace.createdAt !== operation.workspaceCreatedAt ||
+    !["active", "pending", "failed"].includes(workspace.cleanup.status)
+  )
+    throw new Error(
+      `Workspace-cleanup operation ${operation.id} does not match its terminal milestone.`,
+    );
+  const completedReason =
+    operation.reason === "completed-delete-workspace" ||
+    operation.reason === "completed-preserve-workspace";
+  const failedReason =
+    operation.reason === "failed-delete-after-diagnostics" ||
+    operation.reason === "failed-preserve-workspace";
+  if (
+    (milestone.status === "completed" && !completedReason) ||
+    (milestone.status === "escalated" && !failedReason) ||
+    (milestone.status !== "completed" && milestone.status !== "escalated")
+  )
+    throw new Error(
+      `Workspace-cleanup operation ${operation.id} does not match terminal policy.`,
+    );
+  if (
+    state.repository.root !== operation.repositoryRoot ||
+    state.repository.targetBranch !== operation.targetBranch ||
+    state.repository.verifiedCommit !== operation.verifiedCommit
+  )
+    throw new Error(
+      `Workspace-cleanup operation ${operation.id} does not match repository identity.`,
+    );
+  const previousReason = workspace.cleanup.reason;
+  if (
+    previousReason !== null &&
+    previousReason !== "legacy-pre-policy" &&
+    previousReason !== operation.reason
+  )
+    throw new Error(
+      `Workspace-cleanup operation ${operation.id} changes persisted cleanup policy.`,
+    );
+  if (
+    workspace.cleanup.requestedAt !== null &&
+    workspace.cleanup.requestedAt !== operation.requestedAt
+  )
+    throw new Error(
+      `Workspace-cleanup operation ${operation.id} changes the persisted request time.`,
+    );
+  const requiresArchive =
+    operation.reason === "failed-delete-after-diagnostics";
+  if (
+    requiresArchive !== (operation.diagnosticArchivePath !== null) ||
+    requiresArchive !== (operation.diagnosticFiles.length === 3)
+  )
+    throw new Error(
+      `Workspace-cleanup operation ${operation.id} has inconsistent diagnostic evidence.`,
+    );
+  if (operation.inputStateRevision > state.revision)
+    throw new Error(
+      `Workspace-cleanup operation ${operation.id} names a future input revision.`,
+    );
+}
+
+function cleanupIntentRecord(
+  state: OrchestratorState,
+  operation: WorkspaceCleanupOperation,
+): OrchestratorState {
+  return {
+    ...state,
+    milestones: state.milestones.map((milestone) =>
+      milestone.proposal.id === operation.milestoneId
+        ? {
+            ...milestone,
+            workspace: milestone.workspace
+              ? {
+                  ...milestone.workspace,
+                  preserved: true,
+                  cleanup: {
+                    ...milestone.workspace.cleanup,
+                    status: "pending" as const,
+                    reason: operation.reason,
+                    requestedAt: operation.requestedAt,
+                    completedAt: null,
+                    nodeModulesRemovedAt: null,
+                    diagnosticArchivePath: operation.diagnosticArchivePath,
+                    error: null,
+                  },
+                }
+              : null,
+            timestamps: {
+              ...milestone.timestamps,
+              updatedAt: operation.createdAt,
+            },
+          }
+        : milestone,
+    ),
+    pendingOperation: operation,
+  };
+}
+
+export function setWorkspaceCleanupOperation(
+  state: OrchestratorState,
+  operation: WorkspaceCleanupOperation,
+): OrchestratorState {
+  if (state.pendingOperation !== null)
+    throw new Error(
+      `Cannot start workspace-cleanup operation ${operation.id}; operation ${state.pendingOperation.id} is already pending.`,
+    );
+  if (operation.phase !== "intent-persisted" || operation.diagnostic !== null)
+    throw new Error(
+      "A new workspace-cleanup operation must begin at intent-persisted.",
+    );
+  if (operation.inputStateRevision !== state.revision)
+    throw new Error(
+      `Workspace-cleanup operation ${operation.id} is not bound to input revision ${state.revision}.`,
+    );
+  assertWorkspaceCleanupContext(state, operation);
+  return cleanupIntentRecord(state, operation);
+}
+
+export function advanceWorkspaceCleanupOperation(
+  state: OrchestratorState,
+  operationId: string,
+  phase: Exclude<WorkspaceCleanupPhase, "intent-persisted" | "blocked">,
+  updatedAt: string,
+): OrchestratorState {
+  const operation = state.pendingOperation;
+  if (
+    !operation ||
+    operation.kind !== "workspace-cleanup" ||
+    operation.id !== operationId
+  )
+    throw new Error(
+      `Workspace-cleanup operation ${operationId} is not pending.`,
+    );
+  if (!CLEANUP_PHASE_TRANSITIONS[operation.phase].includes(phase))
+    throw new Error(
+      `Workspace-cleanup operation ${operationId} cannot advance from ${operation.phase} to ${phase}.`,
+    );
+  assertWorkspaceCleanupContext(state, operation);
+  return {
+    ...state,
+    pendingOperation: { ...operation, phase, updatedAt, diagnostic: null },
+  };
+}
+
+export function blockWorkspaceCleanupOperation(
+  state: OrchestratorState,
+  operationId: string,
+  diagnostic: WorkspaceCleanupDiagnostic,
+): OrchestratorState {
+  const operation = state.pendingOperation;
+  if (
+    !operation ||
+    operation.kind !== "workspace-cleanup" ||
+    operation.id !== operationId
+  )
+    throw new Error(
+      `Workspace-cleanup operation ${operationId} is not pending.`,
+    );
+  if (operation.phase === "blocked")
+    throw new Error(
+      `Workspace-cleanup operation ${operationId} is already blocked.`,
+    );
+  assertWorkspaceCleanupContext(state, operation);
+  return {
+    ...state,
+    pendingOperation: {
+      ...operation,
+      phase: "blocked",
+      updatedAt: diagnostic.observedAt,
+      diagnostic,
+    },
+  };
+}
+
+export function completeWorkspaceCleanupOperation(
+  state: OrchestratorState,
+  operationId: string,
+): OrchestratorState {
+  const operation = state.pendingOperation;
+  if (
+    !operation ||
+    operation.kind !== "workspace-cleanup" ||
+    operation.id !== operationId
+  )
+    throw new Error(
+      `Workspace-cleanup operation ${operationId} is not pending.`,
+    );
+  const deleting =
+    operation.reason === "completed-delete-workspace" ||
+    operation.reason === "failed-delete-after-diagnostics";
+  const expectedPhase = deleting ? "workspace-deleted" : "dependencies-removed";
+  if (operation.phase !== expectedPhase)
+    throw new Error(
+      `Workspace-cleanup operation ${operationId} cannot complete from ${operation.phase}.`,
+    );
+  assertWorkspaceCleanupContext(state, operation);
+  return {
+    ...state,
+    milestones: state.milestones.map((milestone) =>
+      milestone.proposal.id === operation.milestoneId
+        ? {
+            ...milestone,
+            workspace: milestone.workspace
+              ? {
+                  ...milestone.workspace,
+                  preserved: !deleting,
+                  cleanup: {
+                    ...milestone.workspace.cleanup,
+                    status: deleting
+                      ? ("deleted" as const)
+                      : ("preserved" as const),
+                    reason: operation.reason,
+                    requestedAt: operation.requestedAt,
+                    completedAt: operation.completionAt,
+                    nodeModulesRemovedAt: operation.completionAt,
+                    diagnosticArchivePath: operation.diagnosticArchivePath,
+                    error: null,
+                  },
+                }
+              : null,
+            timestamps: {
+              ...milestone.timestamps,
+              updatedAt: operation.completionAt,
+            },
+          }
+        : milestone,
+    ),
+    pendingOperation: null,
+  };
+}
+
+function setPendingOperation(
+  state: OrchestratorState,
+  operation: PendingOperation,
+): OrchestratorState {
+  switch (operation.kind) {
+    case "workspace-create":
+      return setWorkspaceCreateOperation(state, operation);
+    case "target-integrate":
+      return setTargetIntegrateOperation(state, operation);
+    case "workspace-cleanup":
+      return setWorkspaceCleanupOperation(state, operation);
+  }
+}
+
+function completePendingOperation(
+  state: OrchestratorState,
+  operation: PendingOperation,
+): OrchestratorState {
+  switch (operation.kind) {
+    case "workspace-create":
+      return completeWorkspaceCreateOperation(state, operation.id);
+    case "target-integrate":
+      return completeTargetIntegrateOperation(state, operation.id);
+    case "workspace-cleanup":
+      return completeWorkspaceCleanupOperation(state, operation.id);
+  }
+}
+
+function phaseTransitionAllowed(
+  before: PendingOperation,
+  after: PendingOperation,
+): boolean {
+  if (before.kind !== after.kind) return false;
+  switch (before.kind) {
+    case "workspace-create":
+      return (
+        after.kind === "workspace-create" &&
+        WORKSPACE_PHASE_TRANSITIONS[before.phase].includes(after.phase)
+      );
+    case "target-integrate":
+      return (
+        after.kind === "target-integrate" &&
+        TARGET_PHASE_TRANSITIONS[before.phase].includes(after.phase)
+      );
+    case "workspace-cleanup":
+      return (
+        after.kind === "workspace-cleanup" &&
+        CLEANUP_PHASE_TRANSITIONS[before.phase].includes(after.phase)
+      );
+  }
+}
+
+function assertPendingOperationContext(
+  state: OrchestratorState,
+  operation: PendingOperation,
+): void {
+  switch (operation.kind) {
+    case "workspace-create":
+      assertWorkspaceCreateContext(state, operation);
+      return;
+    case "target-integrate":
+      assertTargetIntegrateContext(state, operation);
+      return;
+    case "workspace-cleanup":
+      assertWorkspaceCleanupContext(state, operation);
+  }
+}
+
 function withoutMutableOperationFields(operation: PendingOperation) {
   return Object.fromEntries(
     Object.entries(operation).filter(
@@ -459,10 +807,7 @@ export function assertPendingOperationStateTransition(
       throw new Error(
         `Pending operation ${after.id} is not bound to canonical generation ${expectedInputGeneration}.`,
       );
-    const expected =
-      after.kind === "workspace-create"
-        ? setWorkspaceCreateOperation(previous, after)
-        : setTargetIntegrateOperation(previous, after);
+    const expected = setPendingOperation(previous, after);
     if (!isDeepStrictEqual(expected, next))
       throw new Error(
         `${after.kind} intent publication cannot include an unrelated state mutation.`,
@@ -471,10 +816,7 @@ export function assertPendingOperationStateTransition(
   }
 
   if (before !== null && after === null) {
-    const expected =
-      before.kind === "workspace-create"
-        ? completeWorkspaceCreateOperation(previous, before.id)
-        : completeTargetIntegrateOperation(previous, before.id);
+    const expected = completePendingOperation(previous, before);
     if (!isDeepStrictEqual(expected, next))
       throw new Error(
         `${before.kind} completion must use the canonical completion reducer.`,
@@ -486,12 +828,7 @@ export function assertPendingOperationStateTransition(
     throw new Error(
       "A pending operation cannot be replaced by another operation.",
     );
-  const phaseAllowed =
-    before.kind === "workspace-create" && after.kind === "workspace-create"
-      ? WORKSPACE_PHASE_TRANSITIONS[before.phase].includes(after.phase)
-      : before.kind === "target-integrate" &&
-        after.kind === "target-integrate" &&
-        TARGET_PHASE_TRANSITIONS[before.phase].includes(after.phase);
+  const phaseAllowed = phaseTransitionAllowed(before, after);
   if (
     !isDeepStrictEqual(
       withoutMutableOperationFields(before),
@@ -509,7 +846,5 @@ export function assertPendingOperationStateTransition(
     throw new Error(
       `A pending ${before.kind} operation exclusively owns state mutation.`,
     );
-  if (after.kind === "workspace-create")
-    assertWorkspaceCreateContext(next, after);
-  else assertTargetIntegrateContext(next, after);
+  assertPendingOperationContext(next, after);
 }

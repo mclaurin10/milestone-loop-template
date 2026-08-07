@@ -3,6 +3,40 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-06 — Intent-first terminal workspace cleanup (WP2c)
+
+**Decision.** State schema `1.7.0` extends the exclusive pending-operation
+union with a strict `workspace-cleanup` intent. The controller publishes that
+intent before removing `node_modules`, creating failed-run diagnostic entries,
+or deleting a workspace. It advances through explicit dependency, archive,
+and deletion phases, pins exact diagnostic hashes and completion timestamps,
+and recovers under the controller lease before ordinary terminal cleanup. A
+missing workspace is adoptable only after durable delete authorization, and a
+failed workspace is deletable only after its complete archive exactly matches
+the intent. One pure reducer owns every terminal cleanup state consequence.
+Ambiguous workspace, Git, path, or archive facts are preserved and durably
+blocked; status and doctor only classify them read-only. Completed cleanup
+requires the observed HEAD to equal the terminal milestone record. Failed
+cleanup retains that recorded fact but separately pins the exact observed
+descendant, because candidate drift may itself be the recorded failure.
+
+**Why.** The previous pending flag was written before cleanup but did not name
+an exclusive operation or fence unrelated state. Process loss after recursive
+deletion therefore left state behind the filesystem, and restart sampled new
+timestamps while accepting missing completed workspaces or a lone failed-run
+manifest as sufficient proof. Intent-first phases make each destructive effect
+attributable and exactly classifiable, while deterministic archive bytes and a
+shared completion reducer make restart converge. Alternatives rejected:
+reconstructing authorization from the legacy cleanup flag, using archive
+existence as authority, accepting a missing workspace before a delete phase,
+overwriting conflicting diagnostic files, deleting substituted paths, and
+combining cleanup with approval-bound evidence retention.
+
+**Affected files.** State contracts/schema/store and JSON schema,
+`operation-intent.ts`, `workspace-cleanup-operation.ts`, orchestrator cleanup
+and startup recovery, status and doctor diagnostics, crash/race workers and
+recovery tests, `README.md`, and `CONTRACT.md`.
+
 ## 2026-08-06 — Intent-first target integration and canonical completion (WP2b)
 
 **Decision.** State schema `1.6.0` extends the single pending-operation union

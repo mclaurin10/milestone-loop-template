@@ -1,7 +1,7 @@
 export const LEGACY_MILESTONE_SCHEMA_VERSION = "1.0.0" as const;
 export const PREVIOUS_MILESTONE_SCHEMA_VERSION = "1.1.0" as const;
 export const MILESTONE_SCHEMA_VERSION = "1.2.0" as const;
-export const STATE_SCHEMA_VERSION = "1.6.0" as const;
+export const STATE_SCHEMA_VERSION = "1.7.0" as const;
 export const CONFIG_SCHEMA_VERSION = "1.4.0" as const;
 export const REVIEW_LEGACY_SCHEMA_VERSION = "1.0.0" as const;
 export const REVIEW_SCHEMA_VERSION = "1.1.0" as const;
@@ -758,8 +758,80 @@ export interface TargetIntegrateOperation {
   readonly diagnostic: TargetIntegrateDiagnostic | null;
 }
 
+export const WORKSPACE_CLEANUP_PHASES = [
+  "intent-persisted",
+  "dependency-removal-started",
+  "dependencies-removed",
+  "archive-started",
+  "archive-ready",
+  "workspace-delete-started",
+  "workspace-deleted",
+  "blocked",
+] as const;
+export type WorkspaceCleanupPhase = (typeof WORKSPACE_CLEANUP_PHASES)[number];
+
+export type WorkspaceCleanupBlockedClassification =
+  | "archive-conflict"
+  | "archive-root-unsafe"
+  | "diagnostic-source-drift"
+  | "premature-workspace-missing"
+  | "state-workspace-inconsistent"
+  | "workspace-identity-drift"
+  | "workspace-root-unsafe";
+
+export interface WorkspaceCleanupDiagnostic {
+  readonly classification: WorkspaceCleanupBlockedClassification;
+  readonly message: string;
+  readonly observedAt: string;
+  readonly preservedPaths: readonly string[];
+  readonly quarantinePath: null;
+}
+
+export interface WorkspaceCleanupDiagnosticFile {
+  readonly name: "git-status.txt" | "workspace.diff" | "recent-git-log.txt";
+  readonly sha256: string;
+  readonly bytes: number;
+}
+
+export interface WorkspaceCleanupOperation {
+  readonly schemaVersion: typeof OPERATION_INTENT_SCHEMA_VERSION;
+  readonly kind: "workspace-cleanup";
+  readonly id: string;
+  readonly runId: string;
+  readonly milestoneId: string;
+  readonly attempt: number;
+  readonly inputStateGeneration: string;
+  readonly inputStateRevision: number;
+  readonly repositoryRoot: string;
+  readonly workspaceRoot: string;
+  readonly artifactRoot: string;
+  readonly targetBranch: string;
+  readonly verifiedCommit: string;
+  readonly workspacePath: string;
+  readonly workspaceBranch: string;
+  readonly workspaceBaseCommit: string;
+  readonly recordedHeadCommit: string | null;
+  readonly observedHeadCommit: string;
+  readonly workspaceCreatedAt: string;
+  readonly workspaceCreateOperationId: string;
+  readonly workspaceStatusSha256: string;
+  readonly reason: Exclude<WorkspaceCleanupReason, "legacy-pre-policy">;
+  readonly runArtifactDirectory: string | null;
+  readonly diagnosticArchivePath: string | null;
+  readonly diagnosticFiles: readonly WorkspaceCleanupDiagnosticFile[];
+  readonly phase: WorkspaceCleanupPhase;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+  readonly requestedAt: string;
+  readonly completionAt: string;
+  readonly recoveryPolicy: "validate-adopt-or-preserve";
+  readonly diagnostic: WorkspaceCleanupDiagnostic | null;
+}
+
 export type PendingOperation =
-  WorkspaceCreateOperation | TargetIntegrateOperation;
+  | WorkspaceCreateOperation
+  | TargetIntegrateOperation
+  | WorkspaceCleanupOperation;
 
 export type WorkspaceCleanupReason =
   | "legacy-pre-policy"

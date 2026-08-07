@@ -29,8 +29,12 @@ import {
   inspectTargetIntegrationOperation,
   type TargetIntegrationRecoveryClassification,
 } from "./target-integration.js";
+import {
+  inspectWorkspaceCleanupOperation,
+  type WorkspaceCleanupRecoveryClassification,
+} from "./workspace-cleanup-operation.js";
 
-export const DOCTOR_SCHEMA_VERSION = "1.4.0" as const;
+export const DOCTOR_SCHEMA_VERSION = "1.5.0" as const;
 
 type CheckStatus = "pass" | "attention";
 
@@ -103,6 +107,16 @@ export interface DoctorDiagnostic {
             readonly outcomePath: string;
             readonly nextSafeAction: string;
           }
+        | {
+            readonly id: string;
+            readonly kind: "workspace-cleanup";
+            readonly phase: string;
+            readonly classification: WorkspaceCleanupRecoveryClassification;
+            readonly workspacePath: string;
+            readonly diagnosticArchivePath: string | null;
+            readonly preservedPaths: readonly string[];
+            readonly nextSafeAction: string;
+          }
         | null;
       readonly outcome:
         | "valid"
@@ -111,6 +125,7 @@ export interface DoctorDiagnostic {
         | "reconciliation-active"
         | "workspace-operation-pending"
         | "target-operation-pending"
+        | "cleanup-operation-pending"
         | "invalid-or-unreadable"
         | "not-checked";
     };
@@ -262,6 +277,26 @@ async function stateOutcome(
             nextSafeAction: recovery.nextSafeAction,
           },
           outcome: "workspace-operation-pending",
+        };
+      }
+      if (state.pendingOperation.kind === "workspace-cleanup") {
+        const recovery = await inspectWorkspaceCleanupOperation(
+          state.pendingOperation,
+        );
+        return {
+          status: "attention",
+          ...details,
+          pendingOperation: {
+            id: state.pendingOperation.id,
+            kind: state.pendingOperation.kind,
+            phase: state.pendingOperation.phase,
+            classification: recovery.classification,
+            workspacePath: state.pendingOperation.workspacePath,
+            diagnosticArchivePath: state.pendingOperation.diagnosticArchivePath,
+            preservedPaths: recovery.preservedPaths,
+            nextSafeAction: recovery.nextSafeAction,
+          },
+          outcome: "cleanup-operation-pending",
         };
       }
       const recovery = await inspectTargetIntegrationOperation(

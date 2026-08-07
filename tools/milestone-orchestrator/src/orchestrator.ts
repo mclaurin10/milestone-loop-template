@@ -23,6 +23,7 @@ import type {
   TargetIntegrateOperation,
   VerificationSummary,
   WorkerFailureRecord,
+  WorkspaceCleanupOperation,
   WorkspaceCleanupReason,
   WorkspaceCreateOperation,
 } from "./contracts.js";
@@ -71,12 +72,16 @@ import {
 } from "./git-isolation.js";
 import {
   advanceTargetIntegrateOperation,
+  advanceWorkspaceCleanupOperation,
   advanceWorkspaceCreateOperation,
   blockTargetIntegrateOperation,
+  blockWorkspaceCleanupOperation,
   blockWorkspaceCreateOperation,
   completeTargetIntegrateOperation,
+  completeWorkspaceCleanupOperation,
   completeWorkspaceCreateOperation,
   setTargetIntegrateOperation,
+  setWorkspaceCleanupOperation,
   setWorkspaceCreateOperation,
 } from "./operation-intent.js";
 import {
@@ -114,7 +119,15 @@ import {
   type StateStoreInspection,
 } from "./state-store.js";
 import { verifyMilestone } from "./verifier.js";
-import { performWorkspaceCleanup } from "./workspace-cleanup.js";
+import {
+  deleteWorkspaceCleanupWorkspace,
+  inspectWorkspaceCleanupOperation,
+  materializeWorkspaceCleanupArchive,
+  planWorkspaceCleanupOperation,
+  removeWorkspaceCleanupDependencies,
+  type WorkspaceCleanupHooks,
+  type WorkspaceCleanupRecoveryInspection,
+} from "./workspace-cleanup-operation.js";
 import {
   cloneWorkspaceCreateTemporary,
   finishWorkspaceCreateTemporary,
@@ -149,9 +162,10 @@ export interface OrchestratorDependencies {
   readonly createRunId?: () => string;
   readonly createWorkspaceOperationId?: () => string;
   readonly createTargetIntegrationOperationId?: () => string;
+  readonly createWorkspaceCleanupOperationId?: () => string;
   readonly workspaceCreateHooks?: WorkspaceCreateHooks;
   readonly targetIntegrationHooks?: TargetIntegrationHooks;
-  readonly workspaceCleanup?: typeof performWorkspaceCleanup;
+  readonly workspaceCleanupHooks?: WorkspaceCleanupHooks;
   readonly evidencePlanner?: typeof planManagedEvidenceRuns;
   readonly evidenceDiscovery?: typeof discoverManagedEvidenceRuns;
   readonly telemetryStoreOpen?: typeof TelemetryStore.open;
@@ -168,9 +182,14 @@ export interface OrchestratorInspection {
   } | null;
   readonly pendingWorkspaceCleanups: number;
   readonly pendingOperation: {
-    readonly operation: WorkspaceCreateOperation | TargetIntegrateOperation;
+    readonly operation:
+      | WorkspaceCreateOperation
+      | TargetIntegrateOperation
+      | WorkspaceCleanupOperation;
     readonly recovery:
-      WorkspaceCreateRecoveryInspection | TargetIntegrationRecoveryInspection;
+      | WorkspaceCreateRecoveryInspection
+      | TargetIntegrationRecoveryInspection
+      | WorkspaceCleanupRecoveryInspection;
   } | null;
   readonly protectedIntegrity:
     "verified" | "uninitialized" | { readonly driftedPaths: readonly string[] };
@@ -216,6 +235,26 @@ export class WorkspaceCreateBlockedError extends Error {
   ) {
     super(`Workspace-create operation ${operationId} is blocked: ${message}`);
     this.name = "WorkspaceCreateBlockedError";
+  }
+}
+
+export class WorkspaceCleanupInterruptedError extends Error {
+  constructor(
+    readonly point: string,
+    options: { readonly cause: unknown },
+  ) {
+    super(`Workspace-cleanup operation was interrupted at ${point}.`, options);
+    this.name = "WorkspaceCleanupInterruptedError";
+  }
+}
+
+export class WorkspaceCleanupBlockedError extends Error {
+  constructor(
+    readonly operationId: string,
+    message: string,
+  ) {
+    super(`Workspace-cleanup operation ${operationId} is blocked: ${message}`);
+    this.name = "WorkspaceCleanupBlockedError";
   }
 }
 
@@ -594,9 +633,10 @@ export class MilestoneOrchestrator {
   private readonly createRunId: () => string;
   private readonly createWorkspaceOperationId: () => string;
   private readonly createTargetIntegrationOperationId: () => string;
+  private readonly createWorkspaceCleanupOperationId: () => string;
   private readonly workspaceCreateHooks: WorkspaceCreateHooks;
   private readonly targetIntegrationHooks: TargetIntegrationHooks;
-  private readonly workspaceCleanup: typeof performWorkspaceCleanup;
+  private readonly workspaceCleanupHooks: WorkspaceCleanupHooks;
   private readonly evidencePlanner: typeof planManagedEvidenceRuns;
   private readonly evidenceDiscovery: typeof discoverManagedEvidenceRuns;
   private readonly telemetryStoreOpen: typeof TelemetryStore.open;
@@ -613,9 +653,10 @@ export class MilestoneOrchestrator {
     createRunId: () => string;
     createWorkspaceOperationId: () => string;
     createTargetIntegrationOperationId: () => string;
+    createWorkspaceCleanupOperationId: () => string;
     workspaceCreateHooks: WorkspaceCreateHooks;
     targetIntegrationHooks: TargetIntegrationHooks;
-    workspaceCleanup: typeof performWorkspaceCleanup;
+    workspaceCleanupHooks: WorkspaceCleanupHooks;
     evidencePlanner: typeof planManagedEvidenceRuns;
     evidenceDiscovery: typeof discoverManagedEvidenceRuns;
     telemetryStoreOpen: typeof TelemetryStore.open;
@@ -631,6 +672,8 @@ export class MilestoneOrchestrator {
     this.createWorkspaceOperationId = input.createWorkspaceOperationId;
     this.createTargetIntegrationOperationId =
       input.createTargetIntegrationOperationId;
+    this.createWorkspaceCleanupOperationId =
+      input.createWorkspaceCleanupOperationId;
     this.workspaceCreateHooks = {
       fault: async (point, operation) => {
         if (!input.workspaceCreateHooks.fault) return;
@@ -651,7 +694,16 @@ export class MilestoneOrchestrator {
         }
       },
     };
-    this.workspaceCleanup = input.workspaceCleanup;
+    this.workspaceCleanupHooks = {
+      fault: async (point, operation) => {
+        if (!input.workspaceCleanupHooks.fault) return;
+        try {
+          await input.workspaceCleanupHooks.fault(point, operation);
+        } catch (error) {
+          throw new WorkspaceCleanupInterruptedError(point, { cause: error });
+        }
+      },
+    };
     this.evidencePlanner = input.evidencePlanner;
     this.evidenceDiscovery = input.evidenceDiscovery;
     this.telemetryStoreOpen = input.telemetryStoreOpen;
@@ -753,10 +805,12 @@ export class MilestoneOrchestrator {
       createTargetIntegrationOperationId:
         dependencies.createTargetIntegrationOperationId ??
         (() => `target-integrate-${randomUUID()}`),
+      createWorkspaceCleanupOperationId:
+        dependencies.createWorkspaceCleanupOperationId ??
+        (() => `workspace-cleanup-${randomUUID()}`),
       workspaceCreateHooks: dependencies.workspaceCreateHooks ?? {},
       targetIntegrationHooks: dependencies.targetIntegrationHooks ?? {},
-      workspaceCleanup:
-        dependencies.workspaceCleanup ?? performWorkspaceCleanup,
+      workspaceCleanupHooks: dependencies.workspaceCleanupHooks ?? {},
       evidencePlanner: dependencies.evidencePlanner ?? planManagedEvidenceRuns,
       evidenceDiscovery:
         dependencies.evidenceDiscovery ?? discoverManagedEvidenceRuns,
@@ -855,7 +909,13 @@ export class MilestoneOrchestrator {
           recovery:
             state.pendingOperation.kind === "workspace-create"
               ? await inspectWorkspaceCreateOperation(state.pendingOperation)
-              : await inspectTargetIntegrationOperation(state.pendingOperation),
+              : state.pendingOperation.kind === "target-integrate"
+                ? await inspectTargetIntegrationOperation(
+                    state.pendingOperation,
+                  )
+                : await inspectWorkspaceCleanupOperation(
+                    state.pendingOperation,
+                  ),
         }
       : null;
     return {
@@ -975,6 +1035,38 @@ export class MilestoneOrchestrator {
       )
         throw new Error(
           `Pending target-integrate operation ${operation.id} has non-canonical controller paths.`,
+        );
+    } else if (operation?.kind === "workspace-cleanup") {
+      const workspaceRoot = resolve(
+        this.repositoryRoot,
+        this.config.workspaceRoot,
+      );
+      const artifactRoot = resolve(
+        this.repositoryRoot,
+        this.config.artifactRoot,
+      );
+      const diagnosticArchivePath =
+        operation.reason === "failed-delete-after-diagnostics" &&
+        operation.runArtifactDirectory
+          ? resolve(
+              operation.runArtifactDirectory,
+              "workspace-diagnostics",
+              operation.milestoneId,
+            )
+          : null;
+      if (
+        operation.repositoryRoot !== this.repositoryRoot ||
+        operation.workspaceRoot !== workspaceRoot ||
+        operation.artifactRoot !== artifactRoot ||
+        operation.workspacePath !==
+          milestoneById(this.stateValue, operation.milestoneId).workspace
+            ?.path ||
+        operation.runArtifactDirectory !==
+          this.stateValue.run.artifactDirectory ||
+        operation.diagnosticArchivePath !== diagnosticArchivePath
+      )
+        throw new Error(
+          `Pending workspace-cleanup operation ${operation.id} has non-canonical controller paths.`,
         );
     }
     const retentionReport = this.stateValue.evidenceRetention.lastReportPath;
@@ -1488,11 +1580,277 @@ export class MilestoneOrchestrator {
     }
   }
 
+  private async workspaceCleanupFault(
+    point: Parameters<NonNullable<WorkspaceCleanupHooks["fault"]>>[0],
+    operation: WorkspaceCleanupOperation,
+  ): Promise<void> {
+    await this.workspaceCleanupHooks.fault?.(point, operation);
+  }
+
+  private async advanceWorkspaceCleanupPhase(
+    phase: Exclude<
+      WorkspaceCleanupOperation["phase"],
+      "intent-persisted" | "blocked"
+    >,
+  ): Promise<void> {
+    const operation = this.stateValue.pendingOperation;
+    if (!operation || operation.kind !== "workspace-cleanup")
+      throw new Error(
+        "Cannot advance a workspace-cleanup operation that is absent.",
+      );
+    await this.persist(
+      advanceWorkspaceCleanupOperation(
+        this.stateValue,
+        operation.id,
+        phase,
+        iso(this.now),
+      ),
+    );
+    const advanced = this.stateValue.pendingOperation;
+    if (!advanced || advanced.kind !== "workspace-cleanup")
+      throw new Error(
+        "Workspace-cleanup phase advance unexpectedly cleared intent.",
+      );
+    const faultPoint = {
+      "dependency-removal-started": "after-dependency-removal-started-state",
+      "dependencies-removed": "after-dependencies-removed-state",
+      "archive-started": "after-archive-started-state",
+      "archive-ready": "after-archive-ready-state",
+      "workspace-delete-started": "after-workspace-delete-started-state",
+      "workspace-deleted": "after-workspace-deleted-state",
+    }[phase] as Parameters<NonNullable<WorkspaceCleanupHooks["fault"]>>[0];
+    await this.workspaceCleanupFault(faultPoint, advanced);
+  }
+
+  private async blockWorkspaceCleanup(
+    inspection: WorkspaceCleanupRecoveryInspection,
+  ): Promise<never> {
+    const operation = this.stateValue.pendingOperation;
+    if (!operation || operation.kind !== "workspace-cleanup")
+      throw new Error(
+        "Cannot block a workspace-cleanup operation that is absent.",
+      );
+    if (operation.phase === "blocked")
+      throw new WorkspaceCleanupBlockedError(
+        operation.id,
+        operation.diagnostic?.message ?? inspection.message,
+      );
+    if (inspection.nextSafeAction !== "manual-reconciliation-required")
+      throw new Error(
+        `Cannot block recoverable cleanup classification ${inspection.classification}.`,
+      );
+    const observedAt = iso(this.now);
+    await this.persist(
+      blockWorkspaceCleanupOperation(this.stateValue, operation.id, {
+        classification: inspection.classification as Exclude<
+          WorkspaceCleanupRecoveryInspection["classification"],
+          | "workspace-ready"
+          | "dependencies-removed"
+          | "archive-incomplete"
+          | "archive-ready"
+          | "workspace-deleted"
+        >,
+        message: redactSensitiveText(inspection.message),
+        observedAt,
+        preservedPaths: inspection.preservedPaths,
+        quarantinePath: null,
+      }),
+    );
+    throw new WorkspaceCleanupBlockedError(
+      operation.id,
+      redactSensitiveText(inspection.message),
+    );
+  }
+
+  private async recoverPendingWorkspaceCleanup(): Promise<void> {
+    const initial = this.stateValue.pendingOperation;
+    if (!initial || initial.kind !== "workspace-cleanup") return;
+    if (initial.phase === "blocked")
+      throw new WorkspaceCleanupBlockedError(
+        initial.id,
+        initial.diagnostic?.message ?? "manual reconciliation is required",
+      );
+    try {
+      while (this.stateValue.pendingOperation?.kind === "workspace-cleanup") {
+        let operation = this.stateValue.pendingOperation;
+        const inspection = await inspectWorkspaceCleanupOperation(operation);
+        if (inspection.nextSafeAction === "manual-reconciliation-required")
+          await this.blockWorkspaceCleanup(inspection);
+
+        switch (inspection.classification) {
+          case "workspace-ready":
+            if (
+              operation.reason === "completed-preserve-workspace" ||
+              operation.reason === "failed-preserve-workspace"
+            ) {
+              if (operation.phase === "intent-persisted") {
+                await this.advanceWorkspaceCleanupPhase(
+                  "dependency-removal-started",
+                );
+                operation = this.stateValue
+                  .pendingOperation as WorkspaceCleanupOperation;
+              }
+              await removeWorkspaceCleanupDependencies(
+                operation,
+                this.workspaceCleanupHooks,
+              );
+              await this.advanceWorkspaceCleanupPhase("dependencies-removed");
+              operation = this.stateValue
+                .pendingOperation as WorkspaceCleanupOperation;
+              await this.persist(
+                completeWorkspaceCleanupOperation(
+                  this.stateValue,
+                  operation.id,
+                ),
+              );
+              await this.workspaceCleanupFault(
+                "after-completion-state",
+                operation,
+              );
+              return;
+            } else {
+              if (operation.phase === "intent-persisted") {
+                await this.advanceWorkspaceCleanupPhase(
+                  "workspace-delete-started",
+                );
+                operation = this.stateValue
+                  .pendingOperation as WorkspaceCleanupOperation;
+              }
+              await deleteWorkspaceCleanupWorkspace(
+                operation,
+                this.workspaceCleanupHooks,
+              );
+              await this.advanceWorkspaceCleanupPhase("workspace-deleted");
+              operation = this.stateValue
+                .pendingOperation as WorkspaceCleanupOperation;
+              await this.persist(
+                completeWorkspaceCleanupOperation(
+                  this.stateValue,
+                  operation.id,
+                ),
+              );
+              await this.workspaceCleanupFault(
+                "after-completion-state",
+                operation,
+              );
+              return;
+            }
+          case "dependencies-removed":
+            if (operation.phase === "intent-persisted") {
+              await this.advanceWorkspaceCleanupPhase(
+                "dependency-removal-started",
+              );
+              operation = this.stateValue
+                .pendingOperation as WorkspaceCleanupOperation;
+            }
+            if (operation.phase === "dependency-removal-started")
+              await this.advanceWorkspaceCleanupPhase("dependencies-removed");
+            operation = this.stateValue
+              .pendingOperation as WorkspaceCleanupOperation;
+            await this.persist(
+              completeWorkspaceCleanupOperation(this.stateValue, operation.id),
+            );
+            await this.workspaceCleanupFault(
+              "after-completion-state",
+              operation,
+            );
+            return;
+          case "archive-incomplete":
+            if (operation.phase === "intent-persisted") {
+              await this.advanceWorkspaceCleanupPhase("archive-started");
+              operation = this.stateValue
+                .pendingOperation as WorkspaceCleanupOperation;
+            }
+            await materializeWorkspaceCleanupArchive(
+              operation,
+              this.workspaceCleanupHooks,
+            );
+            await this.advanceWorkspaceCleanupPhase("archive-ready");
+            await this.advanceWorkspaceCleanupPhase("workspace-delete-started");
+            operation = this.stateValue
+              .pendingOperation as WorkspaceCleanupOperation;
+            await deleteWorkspaceCleanupWorkspace(
+              operation,
+              this.workspaceCleanupHooks,
+            );
+            await this.advanceWorkspaceCleanupPhase("workspace-deleted");
+            operation = this.stateValue
+              .pendingOperation as WorkspaceCleanupOperation;
+            await this.persist(
+              completeWorkspaceCleanupOperation(this.stateValue, operation.id),
+            );
+            await this.workspaceCleanupFault(
+              "after-completion-state",
+              operation,
+            );
+            return;
+          case "archive-ready":
+            if (operation.phase === "archive-started") {
+              await this.advanceWorkspaceCleanupPhase("archive-ready");
+              operation = this.stateValue
+                .pendingOperation as WorkspaceCleanupOperation;
+            }
+            if (operation.phase === "archive-ready") {
+              await this.advanceWorkspaceCleanupPhase(
+                "workspace-delete-started",
+              );
+              operation = this.stateValue
+                .pendingOperation as WorkspaceCleanupOperation;
+            }
+            await deleteWorkspaceCleanupWorkspace(
+              operation,
+              this.workspaceCleanupHooks,
+            );
+            await this.advanceWorkspaceCleanupPhase("workspace-deleted");
+            operation = this.stateValue
+              .pendingOperation as WorkspaceCleanupOperation;
+            await this.persist(
+              completeWorkspaceCleanupOperation(this.stateValue, operation.id),
+            );
+            await this.workspaceCleanupFault(
+              "after-completion-state",
+              operation,
+            );
+            return;
+          case "workspace-deleted":
+            if (operation.phase === "workspace-delete-started")
+              await this.advanceWorkspaceCleanupPhase("workspace-deleted");
+            operation = this.stateValue
+              .pendingOperation as WorkspaceCleanupOperation;
+            await this.persist(
+              completeWorkspaceCleanupOperation(this.stateValue, operation.id),
+            );
+            await this.workspaceCleanupFault(
+              "after-completion-state",
+              operation,
+            );
+            return;
+          default:
+            await this.blockWorkspaceCleanup(inspection);
+        }
+      }
+    } catch (error) {
+      if (
+        error instanceof WorkspaceCleanupInterruptedError ||
+        error instanceof WorkspaceCleanupBlockedError
+      )
+        throw error;
+      const operation = this.stateValue.pendingOperation;
+      if (!operation || operation.kind !== "workspace-cleanup") throw error;
+      const inspection = await inspectWorkspaceCleanupOperation(operation);
+      if (inspection.nextSafeAction === "manual-reconciliation-required")
+        await this.blockWorkspaceCleanup(inspection);
+      throw error;
+    }
+  }
+
   private async recoverPendingOperation(): Promise<void> {
     if (this.stateValue.pendingOperation?.kind === "workspace-create")
       await this.recoverPendingWorkspaceCreate();
     else if (this.stateValue.pendingOperation?.kind === "target-integrate")
       await this.recoverPendingTargetIntegration();
+    else if (this.stateValue.pendingOperation?.kind === "workspace-cleanup")
+      await this.recoverPendingWorkspaceCleanup();
   }
 
   private async initializeEvidenceRetention(): Promise<void> {
@@ -1543,7 +1901,7 @@ export class MilestoneOrchestrator {
     readonly ok: boolean;
     readonly error: string | null;
   }> {
-    let milestone = milestoneById(this.stateValue, id);
+    const milestone = milestoneById(this.stateValue, id);
     const workspace = milestone.workspace;
     if (
       !workspace ||
@@ -1559,96 +1917,40 @@ export class MilestoneOrchestrator {
       workspace.cleanup.reason !== "legacy-pre-policy"
         ? workspace.cleanup.reason
         : this.cleanupReason(milestone);
-    const requestedAt = workspace.cleanup.requestedAt ?? iso(this.now);
-    const runDirectory = this.stateValue.run.artifactDirectory;
-    const diagnosticArchivePath =
-      reason === "failed-delete-after-diagnostics" && runDirectory
-        ? (workspace.cleanup.diagnosticArchivePath ??
-          resolve(runDirectory, "workspace-diagnostics", milestone.proposal.id))
-        : workspace.cleanup.diagnosticArchivePath;
-
+    const runId = this.stateValue.run.id;
+    if (!runId)
+      throw new Error("Terminal workspace cleanup requires a durable run ID.");
+    const generation = this.store.mutationGeneration();
+    const plannedAt = iso(this.now);
+    const operation = await planWorkspaceCleanupOperation({
+      operationId: this.createWorkspaceCleanupOperationId(),
+      inputStateGeneration: generation.objectId,
+      inputStateRevision: generation.revision,
+      repositoryRoot: this.repositoryRoot,
+      configuredWorkspaceRoot: this.config.workspaceRoot,
+      configuredArtifactRoot: this.config.artifactRoot,
+      targetBranch: this.config.targetBranch,
+      verifiedCommit: this.stateValue.repository.verifiedCommit,
+      workspacePath: workspace.path,
+      workspaceBranch: workspace.branch,
+      workspaceBaseCommit: workspace.baseCommit,
+      recordedHeadCommit: workspace.headCommit,
+      workspaceCreatedAt: workspace.createdAt,
+      reason,
+      runArtifactDirectory: this.stateValue.run.artifactDirectory,
+      existingRequestedAt: workspace.cleanup.requestedAt,
+      existingDiagnosticArchivePath: workspace.cleanup.diagnosticArchivePath,
+      runId,
+      milestoneId: milestone.proposal.id,
+      attempt: milestone.attempts,
+      now: plannedAt,
+    });
     await this.persist(
-      replaceMilestone(this.stateValue, id, (record) => ({
-        ...record,
-        workspace: record.workspace
-          ? {
-              ...record.workspace,
-              cleanup: {
-                ...record.workspace.cleanup,
-                status: "pending",
-                reason,
-                requestedAt,
-                completedAt: null,
-                diagnosticArchivePath,
-                error: null,
-              },
-            }
-          : null,
-        timestamps: { ...record.timestamps, updatedAt: iso(this.now) },
-      })),
+      setWorkspaceCleanupOperation(this.stateValue, operation),
     );
-    milestone = milestoneById(this.stateValue, id);
-    if (!milestone.workspace)
-      throw new Error("Persisted cleanup intent lost its workspace record.");
-
-    try {
-      const completedAt = iso(this.now);
-      const result = await this.workspaceCleanup({
-        workspaceRoot: resolve(this.repositoryRoot, this.config.workspaceRoot),
-        artifactRoot: resolve(this.repositoryRoot, this.config.artifactRoot),
-        runArtifactDirectory: this.stateValue.run.artifactDirectory,
-        workspacePath: milestone.workspace.path,
-        baseCommit: milestone.workspace.baseCommit,
-        milestoneId: milestone.proposal.id,
-        reason,
-        diagnosticArchivePath,
-        now: completedAt,
-      });
-      await this.persist(
-        replaceMilestone(this.stateValue, id, (record) => ({
-          ...record,
-          workspace: record.workspace
-            ? {
-                ...record.workspace,
-                preserved: result.status === "preserved",
-                cleanup: {
-                  ...record.workspace.cleanup,
-                  status: result.status,
-                  completedAt,
-                  nodeModulesRemovedAt: result.nodeModulesRemovedAt,
-                  diagnosticArchivePath: result.diagnosticArchivePath,
-                  error: null,
-                },
-              }
-            : null,
-          timestamps: { ...record.timestamps, updatedAt: completedAt },
-        })),
-      );
-      return { ok: true, error: null };
-    } catch (error) {
-      const message = redactSensitiveText(
-        error instanceof Error ? error.message : String(error),
-      );
-      await this.persist(
-        replaceMilestone(this.stateValue, id, (record) => ({
-          ...record,
-          workspace: record.workspace
-            ? {
-                ...record.workspace,
-                preserved: true,
-                cleanup: {
-                  ...record.workspace.cleanup,
-                  status: "failed",
-                  completedAt: null,
-                  error: message,
-                },
-              }
-            : null,
-          timestamps: { ...record.timestamps, updatedAt: iso(this.now) },
-        })),
-      );
-      return { ok: false, error: message };
-    }
+    await this.workspaceCleanupFault("after-intent-persisted", operation);
+    await this.recoverPendingWorkspaceCleanup();
+    return { ok: true, error: null };
   }
 
   private async recordCleanupControllerFailure(

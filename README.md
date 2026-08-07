@@ -20,18 +20,18 @@ full configuration ships as a worked example in
 
 ## What is in the box
 
-| Area | Where | What it does |
-| --- | --- | --- |
-| Orchestrator | `tools/milestone-orchestrator/` | Planner/Worker/Reviewer loop over the Codex SDK, ref-rooted CAS state generations with schema migrations, recoverable intent-first git isolation, retry/escalation policy, protected-path diff policy, safety demonstration, canary milestone, doctor diagnostics |
-| Verification tiers | `src/verification-tier.ts`, `src/verification-cli.ts` | `iteration`, `candidate`, `milestone`, and `periodic` tiers planned from the verification manifest |
-| Invariant suite | `src/invariant-suite.ts`, `config/invariant-suite.json` | Always-run, serial invariants with pinned owner files; fast/migration unit partition |
-| Evidence | `scripts/verify.mjs`, `tools/evidence.mjs`, `tools/run-tool-evidence.mjs` | The authoritative `pnpm verify` aggregate, command-owned receipts with hashed artifacts, fail-closed receipt validation |
-| Shadow scope selection | `src/affected-scope.ts`, `config/verification-scope-policy.json` | Observational affected-scope recommendation (never suppresses closure) with graduation criteria |
-| Paired benchmark | `src/benchmark.ts`, `config/benchmark-matrix.json` | Commissioned before/after benchmark of the scope selector against the historical check workload |
-| Telemetry | `src/telemetry-*.ts` | Non-semantic run telemetry and reporting |
-| Artifacts | `src/artifact-inventory.ts`, `src/evidence-retention.ts`, `src/retention-plan.ts` | Non-destructive inventory and retention planning; deletion only via hash-approved `loop:retention:apply` |
-| Reconciliation | `src/reconciliation.ts` | Resumable controller-boundary reconciliation when work advanced outside the tracked loop, with a fresh independent review |
-| Repo contract | `CONTRACT.md`, `PROJECT_GOAL.md`, `evals/`, `.agent/`, `AGENTS.md` | Everything an adopting repository must provide |
+| Area                   | Where                                                                             | What it does                                                                                                                                                                                                                                                      |
+| ---------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Orchestrator           | `tools/milestone-orchestrator/`                                                   | Planner/Worker/Reviewer loop over the Codex SDK, ref-rooted CAS state generations with schema migrations, recoverable intent-first git isolation, retry/escalation policy, protected-path diff policy, safety demonstration, canary milestone, doctor diagnostics |
+| Verification tiers     | `src/verification-tier.ts`, `src/verification-cli.ts`                             | `iteration`, `candidate`, `milestone`, and `periodic` tiers planned from the verification manifest                                                                                                                                                                |
+| Invariant suite        | `src/invariant-suite.ts`, `config/invariant-suite.json`                           | Always-run, serial invariants with pinned owner files; fast/migration unit partition                                                                                                                                                                              |
+| Evidence               | `scripts/verify.mjs`, `tools/evidence.mjs`, `tools/run-tool-evidence.mjs`         | The authoritative `pnpm verify` aggregate, command-owned receipts with hashed artifacts, fail-closed receipt validation                                                                                                                                           |
+| Shadow scope selection | `src/affected-scope.ts`, `config/verification-scope-policy.json`                  | Observational affected-scope recommendation (never suppresses closure) with graduation criteria                                                                                                                                                                   |
+| Paired benchmark       | `src/benchmark.ts`, `config/benchmark-matrix.json`                                | Commissioned before/after benchmark of the scope selector against the historical check workload                                                                                                                                                                   |
+| Telemetry              | `src/telemetry-*.ts`                                                              | Non-semantic run telemetry and reporting                                                                                                                                                                                                                          |
+| Artifacts              | `src/artifact-inventory.ts`, `src/evidence-retention.ts`, `src/retention-plan.ts` | Non-destructive inventory and retention planning; deletion only via hash-approved `loop:retention:apply`                                                                                                                                                          |
+| Reconciliation         | `src/reconciliation.ts`                                                           | Resumable controller-boundary reconciliation when work advanced outside the tracked loop, with a fresh independent review                                                                                                                                         |
+| Repo contract          | `CONTRACT.md`, `PROJECT_GOAL.md`, `evals/`, `.agent/`, `AGENTS.md`                | Everything an adopting repository must provide                                                                                                                                                                                                                    |
 
 ## The four-tier verification model
 
@@ -49,7 +49,7 @@ Verification cost scales with how much a change claims:
    that detect drift between milestones.
 
 Tier plans are derived from the manifest's check catalogue; the shadow scope
-selector only *observes* which checks it would have chosen. Every focused
+selector only _observes_ which checks it would have chosen. Every focused
 command — in tier plans, invariant entries, and milestone proposals alike —
 must produce a validated command-owned receipt covering its declared
 `expectedArtifactKinds`; a zero exit status alone never passes. `pnpm verify`
@@ -114,6 +114,7 @@ report `NOT_READY`, never pass.
    `loop:doctor` validates runtime pins, config, state readability, and SDK
    authentication; `loop:demo-safety` proves retry, recovery, retry-limit
    stop, and protected-file rejection end to end.
+
 6. **Run the loop**: `pnpm loop:plan` for one planning pass, `pnpm loop:run`
    for the autonomous loop, `pnpm loop:status` / `loop:resume` /
    `loop:reconcile` for lifecycle operations.
@@ -150,7 +151,7 @@ report `NOT_READY`, never pass.
    pushes do not include either private ref.
 
    Isolated clone creation is a durable state operation, not a direct
-   filesystem call. State schema `1.6.0` records one exclusive pending
+   filesystem call. State schema `1.7.0` records one exclusive pending
    operation; a `workspace-create` intent is bound to the exact input state
    generation before any directory or clone side effect. The clone is built
    under a unique controller-derived `.create-<hash>` path, made standalone and
@@ -181,11 +182,24 @@ report `NOT_READY`, never pass.
    or unexpected state is preserved with a durable blocked diagnostic. A
    reviewer approval without the operation never authorizes implicit target
    adoption. `loop:status` and `loop:doctor` classify recovery read-only.
-   Canonical `1.4.0`/`1.5.0` state is migrated virtually on read and becomes
-   `1.6.0` on its next successful CAS publication.
+   Canonical `1.4.0`/`1.5.0`/`1.6.0` state is migrated virtually on read and
+   becomes `1.7.0` on its next successful CAS publication.
 
-   **Nothing is deleted by `loop:run`.** Controller startup only *plans*
-   evidence retention (the run's `evidence-retention.json` lists what a
+   Terminal workspace cleanup is also an exclusive durable state operation.
+   A strict `workspace-cleanup` intent pins the exact state generation,
+   terminal workspace identity, policy, timestamps, and failed-run diagnostic
+   hashes before dependency removal, archive publication, or recursive
+   workspace deletion. Leased startup resumes explicit dependency, archive,
+   and delete phases; a missing workspace is adoptable only after durable
+   delete authorization, and failed-workspace deletion cannot begin until the
+   complete diagnostic archive exactly matches the intent. Unexpected Git or
+   path identity, diagnostic drift, links, premature disappearance, and
+   partial or conflicting archives are preserved with a durable blocked
+   diagnostic. One pure reducer owns terminal cleanup completion. Status and
+   doctor classify the exact safe next action without recovery or mutation.
+
+   **No retained evidence is deleted by `loop:run`.** Controller startup only
+   _plans_ evidence retention (the run's `evidence-retention.json` lists what a
    deletion would remove and why, or why it is suspended). To actually
    delete: `pnpm loop:retention:plan` writes a standalone plan under
    `artifacts/orchestrator/retention/plans/` and prints its sha256;
@@ -193,9 +207,9 @@ report `NOT_READY`, never pass.
    hash, takes the controller lease, re-checks the candidate, configuration,
    citations, and suspensions against a fresh plan, refuses the whole plan
    on any divergence, and deletes with a resumable journal under
-   `artifacts/orchestrator/retention/apply/`. Terminal milestone *workspace*
-   cleanup (`src/workspace-cleanup.ts`) is a separate automatic
-   temporary-workspace policy and is unchanged.
+   `artifacts/orchestrator/retention/apply/`. Terminal milestone _workspace_
+   cleanup (`src/workspace-cleanup-operation.ts`) is a separate automatic
+   temporary-workspace policy governed by the durable operation above.
 
 ## Extension points
 

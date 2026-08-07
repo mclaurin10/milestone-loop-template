@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://milestone-loop.local/schemas/orchestrator-state-1.6.0.json",
+  "$id": "https://milestone-loop.local/schemas/orchestrator-state-1.7.0.json",
   "title": "Example Project Orchestrator State",
   "type": "object",
   "additionalProperties": false,
@@ -23,7 +23,7 @@
     "updatedAt"
   ],
   "properties": {
-    "schemaVersion": { "const": "1.6.0" },
+    "schemaVersion": { "const": "1.7.0" },
     "revision": { "type": "integer", "minimum": 0 },
     "repository": { "type": "object" },
     "queue": {
@@ -117,7 +117,8 @@
       "oneOf": [
         { "type": "null" },
         { "$ref": "#/$defs/workspaceCreateOperation" },
-        { "$ref": "#/$defs/targetIntegrateOperation" }
+        { "$ref": "#/$defs/targetIntegrateOperation" },
+        { "$ref": "#/$defs/workspaceCleanupOperation" }
       ]
     },
     "nextAllowedAction": {
@@ -373,6 +374,181 @@
                     { "type": "string", "pattern": "^[a-f0-9]{40}$" }
                   ]
                 },
+                "preservedPaths": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": { "type": "string", "minLength": 1 }
+                },
+                "quarantinePath": { "type": "null" }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "workspaceCleanupOperation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "kind",
+        "id",
+        "runId",
+        "milestoneId",
+        "attempt",
+        "inputStateGeneration",
+        "inputStateRevision",
+        "repositoryRoot",
+        "workspaceRoot",
+        "artifactRoot",
+        "targetBranch",
+        "verifiedCommit",
+        "workspacePath",
+        "workspaceBranch",
+        "workspaceBaseCommit",
+        "recordedHeadCommit",
+        "observedHeadCommit",
+        "workspaceCreatedAt",
+        "workspaceCreateOperationId",
+        "workspaceStatusSha256",
+        "reason",
+        "runArtifactDirectory",
+        "diagnosticArchivePath",
+        "diagnosticFiles",
+        "phase",
+        "createdAt",
+        "updatedAt",
+        "requestedAt",
+        "completionAt",
+        "recoveryPolicy",
+        "diagnostic"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "kind": { "const": "workspace-cleanup" },
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+        },
+        "runId": { "type": "string", "minLength": 1 },
+        "milestoneId": { "type": "string", "minLength": 1 },
+        "attempt": { "type": "integer", "minimum": 1 },
+        "inputStateGeneration": {
+          "type": "string",
+          "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$"
+        },
+        "inputStateRevision": { "type": "integer", "minimum": 0 },
+        "repositoryRoot": { "type": "string", "minLength": 1 },
+        "workspaceRoot": { "type": "string", "minLength": 1 },
+        "artifactRoot": { "type": "string", "minLength": 1 },
+        "targetBranch": { "type": "string", "minLength": 1 },
+        "verifiedCommit": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "workspacePath": { "type": "string", "minLength": 1 },
+        "workspaceBranch": { "type": "string", "minLength": 1 },
+        "workspaceBaseCommit": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "recordedHeadCommit": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "pattern": "^[a-f0-9]{40}$" }
+          ]
+        },
+        "observedHeadCommit": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "workspaceCreatedAt": { "type": "string", "format": "date-time" },
+        "workspaceCreateOperationId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+        },
+        "workspaceStatusSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "reason": {
+          "enum": [
+            "completed-delete-workspace",
+            "completed-preserve-workspace",
+            "failed-delete-after-diagnostics",
+            "failed-preserve-workspace"
+          ]
+        },
+        "runArtifactDirectory": { "type": ["string", "null"] },
+        "diagnosticArchivePath": { "type": ["string", "null"] },
+        "diagnosticFiles": {
+          "type": "array",
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "sha256", "bytes"],
+            "properties": {
+              "name": {
+                "enum": [
+                  "git-status.txt",
+                  "workspace.diff",
+                  "recent-git-log.txt"
+                ]
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "bytes": { "type": "integer", "minimum": 0 }
+            }
+          }
+        },
+        "phase": {
+          "enum": [
+            "intent-persisted",
+            "dependency-removal-started",
+            "dependencies-removed",
+            "archive-started",
+            "archive-ready",
+            "workspace-delete-started",
+            "workspace-deleted",
+            "blocked"
+          ]
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "requestedAt": { "type": "string", "format": "date-time" },
+        "completionAt": { "type": "string", "format": "date-time" },
+        "recoveryPolicy": { "const": "validate-adopt-or-preserve" },
+        "diagnostic": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "classification",
+                "message",
+                "observedAt",
+                "preservedPaths",
+                "quarantinePath"
+              ],
+              "properties": {
+                "classification": {
+                  "enum": [
+                    "archive-conflict",
+                    "archive-root-unsafe",
+                    "diagnostic-source-drift",
+                    "premature-workspace-missing",
+                    "state-workspace-inconsistent",
+                    "workspace-identity-drift",
+                    "workspace-root-unsafe"
+                  ]
+                },
+                "message": { "type": "string", "minLength": 1 },
+                "observedAt": { "type": "string", "format": "date-time" },
                 "preservedPaths": {
                   "type": "array",
                   "uniqueItems": true,

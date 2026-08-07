@@ -6,14 +6,14 @@ validated at runtime (fail-closed) rather than assumed.
 
 ## 1. Frozen authority set
 
-| File | Role |
-| --- | --- |
-| `PROJECT_GOAL.md` (name configurable via `project.authorityFile`) | The frozen product authority every agent reads first. Must be listed in `protectedPaths`. |
-| `AGENTS.md` | The operating covenant for autonomous agents. |
-| `evals/ACCEPTANCE.md` | Frozen acceptance prose. |
-| `evals/acceptance-manifest.json` | Machine-readable acceptance contract: validation layers, completion metrics, bot requirements, operational chains, seed gates, readiness gate, human gate, planned command surface. |
-| `evals/HIDDEN_VALIDATION_PROTOCOL.md` | Hidden-seed custody rules; seed values never enter the repository. |
-| `evals/immutable-contract-lock.json` | Baseline + active SHA-256 for the four files above, plus the one-time `CAL-1` calibration transition state. Its own hash is pinned as `ESTABLISHED_IMMUTABLE_LOCK_SHA256` in `scripts/verify.mjs`. |
+| File                                                              | Role                                                                                                                                                                                               |
+| ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PROJECT_GOAL.md` (name configurable via `project.authorityFile`) | The frozen product authority every agent reads first. Must be listed in `protectedPaths`.                                                                                                          |
+| `AGENTS.md`                                                       | The operating covenant for autonomous agents.                                                                                                                                                      |
+| `evals/ACCEPTANCE.md`                                             | Frozen acceptance prose.                                                                                                                                                                           |
+| `evals/acceptance-manifest.json`                                  | Machine-readable acceptance contract: validation layers, completion metrics, bot requirements, operational chains, seed gates, readiness gate, human gate, planned command surface.                |
+| `evals/HIDDEN_VALIDATION_PROTOCOL.md`                             | Hidden-seed custody rules; seed values never enter the repository.                                                                                                                                 |
+| `evals/immutable-contract-lock.json`                              | Baseline + active SHA-256 for the four files above, plus the one-time `CAL-1` calibration transition state. Its own hash is pinned as `ESTABLISHED_IMMUTABLE_LOCK_SHA256` in `scripts/verify.mjs`. |
 
 A hash mismatch is a blocking defect, not permission to regenerate the lock.
 The goal and hidden protocol are human-revision-only; acceptance files may
@@ -117,14 +117,14 @@ Every successful stage script (and every focused `verify:<check>` command)
 must write `result.json` into the directory the harness passes via
 environment:
 
-| Variable | Meaning |
-| --- | --- |
-| `LOOP_VERIFY_RUN_ID` | Current verify run id |
-| `LOOP_VERIFY_ARTIFACT_ROOT` | `artifacts/<run-id>` |
-| `LOOP_VERIFY_STAGE_ID` / `LOOP_VERIFY_STAGE_ARTIFACT_DIR` | Owning stage |
-| `LOOP_VERIFY_COMMAND_ID` / `LOOP_VERIFY_COMMAND_ARTIFACT_DIR` | Owning command; receipts go here |
-| `LOOP_ACCEPTANCE_MANIFEST` | Absolute path of the acceptance manifest |
-| `LOOP_TELEMETRY_PARENT_MANAGED` | Set when the orchestrator owns telemetry |
+| Variable                                                      | Meaning                                  |
+| ------------------------------------------------------------- | ---------------------------------------- |
+| `LOOP_VERIFY_RUN_ID`                                          | Current verify run id                    |
+| `LOOP_VERIFY_ARTIFACT_ROOT`                                   | `artifacts/<run-id>`                     |
+| `LOOP_VERIFY_STAGE_ID` / `LOOP_VERIFY_STAGE_ARTIFACT_DIR`     | Owning stage                             |
+| `LOOP_VERIFY_COMMAND_ID` / `LOOP_VERIFY_COMMAND_ARTIFACT_DIR` | Owning command; receipts go here         |
+| `LOOP_ACCEPTANCE_MANIFEST`                                    | Absolute path of the acceptance manifest |
+| `LOOP_TELEMETRY_PARENT_MANAGED`                               | Set when the orchestrator owns telemetry |
 
 Receipt shape (validated fail-closed by `scripts/verify.mjs`, the tiered
 verifier, and the invariant suite):
@@ -137,8 +137,12 @@ verifier, and the invariant suite):
   "status": "PASS",
   "checks": [{ "id": "unique-id", "status": "PASS", "summary": "..." }],
   "artifacts": [
-    { "path": "relative/inside/command-dir", "kind": "report-kind",
-      "bytes": 123, "sha256": "<64 hex>" }
+    {
+      "path": "relative/inside/command-dir",
+      "kind": "report-kind",
+      "bytes": 123,
+      "sha256": "<64 hex>"
+    }
   ]
 }
 ```
@@ -187,13 +191,13 @@ catalogue everything else references:
 
 ## 6. .agent conventions
 
-| Path | Convention |
-| --- | --- |
-| `.agent/PLANS.md` | The executable-plan standard (shape, maintenance, completion rules). |
-| `.agent/current-exec-plan.md` | The single living plan for the active increment, using the required headings. |
-| `.agent/next-milestone.json` | The queued next proposal in milestone schema `1.2.0`; written by reconciliation, consumed by the planner policy. |
+| Path                                      | Convention                                                                                                                   |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `.agent/PLANS.md`                         | The executable-plan standard (shape, maintenance, completion rules).                                                         |
+| `.agent/current-exec-plan.md`             | The single living plan for the active increment, using the required headings.                                                |
+| `.agent/next-milestone.json`              | The queued next proposal in milestone schema `1.2.0`; written by reconciliation, consumed by the planner policy.             |
 | `.agent/readiness-profile-activated.json` | Permanent one-way lifecycle marker (`{schemaVersion, state:"readiness", previousState:"bootstrap", activatedDate, reason}`). |
-| `.agent/completed/` | Durable milestone records, including the verification manifest (§5). |
+| `.agent/completed/`                       | Durable milestone records, including the verification manifest (§5).                                                         |
 
 ## 7. Orchestrator configuration
 
@@ -245,13 +249,13 @@ rejection of every canonical path including case variants.
   `loop:status`/`loop:dry-run` are read-only and lease-free; their state load
   cannot authorize publication or repair the mirror. Normal branch pushes do
   not include either private ref.
-- Recoverable workspace creation: state schema `1.6.0` permits exactly one
+- Recoverable workspace creation: state schema `1.7.0` permits exactly one
   exclusive pending operation. A `workspace-create` intent is published by
   state CAS before any directory creation or `git clone` and binds the operation ID,
   run/milestone/attempt, exact input generation and revision, target base,
   controller-derived branch, temporary/final paths, timestamps, phase, and
-  fixed recovery policy. Canonical `1.4.0`/`1.5.0` generations migrate
-  virtually for read-only compatibility and are written as `1.6.0` by the next
+  fixed recovery policy. Canonical `1.4.0`/`1.5.0`/`1.6.0` generations migrate
+  virtually for read-only compatibility and are written as `1.7.0` by the next
   successful CAS save. While an intent is pending, unrelated state mutations
   fail closed.
   The clone is created with no hardlinks under a unique contained temporary
@@ -287,16 +291,32 @@ rejection of every canonical path including case variants.
   doctor expose the operation, classification, and exact next safe action with
   optional-lock-suppressed read-only inspection and no recovery or artifact
   repair.
+- Recoverable terminal workspace cleanup: the same exclusive pending-operation
+  authority carries a strict `workspace-cleanup` intent before dependency
+  removal, diagnostic publication, or recursive workspace deletion. The intent
+  pins the canonical input generation/revision, run/milestone/attempt,
+  repository and target identity, exact standalone workspace and creation
+  marker, policy, timestamps, run/archive paths, Git status identity, and exact
+  failed-diagnostic file hashes and sizes. Leased startup recovers explicit
+  dependency, archive, and delete phases before ordinary terminal cleanup.
+  Preserve policy never adopts a missing workspace; delete policy adopts one
+  only after a durable delete-started phase; failed deletion requires the
+  complete exact archive first. One pure reducer owns cleanup status,
+  preservation, timestamps, and intent removal. Unsafe roots, linked or
+  substituted paths, Git or diagnostic drift, premature disappearance, and
+  partial or conflicting archives remain preserved with a durable blocked
+  diagnostic. Status and doctor expose the classification, preserved paths,
+  and next safe action using read-only Git inspection without recovery.
 - Approval-bound evidence retention: `loop:run` never deletes evidence —
-  controller startup only writes a retention *plan*
+  controller startup only writes a retention _plan_
   (`evidence-retention.json` in the run directory). Deletion requires
   `loop:retention:plan` (standalone plan + sha256 approval token) followed
   by `loop:retention:apply -- --plan <path> --sha256 <hex>`, which runs
   under the controller lease, re-verifies the candidate, configuration,
   roots, citations, and suspensions against a fresh plan, refuses the
   whole plan on any divergence, and journals every deletion for
-  interruption-safe resumption. Terminal milestone workspace cleanup is a
-  separate automatic temporary-workspace policy (§ workspaces above).
+  interruption-safe resumption. Terminal milestone workspace cleanup is the
+  separate automatic, intent-first temporary-workspace policy above.
 
 ## Adoption checklist
 

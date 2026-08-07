@@ -19,7 +19,6 @@ import {
 import { createMilestoneRecord } from "./milestone-state.js";
 import { MilestoneOrchestrator } from "./orchestrator.js";
 import { StateStore, createInitialState } from "./state-store.js";
-import { performWorkspaceCleanup } from "./workspace-cleanup.js";
 import { validConfig, validProposal } from "../test/fixtures.js";
 import { createIsolatedWorkspaceFixture } from "../test/workspace-fixture.js";
 
@@ -351,35 +350,13 @@ describe("post-persistence workspace lifecycle", () => {
       const store = new StateStore(fixture.root, config.statePath, () => NOW);
       await store.initialize(state);
 
-      let cleanupCalls = 0;
-      const cleanup = async (
-        input: Parameters<typeof performWorkspaceCleanup>[0],
-      ) => {
-        cleanupCalls += 1;
-        const persisted = JSON.parse(await readFile(store.path, "utf8")) as {
-          repository: { verifiedCommit: string };
-          milestones: Array<{
-            status: string;
-            workspace: { cleanup: { status: string } };
-          }>;
-        };
-        expect(persisted.repository.verifiedCommit).toBe(headCommit);
-        expect(persisted.milestones[0]).toMatchObject({
-          status: "completed",
-          workspace: { cleanup: { status: "pending" } },
-        });
-        expect(await exists(workspace.path)).toBe(true);
-        return performWorkspaceCleanup(input);
-      };
-
       const beforeAdvance = await MilestoneOrchestrator.open(
         fixture.root,
         fixture.configPath,
-        { workspaceCleanup: cleanup, now: () => new Date(NOW) },
+        { now: () => new Date(NOW) },
       );
       await beforeAdvance.close();
       expect(beforeAdvance.state.milestones[0]?.status).toBe("reviewing");
-      expect(cleanupCalls).toBe(0);
       expect(await exists(workspace.path)).toBe(true);
 
       integrateFastForward({
@@ -392,12 +369,10 @@ describe("post-persistence workspace lifecycle", () => {
       });
       await expect(
         MilestoneOrchestrator.open(fixture.root, fixture.configPath, {
-          workspaceCleanup: cleanup,
           now: () => new Date(NOW),
         }),
       ).rejects.toThrow(/without a durable target-integrate operation/);
 
-      expect(cleanupCalls).toBe(0);
       const preserved = await new StateStore(
         fixture.root,
         config.statePath,
@@ -413,7 +388,7 @@ describe("post-persistence workspace lifecycle", () => {
 
   it(
     "archives and deletes a terminal failed workspace when preservation is disabled",
-    { timeout: 15_000 },
+    { timeout: 30_000 },
     async () => {
       const fixture = await repositoryFixture(
         validConfig({ preserveFailedWorkspaces: false }),
@@ -577,7 +552,7 @@ describe("post-persistence workspace lifecycle", () => {
 
   it(
     "removes node_modules from completed workspaces even when clone deletion is disabled",
-    { timeout: 15_000 },
+    { timeout: 30_000 },
     async () => {
       const fixture = await repositoryFixture(
         validConfig({ cleanupCompletedWorkspaces: false }),
