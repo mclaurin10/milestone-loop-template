@@ -3,6 +3,75 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-08 — WP3b verifier and evidence trust-root supervision
+
+**Objective.** Convert every process launch owned directly by the protected
+authoritative verifier and shared evidence helpers to the WP3a bounded
+supervisor while preserving verifier contract semantics, exact toolchain
+identity, WP2 retention/workspace-cleanup behavior, and all WP3a review fixes.
+
+**Outcome.** `scripts/verify.mjs` and `tools/evidence.mjs` now use the shared
+plain-Node-loadable supervisor for identity probes, package scripts, citation
+queries, and evidence commands. Each launch has a finite timeout, per-stream
+cap, shared kill grace, redact-before-write behavior, and the complete WP3a
+supervision disposition; timeout and output-limit outcomes fail closed.
+Verifier schema `2.1.0`, stage/profile meanings, immutable-lock and receipt
+validation, identity drift, exit/status weighting, and completion eligibility
+are unchanged. Evidence callers await the asynchronous boundary, execute the
+exact pnpm JavaScript entry under pinned Node, and retain their prior result
+contracts. New regressions cover plain Node loading, default ownership,
+redaction, output breach, timeout, verifier identity/supervision, and absence
+of direct production spawn paths. Isolated verifier and production-build
+fixtures now copy the exact transitive supervisor dependency and pinned
+package-manager state.
+
+**Verification.** All commands used Node `24.18.0` and pnpm `11.15.1`. The
+requested serial cleanup/reconciliation reproduction initially retained only
+the cleanup deadline while an unrelated host Vitest/Git workload was active;
+with that workload clear, the identical command passed 24/24 (cleanup
+26.264 s, rejected-review reconciliation 32.065 s) without a source or timeout
+change. Contended aggregates at
+`artifacts/manual/test-orchestrator-3512/` and
+`artifacts/manual/test-orchestrator-7220/` correctly produced no PASS receipt;
+the clean corrected-tree orchestrator aggregate passed 419 tests (417 passed,
+2 explicit WP5 POSIX skips, 0 failed) at
+`artifacts/manual/test-orchestrator-1444/`. The clean unit aggregate exposed
+one deterministic isolated-fixture dependency defect at
+`artifacts/manual/test-unit-22236/`; after the fixture repair, the focused
+production-build suite passed 13/13 and the complete unit aggregate passed 432
+tests (430 passed, the same 2 WP5 skips, 0 failed) at
+`artifacts/manual/test-unit-21692/`. The earlier one-hour unit supervision
+timeout remains honestly recorded at `artifacts/manual/test-unit-24196/`; no
+bound or test deadline was raised.
+
+Final receipt-owning gates passed at `artifacts/manual/typecheck-6956/`,
+`artifacts/manual/lint-5448/`, and
+`artifacts/manual/format-check-3044/`; the pre-format attempt at
+`artifacts/manual/format-check-13128/` correctly contains only an ERROR
+manifest. Every final orchestrator, unit, typecheck, lint, and format report
+and receipt byte count/SHA-256 was independently recomputed and matches its
+manifest. `pnpm loop:demo-safety` passed all six scenarios at
+`artifacts/orchestrator/runs/safety-demonstration/safety-demonstration-20260809002843117-741e4c73.json`.
+The final focused verifier at
+`artifacts/wp3b-final-contract-20260808/result.json` has all exact-runtime/pin
+checks and all 13 contract-integrity checks PASS; overall FAIL is expected
+only from the honest dependency placeholder, its command supervision is
+bounded/closed-stream, and completion is ineligible. The immutable lock and
+all four governed hashes remain exact, `git diff --check` passed, and the
+unrelated human file remained outside the commit at blob
+`d0abdd24f404d9dc335818c355e39f7cfc531300`.
+
+**Commit.** `3efa3ed77b46abdea61e4b867a5998e92f54d6c3` (tree
+`8cb1bd29486f643830ff19e39ede38945ed7ea73`).
+
+**Known gaps.** The two POSIX group/process-tree tests remain explicit WP5
+skips; no unsupported-platform coverage is claimed. OCI containment,
+execution-provider identity, unrelated launch sites, and the previously
+recorded WP3a process-escape residuals remain future WP3 work. Product-domain
+verification placeholders, calibration, and every autonomous-readiness and
+human-verification gate remain open. This increment makes no completion or
+autonomous-readiness claim.
+
 ## 2026-08-07 — WP3a review fix: drain cutoff, spawn resolve, honest termination
 
 **Objective.** Close three independent review findings against the WP3a

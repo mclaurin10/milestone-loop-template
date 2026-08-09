@@ -1,6 +1,6 @@
 # Current Execution Plan
 
-**Status:** WP3b implementation and verification complete; implementation commit pending
+**Status:** WP3b complete at `3efa3ed`; handoff recorded
 **Updated:** 2026-08-08
 **Owner:** autonomous loop
 
@@ -98,7 +98,7 @@ cleanup; and any autonomous-readiness or unsupported-platform claim.
        unit aggregates, the safety demonstration, focused contract-integrity
        verification, and repository/hash checks. Inspect the resulting JSON
        and logs rather than relying on exit codes alone.
-6. [in progress] Record the durable decision and completed evidence in
+6. [x] Record the durable decision and completed evidence in
        `docs/decision-log.md`, `docs/autonomy-log.md`, and this plan; commit
        only the cohesive WP3b increment with both unrelated untracked entries
        excluded.
@@ -332,13 +332,22 @@ drain-sweep, and publication races remain explicitly deferred to WP5 CI.
   `spawn`/`spawnSync` call, `git diff --check` is clean, `.claude/` remains
   ignored and outside the diff, and the unrelated human file remains exact at
   blob `d0abdd24f404d9dc335818c355e39f7cfc531300`. Every WP3b acceptance
-  criterion has been observed. The cohesive implementation commit is the
-  only remaining action before recording its identifier and autonomy handoff.
+  criterion had been observed; at that checkpoint, the cohesive
+  implementation commit was the only remaining action before recording its
+  identifier and autonomy handoff.
+- 2026-08-08: The cohesive WP3b implementation, tests, durable decision, and
+  verified plan were committed as
+  `3efa3ed77b46abdea61e4b867a5998e92f54d6c3` (tree
+  `8cb1bd29486f643830ff19e39ede38945ed7ea73`). The staged path audit excluded
+  `.claude/` and the unrelated human file; post-commit status contained only
+  that untracked human file at its required blob. The exact commit identity
+  and outcome are now recorded in `docs/autonomy-log.md`.
 
 ## Next Action
 
-Stage only the tracked WP3b implementation, tests, decision, and plan; verify
-the staged path set excludes `.claude/` and the unrelated human file; then
-create the cohesive implementation commit. After the commit exists, record
-its exact commit/tree identity in this plan and `docs/autonomy-log.md` and
-commit that narrow documentation handoff.
+Begin a fresh inspect/plan loop from WP3b implementation commit `3efa3ed` for
+the next bounded WP3 containment increment. Re-read the remaining audit and
+improvement-plan gaps, select one cohesive slice, and write its executable
+plan before production changes. Do not treat WP3b, the focused contract
+result, or Windows-only evidence as product completion, autonomous readiness,
+or unsupported-platform coverage.
