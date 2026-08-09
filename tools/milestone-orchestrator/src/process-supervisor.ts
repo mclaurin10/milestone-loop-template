@@ -2,12 +2,9 @@ import { spawn } from "node:child_process";
 import { join } from "node:path";
 
 import type { StreamCaptureReport, SupervisionReport } from "./contracts.js";
-import {
-  DEFAULT_COMMAND_KILL_GRACE_MS,
-  DEFAULT_COMMAND_OUTPUT_LIMIT_BYTES,
-} from "./contracts.js";
 
-export { DEFAULT_COMMAND_KILL_GRACE_MS, DEFAULT_COMMAND_OUTPUT_LIMIT_BYTES };
+export const DEFAULT_COMMAND_OUTPUT_LIMIT_BYTES = 67_108_864;
+export const DEFAULT_COMMAND_KILL_GRACE_MS = 5_000;
 
 const TRUNCATION_BOUNDARY_WINDOW_BYTES = 4096;
 const NEWLINE = 0x0a;

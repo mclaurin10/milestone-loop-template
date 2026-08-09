@@ -48,11 +48,13 @@ async function verifierFixture(mutator: string): Promise<string> {
   git(root, "init", "-b", "main");
   git(root, "config", "user.name", "Verify Identity Test");
   git(root, "config", "user.email", "verify-identity@example.invalid");
-  await mkdir(join(root, "scripts"), { recursive: true });
-  await cp(
-    join(repositoryRoot, "scripts", "verify.mjs"),
-    join(root, "scripts", "verify.mjs"),
-  );
+  for (const path of [
+    "scripts/verify.mjs",
+    "tools/milestone-orchestrator/src/process-supervisor.ts",
+  ]) {
+    await mkdir(dirname(join(root, path)), { recursive: true });
+    await cp(join(repositoryRoot, path), join(root, path));
+  }
   for (const path of [
     "PROJECT_GOAL.md",
     "AGENTS.md",
@@ -73,6 +75,8 @@ async function verifierFixture(mutator: string): Promise<string> {
         name: "verify-identity-fixture",
         private: true,
         type: "module",
+        engines: { node: "24.18.0" },
+        packageManager: "pnpm@11.15.1",
         milestoneLoop: { verification: { defaultProfile: "readiness" } },
         scripts: { typecheck: "node mutate.mjs" },
       },
@@ -81,6 +85,10 @@ async function verifierFixture(mutator: string): Promise<string> {
     )}\n`,
   );
   await writeFile(join(root, "mutate.mjs"), mutator);
+  await writeFile(
+    join(root, "pnpm-lock.yaml"),
+    "lockfileVersion: '9.0'\n\nsettings:\n  autoInstallPeers: true\n  excludeLinksFromLockfile: false\n\nimporters:\n\n  .: {}\n",
+  );
   await writeFile(join(root, ".gitignore"), "artifacts/\nnode_modules/\n");
   await writeFile(join(root, "tracked.txt"), "base\n");
   git(root, "add", ".");
@@ -192,6 +200,19 @@ describe("aggregate verifier end-of-run identity", () => {
       expect(candidateFinal["gitCommit"]).toBe(candidate["gitCommit"]);
       expect(candidateFinal["gitTree"]).toBe(candidate["gitTree"]);
       expect(candidateFinal["workingTreeDirty"]).toBe(false);
+      const typecheck = (
+        result["stages"] as {
+          id: string;
+          commands: { supervision?: Record<string, unknown> }[];
+        }[]
+      ).find((stage) => stage.id === "typecheck");
+      expect(typecheck?.commands[0]?.supervision).toMatchObject({
+        timedOut: false,
+        outputLimitExceeded: false,
+        streamsClosed: true,
+        drainTimedOut: false,
+        drainCutoff: null,
+      });
     },
   );
 });

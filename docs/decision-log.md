@@ -3,6 +3,57 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-08 — Shared supervision at verifier and evidence trust roots (WP3b)
+
+**Decision.** Every process launch owned directly by `scripts/verify.mjs` or
+`tools/evidence.mjs` now resolves through the existing WP3a
+`superviseCommand` boundary. The protected verifier uses finite identity and
+stage-command timeouts, the shared per-stream output cap and kill grace, and
+adds the complete supervision disposition to each launched-command record
+without changing schema `2.1.0`, stage/profile meanings, status weights,
+receipt validation, identity-drift rules, immutable-lock validation, or
+completion eligibility. Evidence helpers use one asynchronous result adapter;
+their callers await it explicitly, timeout or output breach remains
+non-passing, and retained stdout/stderr is redacted before any console, log,
+manual report, or error write. Package scripts launch the exact pnpm JavaScript
+entry under the already selected Node executable so the supervised process is
+the real package-manager root and the Node/pnpm pins stay observable. The
+supervisor remains directly loadable by plain Node `24.18.0`, and its output
+limit and kill-grace defaults have one runtime owner.
+
+Isolated trust-boundary fixtures copy their exact transitive dependencies and
+pinned package-manager state. In particular, verifier identity fixtures copy
+the shared supervisor plus lockfile, while the production-build PASS-receipt
+fixture copies the explicit repository-relative evidence-wrapper dependency
+graph, including the supervisor, and creates nested destinations before copy.
+This keeps missing dependency edges deterministic instead of allowing a host
+checkout to mask them.
+
+**Why.** WP3a bounded orchestrator-owned commands, but these two launch owners
+still used bespoke `spawn`/`spawnSync` paths with unbounded capture, direct-child
+timeout handling, or no timeout at all. Reusing the same supervisor makes cap,
+redaction, tree termination, drain cutoff, exactly-once settle, and honest
+`rootExitObserved` behavior consistent across controller, authoritative
+verifier, and evidence commands. Executing pnpm through its JavaScript entry
+avoids inserting a shell or shim process that would blur ownership and
+termination evidence. Alternatives rejected: retaining synchronous probes
+(unbounded and unsupervised), wrapping shell/shim launchers (ambiguous process
+root), duplicating limits in the verifier/evidence layers (configuration
+drift), and weakening isolated fixtures after the new import (would hide a
+real packaging dependency).
+
+**Known residuals.** This does not add OCI containment or execution-provider
+identity, prove POSIX behavior, convert unrelated repository launch sites,
+or change the previously recorded WP3a platform escape residuals. The two
+POSIX-only supervisor tests remain explicit WP5 skips. No unsupported-platform,
+product-completion, or autonomous-readiness claim is made.
+
+**Affected files.** `scripts/verify.mjs`, `tools/evidence.mjs`,
+`tools/run-tool-evidence.mjs`,
+`tools/milestone-orchestrator/src/process-supervisor.ts`, `contracts.ts`,
+`aggregate-verify-identity.test.ts`, `evidence-supervision.test.ts`, and
+`tools/production-build.test.mjs`.
+
 ## 2026-08-07 — Supervisor drain cutoff and honest termination facts (WP3a review fix)
 
 **Decision.** Independent review of the WP3a supervisor found three defects,

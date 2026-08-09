@@ -1,10 +1,19 @@
-import { spawnSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
-import { unlinkSync, writeFileSync } from "node:fs";
+import { existsSync, unlinkSync, writeFileSync } from "node:fs";
 import { mkdir, readFile, stat, unlink, writeFile } from "node:fs/promises";
-import { basename, isAbsolute, relative, resolve } from "node:path";
+import { basename, dirname, isAbsolute, relative, resolve } from "node:path";
+
+import {
+  DEFAULT_COMMAND_KILL_GRACE_MS,
+  DEFAULT_COMMAND_OUTPUT_LIMIT_BYTES,
+  superviseCommand,
+} from "./milestone-orchestrator/src/process-supervisor.ts";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
+const DEFAULT_EVIDENCE_COMMAND_TIMEOUT_MS = 3_600_000;
+const IDENTITY_COMMAND_TIMEOUT_MS = 30_000;
+const CITATION_COMMAND_TIMEOUT_MS = 60_000;
+const CITATION_OUTPUT_LIMIT_BYTES = 16 * 1024 * 1024;
 
 function safeName(value) {
   return value.replaceAll(":", "-").replaceAll(/[^A-Za-z0-9._-]/g, "-");
@@ -69,6 +78,78 @@ function redactArgv(argv) {
   return result;
 }
 
+function renderSupervisedStream(raw, capture) {
+  const redacted = redactSensitiveText(raw.toString("utf8"));
+  if (!capture.truncated) return redacted;
+  const separator =
+    redacted.length === 0 || redacted.endsWith("\n") ? "" : "\n";
+  return `${redacted}${separator}[output truncated: retained ${capture.bytesCaptured} of ${capture.totalBytesObserved} observed bytes]\n`;
+}
+
+function stringEnvironment(source) {
+  return Object.fromEntries(
+    Object.entries(source).filter((entry) => typeof entry[1] === "string"),
+  );
+}
+
+function positiveInteger(value, label) {
+  if (!Number.isSafeInteger(value) || value <= 0)
+    throw new Error(`${label} must be a positive safe integer.`);
+  return value;
+}
+
+async function superviseEvidenceCommand(command, args, options = {}) {
+  const timeoutMs = positiveInteger(
+    options.timeoutMs ?? DEFAULT_EVIDENCE_COMMAND_TIMEOUT_MS,
+    "Evidence command timeout",
+  );
+  const killGraceMs = positiveInteger(
+    options.killGraceMs ?? DEFAULT_COMMAND_KILL_GRACE_MS,
+    "Evidence command kill grace",
+  );
+  const outputLimitBytes = positiveInteger(
+    options.outputLimitBytes ?? DEFAULT_COMMAND_OUTPUT_LIMIT_BYTES,
+    "Evidence command output limit",
+  );
+  const supervised = await superviseCommand({
+    executable: command,
+    args,
+    cwd: options.cwd ?? repositoryRoot,
+    env: stringEnvironment({ ...process.env, ...options.env }),
+    timeoutMs,
+    killGraceMs,
+    outputLimitBytes,
+  });
+  const stdout = renderSupervisedStream(
+    supervised.stdout,
+    supervised.supervision.stdout,
+  );
+  const stderr = renderSupervisedStream(
+    supervised.stderr,
+    supervised.supervision.stderr,
+  );
+  const error = supervised.spawnError
+    ? new Error(redactSensitiveText(supervised.spawnError.message))
+    : supervised.supervision.timedOut
+      ? new Error(`Command timed out after ${timeoutMs} ms.`)
+      : supervised.supervision.outputLimitExceeded
+        ? new Error(
+            supervised.supervision.terminationReason === "output-limit"
+              ? `Command exceeded the ${outputLimitBytes}-byte per-stream output limit; output was truncated and the process tree was terminated.`
+              : `Command exceeded the ${outputLimitBytes}-byte per-stream output limit while draining after exit; output was truncated and remaining streams were cut off.`,
+          )
+        : null;
+  return {
+    status: supervised.exitCode,
+    signal: supervised.signal,
+    stdout,
+    stderr,
+    error,
+    spawnargs: redactArgv([command, ...args]),
+    supervision: supervised.supervision,
+  };
+}
+
 function displayCommand(argv = process.argv) {
   return redactSensitiveText(
     redactArgv(argv)
@@ -116,12 +197,12 @@ function citationClass(citations) {
       : "mixed";
 }
 
-function trackedCitationPaths(repositoryRoot, needles) {
+async function trackedCitationPaths(repositoryRoot, needles) {
   const citations = new Set();
   for (let offset = 0; offset < needles.length; offset += 20) {
     const batch = needles.slice(offset, offset + 20);
     if (batch.length === 0) continue;
-    const result = spawnSync(
+    const result = await superviseEvidenceCommand(
       "git",
       [
         "-C",
@@ -134,11 +215,15 @@ function trackedCitationPaths(repositoryRoot, needles) {
         "HEAD",
         "--",
       ],
-      { encoding: "utf8", maxBuffer: 16 * 1024 * 1024, windowsHide: true },
+      {
+        cwd: repositoryRoot,
+        timeoutMs: CITATION_COMMAND_TIMEOUT_MS,
+        outputLimitBytes: CITATION_OUTPUT_LIMIT_BYTES,
+      },
     );
     if (result.error || (result.status !== 0 && result.status !== 1))
       throw new Error(
-        `Cannot inspect durable evidence citations: ${result.error?.message ?? result.stderr.trim()}.`,
+        `Cannot inspect durable evidence citations: ${result.error?.message ?? (result.stderr.trim() || `git grep exited ${String(result.status)}`)}.`,
       );
     for (const path of result.stdout.split(/\r?\n/u))
       if (path.length > 0)
@@ -155,7 +240,7 @@ async function durableCitations(context, manifestId) {
   if (relativeDirectory.length > 0) {
     needles.push(relativeDirectory, `${relativeDirectory}/result.json`);
   }
-  const trackedPaths = trackedCitationPaths(context.repositoryRoot, [
+  const trackedPaths = await trackedCitationPaths(context.repositoryRoot, [
     ...new Set(needles),
   ]);
   const statePath = resolve(
@@ -446,7 +531,7 @@ export async function evidenceContext(defaultStageId, defaultCommandId) {
       manifestId: `manual-${safeName(commandId)}-${createdAt.replaceAll(/[^0-9]/g, "")}-${process.pid}-${randomUUID().slice(0, 8)}`,
       createdAt,
       displayCommand: displayCommand(),
-      candidate: candidateFromIdentity(commandIdentity(repositoryRoot)),
+      candidate: candidateFromIdentity(await commandIdentity(repositoryRoot)),
       telemetry: { runId: null, manifestPath: null },
       finalized: false,
       lastManifest: null,
@@ -461,7 +546,7 @@ export async function beginDirectTelemetry(context, input = {}) {
   try {
     const { TelemetryStore } =
       await import("./milestone-orchestrator/src/telemetry-store.ts");
-    const identity = commandIdentity();
+    const identity = await commandIdentity();
     const timestamp = new Date().toISOString().replaceAll(/[^0-9]/g, "");
     const runId =
       process.env.MILESTONE_LOOP_TELEMETRY_RUN_ID ??
@@ -559,51 +644,60 @@ export async function finishDirectTelemetry(handle, input) {
 
 export function pnpmInvocation(args) {
   const pnpmPath = process.env.npm_execpath;
-  if (pnpmPath && /pnpm(?:\.[cm]?js)?$/i.test(pnpmPath)) {
+  if (
+    pnpmPath &&
+    /pnpm(?:\.[cm]?js)?$/i.test(pnpmPath) &&
+    existsSync(pnpmPath)
+  ) {
     return { command: process.execPath, args: [pnpmPath, ...args] };
   }
-  if (process.platform === "win32") {
-    return {
-      command: process.env.ComSpec ?? "cmd.exe",
-      args: ["/d", "/s", "/c", "pnpm.cmd", ...args],
-    };
-  }
+  const corepackPnpmPath = resolve(
+    dirname(process.execPath),
+    "node_modules",
+    "corepack",
+    "dist",
+    "pnpm.js",
+  );
+  if (existsSync(corepackPnpmPath))
+    return { command: process.execPath, args: [corepackPnpmPath, ...args] };
+  if (process.platform === "win32")
+    throw new Error(
+      "Safe pnpm argv execution on Windows could not resolve a pnpm JavaScript entry from npm_execpath or the pinned Node Corepack installation.",
+    );
   return { command: "pnpm", args };
 }
 
-export function runPnpm(args, options = {}) {
+export async function runPnpm(args, options = {}) {
   const invocation = pnpmInvocation(args);
-  return spawnSync(invocation.command, invocation.args, {
-    cwd: repositoryRoot,
-    encoding: "utf8",
-    env: { ...process.env, ...options.env },
-    maxBuffer: 64 * 1024 * 1024,
-    windowsHide: true,
+  return superviseEvidenceCommand(invocation.command, invocation.args, {
+    cwd: options.cwd ?? repositoryRoot,
+    env: options.env,
+    timeoutMs: options.timeoutMs,
+    killGraceMs: options.killGraceMs,
+    outputLimitBytes: options.outputLimitBytes,
   });
 }
 
-export function commandIdentity(root = repositoryRoot) {
-  const output = (command, args) => {
-    const result = spawnSync(command, args, {
+export async function commandIdentity(root = repositoryRoot) {
+  const output = async (command, args) => {
+    const result = await superviseEvidenceCommand(command, args, {
       cwd: root,
-      encoding: "utf8",
-      windowsHide: true,
+      timeoutMs: IDENTITY_COMMAND_TIMEOUT_MS,
+      outputLimitBytes: CITATION_OUTPUT_LIMIT_BYTES,
     });
-    return result.status === 0 ? result.stdout.trim() : null;
+    return !result.error && result.status === 0 ? result.stdout.trim() : null;
   };
+  const pnpm = pnpmInvocation(["--version"]);
   return {
-    gitCommit: output("git", ["rev-parse", "HEAD"]),
-    gitTree: output("git", ["write-tree"]),
-    gitStatus: output("git", [
+    gitCommit: await output("git", ["rev-parse", "HEAD"]),
+    gitTree: await output("git", ["write-tree"]),
+    gitStatus: await output("git", [
       "status",
       "--porcelain=v1",
       "--untracked-files=all",
     ]),
     nodeVersion: process.version,
-    pnpmVersion: output(
-      pnpmInvocation(["--version"]).command,
-      pnpmInvocation(["--version"]).args,
-    ),
+    pnpmVersion: await output(pnpm.command, pnpm.args),
   };
 }
 
@@ -711,7 +805,9 @@ export async function writeManualEvidenceManifest(context, input) {
     manifestId: `manual-${safeName(context.commandId)}-${Date.now()}-${randomUUID().slice(0, 8)}`,
     createdAt: new Date().toISOString(),
     displayCommand: displayCommand(),
-    candidate: candidateFromIdentity(commandIdentity(context.repositoryRoot)),
+    candidate: candidateFromIdentity(
+      await commandIdentity(context.repositoryRoot),
+    ),
     telemetry: { runId: null, manifestPath: null },
     finalized: false,
     lastManifest: null,
@@ -780,6 +876,7 @@ export function describeResult(result) {
     signal: result.signal,
     stdout: result.stdout,
     stderr: result.stderr,
+    supervision: result.supervision ?? null,
   };
 }
 

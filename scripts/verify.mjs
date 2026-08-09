@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-import { spawn, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
 import {
@@ -14,6 +13,12 @@ import {
 import { dirname, isAbsolute, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import {
+  DEFAULT_COMMAND_KILL_GRACE_MS,
+  DEFAULT_COMMAND_OUTPUT_LIMIT_BYTES,
+  superviseCommand,
+} from "../tools/milestone-orchestrator/src/process-supervisor.ts";
+
 const RESULT_SCHEMA_VERSION = "2.1.0";
 const EVIDENCE_RECEIPT_SCHEMA_VERSION = "1.0.0";
 const IMMUTABLE_LOCK_SCHEMA_VERSION = "1.0.0";
@@ -21,6 +26,8 @@ const ESTABLISHED_IMMUTABLE_LOCK_SHA256 =
   "d1166088b00c54af65e8654188adc58a3cabd9d7908820809fe66af28c933050";
 const REQUIRED_NODE_MAJOR = 24;
 const REQUIRED_PNPM_MAJOR = 11;
+const IDENTITY_COMMAND_TIMEOUT_MS = 30_000;
+const IDENTITY_OUTPUT_LIMIT_BYTES = 16 * 1024 * 1024;
 const STATUS = Object.freeze({
   PASS: "PASS",
   FAIL: "FAIL",
@@ -446,43 +453,97 @@ async function sha256FileIfPresent(path) {
   return existsSync(path) ? sha256File(path) : null;
 }
 
-function commandOutput(command, args, cwd = repositoryRoot) {
-  const result = spawnSync(command, args, {
+function redactSensitiveText(value) {
+  return [
+    [
+      /(\b(?:authorization|proxy-authorization)\s*:\s*bearer\s+)[^\s,;]+/giu,
+      "$1[REDACTED]",
+    ],
+    [/\b(?:sk|sess|pat|ghp|github_pat)-[A-Za-z0-9_-]{8,}\b/gu, "[REDACTED]"],
+    [
+      /(\b[A-Za-z][A-Za-z0-9_]*(?:TOKEN|SECRET|PASSWORD|API_KEY)[A-Za-z0-9_]*\s*=\s*)[^\s]+/giu,
+      "$1[REDACTED]",
+    ],
+    [/(https?:\/\/)[^\s/@:]+:[^\s/@]+@/giu, "$1[REDACTED]@"],
+  ].reduce(
+    (redacted, [pattern, replacement]) =>
+      redacted.replace(pattern, replacement),
+    value,
+  );
+}
+
+function stringEnvironment(source) {
+  return Object.fromEntries(
+    Object.entries(source).filter((entry) => typeof entry[1] === "string"),
+  );
+}
+
+function renderSupervisedStream(raw, capture) {
+  const redacted = redactSensitiveText(raw.toString("utf8"));
+  if (!capture.truncated) return redacted;
+  const separator =
+    redacted.length === 0 || redacted.endsWith("\n") ? "" : "\n";
+  return `${redacted}${separator}[output truncated: retained ${capture.bytesCaptured} of ${capture.totalBytesObserved} observed bytes]\n`;
+}
+
+async function commandOutput(command, args, cwd = repositoryRoot) {
+  const result = await superviseCommand({
+    executable: command,
+    args,
     cwd,
-    encoding: "utf8",
-    windowsHide: true,
+    env: stringEnvironment(process.env),
+    timeoutMs: IDENTITY_COMMAND_TIMEOUT_MS,
+    killGraceMs: DEFAULT_COMMAND_KILL_GRACE_MS,
+    outputLimitBytes: IDENTITY_OUTPUT_LIMIT_BYTES,
   });
-  if (result.error || result.status !== 0) return undefined;
-  return result.stdout.trim();
+  if (
+    result.spawnError ||
+    result.supervision.timedOut ||
+    result.supervision.outputLimitExceeded ||
+    result.exitCode !== 0
+  )
+    return undefined;
+  return redactSensitiveText(result.stdout.toString("utf8")).trim();
 }
 
 function pnpmInvocation(args) {
   const pnpmExecPath = process.env.npm_execpath;
-  if (pnpmExecPath && /pnpm(?:\.c?js)?$/i.test(pnpmExecPath)) {
+  if (
+    pnpmExecPath &&
+    /pnpm(?:\.[cm]?js)?$/i.test(pnpmExecPath) &&
+    existsSync(pnpmExecPath)
+  ) {
     return { command: process.execPath, args: [pnpmExecPath, ...args] };
   }
-  if (process.platform === "win32") {
-    return {
-      command: process.env.ComSpec ?? "cmd.exe",
-      args: ["/d", "/s", "/c", "pnpm.cmd", ...args],
-    };
-  }
+  const corepackPnpmPath = resolve(
+    dirname(process.execPath),
+    "node_modules",
+    "corepack",
+    "dist",
+    "pnpm.js",
+  );
+  if (existsSync(corepackPnpmPath))
+    return { command: process.execPath, args: [corepackPnpmPath, ...args] };
+  if (process.platform === "win32")
+    throw new Error(
+      "Safe pnpm argv execution on Windows could not resolve a pnpm JavaScript entry from npm_execpath or the pinned Node Corepack installation.",
+    );
   return { command: "pnpm", args };
 }
 
-function detectPnpmVersion() {
+async function detectPnpmVersion() {
   const userAgentMatch = process.env.npm_config_user_agent?.match(
     /(?:^|\s)pnpm\/([^\s]+)/,
   );
   if (userAgentMatch) return userAgentMatch[1];
   const invocation = pnpmInvocation(["--version"]);
-  return commandOutput(invocation.command, invocation.args);
+  return await commandOutput(invocation.command, invocation.args);
 }
 
 async function collectCandidateIdentity(packageJson, pnpmVersion) {
-  const gitCommit = commandOutput("git", ["rev-parse", "HEAD"]);
-  const gitTree = commandOutput("git", ["rev-parse", "HEAD^{tree}"]);
-  const gitStatus = commandOutput("git", [
+  const gitCommit = await commandOutput("git", ["rev-parse", "HEAD"]);
+  const gitTree = await commandOutput("git", ["rev-parse", "HEAD^{tree}"]);
+  const gitStatus = await commandOutput("git", [
     "status",
     "--porcelain=v1",
     "--untracked-files=all",
@@ -1362,125 +1423,131 @@ async function runPackageScript(
   await mkdir(dirname(absoluteLogPath), { recursive: true });
   await mkdir(absoluteCommandRoot, { recursive: true });
   const invocation = pnpmInvocation(["run", scriptName]);
-  const logChunks = [];
 
   console.log(`[RUN] ${stage.id}: pnpm run ${scriptName}`);
-
-  return new Promise((resolveCommand) => {
-    let settled = false;
-    let spawnError;
-    let timedOut = false;
-    let forceKillTimeout;
-    const child = spawn(invocation.command, invocation.args, {
-      cwd: repositoryRoot,
-      env: {
-        ...process.env,
-        LOOP_VERIFY_RUN_ID: artifactRoot.split(/[\\/]/).at(-1),
-        LOOP_VERIFY_ARTIFACT_ROOT: artifactRoot,
-        LOOP_VERIFY_STAGE_ID: stage.id,
-        LOOP_VERIFY_STAGE_ARTIFACT_DIR: absoluteStageRoot,
-        LOOP_VERIFY_COMMAND_ID: scriptName,
-        LOOP_VERIFY_COMMAND_ARTIFACT_DIR: absoluteCommandRoot,
-        LOOP_ACCEPTANCE_MANIFEST: acceptanceManifestPath,
-      },
-      stdio: ["ignore", "pipe", "pipe"],
-      windowsHide: true,
-    });
-
-    const capture = (stream, label) => {
-      stream.on("data", (chunk) => {
-        const text = chunk.toString();
-        logChunks.push(`[${label}] ${text}`);
-        process[label === "stdout" ? "stdout" : "stderr"].write(
-          `[${stage.id}] ${text}`,
-        );
-      });
-    };
-    capture(child.stdout, "stdout");
-    capture(child.stderr, "stderr");
-
-    child.on("error", (error) => {
-      spawnError = error;
-    });
-    const timeout = setTimeout(() => {
-      timedOut = true;
-      logChunks.push(`[harness] Timed out after ${stage.timeoutMs} ms.\n`);
-      child.kill("SIGTERM");
-      forceKillTimeout = setTimeout(() => {
-        if (!settled) child.kill("SIGKILL");
-      }, 5_000);
-    }, stage.timeoutMs);
-    child.on("close", async (exitCode, signal) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timeout);
-      clearTimeout(forceKillTimeout);
-      const durationMs = Date.now() - commandStarted;
-      await writeFile(absoluteLogPath, logChunks.join(""), "utf8");
-      let evidence = null;
-      if (!spawnError && !timedOut && exitCode === 0) {
-        try {
-          evidence = await validateEvidenceReceipt(
-            stage,
-            scriptName,
-            absoluteCommandRoot,
-          );
-        } catch (error) {
-          evidence = {
-            valid: false,
-            message: `Evidence validation raised an error: ${error.message}`,
-            receipt: null,
-            artifacts: [],
-          };
-        }
-      }
-      const status = spawnError
-        ? STATUS.ERROR
-        : timedOut
-          ? STATUS.FAIL
-          : exitCode === 0
-            ? evidence.valid
-              ? STATUS.PASS
-              : STATUS.FAIL
-            : exitCode === EXIT_CODE[STATUS.NOT_READY]
-              ? STATUS.NOT_READY
-              : STATUS.FAIL;
-      resolveCommand({
-        script: scriptName,
-        displayCommand: `pnpm run ${scriptName}`,
-        status,
-        exitCode,
-        signal,
-        durationMs,
-        log: relativeLogPath,
-        artifactDirectory: relativeCommandRoot,
-        evidence:
-          evidence === null
-            ? null
-            : {
-                receipt: `${relativeCommandRoot}/result.json`,
-                valid: evidence.valid,
-                message: evidence.message,
-                checks: evidence.receipt?.checks ?? [],
-                artifacts: evidence.artifacts.map((artifact) => ({
-                  ...artifact,
-                  path: `${relativeCommandRoot}/${artifact.path}`,
-                })),
-              },
-        message: spawnError
-          ? `Could not start command: ${spawnError.message}`
-          : timedOut
-            ? `Command timed out after ${stage.timeoutMs} ms.`
-            : exitCode === 0
-              ? evidence.valid
-                ? `Command passed with validated evidence. ${evidence.message}`
-                : `Command exited 0 but evidence validation failed. ${evidence.message}`
-              : exitCode === EXIT_CODE[STATUS.NOT_READY]
-                ? "Command reported NOT_READY (exit 2)."
-                : `Command failed with exit ${exitCode}${signal ? ` and signal ${signal}` : ""}.`,
-      });
-    });
+  const supervised = await superviseCommand({
+    executable: invocation.command,
+    args: invocation.args,
+    cwd: repositoryRoot,
+    env: stringEnvironment({
+      ...process.env,
+      LOOP_VERIFY_RUN_ID: artifactRoot.split(/[\\/]/).at(-1),
+      LOOP_VERIFY_ARTIFACT_ROOT: artifactRoot,
+      LOOP_VERIFY_STAGE_ID: stage.id,
+      LOOP_VERIFY_STAGE_ARTIFACT_DIR: absoluteStageRoot,
+      LOOP_VERIFY_COMMAND_ID: scriptName,
+      LOOP_VERIFY_COMMAND_ARTIFACT_DIR: absoluteCommandRoot,
+      LOOP_ACCEPTANCE_MANIFEST: acceptanceManifestPath,
+    }),
+    timeoutMs: stage.timeoutMs,
+    killGraceMs: DEFAULT_COMMAND_KILL_GRACE_MS,
+    outputLimitBytes: DEFAULT_COMMAND_OUTPUT_LIMIT_BYTES,
   });
+  const { supervision, spawnError, exitCode, signal } = supervised;
+  const stdoutText = renderSupervisedStream(
+    supervised.stdout,
+    supervision.stdout,
+  );
+  const stderrText = renderSupervisedStream(
+    supervised.stderr,
+    supervision.stderr,
+  );
+  const logChunks = [];
+  if (stdoutText.length > 0) {
+    logChunks.push(`[stdout] ${stdoutText}`);
+    process.stdout.write(
+      `[${stage.id}] ${stdoutText}${stdoutText.endsWith("\n") ? "" : "\n"}`,
+    );
+  }
+  if (stderrText.length > 0) {
+    logChunks.push(`[stderr] ${stderrText}`);
+    process.stderr.write(
+      `[${stage.id}] ${stderrText}${stderrText.endsWith("\n") ? "" : "\n"}`,
+    );
+  }
+  if (supervision.timedOut)
+    logChunks.push(`[harness] Timed out after ${stage.timeoutMs} ms.\n`);
+  if (supervision.outputLimitExceeded)
+    logChunks.push(
+      `[harness] Per-stream output limit ${DEFAULT_COMMAND_OUTPUT_LIMIT_BYTES} bytes exceeded.\n`,
+    );
+  await writeFile(absoluteLogPath, logChunks.join(""), "utf8");
+
+  let evidence = null;
+  if (
+    !spawnError &&
+    !supervision.timedOut &&
+    !supervision.outputLimitExceeded &&
+    exitCode === 0
+  ) {
+    try {
+      evidence = await validateEvidenceReceipt(
+        stage,
+        scriptName,
+        absoluteCommandRoot,
+      );
+    } catch (error) {
+      evidence = {
+        valid: false,
+        message: `Evidence validation raised an error: ${error.message}`,
+        receipt: null,
+        artifacts: [],
+      };
+    }
+  }
+  const status = spawnError
+    ? STATUS.ERROR
+    : supervision.timedOut
+      ? STATUS.FAIL
+      : supervision.outputLimitExceeded
+        ? STATUS.ERROR
+        : exitCode === 0
+          ? evidence?.valid
+            ? STATUS.PASS
+            : STATUS.FAIL
+          : exitCode === EXIT_CODE[STATUS.NOT_READY]
+            ? STATUS.NOT_READY
+            : STATUS.FAIL;
+  const message = spawnError
+    ? `Could not start command: ${redactSensitiveText(spawnError.message)}`
+    : supervision.timedOut
+      ? `Command timed out after ${stage.timeoutMs} ms.`
+      : supervision.outputLimitExceeded
+        ? supervision.terminationReason === "output-limit"
+          ? `Command exceeded the ${DEFAULT_COMMAND_OUTPUT_LIMIT_BYTES}-byte per-stream output limit; output was truncated and the process tree terminated.`
+          : `Command exceeded the ${DEFAULT_COMMAND_OUTPUT_LIMIT_BYTES}-byte per-stream output limit while draining after exit; output was truncated and remaining streams were cut off.`
+        : exitCode === 0
+          ? evidence?.valid
+            ? `Command passed with validated evidence. ${evidence.message}`
+            : `Command exited 0 but evidence validation failed. ${evidence?.message ?? "No evidence result was produced."}`
+          : exitCode === EXIT_CODE[STATUS.NOT_READY]
+            ? "Command reported NOT_READY (exit 2)."
+            : `Command failed with exit ${exitCode}${signal ? ` and signal ${signal}` : ""}.`;
+  return {
+    script: scriptName,
+    displayCommand: `pnpm run ${scriptName}`,
+    status,
+    exitCode,
+    signal,
+    durationMs: Date.now() - commandStarted,
+    log: relativeLogPath,
+    artifactDirectory: relativeCommandRoot,
+    evidence:
+      evidence === null
+        ? null
+        : {
+            receipt: `${relativeCommandRoot}/result.json`,
+            valid: evidence.valid,
+            message: evidence.message,
+            checks: evidence.receipt?.checks ?? [],
+            artifacts: evidence.artifacts.map((artifact) => ({
+              ...artifact,
+              path: `${relativeCommandRoot}/${artifact.path}`,
+            })),
+          },
+    supervision,
+    message,
+  };
 }
 
 async function evaluateScriptStage(stage, packageJson, artifactRoot) {
@@ -1619,7 +1686,7 @@ async function runVerification(options) {
   await mkdir(resolve(artifactRoot, "logs"), { recursive: true });
 
   const startedAt = new Date();
-  const pnpmVersion = detectPnpmVersion();
+  const pnpmVersion = await detectPnpmVersion();
   const candidate = await collectCandidateIdentity(packageJson, pnpmVersion);
   const profileResult = {
     id: profile.id,

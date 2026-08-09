@@ -80,16 +80,15 @@ async function createFixture(options = {}) {
   );
   await writeFile(join(repository, "build-script.mjs"), buildSource, "utf8");
   if (options.includeEvidenceWrapper) {
-    await mkdir(join(repository, "tools"), { recursive: true });
-    for (const name of [
-      "evidence.mjs",
-      "production-build.mjs",
-      "run-tool-evidence.mjs",
+    for (const path of [
+      "tools/evidence.mjs",
+      "tools/production-build.mjs",
+      "tools/run-tool-evidence.mjs",
+      "tools/milestone-orchestrator/src/process-supervisor.ts",
     ]) {
-      await copyFile(
-        join(repositoryRoot, "tools", name),
-        join(repository, "tools", name),
-      );
+      const destination = join(repository, path);
+      await mkdir(dirname(destination), { recursive: true });
+      await copyFile(join(repositoryRoot, path), destination);
     }
     await writeFile(
       join(repository, "tools", "workspace-typecheck.mjs"),

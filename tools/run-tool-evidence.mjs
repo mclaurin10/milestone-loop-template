@@ -27,6 +27,7 @@ const definitions = {
     stageId: "format-lint",
     commandId: "format:check",
     kind: "format-report",
+    timeoutMs: 300_000,
     commands: [
       [
         "exec",
@@ -47,12 +48,14 @@ const definitions = {
     stageId: "format-lint",
     commandId: "lint",
     kind: "lint-report",
+    timeoutMs: 300_000,
     commands: [["exec", "eslint", "scripts", "tools", "vitest.config.ts"]],
   },
   typecheck: {
     stageId: "typecheck",
     commandId: "typecheck",
     kind: "typecheck-report",
+    timeoutMs: 600_000,
     commands: [],
   },
   build: {
@@ -64,12 +67,14 @@ const definitions = {
     stageId: "bootstrap-tests",
     commandId: "test:unit",
     kind: "vitest-report",
+    timeoutMs: 3_600_000,
     commands: [],
   },
   orchestrator: {
     stageId: "verification-tier-milestone",
     commandId: "test-orchestrator",
     kind: "orchestrator-vitest-report",
+    timeoutMs: 3_600_000,
     commands: [],
   },
 };
@@ -132,14 +137,17 @@ if (mode === "invariant-vitest" || mode === "focused-verify") {
       artifactName = "invariant-vitest-report.json";
       artifactKind = "invariant-vitest-report";
       const reportPath = resolve(context.artifactDirectory, artifactName);
-      const result = runPnpm([
-        "exec",
-        "vitest",
-        "run",
-        ...modeArguments,
-        "--reporter=json",
-        `--outputFile=${reportPath}`,
-      ]);
+      const result = await runPnpm(
+        [
+          "exec",
+          "vitest",
+          "run",
+          ...modeArguments,
+          "--reporter=json",
+          `--outputFile=${reportPath}`,
+        ],
+        { timeoutMs: 3_600_000 },
+      );
       assertCommandPassed(result, "invariant-vitest command");
       const parsed = JSON.parse(await readFile(reportPath, "utf8"));
       tests = {
@@ -169,7 +177,9 @@ if (mode === "invariant-vitest" || mode === "focused-verify") {
       const stage = modeArguments[1];
       artifactName = "focused-verify-result.json";
       artifactKind = "focused-verify-result";
-      const result = runPnpm(["verify", "--", "--stage", stage]);
+      const result = await runPnpm(["verify", "--", "--stage", stage], {
+        timeoutMs: 29_400_000,
+      });
       assertCommandPassed(result, `focused verify stage ${stage}`);
       const matches = [
         ...String(result.stdout ?? "").matchAll(
@@ -299,7 +309,9 @@ if (mode === "invariant-vitest" || mode === "focused-verify") {
         results.push(runWorkspaceTypecheck(context.repositoryRoot));
       }
       for (const args of definition.commands) {
-        const result = runPnpm(args);
+        const result = await runPnpm(args, {
+          timeoutMs: definition.timeoutMs,
+        });
         results.push(describeResult(result));
         assertCommandPassed(result, `${mode} command`);
       }
@@ -308,7 +320,7 @@ if (mode === "invariant-vitest" || mode === "focused-verify") {
           schemaVersion: "1.0.0",
           status: "PASS",
           mode,
-          identity: commandIdentity(),
+          identity: await commandIdentity(),
           commands: results,
         };
         await writeJson(reportPath, report);

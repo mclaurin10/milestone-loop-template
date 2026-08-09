@@ -18,8 +18,10 @@ export const VERIFICATION_TIER_SCHEMA_VERSION = "1.1.0" as const;
 export const VERIFICATION_MANIFEST_SCHEMA_VERSION =
   "verification-manifest.v1" as const;
 
-export const DEFAULT_COMMAND_OUTPUT_LIMIT_BYTES = 67_108_864;
-export const DEFAULT_COMMAND_KILL_GRACE_MS = 5_000;
+export {
+  DEFAULT_COMMAND_KILL_GRACE_MS,
+  DEFAULT_COMMAND_OUTPUT_LIMIT_BYTES,
+} from "./process-supervisor.js";
 
 export const AGENT_ROLES = [
   "planner",
