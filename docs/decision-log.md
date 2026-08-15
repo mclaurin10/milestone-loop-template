@@ -3,6 +3,50 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-15 — Deterministic one-shot commissioning (WP4b)
+
+**Decision.** A repository creates its active generic v2 verification manifest
+only through `pnpm loop:commission -- --input <file>`. The strict, explicit
+input binds the target branch, strict-ancestor base, package-default profile,
+current config/registry paths and identities, immutable-lock hash, canonical
+protected floor, focused catalogue, literal exact command, and generic
+reconciliation minimum. Commissioning is deliberately one-shot: the active
+path must be absent and the attached target-branch checkout must be clean of
+both tracked and untracked changes. Readiness additionally requires the
+permanent marker to exist at or before the base and at the candidate;
+bootstrap rejects any marker tree or history.
+
+Generated `createdAt` is the base commit's canonical Git timestamp. The command
+validates existing authority hashes, immutable-lock lifecycle and verifier
+anchor, package scripts, all registry identities, protected coverage, and all
+four tier plans; it never creates or repairs authority. It writes an exclusive
+temporary file, verifies exact bytes and SHA-256, rechecks Git identity and
+status, creates the absent destination with a no-clobber filesystem link, and
+runs a strict read-only commissioning doctor. Failure cleans the owned stage;
+after publication it may remove only the exact inode and hash it just created.
+Every generated path, byte count, and SHA-256 is printed.
+
+The source repository is commissioned on `master` from WP4a commit
+`0f4ab3e5ef39bda07d6e77356ad53fca9136cdd5` with its existing readiness
+lifecycle. Only the active registry ids become generic
+`milestone-loop-core-invariants.v1` and
+`milestone-loop-shadow-scope-policy.v1`; explicit historical v1 records retain
+their legacy identity. Because the protected human plan intentionally makes
+the source checkout unclean, the workflow ran in a clean temporary clone of
+the exact candidate and only its independently matched deterministic manifest
+bytes returned to the source tree.
+
+**Why.** Commissioning is a trust transition, so accepting hand-authored
+output, wall-clock metadata, a dirty-tree exception, branch inference,
+overwrite-style rename, silent authority repair, or implicit historical
+fallback would make provenance ambiguous. A single absent-file publication
+boundary permits deterministic output and exact rollback ownership without a
+multi-file transaction.
+
+**Affected files.** Commissioning contract/CLI/tests, manifest and doctor
+validation, source config/registries/input/active manifest, package command,
+combined schema, adoption and contract documentation, and WP4b plan/logs.
+
 ## 2026-08-15 — Generic active verification commissioning boundary (WP4a)
 
 **Decision.** New in-flight verification commissioning uses the strict

@@ -65,7 +65,9 @@ report `NOT_READY`, never pass.
    `.agent/readiness-profile-activated.json` and set
    `package.json#milestoneLoop.verification.defaultProfile` to `"bootstrap"`
    (this template ships in `readiness` shape because its own history already
-   contains the marker).
+   contains the marker). Remove the source repository's commissioned
+   `.agent/verification-manifest.json`; a fresh adopter must commission its own
+   manifest from its own Git identity.
 2. **Write your authority set**: replace `PROJECT_GOAL.md` and the `evals/`
    placeholders, then regenerate `evals/immutable-contract-lock.json` hashes
    and the `ESTABLISHED_IMMUTABLE_LOCK_SHA256` pin in `scripts/verify.mjs`.
@@ -79,10 +81,8 @@ report `NOT_READY`, never pass.
 4. **Implement the repository contract** in [`CONTRACT.md`](CONTRACT.md):
    replace every `tools/placeholder-check.mjs` script with a real
    evidence-producing command, wire your product's verify stages, and
-   author the verification manifest
-   (`.agent/verification-manifest.json`). Keep `build`
-   as the evidence-owning wrapper and declare the real production boundary in
-   `package.json`, for example:
+   keep `build` as the evidence-owning wrapper. Declare the real production
+   boundary in `package.json`, for example:
 
    ```json
    {
@@ -101,7 +101,30 @@ report `NOT_READY`, never pass.
    outside-root mutations and linked outputs, and retains a path/size/SHA-256
    inventory in `build-report.json`.
 
-5. **Check the wiring**:
+5. **Commission the repository once.** Use
+   `tools/milestone-orchestrator/config/source-commissioning-input.json` as the
+   input-shape reference, replacing its source identity, target branch, strict
+   ancestor base commit, profile, immutable-lock hash, registries, protected
+   floor, and focused catalogue with the adopter's values. Keep the input
+   inside the repository and tracked. Commit that input
+   and all prerequisites, make the tracked and untracked tree completely
+   clean, then run:
+
+   ```bash
+   pnpm loop:commission -- --input <commissioning-input.json>
+   ```
+
+   Commissioning refuses an existing active manifest, a dirty or detached
+   checkout, a wrong/non-ancestor base or branch, inconsistent authority,
+   lock, profile, readiness history, registries, protected paths, commands, or
+   policies. It derives `createdAt` from the base commit, stages and validates
+   deterministic bytes, publishes without clobbering, runs the read-only
+   commissioning doctor, and prints each generated path, byte count, and
+   SHA-256. Review and commit the generated
+   `.agent/verification-manifest.json`; do not rerun commissioning on that
+   repository.
+
+6. **Check the wiring**:
 
    ```bash
    pnpm install
@@ -153,7 +176,7 @@ report `NOT_READY`, never pass.
    Linux-native dependency/controller build) and retain that distinction in
    the evidence.
 
-6. **Run the loop**: `pnpm loop:plan` for one planning pass, `pnpm loop:run`
+7. **Run the loop**: `pnpm loop:plan` for one planning pass, `pnpm loop:run`
    for the autonomous loop, `pnpm loop:status` / `loop:resume` /
    `loop:reconcile` for lifecycle operations.
 

@@ -11,6 +11,10 @@ import {
   loadConfig,
 } from "./config.js";
 import {
+  inspectCommissionedRepository,
+  type CommissioningDoctorDiagnostic,
+} from "./commissioning.js";
+import {
   ControllerLease,
   type ControllerLeaseInspection,
 } from "./controller-lease.js";
@@ -43,7 +47,7 @@ import {
   type RetentionApplyRecoveryClassification,
 } from "./retention-apply-operation.js";
 
-export const DOCTOR_SCHEMA_VERSION = "1.7.0" as const;
+export const DOCTOR_SCHEMA_VERSION = "1.8.0" as const;
 
 type CheckStatus = "pass" | "attention";
 
@@ -58,6 +62,9 @@ export interface DoctorDependencies {
   readonly gitProbe?: (repositoryRoot: string) => DoctorGitProbe;
   readonly headProbe?: (repositoryRoot: string) => string | null;
   readonly executionProviderProbe?: ExecutionProviderCapabilityProbe;
+  readonly commissioningProbe?: (
+    repositoryRoot: string,
+  ) => Promise<CommissioningDoctorDiagnostic>;
 }
 
 export interface DoctorDiagnostic {
@@ -87,6 +94,17 @@ export interface DoctorDiagnostic {
     readonly configuration: {
       readonly status: CheckStatus;
       readonly valid: boolean;
+    };
+    readonly commissioning: {
+      readonly status: CheckStatus;
+      readonly manifestPath: typeof DEFAULT_VERIFICATION_MANIFEST_PATH;
+      readonly commissioned: boolean;
+      readonly targetBranch: string | null;
+      readonly baseCommit: string | null;
+      readonly profile: "bootstrap" | "readiness" | null;
+      readonly invariantSuiteId: string | null;
+      readonly scopePolicyId: string | null;
+      readonly message: string;
     };
     readonly executionProvider: {
       readonly status: CheckStatus;
@@ -182,6 +200,38 @@ export interface DoctorDiagnostic {
       readonly owner: ControllerLeaseInspection["owner"];
     };
   };
+}
+
+async function commissioningCheck(
+  repositoryRoot: string,
+  probe: (repositoryRoot: string) => Promise<CommissioningDoctorDiagnostic>,
+): Promise<DoctorDiagnostic["checks"]["commissioning"]> {
+  try {
+    const result = await probe(repositoryRoot);
+    return {
+      status: "pass",
+      manifestPath: DEFAULT_VERIFICATION_MANIFEST_PATH,
+      commissioned: true,
+      targetBranch: result.repository.targetBranch,
+      baseCommit: result.repository.baseCommit,
+      profile: result.repository.profile,
+      invariantSuiteId: result.invariantSuiteId,
+      scopePolicyId: result.scopePolicyId,
+      message: "Active verification commissioning is valid.",
+    };
+  } catch {
+    return {
+      status: "attention",
+      manifestPath: DEFAULT_VERIFICATION_MANIFEST_PATH,
+      commissioned: false,
+      targetBranch: null,
+      baseCommit: null,
+      profile: null,
+      invariantSuiteId: null,
+      scopePolicyId: null,
+      message: "Active verification commissioning is missing or invalid.",
+    };
+  }
 }
 
 interface RuntimePins {
@@ -549,6 +599,10 @@ export async function runDoctorDiagnostic(
     status: config ? "pass" : "attention",
     valid: config !== null,
   };
+  const commissioning = await commissioningCheck(
+    repositoryRoot,
+    dependencies.commissioningProbe ?? inspectCommissionedRepository,
+  );
   const trustedCapability = config
     ? inspectTrustedExecutionCapability(
         config.candidateExecution.trustedContainer,
@@ -586,6 +640,7 @@ export async function runDoctorDiagnostic(
     runtimePins,
     gitCleanliness,
     configuration,
+    commissioning,
     executionProvider,
     state,
     codexAuthentication,

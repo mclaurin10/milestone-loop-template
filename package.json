@@ -42,6 +42,7 @@
     "verify:milestone": "tsx tools/milestone-orchestrator/src/verification-cli.ts milestone",
     "verify:periodic": "tsx tools/milestone-orchestrator/src/verification-cli.ts periodic",
     "loop:status": "tsx tools/milestone-orchestrator/src/cli.ts status",
+    "loop:commission": "tsx tools/milestone-orchestrator/src/commissioning-cli.ts",
     "loop:doctor": "tsx tools/milestone-orchestrator/src/cli.ts doctor",
     "loop:check-model-policy": "tsx tools/milestone-orchestrator/src/cli.ts check-model-policy",
     "loop:telemetry:report": "tsx tools/milestone-orchestrator/src/telemetry-report.ts",

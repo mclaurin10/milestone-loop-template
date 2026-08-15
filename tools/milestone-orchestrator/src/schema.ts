@@ -2682,6 +2682,36 @@ function manifestIdentifier(value: unknown): value is string {
   );
 }
 
+function safeTargetBranch(value: unknown): value is string {
+  const forbiddenCharacters = ["\\", " ", "~", "^", ":", "?", "*", "[", "]"];
+  if (
+    typeof value !== "string" ||
+    value.length === 0 ||
+    value.length > 200 ||
+    value.startsWith("-") ||
+    value.startsWith("/") ||
+    value.endsWith("/") ||
+    value.endsWith(".") ||
+    value.includes("..") ||
+    value.includes("@{") ||
+    forbiddenCharacters.some((character) => value.includes(character)) ||
+    [...value].some((character) => {
+      const codePoint = character.codePointAt(0) ?? 0;
+      return codePoint < 0x20 || codePoint === 0x7f;
+    })
+  )
+    return false;
+  return value
+    .split("/")
+    .every(
+      (segment) =>
+        segment.length > 0 &&
+        segment !== "." &&
+        segment !== ".." &&
+        !segment.endsWith(".lock"),
+    );
+}
+
 function safeLiteralRepositoryPath(value: unknown): value is string {
   return (
     safeRelativePath(value) &&
@@ -2747,8 +2777,15 @@ export function validateVerificationManifest(
   const commissioning = value["commissioning"];
   if (
     !isRecord(commissioning) ||
-    !hasOnlyKeys(commissioning, ["id", "baseCommit", "profile", "createdAt"]) ||
+    !hasOnlyKeys(commissioning, [
+      "id",
+      "targetBranch",
+      "baseCommit",
+      "profile",
+      "createdAt",
+    ]) ||
     !manifestIdentifier(commissioning["id"]) ||
+    !safeTargetBranch(commissioning["targetBranch"]) ||
     !commitId(commissioning["baseCommit"]) ||
     !VERIFICATION_PROFILES.includes(commissioning["profile"] as never) ||
     !canonicalTimestamp(commissioning["createdAt"])

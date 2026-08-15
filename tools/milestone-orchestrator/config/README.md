@@ -142,11 +142,23 @@ and class ids are pinned by `assertBenchmarkMatrix` and cannot be weakened.
 ## Verification manifests
 
 The active `.agent/verification-manifest.json` uses the generic
-`verification-manifest.v2` contract. Its commissioning profile must match the
-package-default verification profile; its `focusedCommands` define the check
-catalogue (id, argv, tiers, expected artifact kinds), and its invariant,
-scope, exact-verification, protected-path, and reconciliation identities fail
-closed at load or tier construction. The retained
+`verification-manifest.v2` contract. Create it once with
+`pnpm loop:commission -- --input <file>` using a repository-contained tracked
+input; the tracked
+`source-commissioning-input.json` records this repository's explicit source
+inputs. The command requires a clean tracked and untracked target-branch
+checkout, an absent active manifest, a strict-ancestor base commit, and an
+explicit package-default `bootstrap` or `readiness` profile with compatible
+marker history. It validates existing frozen authority and lock identities,
+the current invariant/scope registries, protected floor, focused package
+commands, exact and reconciliation policies, and all four tier plans. It
+derives the manifest timestamp from the base commit, publishes validated bytes
+without clobber, reports path/bytes/SHA-256, and never regenerates authority.
+
+The manifest's `focusedCommands` define the check catalogue (id, argv, tiers,
+expected artifact kinds), and its target branch, invariant, scope,
+exact-verification, protected-path, and reconciliation identities fail closed
+at load or tier construction. The retained
 `.agent/completed/loop-recommissioning-verification.json` v1 record is readable
 only by explicit source benchmark/reconciliation contexts and is never a
 default for new work. See `CONTRACT.md` at the repository root.

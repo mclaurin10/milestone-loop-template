@@ -348,6 +348,7 @@ export function validVerificationManifest(
     schemaVersion: VERIFICATION_MANIFEST_SCHEMA_VERSION,
     commissioning: {
       id: "generic-fixture-commissioning",
+      targetBranch: "main",
       baseCommit: "a".repeat(40),
       profile: "readiness",
       createdAt: "2026-08-15T00:00:00.000Z",

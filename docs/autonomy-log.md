@@ -3,6 +3,69 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-15 — WP4b deterministic source commissioning
+
+**Objective.** Add one deterministic, fail-closed commissioning workflow and
+use it to publish the source repository's active generic v2 manifest, without
+rewriting historical evidence, frozen authority, readiness history, product
+placeholders, provider boundaries, or verifier policy.
+
+**Outcome before final milestone verification.** The standalone
+`pnpm loop:commission -- --input <file>` command validates an absent active
+path; completely clean tracked and untracked state; attached configured target
+branch; exact strict-ancestor base; explicit bootstrap/readiness lifecycle;
+authority, immutable-lock, and verifier-anchor agreement; generic registry and
+protected-root identities; package-owned focused commands; exact and
+reconciliation policy; and all four tier plans. Its canonical timestamp comes
+from the base commit. It stages exclusive deterministic bytes, detects
+identity/status drift, publishes no-clobber, performs a read-only post-generation
+doctor, reports path/bytes/SHA-256, and cleans or exactly rolls back its owned
+output on injected faults.
+
+The source target is corrected from `main` to its real `master` branch and the
+active invariant/scope ids are generic. Historical v1 records and adapters
+remain explicit legacy contexts. In a clean clone of the exact candidate, the
+tracked source input (6,561 bytes, SHA-256
+`59f053d0b4ed195e2fda8746f8ee018ea3c97706c07f53a37908c40ef41b8629`)
+commissioned `.agent/verification-manifest.json` at 7,124 bytes and SHA-256
+`f765765d8082280282151253e616f87a460dbe8c38f17909aa22d7dcb7930dd9`.
+The manifest binds WP4a base
+`0f4ab3e5ef39bda07d6e77356ad53fca9136cdd5`, `master`, package-default
+readiness, the base's real `2026-08-15T20:50:19.000Z` timestamp, the current
+generic registries and complete catalogue, and no D-031/D-032 or Ski Tycoon
+identity. The commissioning doctor passed and constructed iteration,
+candidate, milestone, and periodic plans; exact verification appears only in
+milestone and periodic.
+
+**Implementation diagnostics.** No broad suite or full verifier was used for
+orientation. Under pinned Node `24.18.0` and pnpm `11.15.1`, the commissioning
+fixture file passed 13/13 cases, including fresh bootstrap/readiness adopters,
+twin-clone determinism, dirty trees, bases/branches/profiles/marker history,
+authority/lock/registry/catalogue drift, unsafe input, partial writes, races,
+rollback, reporting, and read-only doctor behavior. Six manifest, schema,
+config, tier, doctor, and protected-root files passed 66/66, and the tools
+TypeScript diagnostic passed. These are iteration diagnostics, not final
+receipts.
+
+**Stable-tree milestone protocol.** Source, tests, this log, the execution
+plan, schema, generated input/manifest, and documentation freeze before the
+final commands. Two receipt-owning focused shards, the live safety
+demonstration, serial orchestrator and unit aggregates, and receipt-owning
+typecheck/lint/format gates write fresh ignored evidence. Their outcomes remain
+in machine-owned artifacts and the final handoff rather than being backfilled
+into tracked files. Every receipt, declared artifact, count, skip, duration,
+candidate identity, and immutable/protected hash is independently checked
+before the cohesive commit. Literal no-argument `pnpm verify` runs exactly once
+afterward and its unrelated product/infrastructure gaps remain honest.
+
+**Commit.** Assigned only after the frozen candidate passes the applicable
+WP4b checks; identify it as the newest commit touching this entry.
+
+**Known gaps.** WP4c may relocate or modernize the Ski Tycoon worked example.
+Product placeholders, calibration, trusted default-Windows execution,
+autonomous readiness, hidden validation, and human verification remain open.
+WP4b makes no readiness claim.
+
 ## 2026-08-15 — WP4a generic verification-manifest foundations
 
 **Objective.** Replace the active D-031/D-032-specific commissioning contract

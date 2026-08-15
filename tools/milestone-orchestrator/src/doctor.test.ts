@@ -13,6 +13,7 @@ import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { runDoctorDiagnostic } from "./doctor.js";
+import type { CommissioningDoctorDiagnostic } from "./commissioning.js";
 import {
   inspectTrustedExecutionCapability,
   type ExecutionProviderCapabilityProbe,
@@ -81,6 +82,37 @@ const pinnedEnvironment = {
 const storedHead = "a".repeat(40);
 const pinnedImageDigest = `sha256:${"e".repeat(64)}`;
 
+function readyCommissioningDiagnostic(): CommissioningDoctorDiagnostic {
+  return {
+    schemaVersion: "loop-commissioning-doctor.v1",
+    diagnostic: "loop-commissioning",
+    status: "PASS",
+    readOnly: true,
+    manifest: {
+      path: ".agent/verification-manifest.json",
+      bytes: 100,
+      sha256: "f".repeat(64),
+    },
+    repository: {
+      targetBranch: "main",
+      baseCommit: "a".repeat(40),
+      headCommit: "b".repeat(40),
+      headTree: "c".repeat(40),
+      profile: "readiness",
+    },
+    immutableContractLockSha256: "d".repeat(64),
+    invariantSuiteId: "generic-invariants.v1",
+    scopePolicyId: "generic-scope.v1",
+    tierPlans: ["iteration", "candidate", "milestone", "periodic"].map(
+      (tier) => ({
+        tier: tier as "iteration" | "candidate" | "milestone" | "periodic",
+        commandCount: 1,
+        exactVerificationIncluded: tier === "milestone" || tier === "periodic",
+      }),
+    ),
+  };
+}
+
 function doctorConfig() {
   return validConfig({
     candidateExecution: {
@@ -122,11 +154,12 @@ describe("read-only orchestrator doctor", () => {
         gitProbe: () => ({ clean: true }),
         headProbe: () => storedHead,
         executionProviderProbe: readyExecutionProviderProbe,
+        commissioningProbe: async () => readyCommissioningDiagnostic(),
       },
     );
 
     expect(diagnostic).toEqual({
-      schemaVersion: "1.7.0",
+      schemaVersion: "1.8.0",
       diagnostic: "orchestrator-doctor",
       status: "ready",
       readOnly: true,
@@ -147,6 +180,17 @@ describe("read-only orchestrator doctor", () => {
         },
         gitCleanliness: { status: "pass", clean: true },
         configuration: { status: "pass", valid: true },
+        commissioning: {
+          status: "pass",
+          manifestPath: ".agent/verification-manifest.json",
+          commissioned: true,
+          targetBranch: "main",
+          baseCommit: "a".repeat(40),
+          profile: "readiness",
+          invariantSuiteId: "generic-invariants.v1",
+          scopePolicyId: "generic-scope.v1",
+          message: "Active verification commissioning is valid.",
+        },
         executionProvider: {
           status: "pass",
           configuredProvider: "trusted-container",
@@ -212,6 +256,7 @@ describe("read-only orchestrator doctor", () => {
         gitProbe: () => ({ clean: true }),
         headProbe: () => storedHead,
         executionProviderProbe: readyExecutionProviderProbe,
+        commissioningProbe: async () => readyCommissioningDiagnostic(),
       },
     );
 

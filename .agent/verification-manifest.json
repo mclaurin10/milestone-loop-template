@@ -1,0 +1,316 @@
+{
+  "schemaVersion": "verification-manifest.v2",
+  "commissioning": {
+    "id": "milestone-loop-template-source.v1",
+    "targetBranch": "master",
+    "baseCommit": "0f4ab3e5ef39bda07d6e77356ad53fca9136cdd5",
+    "profile": "readiness",
+    "createdAt": "2026-08-15T20:50:19.000Z"
+  },
+  "objective": "Commission the generic verification lifecycle for the milestone-loop template repository.",
+  "exclusions": [
+    "No frozen authority, calibration, readiness meaning, verifier deadline, or exact command changes.",
+    "No product implementation, placeholder replacement, historical-record rewrite, or worked-example migration."
+  ],
+  "focusedCommands": [
+    {
+      "id": "test-invariants",
+      "argv": [
+        "pnpm",
+        "test:invariants"
+      ],
+      "tiers": [
+        "iteration",
+        "candidate",
+        "milestone"
+      ],
+      "expectedArtifactKinds": [
+        "invariant-suite-report"
+      ]
+    },
+    {
+      "id": "test-unit-fast",
+      "argv": [
+        "pnpm",
+        "test:unit:fast"
+      ],
+      "tiers": [
+        "candidate",
+        "milestone"
+      ],
+      "expectedArtifactKinds": [
+        "fast-unit-vitest-report",
+        "unit-partition-report"
+      ]
+    },
+    {
+      "id": "test-unit-migrations",
+      "argv": [
+        "pnpm",
+        "test:unit:migrations"
+      ],
+      "tiers": [
+        "milestone"
+      ],
+      "expectedArtifactKinds": [
+        "migration-unit-vitest-report",
+        "unit-partition-report"
+      ]
+    },
+    {
+      "id": "test-orchestrator",
+      "argv": [
+        "pnpm",
+        "test:orchestrator"
+      ],
+      "tiers": [
+        "candidate",
+        "milestone"
+      ],
+      "expectedArtifactKinds": [
+        "orchestrator-vitest-report"
+      ]
+    },
+    {
+      "id": "format-check",
+      "argv": [
+        "pnpm",
+        "format:check"
+      ],
+      "tiers": [
+        "candidate",
+        "milestone"
+      ],
+      "expectedArtifactKinds": [
+        "format-report"
+      ]
+    },
+    {
+      "id": "lint",
+      "argv": [
+        "pnpm",
+        "lint"
+      ],
+      "tiers": [
+        "candidate",
+        "milestone"
+      ],
+      "expectedArtifactKinds": [
+        "lint-report"
+      ]
+    },
+    {
+      "id": "lint-architecture",
+      "argv": [
+        "pnpm",
+        "lint:architecture"
+      ],
+      "tiers": [
+        "candidate",
+        "milestone"
+      ],
+      "expectedArtifactKinds": [
+        "architecture-report"
+      ]
+    },
+    {
+      "id": "typecheck",
+      "argv": [
+        "pnpm",
+        "typecheck"
+      ],
+      "tiers": [
+        "candidate",
+        "milestone"
+      ],
+      "expectedArtifactKinds": [
+        "typecheck-report"
+      ]
+    },
+    {
+      "id": "build",
+      "argv": [
+        "pnpm",
+        "build"
+      ],
+      "tiers": [
+        "candidate",
+        "milestone"
+      ],
+      "expectedArtifactKinds": [
+        "build-report"
+      ]
+    },
+    {
+      "id": "domain-construction-standard",
+      "argv": [
+        "pnpm",
+        "verify:domain-construction-standard"
+      ],
+      "tiers": [
+        "milestone"
+      ],
+      "expectedArtifactKinds": [
+        "domain-construction-standard-proof",
+        "independent-domain-construction-standard-proof",
+        "domain-construction-standard-vitest-report",
+        "domain-construction-standard-worker-parity-report",
+        "playwright-report",
+        "browser-diagnostics",
+        "domain-construction-standard-verification-report"
+      ]
+    },
+    {
+      "id": "domain-resources",
+      "argv": [
+        "pnpm",
+        "verify:domain-resources"
+      ],
+      "tiers": [
+        "milestone"
+      ],
+      "expectedArtifactKinds": [
+        "domain-resources-report"
+      ]
+    },
+    {
+      "id": "domain-networks",
+      "argv": [
+        "pnpm",
+        "verify:domain-networks"
+      ],
+      "tiers": [
+        "milestone"
+      ],
+      "expectedArtifactKinds": [
+        "domain-networks-report"
+      ]
+    },
+    {
+      "id": "domain-planning",
+      "argv": [
+        "pnpm",
+        "verify:domain-planning"
+      ],
+      "tiers": [
+        "milestone"
+      ],
+      "expectedArtifactKinds": [
+        "domain-planning-report"
+      ]
+    },
+    {
+      "id": "domain-entitlement",
+      "argv": [
+        "pnpm",
+        "verify:domain-entitlement"
+      ],
+      "tiers": [
+        "milestone"
+      ],
+      "expectedArtifactKinds": [
+        "domain-entitlement-report"
+      ]
+    },
+    {
+      "id": "domain-entitlement-standard",
+      "argv": [
+        "pnpm",
+        "verify:domain-entitlement-standard"
+      ],
+      "tiers": [
+        "milestone"
+      ],
+      "expectedArtifactKinds": [
+        "domain-entitlement-standard-report"
+      ]
+    },
+    {
+      "id": "domain-development",
+      "argv": [
+        "pnpm",
+        "verify:domain-development"
+      ],
+      "tiers": [
+        "milestone"
+      ],
+      "expectedArtifactKinds": [
+        "domain-development-report"
+      ]
+    },
+    {
+      "id": "domain-simulation",
+      "argv": [
+        "pnpm",
+        "verify:domain-simulation"
+      ],
+      "tiers": [
+        "milestone"
+      ],
+      "expectedArtifactKinds": [
+        "domain-simulation-report"
+      ]
+    },
+    {
+      "id": "domain-browser",
+      "argv": [
+        "pnpm",
+        "verify:domain-browser"
+      ],
+      "tiers": [
+        "milestone"
+      ],
+      "expectedArtifactKinds": [
+        "domain-browser-report"
+      ]
+    }
+  ],
+  "requiredProtectedPaths": [
+    ".agent/completed/loop-recommissioning-verification.json",
+    ".agent/readiness-profile-activated.json",
+    ".agent/verification-manifest.json",
+    "AGENTS.md",
+    "PROJECT_GOAL.md",
+    "evals/ACCEPTANCE.md",
+    "evals/HIDDEN_VALIDATION_PROTOCOL.md",
+    "evals/acceptance-manifest.json",
+    "evals/immutable-contract-lock.json",
+    "package.json",
+    "pnpm-lock.yaml",
+    "scripts/verify.mjs",
+    "tools/milestone-orchestrator/config/default.json",
+    "tools/milestone-orchestrator/config/invariant-suite.json",
+    "tools/milestone-orchestrator/config/source-commissioning-input.json",
+    "tools/milestone-orchestrator/config/verification-scope-policy.json"
+  ],
+  "requiredInvariantSuiteId": "milestone-loop-core-invariants.v1",
+  "scopePolicyId": "milestone-loop-shadow-scope-policy.v1",
+  "exactVerification": {
+    "argv": [
+      "pnpm",
+      "verify"
+    ],
+    "requiresNoArguments": true,
+    "profileSource": "package-default",
+    "selectedByOverride": false
+  },
+  "reconciliationPolicy": {
+    "id": "milestone-loop-source-reconciliation.v1",
+    "nextProposalPath": ".agent/next-milestone.json",
+    "requiredReviewChecks": [
+      "completeCommitLineage",
+      "protectedIntegrity",
+      "noFabricatedHistory",
+      "commandOwnedEvidenceValidity",
+      "verificationTierNonAuthority",
+      "invariantSuiteQuality",
+      "selectorShadowOnlyEnforcement",
+      "telemetryNonSemanticBehavior",
+      "artifactContainmentAndNonDeletion",
+      "stateMigrationAndRecovery",
+      "verticalMilestonePolicy",
+      "dependencyValidNextProposal",
+      "noScopeReductionOrSuspiciousShortcut"
+    ]
+  }
+}

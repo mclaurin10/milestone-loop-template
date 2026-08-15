@@ -201,9 +201,9 @@ catalogue. Active manifests use `verification-manifest.v2`; the retained
 historical source evidence and is accepted only through explicitly named
 benchmark or reconciliation loaders. It is never an active-manifest fallback.
 
-- `commissioning`: a generic commissioning id, exact base commit,
-  `bootstrap` or `readiness` profile, and canonical creation timestamp. The
-  commissioned profile must equal
+- `commissioning`: a generic commissioning id, exact target branch and strict
+  ancestor base commit, `bootstrap` or `readiness` profile, and canonical
+  creation timestamp. The commissioned profile must equal
   `package.json#milestoneLoop.verification.defaultProfile`.
 
 - `focusedCommands[]`: `{ id, argv, tiers, expectedArtifactKinds }` for
@@ -229,6 +229,28 @@ benchmark or reconciliation loaders. It is never an active-manifest fallback.
 - `reconciliationPolicy` names the policy, its contained JSON proposal path,
   and the ordered generic minimum review checks. Project-specific additions
   may follow that minimum but cannot replace or reorder it.
+
+Create the active manifest only through the one-shot command
+`pnpm loop:commission -- --input <file>`. Its strict, repository-contained
+tracked input names the canonical
+config, invariant, scope, immutable-lock, and output paths plus the complete
+catalogue and policies. Real commissioning requires an absent active manifest,
+a completely clean tracked and untracked tree, an attached configured target
+branch, and a real strict-ancestor base. The selected profile must equal the
+package default; bootstrap forbids readiness-marker tree or history, while
+readiness requires the permanent valid marker at or before the base and at the
+candidate.
+
+The command validates existing authority and lock bytes, the verifier's lock
+anchor, registry identities, the canonical protected floor, package scripts,
+exact policy, reconciliation minimum, and all four tier plans. It never writes
+or regenerates authority. `createdAt` is the base commit's canonical Git
+timestamp, so equal input and Git identity produce equal bytes. Publication
+uses an exclusive staged file and one no-clobber filesystem link after byte,
+hash, Git-identity, and clean-status rechecks. Strict post-publication doctor
+validation must pass; an owned partial stage is cleaned, and a post-publication
+fault removes only the exact inode and hash that this invocation created. The
+command reports every generated path, byte count, and SHA-256.
 
 ## 6. .agent conventions
 

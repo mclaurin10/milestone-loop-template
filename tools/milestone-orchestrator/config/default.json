@@ -8,7 +8,7 @@
       "categoryPatterns": []
     }
   },
-  "targetBranch": "main",
+  "targetBranch": "master",
   "statePath": "artifacts/orchestrator/state/state.json",
   "artifactRoot": "artifacts/orchestrator/runs",
   "workspaceRoot": "artifacts/orchestrator/workspaces",
@@ -103,6 +103,9 @@
     "scripts/verify.mjs",
     "pnpm-lock.yaml",
     "package.json",
-    "tools/milestone-orchestrator/config/invariant-suite.json"
+    "tools/milestone-orchestrator/config/invariant-suite.json",
+    "tools/milestone-orchestrator/config/verification-scope-policy.json",
+    "tools/milestone-orchestrator/config/source-commissioning-input.json",
+    ".agent/verification-manifest.json"
   ]
 }

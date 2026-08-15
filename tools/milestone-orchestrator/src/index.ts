@@ -4,6 +4,8 @@ export * from "./budget.js";
 export * from "./benchmark.js";
 export * from "./affected-scope.js";
 export * from "./codex-gateway.js";
+export * from "./commissioning.js";
+export * from "./commissioning-cli.js";
 export * from "./command-policy.js";
 export * from "./config.js";
 export * from "./contracts.js";

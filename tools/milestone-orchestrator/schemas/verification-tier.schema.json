@@ -131,9 +131,15 @@
     "commissioning": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "baseCommit", "profile", "createdAt"],
+      "required": ["id", "targetBranch", "baseCommit", "profile", "createdAt"],
       "properties": {
         "id": { "$ref": "#/$defs/manifestIdentifier" },
+        "targetBranch": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "^(?!-)(?!/)(?!.*(?:\\.\\.|@\\{|[\\\\ ~^:?*\\[\\]\\u0000-\\u001f\\u007f]))(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*(?:^|/)[^/]*\\.lock(?:/|$))(?!.*[/.]$).+$"
+        },
         "baseCommit": { "$ref": "#/$defs/commit" },
         "profile": { "$ref": "#/$defs/verificationProfile" },
         "createdAt": { "type": "string", "format": "date-time" }

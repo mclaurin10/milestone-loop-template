@@ -34,8 +34,20 @@ export function assertVerificationManifestRegistryIdentities(
     );
 }
 
+export function assertVerificationManifestTargetBranch(
+  manifest: VerificationManifest,
+  configuredTargetBranch: string,
+): void {
+  if (manifest.commissioning.targetBranch !== configuredTargetBranch)
+    throw new Error(
+      `Verification manifest target branch ${manifest.commissioning.targetBranch} does not match configured target branch ${configuredTargetBranch}.`,
+    );
+}
+
 export function adaptHistoricalVerificationManifest(input: {
   readonly manifest: LegacyVerificationManifest;
+  readonly targetBranch: string;
+  readonly invariantSuiteId: string;
   readonly scopePolicyId: string;
   readonly historicalRecordCommittedAt: string;
 }): VerificationManifest {
@@ -59,6 +71,7 @@ export function adaptHistoricalVerificationManifest(input: {
     schemaVersion: VERIFICATION_MANIFEST_SCHEMA_VERSION,
     commissioning: {
       id: "historical-source-manifest-adapter",
+      targetBranch: input.targetBranch,
       baseCommit: input.manifest.d031BaselineCommit,
       profile: input.manifest.finalExactVerification.profileId,
       createdAt: input.historicalRecordCommittedAt,
@@ -67,7 +80,7 @@ export function adaptHistoricalVerificationManifest(input: {
     exclusions: input.manifest.exclusions,
     focusedCommands: input.manifest.focusedCommands,
     requiredProtectedPaths,
-    requiredInvariantSuiteId: input.manifest.requiredInvariantSuiteId,
+    requiredInvariantSuiteId: input.invariantSuiteId,
     scopePolicyId: input.scopePolicyId,
     exactVerification: {
       argv: ["pnpm", "verify"],

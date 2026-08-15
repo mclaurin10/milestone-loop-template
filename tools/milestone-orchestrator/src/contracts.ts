@@ -20,6 +20,8 @@ export const LEGACY_VERIFICATION_MANIFEST_SCHEMA_VERSION =
   "verification-manifest.v1" as const;
 export const VERIFICATION_MANIFEST_SCHEMA_VERSION =
   "verification-manifest.v2" as const;
+export const COMMISSIONING_INPUT_SCHEMA_VERSION =
+  "loop-commissioning-input.v1" as const;
 
 export {
   DEFAULT_COMMAND_KILL_GRACE_MS,
@@ -293,6 +295,7 @@ export interface VerificationManifest extends VerificationCommandManifest {
   readonly schemaVersion: typeof VERIFICATION_MANIFEST_SCHEMA_VERSION;
   readonly commissioning: {
     readonly id: string;
+    readonly targetBranch: string;
     readonly baseCommit: string;
     readonly profile: VerificationProfile;
     readonly createdAt: string;
@@ -312,6 +315,34 @@ export interface VerificationManifest extends VerificationCommandManifest {
     readonly id: string;
     readonly nextProposalPath: string;
     readonly requiredReviewChecks: readonly string[];
+  };
+}
+
+export interface CommissioningInput {
+  readonly schemaVersion: typeof COMMISSIONING_INPUT_SCHEMA_VERSION;
+  readonly commissioning: {
+    readonly id: string;
+    readonly targetBranch: string;
+    readonly baseCommit: string;
+    readonly profile: VerificationProfile;
+  };
+  readonly sources: {
+    readonly configPath: string;
+    readonly invariantSuitePath: string;
+    readonly scopePolicyPath: string;
+    readonly immutableContractLockPath: string;
+    readonly immutableContractLockSha256: string;
+  };
+  readonly objective: string;
+  readonly exclusions: readonly string[];
+  readonly focusedCommands: readonly FocusedVerificationCommand[];
+  readonly requiredProtectedPaths: readonly string[];
+  readonly requiredInvariantSuiteId: string;
+  readonly scopePolicyId: string;
+  readonly exactVerification: VerificationManifest["exactVerification"];
+  readonly reconciliationPolicy: VerificationManifest["reconciliationPolicy"];
+  readonly output: {
+    readonly verificationManifestPath: string;
   };
 }
 

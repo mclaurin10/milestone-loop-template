@@ -62,6 +62,7 @@ import {
 import {
   adaptHistoricalVerificationManifest,
   assertVerificationManifestRegistryIdentities,
+  assertVerificationManifestTargetBranch,
   resolveVerificationManifestProfile,
 } from "./verification-manifest.js";
 
@@ -749,9 +750,10 @@ export async function runVerificationTier(
   input: RunVerificationTierInput,
 ): Promise<VerificationTierResult> {
   const startedAt = new Date();
-  const [invariant, scopePolicy] = await Promise.all([
+  const [invariant, scopePolicy, config] = await Promise.all([
     loadInvariantSuiteRegistry(input.repositoryRoot),
     loadVerificationScopePolicy(input.repositoryRoot),
+    loadConfig(input.repositoryRoot),
   ]);
   const historicalManifestContext = input.historicalManifestContext;
   const manifest = historicalManifestContext
@@ -770,6 +772,8 @@ export async function runVerificationTier(
         ]);
         const value = adaptHistoricalVerificationManifest({
           manifest: historical.value,
+          targetBranch: config.targetBranch,
+          invariantSuiteId: invariant.value.id,
           scopePolicyId: scopePolicy.value.id,
           historicalRecordCommittedAt: historical.historicalRecordCommittedAt,
         });
@@ -791,10 +795,10 @@ export async function runVerificationTier(
     invariant.value.id,
     scopePolicy.value.id,
   );
+  assertVerificationManifestTargetBranch(manifest.value, config.targetBranch);
   // A caller-supplied --manifest must satisfy the same coverage guarantee as
   // the default manifest: every protected path it requires is one the
   // controller actually enforces.
-  const config = await loadConfig(input.repositoryRoot);
   const executionProvider =
     input.executionProvider ?? createCandidateExecutionProvider(config);
   assertManifestProtectedPathsCovered(manifest.value, config.protectedPaths);

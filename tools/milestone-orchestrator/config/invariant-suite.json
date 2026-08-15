@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "id": "d032-core-invariants.v1",
+  "id": "milestone-loop-core-invariants.v1",
   "warmRuntimeTargetMs": 60000,
   "serial": true,
   "entries": [

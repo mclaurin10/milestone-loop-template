@@ -9,7 +9,12 @@ import type {
   ExactVerificationIndex,
   VerificationTierCommandRecord,
 } from "./contracts.js";
-import { loadVerificationScopePolicy } from "./config.js";
+import {
+  loadActiveVerificationManifest,
+  loadConfig,
+  loadInvariantSuiteRegistry,
+  loadVerificationScopePolicy,
+} from "./config.js";
 import { createCandidateExecutionProvider } from "./execution-provider.js";
 import { validateVerificationTierResult } from "./schema.js";
 import {
@@ -20,6 +25,10 @@ import {
   tierCommandRecord,
   tierIdentityDrift,
 } from "./verification-tier.js";
+import {
+  assertVerificationManifestRegistryIdentities,
+  assertVerificationManifestTargetBranch,
+} from "./verification-manifest.js";
 import {
   trustedTestExecutionProvider,
   trustedTestExecutionProviderIdentity,
@@ -171,6 +180,52 @@ describe("verification tier planning", () => {
         expect(plan.actualCheckIds).toContain("exact-readiness");
     },
   );
+
+  it("constructs every source plan from the active manifest without a historical adapter", async () => {
+    const [manifest, invariant, scopePolicy, config] = await Promise.all([
+      loadActiveVerificationManifest(repositoryRoot),
+      loadInvariantSuiteRegistry(repositoryRoot),
+      loadVerificationScopePolicy(repositoryRoot),
+      loadConfig(repositoryRoot),
+    ]);
+    assertVerificationManifestRegistryIdentities(
+      manifest.value,
+      invariant.value.id,
+      scopePolicy.value.id,
+    );
+    assertVerificationManifestTargetBranch(manifest.value, config.targetBranch);
+    expect(JSON.stringify(manifest.value)).not.toMatch(/d-?0?31|d-?0?32/i);
+    for (const tier of [
+      "iteration",
+      "candidate",
+      "milestone",
+      "periodic",
+    ] as const) {
+      const plan = await planVerificationTier({
+        repositoryRoot,
+        tier,
+        manifest: manifest.value,
+        scopePolicy: scopePolicy.value,
+        scopePolicySha256: scopePolicy.sha256,
+        changedPaths: ["tools/milestone-orchestrator/src/commissioning.ts"],
+        changedPathSource: {
+          kind: "fixture",
+          fixtureId: `source-active-${tier}`,
+        },
+        candidate: {
+          baseCommit: manifest.value.commissioning.baseCommit,
+          gitCommit: "b".repeat(40),
+          gitTree: "c".repeat(40),
+          workingTreeDirty: false,
+        },
+        protectedAuthorityPaths: config.protectedPaths,
+      });
+      expect(plan.actualCheckIds.length).toBeGreaterThan(0);
+      expect(plan.actualCheckIds.includes("exact-readiness")).toBe(
+        tier === "milestone" || tier === "periodic",
+      );
+    }
+  });
 });
 
 describe("non-authoritative tier outcomes", () => {

@@ -83,6 +83,12 @@ describe("generic active verification manifest", () => {
     expect(
       validateVerificationManifest({
         ...base,
+        commissioning: { ...base.commissioning, targetBranch: "bad branch" },
+      }).valid,
+    ).toBe(false);
+    expect(
+      validateVerificationManifest({
+        ...base,
         requiredProtectedPaths: [
           ...base.requiredProtectedPaths,
           "../outside.txt",
@@ -184,6 +190,8 @@ describe("historical verification manifest isolation", () => {
     );
     const adapted = adaptHistoricalVerificationManifest({
       manifest: loaded.value,
+      targetBranch: "main",
+      invariantSuiteId: "generic-invariants.v1",
       scopePolicyId: "generic-scope-policy.v1",
       historicalRecordCommittedAt: loaded.historicalRecordCommittedAt,
     });
@@ -191,6 +199,7 @@ describe("historical verification manifest isolation", () => {
       schemaVersion: "verification-manifest.v2",
       commissioning: {
         id: "historical-source-manifest-adapter",
+        targetBranch: "main",
         profile: "readiness",
       },
       scopePolicyId: "generic-scope-policy.v1",
