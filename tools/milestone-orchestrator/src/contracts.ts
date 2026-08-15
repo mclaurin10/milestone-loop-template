@@ -16,8 +16,10 @@ export const WORKSPACE_CLEANUP_SCHEMA_VERSION = "1.0.0" as const;
 export const OPERATION_INTENT_SCHEMA_VERSION = "1.0.0" as const;
 export const EVIDENCE_RETENTION_SCHEMA_VERSION = "1.0.0" as const;
 export const VERIFICATION_TIER_SCHEMA_VERSION = "1.2.0" as const;
-export const VERIFICATION_MANIFEST_SCHEMA_VERSION =
+export const LEGACY_VERIFICATION_MANIFEST_SCHEMA_VERSION =
   "verification-manifest.v1" as const;
+export const VERIFICATION_MANIFEST_SCHEMA_VERSION =
+  "verification-manifest.v2" as const;
 
 export {
   DEFAULT_COMMAND_KILL_GRACE_MS,
@@ -157,10 +159,10 @@ export const CONTROLLER_TRUST_ROOT_SUBTREES = [
   "tools/milestone-orchestrator",
 ] as const;
 
-// The verification manifest is protected when commissioned: loadConfig
-// appends DEFAULT_VERIFICATION_MANIFEST_PATH to the enforced protected set
-// whenever the file exists, so editing or deleting a commissioned manifest
-// trips the diff fence and the recorded hash baseline.
+// Verification manifests are protected while present: loadConfig appends both
+// the active commissioning path and the retained source-history path to the
+// enforced protected set, so editing or deleting either trips the diff fence
+// and the recorded hash baseline.
 
 export const REQUIRED_PROTECTED_PATHS = [
   "evals/ACCEPTANCE.md",
@@ -226,6 +228,27 @@ export const VERIFICATION_TIERS = [
 ] as const;
 export type VerificationTier = (typeof VERIFICATION_TIERS)[number];
 
+export const VERIFICATION_PROFILES = ["bootstrap", "readiness"] as const;
+export type VerificationProfile = (typeof VERIFICATION_PROFILES)[number];
+
+export const GENERIC_RECONCILIATION_REVIEW_CHECK_IDS = [
+  "completeCommitLineage",
+  "protectedIntegrity",
+  "noFabricatedHistory",
+  "commandOwnedEvidenceValidity",
+  "verificationTierNonAuthority",
+  "invariantSuiteQuality",
+  "selectorShadowOnlyEnforcement",
+  "telemetryNonSemanticBehavior",
+  "artifactContainmentAndNonDeletion",
+  "stateMigrationAndRecovery",
+  "verticalMilestonePolicy",
+  "dependencyValidNextProposal",
+  "noScopeReductionOrSuspiciousShortcut",
+] as const;
+export type GenericReconciliationReviewCheckId =
+  (typeof GENERIC_RECONCILIATION_REVIEW_CHECK_IDS)[number];
+
 export interface FocusedVerificationCommand {
   readonly id: string;
   readonly argv: readonly string[];
@@ -233,8 +256,13 @@ export interface FocusedVerificationCommand {
   readonly expectedArtifactKinds: readonly string[];
 }
 
-export interface VerificationManifest {
-  readonly schemaVersion: typeof VERIFICATION_MANIFEST_SCHEMA_VERSION;
+export interface VerificationCommandManifest {
+  readonly focusedCommands: readonly FocusedVerificationCommand[];
+  readonly requiredProtectedPaths: readonly string[];
+}
+
+export interface LegacyVerificationManifest extends VerificationCommandManifest {
+  readonly schemaVersion: typeof LEGACY_VERIFICATION_MANIFEST_SCHEMA_VERSION;
   readonly milestoneId: "d032-loop-efficiency-recommissioning";
   readonly objective: string;
   readonly exclusions: readonly string[];
@@ -258,6 +286,32 @@ export interface VerificationManifest {
     readonly requiresNoArguments: true;
     readonly profileId: "readiness";
     readonly selectedByOverride: false;
+  };
+}
+
+export interface VerificationManifest extends VerificationCommandManifest {
+  readonly schemaVersion: typeof VERIFICATION_MANIFEST_SCHEMA_VERSION;
+  readonly commissioning: {
+    readonly id: string;
+    readonly baseCommit: string;
+    readonly profile: VerificationProfile;
+    readonly createdAt: string;
+  };
+  readonly objective: string;
+  readonly exclusions: readonly string[];
+  readonly requiredProtectedPaths: readonly string[];
+  readonly requiredInvariantSuiteId: string;
+  readonly scopePolicyId: string;
+  readonly exactVerification: {
+    readonly argv: readonly ["pnpm", "verify"];
+    readonly requiresNoArguments: true;
+    readonly profileSource: "package-default";
+    readonly selectedByOverride: false;
+  };
+  readonly reconciliationPolicy: {
+    readonly id: string;
+    readonly nextProposalPath: string;
+    readonly requiredReviewChecks: readonly string[];
   };
 }
 
@@ -388,7 +442,7 @@ export interface ExactVerificationIndex {
   readonly status: "PASS" | "NOT_READY";
   readonly exitCode: 0 | 2;
   readonly disposition: AuthoritativeVerificationDisposition;
-  readonly profileId: "readiness";
+  readonly profileId: VerificationProfile;
   readonly selectedByOverride: false;
   readonly candidateCommit: string;
   readonly candidateTree: string;

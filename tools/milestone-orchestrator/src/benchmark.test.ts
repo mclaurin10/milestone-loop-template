@@ -28,7 +28,7 @@ import {
   recommendAffectedScope,
 } from "./affected-scope.js";
 import {
-  loadVerificationManifest,
+  loadHistoricalVerificationManifest,
   loadVerificationScopePolicy,
 } from "./config.js";
 import { buildPackageGraph } from "./package-graph.js";
@@ -392,7 +392,7 @@ describe("loop benchmark", () => {
   it("binds the plan to the tracked baseline and reports dirty state honestly", async () => {
     const [plan, manifest] = await Promise.all([
       benchmarkPlan(repositoryRoot),
-      loadVerificationManifest(repositoryRoot),
+      loadHistoricalVerificationManifest(repositoryRoot, "source-benchmark"),
     ]);
     expect(plan.matrixId).toBe(manifest.value.requiredBenchmarkMatrixId);
     expect(plan.baselineCommit).toBe(manifest.value.d031BaselineCommit);
@@ -405,7 +405,7 @@ describe("loop benchmark", () => {
   it("keeps narrow recommendations narrow and expands risky plus unknown paths", async () => {
     const [matrix, manifest, policy, graph] = await Promise.all([
       loadBenchmarkMatrix(repositoryRoot),
-      loadVerificationManifest(repositoryRoot),
+      loadHistoricalVerificationManifest(repositoryRoot, "source-benchmark"),
       loadVerificationScopePolicy(repositoryRoot),
       buildPackageGraph(repositoryRoot),
     ]);

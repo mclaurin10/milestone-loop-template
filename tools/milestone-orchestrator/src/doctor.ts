@@ -7,8 +7,8 @@ import { join, resolve } from "node:path";
 import {
   DEFAULT_CONFIG_PATH,
   DEFAULT_VERIFICATION_MANIFEST_PATH,
+  loadActiveVerificationManifest,
   loadConfig,
-  loadVerificationManifest,
 } from "./config.js";
 import {
   ControllerLease,
@@ -448,7 +448,7 @@ async function protectedTrustRootsCheck(
   let manifestCovered: boolean | null = null;
   if (existsSync(resolve(repositoryRoot, DEFAULT_VERIFICATION_MANIFEST_PATH))) {
     try {
-      const manifest = await loadVerificationManifest(repositoryRoot);
+      const manifest = await loadActiveVerificationManifest(repositoryRoot);
       assertManifestProtectedPathsCovered(
         manifest.value,
         buildCanonicalProtectedSet(config),

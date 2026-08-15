@@ -10,7 +10,7 @@ import {
   validateScopeSelection,
 } from "./affected-scope.js";
 import {
-  loadVerificationManifest,
+  loadHistoricalVerificationManifest,
   loadVerificationScopePolicy,
 } from "./config.js";
 import { buildPackageGraph } from "./package-graph.js";
@@ -41,7 +41,7 @@ interface ScopeFixture {
 
 async function setup() {
   const [manifest, policy, graph] = await Promise.all([
-    loadVerificationManifest(repositoryRoot),
+    loadHistoricalVerificationManifest(repositoryRoot, "source-benchmark"),
     loadVerificationScopePolicy(repositoryRoot),
     buildPackageGraph(repositoryRoot),
   ]);

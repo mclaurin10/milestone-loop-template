@@ -10,7 +10,7 @@ import type { MilestoneRecord, OrchestratorConfig } from "./contracts.js";
 import { canaryMilestone } from "./canary.js";
 import {
   DEFAULT_VERIFICATION_MANIFEST_PATH,
-  loadVerificationManifest,
+  loadActiveVerificationManifest,
 } from "./config.js";
 import {
   createMilestoneRecord,
@@ -227,7 +227,9 @@ export async function demonstrateSafety(input: {
   );
   const manifestScenario = existsSync(manifestPath)
     ? await (async () => {
-        const manifest = await loadVerificationManifest(input.repositoryRoot);
+        const manifest = await loadActiveVerificationManifest(
+          input.repositoryRoot,
+        );
         assertManifestProtectedPathsCovered(
           manifest.value,
           canonicalProtectedSet,

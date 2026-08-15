@@ -57,9 +57,10 @@ their contents, guided by the templates.
   `tools/milestone-orchestrator/` subtree is protected (the controller runs
   from the target checkout, so its source and config are
   verifier-equivalent): any changed path under it — including newly created
-  files — is a protected change. A commissioned verification manifest at
-  `.agent/completed/loop-recommissioning-verification.json` joins the
-  enforced set automatically while it exists.
+  files — is a protected change. The active commissioned manifest at
+  `.agent/verification-manifest.json` and the retained historical source
+  manifest at `.agent/completed/loop-recommissioning-verification.json` each
+  join the enforced set automatically while present.
 
 Config schema migrations live in `src/config.ts` (`migrateConfig`); 1.0.0 →
 1.5.0 configs are migrated in memory to 1.6.0 with generic defaults for new
@@ -138,8 +139,14 @@ and class ids are pinned by `assertBenchmarkMatrix` and cannot be weakened.
 - `historical.iterationCheckIdsByClass` — the historical per-iteration check
   sets for classes that had narrower iteration workflows.
 
-## Verification manifest (`.agent/completed/loop-recommissioning-verification.json`)
+## Verification manifests
 
-Not in this directory, but the file every check id above must agree with: its
-`focusedCommands` define the check catalogue (id, argv, tiers, expected
-artifact kinds). See `CONTRACT.md` at the repository root.
+The active `.agent/verification-manifest.json` uses the generic
+`verification-manifest.v2` contract. Its commissioning profile must match the
+package-default verification profile; its `focusedCommands` define the check
+catalogue (id, argv, tiers, expected artifact kinds), and its invariant,
+scope, exact-verification, protected-path, and reconciliation identities fail
+closed at load or tier construction. The retained
+`.agent/completed/loop-recommissioning-verification.json` v1 record is readable
+only by explicit source benchmark/reconciliation contexts and is never a
+default for new work. See `CONTRACT.md` at the repository root.

@@ -2,13 +2,17 @@ import { resolve } from "node:path";
 
 import {
   CONFIG_SCHEMA_VERSION,
+  GENERIC_RECONCILIATION_REVIEW_CHECK_IDS,
   LEGACY_MILESTONE_SCHEMA_VERSION,
   MILESTONE_SCHEMA_VERSION,
   PREVIOUS_MILESTONE_SCHEMA_VERSION,
+  REQUIRED_PROTECTED_PATHS,
+  VERIFICATION_MANIFEST_SCHEMA_VERSION,
   type MilestoneProposal,
   type OrchestratorConfig,
   type OrchestratorState,
   type ReconciliationRecord,
+  type VerificationManifest,
 } from "../src/contracts.js";
 import { createInitialState } from "../src/state-store.js";
 import {
@@ -335,6 +339,94 @@ export function validConfig(
     ],
     ...overrides,
   };
+}
+
+export function validVerificationManifest(
+  overrides: Partial<VerificationManifest> = {},
+): VerificationManifest {
+  return {
+    schemaVersion: VERIFICATION_MANIFEST_SCHEMA_VERSION,
+    commissioning: {
+      id: "generic-fixture-commissioning",
+      baseCommit: "a".repeat(40),
+      profile: "readiness",
+      createdAt: "2026-08-15T00:00:00.000Z",
+    },
+    objective: "Verify one generic commissioned repository lifecycle.",
+    exclusions: ["No immutable authority or readiness semantic changes."],
+    focusedCommands: [
+      {
+        id: "test-invariants",
+        argv: ["pnpm", "test:invariants"],
+        tiers: ["iteration", "candidate", "milestone"],
+        expectedArtifactKinds: ["invariant-suite-report"],
+      },
+    ],
+    requiredProtectedPaths: [...REQUIRED_PROTECTED_PATHS],
+    requiredInvariantSuiteId: "generic-invariants.v1",
+    scopePolicyId: "generic-scope-policy.v1",
+    exactVerification: {
+      argv: ["pnpm", "verify"],
+      requiresNoArguments: true,
+      profileSource: "package-default",
+      selectedByOverride: false,
+    },
+    reconciliationPolicy: {
+      id: "generic-reconciliation.v1",
+      nextProposalPath: ".agent/next-milestone.json",
+      requiredReviewChecks: [...GENERIC_RECONCILIATION_REVIEW_CHECK_IDS],
+    },
+    ...overrides,
+  };
+}
+
+export function genericTierVerificationManifest(
+  overrides: Partial<VerificationManifest> = {},
+): VerificationManifest {
+  const candidateAndMilestone = [
+    ["test-unit-fast", "test:unit:fast"],
+    ["test-orchestrator", "test:orchestrator"],
+    ["format-check", "format:check"],
+    ["lint", "lint"],
+    ["lint-architecture", "lint:architecture"],
+    ["typecheck", "typecheck"],
+    ["build", "build"],
+  ] as const;
+  const milestoneOnly = [
+    ["test-unit-migrations", "test:unit:migrations"],
+    ["domain-construction-standard", "verify:domain-construction-standard"],
+    ["domain-resources", "verify:domain-resources"],
+    ["domain-networks", "verify:domain-networks"],
+    ["domain-planning", "verify:domain-planning"],
+    ["domain-entitlement", "verify:domain-entitlement"],
+    ["domain-entitlement-standard", "verify:domain-entitlement-standard"],
+    ["domain-development", "verify:domain-development"],
+    ["domain-simulation", "verify:domain-simulation"],
+    ["domain-browser", "verify:domain-browser"],
+  ] as const;
+  return validVerificationManifest({
+    focusedCommands: [
+      {
+        id: "test-invariants",
+        argv: ["pnpm", "test:invariants"],
+        tiers: ["iteration", "candidate", "milestone"],
+        expectedArtifactKinds: ["invariant-suite-report"],
+      },
+      ...candidateAndMilestone.map(([id, script]) => ({
+        id,
+        argv: ["pnpm", script],
+        tiers: ["candidate", "milestone"] as const,
+        expectedArtifactKinds: [`${id}-report`],
+      })),
+      ...milestoneOnly.map(([id, script]) => ({
+        id,
+        argv: ["pnpm", script],
+        tiers: ["milestone"] as const,
+        expectedArtifactKinds: [`${id}-report`],
+      })),
+    ],
+    ...overrides,
+  });
 }
 
 export function validState(repositoryRoot: string): OrchestratorState {

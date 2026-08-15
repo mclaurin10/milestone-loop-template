@@ -46,8 +46,8 @@ import {
 import { measurableTokenUnits } from "./budget.js";
 import {
   DEFAULT_VERIFICATION_MANIFEST_PATH,
+  loadActiveVerificationManifest,
   loadConfig,
-  loadVerificationManifest,
 } from "./config.js";
 import {
   assertManifestProtectedPathsCovered,
@@ -738,7 +738,7 @@ export class MilestoneOrchestrator {
     const root = resolve(repositoryRoot);
     const config = await loadConfig(root, configPath);
     if (existsSync(resolve(root, DEFAULT_VERIFICATION_MANIFEST_PATH))) {
-      const manifest = await loadVerificationManifest(root);
+      const manifest = await loadActiveVerificationManifest(root);
       assertManifestProtectedPathsCovered(
         manifest.value,
         buildCanonicalProtectedSet(config),

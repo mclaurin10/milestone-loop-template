@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://milestone-loop.local/schemas/verification-tier-1.2.0.json",
+  "$id": "https://milestone-loop.local/schemas/verification-tier-2.0.0.json",
   "title": "Example Project verification manifest and non-authoritative tier result",
   "oneOf": [{ "$ref": "#/$defs/manifest" }, { "$ref": "#/$defs/result" }],
   "$defs": {
@@ -14,7 +14,41 @@
     "argv": {
       "type": "array",
       "minItems": 2,
+      "prefixItems": [{ "enum": ["pnpm", "node", "git"] }],
       "items": { "type": "string", "minLength": 1 }
+    },
+    "repositoryPath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?![A-Za-z]:)(?!/)(?!\\./)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*[\\\\*?])(?!.*/$).+$"
+    },
+    "protectedPathArray": {
+      "type": "array",
+      "minItems": 10,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/repositoryPath" },
+      "allOf": [
+        { "contains": { "const": "evals/ACCEPTANCE.md" } },
+        { "contains": { "const": "evals/acceptance-manifest.json" } },
+        {
+          "contains": { "const": "evals/HIDDEN_VALIDATION_PROTOCOL.md" }
+        },
+        {
+          "contains": { "const": "evals/immutable-contract-lock.json" }
+        },
+        { "contains": { "const": "AGENTS.md" } },
+        {
+          "contains": { "const": ".agent/readiness-profile-activated.json" }
+        },
+        { "contains": { "const": "scripts/verify.mjs" } },
+        { "contains": { "const": "pnpm-lock.yaml" } },
+        { "contains": { "const": "package.json" } },
+        {
+          "contains": {
+            "const": "tools/milestone-orchestrator/config/invariant-suite.json"
+          }
+        }
+      ]
     },
     "executionProvider": {
       "type": "object",
@@ -89,29 +123,29 @@
         "expectedArtifactKinds": { "$ref": "#/$defs/stringArray" }
       }
     },
-    "authorityChanges": {
+    "manifestIdentifier": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    },
+    "verificationProfile": { "enum": ["bootstrap", "readiness"] },
+    "commissioning": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "readinessStagesChanged",
-        "acceptanceChanged",
-        "defaultProfileChanged",
-        "exactVerifyCommandChanged"
-      ],
+      "required": ["id", "baseCommit", "profile", "createdAt"],
       "properties": {
-        "readinessStagesChanged": { "const": false },
-        "acceptanceChanged": { "const": false },
-        "defaultProfileChanged": { "const": false },
-        "exactVerifyCommandChanged": { "const": false }
+        "id": { "$ref": "#/$defs/manifestIdentifier" },
+        "baseCommit": { "$ref": "#/$defs/commit" },
+        "profile": { "$ref": "#/$defs/verificationProfile" },
+        "createdAt": { "type": "string", "format": "date-time" }
       }
     },
-    "finalExactVerification": {
+    "manifestExactVerification": {
       "type": "object",
       "additionalProperties": false,
       "required": [
         "argv",
         "requiresNoArguments",
-        "profileId",
+        "profileSource",
         "selectedByOverride"
       ],
       "properties": {
@@ -122,8 +156,43 @@
           "maxItems": 2
         },
         "requiresNoArguments": { "const": true },
-        "profileId": { "const": "readiness" },
+        "profileSource": { "const": "package-default" },
         "selectedByOverride": { "const": false }
+      }
+    },
+    "reconciliationPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "nextProposalPath", "requiredReviewChecks"],
+      "properties": {
+        "id": { "$ref": "#/$defs/manifestIdentifier" },
+        "nextProposalPath": {
+          "allOf": [
+            { "$ref": "#/$defs/repositoryPath" },
+            { "pattern": "\\.json$" }
+          ]
+        },
+        "requiredReviewChecks": {
+          "type": "array",
+          "minItems": 13,
+          "uniqueItems": true,
+          "prefixItems": [
+            { "const": "completeCommitLineage" },
+            { "const": "protectedIntegrity" },
+            { "const": "noFabricatedHistory" },
+            { "const": "commandOwnedEvidenceValidity" },
+            { "const": "verificationTierNonAuthority" },
+            { "const": "invariantSuiteQuality" },
+            { "const": "selectorShadowOnlyEnforcement" },
+            { "const": "telemetryNonSemanticBehavior" },
+            { "const": "artifactContainmentAndNonDeletion" },
+            { "const": "stateMigrationAndRecovery" },
+            { "const": "verticalMilestonePolicy" },
+            { "const": "dependencyValidNextProposal" },
+            { "const": "noScopeReductionOrSuspiciousShortcut" }
+          ],
+          "items": { "$ref": "#/$defs/manifestIdentifier" }
+        }
       }
     },
     "manifest": {
@@ -131,44 +200,38 @@
       "additionalProperties": false,
       "required": [
         "schemaVersion",
-        "milestoneId",
+        "commissioning",
         "objective",
         "exclusions",
-        "baseCommit",
-        "d031BaselineCommit",
         "focusedCommands",
         "requiredProtectedPaths",
         "requiredInvariantSuiteId",
-        "requiredBenchmarkMatrixId",
-        "requiredReconciliationReviewChecks",
-        "expectedArtifactKinds",
-        "authorityChanges",
-        "nextProposalPath",
-        "finalExactVerification"
+        "scopePolicyId",
+        "exactVerification",
+        "reconciliationPolicy"
       ],
       "properties": {
-        "schemaVersion": { "const": "verification-manifest.v1" },
-        "milestoneId": { "const": "d032-loop-efficiency-recommissioning" },
+        "schemaVersion": { "const": "verification-manifest.v2" },
+        "commissioning": { "$ref": "#/$defs/commissioning" },
         "objective": { "type": "string", "minLength": 1 },
         "exclusions": { "$ref": "#/$defs/stringArray" },
-        "baseCommit": { "$ref": "#/$defs/commit" },
-        "d031BaselineCommit": { "$ref": "#/$defs/commit" },
         "focusedCommands": {
           "type": "array",
           "minItems": 1,
           "items": { "$ref": "#/$defs/focusedCommand" }
         },
-        "requiredProtectedPaths": { "$ref": "#/$defs/stringArray" },
-        "requiredInvariantSuiteId": { "type": "string", "minLength": 1 },
-        "requiredBenchmarkMatrixId": { "type": "string", "minLength": 1 },
-        "requiredReconciliationReviewChecks": {
-          "$ref": "#/$defs/stringArray"
+        "requiredProtectedPaths": {
+          "$ref": "#/$defs/protectedPathArray"
         },
-        "expectedArtifactKinds": { "$ref": "#/$defs/stringArray" },
-        "authorityChanges": { "$ref": "#/$defs/authorityChanges" },
-        "nextProposalPath": { "const": ".agent/next-milestone.json" },
-        "finalExactVerification": {
-          "$ref": "#/$defs/finalExactVerification"
+        "requiredInvariantSuiteId": {
+          "$ref": "#/$defs/manifestIdentifier"
+        },
+        "scopePolicyId": { "$ref": "#/$defs/manifestIdentifier" },
+        "exactVerification": {
+          "$ref": "#/$defs/manifestExactVerification"
+        },
+        "reconciliationPolicy": {
+          "$ref": "#/$defs/reconciliationPolicy"
         }
       }
     },
@@ -288,7 +351,7 @@
         "disposition": {
           "enum": ["completion-eligible", "incremental-readiness"]
         },
-        "profileId": { "const": "readiness" },
+        "profileId": { "$ref": "#/$defs/verificationProfile" },
         "selectedByOverride": { "const": false },
         "candidateCommit": { "$ref": "#/$defs/commit" },
         "candidateTree": { "$ref": "#/$defs/commit" },

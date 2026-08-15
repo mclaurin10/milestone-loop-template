@@ -18,9 +18,9 @@ import {
   type VerificationTierResult,
 } from "./contracts.js";
 import {
-  DEFAULT_VERIFICATION_MANIFEST_PATH,
+  HISTORICAL_VERIFICATION_MANIFEST_PATH,
   loadConfig,
-  loadVerificationManifest,
+  loadHistoricalVerificationManifest,
 } from "./config.js";
 import { runCommand } from "./command-runner.js";
 import { assertArtifactInventory } from "./artifact-inventory.js";
@@ -906,7 +906,13 @@ async function defaultMilestoneTier(input: {
     {
       id: "reconciliation-milestone-tier",
       executable: "pnpm",
-      args: ["verify:milestone", "--", "--manifest", input.manifestPath],
+      args: [
+        "verify:milestone",
+        "--",
+        "--manifest",
+        input.manifestPath,
+        "--historical-source-reconciliation",
+      ],
       parser: "exit-code",
       timeoutMs: input.timeoutMs,
     },
@@ -1080,8 +1086,9 @@ export class ReconciliationController {
       throw new Error(
         "Reconciliation requires a truthful external-gap reason.",
       );
-    const verificationManifest = await loadVerificationManifest(
+    const verificationManifest = await loadHistoricalVerificationManifest(
       this.repositoryRoot,
+      "source-reconciliation",
     );
     if (proposalPath !== verificationManifest.value.nextProposalPath)
       throw new Error(
@@ -1232,9 +1239,10 @@ export class ReconciliationController {
     } else if (record.phase !== "verifying") {
       throw new Error(`Cannot verify reconciliation from ${record.phase}.`);
     }
-    const manifest = await loadVerificationManifest(
+    const manifest = await loadHistoricalVerificationManifest(
       this.repositoryRoot,
-      DEFAULT_VERIFICATION_MANIFEST_PATH,
+      "source-reconciliation",
+      HISTORICAL_VERIFICATION_MANIFEST_PATH,
     );
     const artifactDirectory = resolve(
       this.repositoryRoot,
@@ -1354,7 +1362,10 @@ export class ReconciliationController {
     } else if (record.phase !== "reviewing") {
       throw new Error(`Cannot review reconciliation from ${record.phase}.`);
     }
-    const manifest = await loadVerificationManifest(this.repositoryRoot);
+    const manifest = await loadHistoricalVerificationManifest(
+      this.repositoryRoot,
+      "source-reconciliation",
+    );
     await ensureContainedDirectory(
       this.repositoryRoot,
       resolve(this.repositoryRoot, RECONCILIATION_ROOT, record.id),
@@ -1648,8 +1659,9 @@ export class ReconciliationController {
       commitRange: range,
       outputPath: resolve(directory, "protected-comparison.json"),
     });
-    const verificationManifest = await loadVerificationManifest(
+    const verificationManifest = await loadHistoricalVerificationManifest(
       this.repositoryRoot,
+      "source-reconciliation",
     );
     if (
       verificationManifest.value.nextProposalPath !== record.nextProposal.path

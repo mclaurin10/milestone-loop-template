@@ -80,7 +80,7 @@ report `NOT_READY`, never pass.
    replace every `tools/placeholder-check.mjs` script with a real
    evidence-producing command, wire your product's verify stages, and
    author the verification manifest
-   (`.agent/completed/loop-recommissioning-verification.json`). Keep `build`
+   (`.agent/verification-manifest.json`). Keep `build`
    as the evidence-owning wrapper and declare the real production boundary in
    `package.json`, for example:
 

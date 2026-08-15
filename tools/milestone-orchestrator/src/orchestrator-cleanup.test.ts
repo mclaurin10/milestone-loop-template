@@ -12,6 +12,7 @@ import { dirname, join } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
+import { DEFAULT_VERIFICATION_MANIFEST_PATH } from "./config.js";
 import {
   captureProtectedFiles,
   integrateFastForward,
@@ -19,7 +20,11 @@ import {
 import { createMilestoneRecord } from "./milestone-state.js";
 import { MilestoneOrchestrator } from "./orchestrator.js";
 import { StateStore, createInitialState } from "./state-store.js";
-import { validConfig, validProposal } from "../test/fixtures.js";
+import {
+  validConfig,
+  validProposal,
+  validVerificationManifest,
+} from "../test/fixtures.js";
 import { createIsolatedWorkspaceFixture } from "../test/workspace-fixture.js";
 
 const NOW = "2026-08-02T18:00:00.000Z";
@@ -175,26 +180,20 @@ describe("canonical protected trust roots at controller startup", () => {
     { timeout: 30_000 },
     async () => {
       const fixture = await repositoryFixture();
-      const manifest = JSON.parse(
-        await readFile(
-          join(
-            process.cwd(),
-            ".agent",
-            "completed",
-            "loop-recommissioning-verification.json",
-          ),
-          "utf8",
-        ),
-      ) as { requiredProtectedPaths: string[] };
-      manifest.requiredProtectedPaths = [
-        ...manifest.requiredProtectedPaths,
-        "docs/never-configured-protection.md",
-      ];
+      const manifest = validVerificationManifest({
+        commissioning: {
+          ...validVerificationManifest().commissioning,
+          baseCommit: fixture.baseCommit,
+          createdAt: NOW,
+        },
+        requiredProtectedPaths: [
+          ...validVerificationManifest().requiredProtectedPaths,
+          "docs/never-configured-protection.md",
+        ],
+      });
       const manifestPath = join(
         fixture.root,
-        ".agent",
-        "completed",
-        "loop-recommissioning-verification.json",
+        ...DEFAULT_VERIFICATION_MANIFEST_PATH.split("/"),
       );
       await mkdir(dirname(manifestPath), { recursive: true });
       await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
@@ -219,21 +218,22 @@ describe("canonical protected trust roots at controller startup", () => {
       const fixture = await repositoryFixture();
       const manifestPath = join(
         fixture.root,
-        ".agent",
-        "completed",
-        "loop-recommissioning-verification.json",
+        ...DEFAULT_VERIFICATION_MANIFEST_PATH.split("/"),
       );
       await mkdir(dirname(manifestPath), { recursive: true });
       await writeFile(
         manifestPath,
-        await readFile(
-          join(
-            process.cwd(),
-            ".agent",
-            "completed",
-            "loop-recommissioning-verification.json",
-          ),
-        ),
+        `${JSON.stringify(
+          validVerificationManifest({
+            commissioning: {
+              ...validVerificationManifest().commissioning,
+              baseCommit: fixture.baseCommit,
+              createdAt: NOW,
+            },
+          }),
+          null,
+          2,
+        )}\n`,
       );
       git(fixture.root, "add", "--all");
       git(fixture.root, "commit", "-m", "commission the manifest");
@@ -245,7 +245,7 @@ describe("canonical protected trust roots at controller startup", () => {
       await first.close();
       expect(
         first.state.repository.protectedFiles.map((file) => file.path),
-      ).toContain(".agent/completed/loop-recommissioning-verification.json");
+      ).toContain(DEFAULT_VERIFICATION_MANIFEST_PATH);
 
       // Deleting the tracked manifest can no longer silently disable the
       // coverage assertion: the earliest fence (target cleanliness here;
@@ -256,7 +256,7 @@ describe("canonical protected trust roots at controller startup", () => {
           now: () => new Date(NOW),
         }),
       ).rejects.toThrow(
-        /working tree is dirty|Protected file was deleted: \.agent\/completed\/loop-recommissioning-verification\.json/,
+        /working tree is dirty|Protected file was deleted: \.agent\/verification-manifest\.json/,
       );
     },
   );

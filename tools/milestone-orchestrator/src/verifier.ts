@@ -125,6 +125,7 @@ export async function validateReconciliationMilestoneTier(input: {
     result.exactVerification.status !== "NOT_READY" ||
     result.exactVerification.exitCode !== 2 ||
     result.exactVerification.disposition !== "incremental-readiness" ||
+    result.exactVerification.profileId !== "readiness" ||
     result.exactVerification.selectedByOverride !== false ||
     result.exactVerification.candidateCommit !== input.candidateCommit ||
     result.exactVerification.candidateTree !== input.candidateTree ||
@@ -872,8 +873,7 @@ export async function parseAuthoritativeVerification(input: {
       executionProvider,
       input.expectedExecutionProvider,
     ) ||
-    (status === "PASS" && !executionProvider.completionEligible) ||
-    (status === "NOT_READY" && profile !== "readiness")
+    (status === "PASS" && !executionProvider.completionEligible)
   )
     throw malformed();
 

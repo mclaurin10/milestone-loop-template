@@ -5,16 +5,21 @@ import { describe, expect, it } from "vitest";
 
 import {
   CONTROLLER_TRUST_ROOT_PATHS,
+  type LegacyVerificationManifest,
   type VerificationManifest,
 } from "./contracts.js";
-import { loadConfig, loadVerificationManifest } from "./config.js";
+import {
+  HISTORICAL_VERIFICATION_MANIFEST_PATH,
+  loadConfig,
+  loadHistoricalVerificationManifest,
+} from "./config.js";
 import {
   assertManifestProtectedPathsCovered,
   buildCanonicalProtectedSet,
   casefoldPathKey,
   enforcementProtectedPatterns,
 } from "./protected-roots.js";
-import { validConfig } from "../test/fixtures.js";
+import { validConfig, validVerificationManifest } from "../test/fixtures.js";
 
 const repositoryRoot = resolve(import.meta.dirname, "../../..");
 
@@ -76,15 +81,27 @@ describe("canonical protected trust roots", () => {
     ).toThrow(/cannot enforce.*docs\/never-configured\.md/);
   });
 
-  it("covers the live commissioned manifest from the live configuration", async () => {
+  it("keeps the retained historical manifest protected and covered", async () => {
     const [config, manifest] = await Promise.all([
       loadConfig(repositoryRoot),
-      loadVerificationManifest(repositoryRoot),
+      loadHistoricalVerificationManifest(repositoryRoot, "source-benchmark"),
     ]);
+    expect(config.protectedPaths).toContain(
+      HISTORICAL_VERIFICATION_MANIFEST_PATH,
+    );
     expect(() =>
       assertManifestProtectedPathsCovered(
         manifest.value,
         buildCanonicalProtectedSet(config),
+      ),
+    ).not.toThrow();
+  });
+
+  it("covers a generic commissioned manifest from canonical configuration", () => {
+    expect(() =>
+      assertManifestProtectedPathsCovered(
+        validVerificationManifest(),
+        buildCanonicalProtectedSet(validConfig()),
       ),
     ).not.toThrow();
   });
@@ -104,7 +121,7 @@ describe("canonical protected trust roots", () => {
         ),
         "utf8",
       ),
-    ) as VerificationManifest;
+    ) as LegacyVerificationManifest;
     expect(() =>
       assertManifestProtectedPathsCovered(
         exampleManifest,

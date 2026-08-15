@@ -4,7 +4,7 @@ import { isAbsolute } from "node:path";
 import {
   SCOPE_TRIGGER_CLASSES,
   type ScopeTriggerClass,
-  type VerificationManifest,
+  type VerificationCommandManifest,
   type VerificationScopePolicy,
   type VerificationTier,
 } from "./contracts.js";
@@ -175,7 +175,7 @@ function sha(value: unknown): value is string {
 }
 
 export function buildScopeCheckCatalogue(
-  manifest: VerificationManifest,
+  manifest: VerificationCommandManifest,
 ): ScopeCheckCatalogue {
   const byId = new Map<string, ScopeCheckDefinition>();
   for (const command of [...manifest.focusedCommands, ...AUXILIARY_CHECKS]) {
@@ -334,7 +334,7 @@ export function recommendAffectedScope(input: {
   readonly changedPaths: readonly string[];
   readonly changedPathSource: ChangedPathSource;
   readonly candidate: ScopeCandidateIdentity;
-  readonly manifest: VerificationManifest;
+  readonly manifest: VerificationCommandManifest;
   readonly policy: VerificationScopePolicy;
   readonly policySha256: string;
   readonly packageGraph: PackageGraphSnapshot;

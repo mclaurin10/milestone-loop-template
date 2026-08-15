@@ -3,6 +3,45 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-15 — Generic active verification commissioning boundary (WP4a)
+
+**Decision.** New in-flight verification commissioning uses the strict
+`verification-manifest.v2` shape at `.agent/verification-manifest.json`. Its
+generic commissioning identity binds an exact base commit, canonical timestamp,
+and `bootstrap` or `readiness` profile; that profile must equal
+`package.json#milestoneLoop.verification.defaultProfile`. Exact closure remains
+literal no-argument `pnpm verify`, and the existing `exact-readiness` wire check
+id stays stable compatibility data even though the exact result profile may be
+bootstrap or readiness. Tier results remain non-authoritative at schema `1.2.0`;
+all reconciliation/adoption paths still require readiness evidence explicitly,
+so bootstrap can never satisfy autonomous readiness.
+
+The frozen `verification-manifest.v1` source and Ski Tycoon records are legacy
+types accepted only through closed, purpose-named historical loaders. Source
+reconciliation alone may adapt the source record to the generic tier input; the
+adapter adds the current protected floor and generic reconciliation minimum but
+does not rewrite historical bytes; its generic `createdAt` is the canonical Git
+commit timestamp of that retained record, not an invented historical event.
+There is no implicit v1 fallback. The
+published combined JSON Schema advances to `2.0.0` because its manifest branch
+is replacement-incompatible, while its tier-result branch continues to require
+wire schema `1.2.0`.
+
+**Why.** A D-031/D-032 literal cannot commission a reusable loop, and an exact
+command whose profile is duplicated in a manifest can drift from the package
+authority. Separate active and historical boundaries make provenance explicit,
+while resolving the exact profile from the package default avoids override
+semantics without weakening the one-way readiness gate. Alternatives rejected:
+accepting v1 for new work, silently translating any supplied legacy path,
+rewriting the frozen source record, treating bootstrap as readiness, renaming
+the stable exact check id in this slice, and migrating the live source before
+the WP4b commissioning workflow exists.
+
+**Affected files.** Manifest contracts/validators/schema, configuration and
+profile loaders, tier construction and CLI, historical benchmark and
+reconciliation callers, startup/doctor/safety protected-root checks, focused
+fixtures/tests, `README.md`, `CONTRACT.md`, and configuration documentation.
+
 ## 2026-08-14 — Docker-attested disposable OCI data plane (WP3d)
 
 **Decision.** Trusted candidate execution now uses Docker Engine through one

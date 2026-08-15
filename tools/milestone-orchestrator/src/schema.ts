@@ -7,6 +7,8 @@ import {
   AGENT_ROLES,
   CONFIG_SCHEMA_VERSION,
   EVIDENCE_RETENTION_SCHEMA_VERSION,
+  GENERIC_RECONCILIATION_REVIEW_CHECK_IDS,
+  LEGACY_VERIFICATION_MANIFEST_SCHEMA_VERSION,
   LEGACY_MILESTONE_SCHEMA_VERSION,
   MILESTONE_SCHEMA_VERSION,
   PREVIOUS_MILESTONE_SCHEMA_VERSION,
@@ -25,6 +27,7 @@ import {
   STATE_SCHEMA_VERSION,
   TARGET_INTEGRATE_PHASES,
   VERIFICATION_MANIFEST_SCHEMA_VERSION,
+  VERIFICATION_PROFILES,
   VERIFICATION_SUMMARY_SCHEMA_VERSION,
   VERIFICATION_TIERS,
   VERIFICATION_TIER_SCHEMA_VERSION,
@@ -32,6 +35,7 @@ import {
   WORKSPACE_CLEANUP_SCHEMA_VERSION,
   WORKSPACE_CREATE_PHASES,
   type InvariantSuiteRegistry,
+  type LegacyVerificationManifest,
   type MilestoneProposal,
   type OrchestratorConfig,
   type OrchestratorState,
@@ -2665,12 +2669,192 @@ function sha256(value: unknown): value is string {
   return typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
 }
 
+function canonicalTimestamp(value: unknown): value is string {
+  if (typeof value !== "string" || !Number.isFinite(Date.parse(value)))
+    return false;
+  return new Date(value).toISOString() === value;
+}
+
+function manifestIdentifier(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(value)
+  );
+}
+
+function safeLiteralRepositoryPath(value: unknown): value is string {
+  return (
+    safeRelativePath(value) &&
+    !value.includes("\\") &&
+    !value.startsWith("./") &&
+    !value.endsWith("/") &&
+    !value.split("/").includes("") &&
+    !value.split("/").includes(".") &&
+    !/[*?]/.test(value)
+  );
+}
+
+function validManifestFocusedCommands(value: unknown): boolean {
+  if (!Array.isArray(value) || value.length === 0) return false;
+  const ids = new Set<string>();
+  for (const command of value) {
+    if (
+      !isRecord(command) ||
+      !hasOnlyKeys(command, ["id", "argv", "tiers", "expectedArtifactKinds"]) ||
+      !manifestIdentifier(command["id"]) ||
+      ids.has(command["id"]) ||
+      !stringArray(command["argv"], 2) ||
+      !["pnpm", "node", "git"].includes(String(command["argv"]?.[0])) ||
+      !stringArray(command["tiers"], 1) ||
+      command["tiers"].some(
+        (tier) =>
+          tier === "periodic" || !VERIFICATION_TIERS.includes(tier as never),
+      ) ||
+      !stringArray(command["expectedArtifactKinds"], 1)
+    )
+      return false;
+    ids.add(command["id"]);
+  }
+  return true;
+}
+
 export function validateVerificationManifest(
   value: unknown,
 ): ValidationResult<VerificationManifest> {
   const errors: string[] = [];
   if (!isRecord(value))
     return validation(value, ["Manifest must be an object."]);
+  const requiredKeys = [
+    "schemaVersion",
+    "commissioning",
+    "objective",
+    "exclusions",
+    "focusedCommands",
+    "requiredProtectedPaths",
+    "requiredInvariantSuiteId",
+    "scopePolicyId",
+    "exactVerification",
+    "reconciliationPolicy",
+  ] as const;
+  if (
+    !hasOnlyKeys(value, requiredKeys) ||
+    requiredKeys.some((key) => !(key in value))
+  )
+    errors.push("Manifest keys do not match verification-manifest.v2.");
+  if (value["schemaVersion"] !== VERIFICATION_MANIFEST_SCHEMA_VERSION)
+    errors.push("Manifest schemaVersion is invalid.");
+
+  const commissioning = value["commissioning"];
+  if (
+    !isRecord(commissioning) ||
+    !hasOnlyKeys(commissioning, ["id", "baseCommit", "profile", "createdAt"]) ||
+    !manifestIdentifier(commissioning["id"]) ||
+    !commitId(commissioning["baseCommit"]) ||
+    !VERIFICATION_PROFILES.includes(commissioning["profile"] as never) ||
+    !canonicalTimestamp(commissioning["createdAt"])
+  )
+    errors.push("Manifest commissioning identity is invalid.");
+
+  if (
+    !nonEmptyString(value["objective"]) ||
+    !stringArray(value["exclusions"], 1)
+  )
+    errors.push("Manifest objective or exclusions are invalid.");
+
+  if (!validManifestFocusedCommands(value["focusedCommands"]))
+    errors.push("Manifest contains an invalid focused command.");
+
+  const protectedPaths = value["requiredProtectedPaths"];
+  if (
+    !stringArray(protectedPaths, 1) ||
+    protectedPaths.some((path) => !safeLiteralRepositoryPath(path)) ||
+    new Set(protectedPaths.map((path) => path.toLowerCase())).size !==
+      protectedPaths.length ||
+    REQUIRED_PROTECTED_PATHS.some(
+      (required) =>
+        !protectedPaths.some(
+          (path) => path.toLowerCase() === required.toLowerCase(),
+        ),
+    )
+  )
+    errors.push(
+      "Manifest requiredProtectedPaths are unsafe, ambiguous, or omit the protected floor.",
+    );
+
+  if (
+    !manifestIdentifier(value["requiredInvariantSuiteId"]) ||
+    !manifestIdentifier(value["scopePolicyId"])
+  )
+    errors.push("Manifest registry identities are invalid.");
+
+  const exact = value["exactVerification"];
+  if (
+    !isRecord(exact) ||
+    !hasOnlyKeys(exact, [
+      "argv",
+      "requiresNoArguments",
+      "profileSource",
+      "selectedByOverride",
+    ]) ||
+    !Array.isArray(exact["argv"]) ||
+    exact["argv"].length !== 2 ||
+    exact["argv"][0] !== "pnpm" ||
+    exact["argv"][1] !== "verify" ||
+    exact["requiresNoArguments"] !== true ||
+    exact["profileSource"] !== "package-default" ||
+    exact["selectedByOverride"] !== false
+  )
+    errors.push(
+      "Manifest exact verification must be literal no-argument package-default pnpm verify.",
+    );
+
+  const reconciliation = value["reconciliationPolicy"];
+  const requiredReviewChecks = isRecord(reconciliation)
+    ? reconciliation["requiredReviewChecks"]
+    : null;
+  if (
+    !isRecord(reconciliation) ||
+    !hasOnlyKeys(reconciliation, [
+      "id",
+      "nextProposalPath",
+      "requiredReviewChecks",
+    ]) ||
+    !manifestIdentifier(reconciliation["id"]) ||
+    !safeLiteralRepositoryPath(reconciliation["nextProposalPath"]) ||
+    !String(reconciliation["nextProposalPath"]).endsWith(".json") ||
+    !stringArray(
+      requiredReviewChecks,
+      GENERIC_RECONCILIATION_REVIEW_CHECK_IDS.length,
+    ) ||
+    requiredReviewChecks.some((check) => !manifestIdentifier(check)) ||
+    GENERIC_RECONCILIATION_REVIEW_CHECK_IDS.some(
+      (check, index) => requiredReviewChecks[index] !== check,
+    )
+  )
+    errors.push(
+      "Manifest reconciliation policy is unsafe or omits the canonical generic review minimum.",
+    );
+
+  return validation(value, errors);
+}
+
+export function assertVerificationManifest(
+  value: unknown,
+): VerificationManifest {
+  const result = validateVerificationManifest(value);
+  if (!result.valid || !result.value)
+    throw new Error(
+      `Invalid verification manifest: ${result.errors.join(" ")}`,
+    );
+  return result.value;
+}
+
+export function validateLegacyVerificationManifest(
+  value: unknown,
+): ValidationResult<LegacyVerificationManifest> {
+  const errors: string[] = [];
+  if (!isRecord(value))
+    return validation(value, ["Legacy manifest must be an object."]);
   const requiredKeys = [
     "schemaVersion",
     "milestoneId",
@@ -2692,24 +2876,25 @@ export function validateVerificationManifest(
     !hasOnlyKeys(value, requiredKeys) ||
     requiredKeys.some((key) => !(key in value))
   )
-    errors.push("Manifest keys do not match verification-manifest.v1.");
-  if (value["schemaVersion"] !== VERIFICATION_MANIFEST_SCHEMA_VERSION)
-    errors.push("Manifest schemaVersion is invalid.");
+    errors.push("Legacy manifest keys do not match verification-manifest.v1.");
+  if (value["schemaVersion"] !== LEGACY_VERIFICATION_MANIFEST_SCHEMA_VERSION)
+    errors.push("Legacy manifest schemaVersion is invalid.");
   if (value["milestoneId"] !== "d032-loop-efficiency-recommissioning")
-    errors.push("Manifest milestoneId is invalid.");
+    errors.push("Legacy manifest milestoneId is invalid.");
   if (
     !nonEmptyString(value["objective"]) ||
     !stringArray(value["exclusions"], 1)
   )
-    errors.push("Manifest objective or exclusions are invalid.");
+    errors.push("Legacy manifest objective or exclusions are invalid.");
   if (!commitId(value["baseCommit"]) || !commitId(value["d031BaselineCommit"]))
-    errors.push("Manifest commit identities are invalid.");
+    errors.push("Legacy manifest commit identities are invalid.");
   for (const key of [
     "requiredProtectedPaths",
     "requiredReconciliationReviewChecks",
     "expectedArtifactKinds",
   ] as const) {
-    if (!stringArray(value[key], 1)) errors.push(`Manifest ${key} is invalid.`);
+    if (!stringArray(value[key], 1))
+      errors.push(`Legacy manifest ${key} is invalid.`);
   }
   if (
     Array.isArray(value["requiredReconciliationReviewChecks"]) &&
@@ -2720,47 +2905,17 @@ export function validateVerificationManifest(
       ))
   )
     errors.push(
-      "Manifest reconciliation-review checks do not match the commissioned review surface.",
+      "Legacy manifest reconciliation-review checks do not match the historical review surface.",
     );
   if (
     !nonEmptyString(value["requiredInvariantSuiteId"]) ||
     !nonEmptyString(value["requiredBenchmarkMatrixId"])
   )
-    errors.push("Manifest registry identities are invalid.");
+    errors.push("Legacy manifest registry identities are invalid.");
   if (value["nextProposalPath"] !== ".agent/next-milestone.json")
-    errors.push("Manifest next-proposal path is invalid.");
-
-  const commands = value["focusedCommands"];
-  if (!Array.isArray(commands) || commands.length === 0) {
-    errors.push("Manifest focusedCommands must be non-empty.");
-  } else {
-    const ids = new Set<string>();
-    for (const command of commands) {
-      if (
-        !isRecord(command) ||
-        !hasOnlyKeys(command, [
-          "id",
-          "argv",
-          "tiers",
-          "expectedArtifactKinds",
-        ]) ||
-        !nonEmptyString(command["id"]) ||
-        ids.has(String(command["id"])) ||
-        !stringArray(command["argv"], 2) ||
-        !["pnpm", "node", "git"].includes(String(command["argv"]?.[0])) ||
-        !stringArray(command["tiers"], 1) ||
-        command["tiers"].some(
-          (tier) =>
-            tier === "periodic" || !VERIFICATION_TIERS.includes(tier as never),
-        ) ||
-        !stringArray(command["expectedArtifactKinds"], 1)
-      ) {
-        errors.push("Manifest contains an invalid focused command.");
-        continue;
-      }
-      ids.add(command["id"]);
-    }
-  }
+    errors.push("Legacy manifest next-proposal path is invalid.");
+  if (!validManifestFocusedCommands(value["focusedCommands"]))
+    errors.push("Legacy manifest contains an invalid focused command.");
 
   const authority = value["authorityChanges"];
   if (
@@ -2773,7 +2928,9 @@ export function validateVerificationManifest(
     ]) ||
     Object.values(authority).some((changed) => changed !== false)
   )
-    errors.push("Manifest attempts to change an authoritative boundary.");
+    errors.push(
+      "Legacy manifest attempts to change an authoritative boundary.",
+    );
 
   const exact = value["finalExactVerification"];
   if (
@@ -2793,19 +2950,18 @@ export function validateVerificationManifest(
     exact["selectedByOverride"] !== false
   )
     errors.push(
-      "Manifest exact verification must be literal no-argument pnpm verify.",
+      "Legacy manifest exact verification must be literal no-argument readiness pnpm verify.",
     );
-
   return validation(value, errors);
 }
 
-export function assertVerificationManifest(
+export function assertLegacyVerificationManifest(
   value: unknown,
-): VerificationManifest {
-  const result = validateVerificationManifest(value);
+): LegacyVerificationManifest {
+  const result = validateLegacyVerificationManifest(value);
   if (!result.valid || !result.value)
     throw new Error(
-      `Invalid verification manifest: ${result.errors.join(" ")}`,
+      `Invalid historical verification manifest: ${result.errors.join(" ")}`,
     );
   return result.value;
 }
@@ -3253,7 +3409,7 @@ export function validateVerificationTierResult(
         (exact["status"] === "PASS"
           ? "completion-eligible"
           : "incremental-readiness") ||
-      exact["profileId"] !== "readiness" ||
+      !VERIFICATION_PROFILES.includes(exact["profileId"] as never) ||
       exact["selectedByOverride"] !== false ||
       !commitId(exact["candidateCommit"]) ||
       !commitId(exact["candidateTree"]) ||
@@ -3267,13 +3423,15 @@ export function validateVerificationTierResult(
         (exact["candidateCommit"] !== candidate["gitCommit"] ||
           exact["candidateTree"] !== candidate["gitTree"]))
     )
-      errors.push("Verification tier exact-readiness index is malformed.");
+      errors.push("Verification tier exact-verification index is malformed.");
   }
   if (
     value["status"] === "NOT_READY" &&
     (!isRecord(exact) || exact["status"] !== "NOT_READY")
   )
-    errors.push("Tier NOT_READY must be linked to exact readiness NOT_READY.");
+    errors.push(
+      "Tier NOT_READY must be linked to exact verification NOT_READY.",
+    );
   return validation(value, errors);
 }
 

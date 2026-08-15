@@ -9,6 +9,7 @@ import {
   validateOrchestratorState,
   validateReconciliationReview,
   validateReviewerReport,
+  validateLegacyVerificationManifest,
   validateVerificationManifest,
 } from "./schema.js";
 import { RECONCILIATION_REVIEW_CHECK_IDS } from "./contracts.js";
@@ -120,13 +121,16 @@ describe("versioned orchestrator schemas", () => {
     ) as Record<string, unknown> & {
       focusedCommands: { expectedArtifactKinds: string[] }[];
     };
-    expect(validateVerificationManifest(manifest)).toMatchObject({
+    expect(validateLegacyVerificationManifest(manifest)).toMatchObject({
       valid: true,
+    });
+    expect(validateVerificationManifest(manifest)).toMatchObject({
+      valid: false,
     });
     const first = manifest.focusedCommands[0];
     if (!first) throw new Error("Manifest fixture lost its commands.");
     first.expectedArtifactKinds = [];
-    expect(validateVerificationManifest(manifest)).toMatchObject({
+    expect(validateLegacyVerificationManifest(manifest)).toMatchObject({
       valid: false,
     });
   });
@@ -499,7 +503,11 @@ describe("versioned orchestrator schemas", () => {
           ),
           "utf8",
         ),
-      ) as { $id?: string; $schema?: string };
+      ) as {
+        $id?: string;
+        $schema?: string;
+        $defs?: Record<string, unknown>;
+      };
       expect(schema.$schema).toContain("2020-12");
       expect(schema.$id).toContain(
         file === "state.schema.json"
@@ -507,11 +515,15 @@ describe("versioned orchestrator schemas", () => {
           : file === "milestone.schema.json"
             ? "1.2.0"
             : file === "verification-tier.schema.json"
-              ? "1.2.0"
+              ? "2.0.0"
               : file === "review.schema.json"
                 ? "1.1.0"
                 : "1.0.0",
       );
+      if (file === "verification-tier.schema.json")
+        expect(JSON.stringify(schema.$defs?.["manifest"])).not.toMatch(
+          /d031|d032|loop-recommissioning/i,
+        );
     }
   });
 });

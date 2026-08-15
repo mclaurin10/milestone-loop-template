@@ -3,6 +3,59 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-15 — WP4a generic verification-manifest foundations
+
+**Objective.** Replace the active D-031/D-032-specific commissioning contract
+with a generic manifest and make configuration/tier runtime paths resolve exact
+verification from the package-default profile, without migrating the retained
+source record or weakening readiness, reconciliation, provider, or protected
+authority gates.
+
+**Outcome before final milestone verification.** Active manifests now use
+strict `verification-manifest.v2` at `.agent/verification-manifest.json`, with
+generic commissioning, objective, focused command, protected-path, invariant,
+scope, exact, and reconciliation policy fields. Config loading proves the
+commissioned profile equals the package default; all four tier plans consume a
+source-independent generic fixture. Bootstrap exact indexes are representable
+but remain non-authoritative and are explicitly rejected by readiness
+reconciliation. The frozen v1 source and Ski Tycoon records are accepted only
+by closed historical contexts; the source reconciliation adapter strengthens
+their protected set with the current floor and cannot act as a general active
+loader. Its required v2 timestamp comes from the retained record's real Git
+commit timestamp. Both active and retained source paths remain automatically
+protected while present. The source repository intentionally has no active v2
+manifest until WP4b.
+
+**Implementation diagnostics.** Read-only entry inspection confirmed synced
+HEAD `2b65ddc860e5c8387de57aa6f2f624f4a734f167`, tree
+`30e787d81c5faee1ae7080f2ffaf845fb8eab268`, zero branch divergence, a clean
+tracked tree, and the protected human file's four expected identities. No
+orientation aggregate or OCI case was run. Under pinned Node `24.18.0` and pnpm
+`11.15.1`, the first five-file diagnostic ran 50 tests: 49 passed and the
+historical adapter exposed one missing-current-trust-floor defect. After the
+one-way protected-root union, the focused manifest file passed 6/6. A direct
+stabilized-interface TypeScript diagnostic then passed. These are iteration
+diagnostics, not final receipts.
+
+**Stable-tree milestone protocol.** Source, tests, this log, the execution plan,
+schema, and documentation freeze before the final commands. Two exact
+receipt-owning focused shards, the live safety demonstration, serial
+orchestrator and unit aggregates, and receipt-owning typecheck/lint/format gates
+write fresh ignored evidence. Their outcomes remain in machine-owned artifacts
+and the final handoff rather than being backfilled into tracked files. Every
+receipt, declared artifact, count, skip, duration, candidate identity, and
+immutable/protected hash is independently checked before the cohesive commit.
+The required no-argument verifier runs exactly once afterward and its known
+unrelated non-passing conditions remain honest.
+
+**Commit.** Assigned only after the frozen candidate passes the applicable
+WP4a checks; identify it as the newest commit touching this entry.
+
+**Known gaps.** WP4b must commission the active source manifest and its
+workflow without changing the historical record. Product placeholders,
+calibration, trusted default-Windows execution, autonomous readiness, hidden
+validation, and human verification remain open. WP4a makes no readiness claim.
+
 ## 2026-08-14 — WP3d disposable Docker execution candidate
 
 **Objective.** Implement the OCI data plane behind WP3c's fail-closed provider:

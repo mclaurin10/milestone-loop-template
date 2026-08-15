@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { lstat, readFile, realpath } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
@@ -14,25 +15,33 @@ import {
 } from "./execution-provider-identity.js";
 import type {
   InvariantSuiteRegistry,
+  LegacyVerificationManifest,
   OrchestratorConfig,
   SlowSuiteRegistry,
   VerificationManifest,
+  VerificationProfile,
   VerificationScopePolicy,
 } from "./contracts.js";
 import { assertInstalledSdkCompatibility } from "./model-policy.js";
 import { buildCanonicalProtectedSet } from "./protected-roots.js";
 import {
   assertInvariantSuiteRegistry,
+  assertLegacyVerificationManifest,
   assertOrchestratorConfig,
   assertSlowSuiteRegistry,
   assertVerificationManifest,
   assertVerificationScopePolicy,
 } from "./schema.js";
+import { resolveVerificationManifestProfile } from "./verification-manifest.js";
 
 export const DEFAULT_CONFIG_PATH =
   "tools/milestone-orchestrator/config/default.json";
 export const DEFAULT_VERIFICATION_MANIFEST_PATH =
+  ".agent/verification-manifest.json";
+export const HISTORICAL_VERIFICATION_MANIFEST_PATH =
   ".agent/completed/loop-recommissioning-verification.json";
+export const SKI_TYCOON_HISTORICAL_VERIFICATION_MANIFEST_PATH =
+  "examples/ski-tycoon/loop-recommissioning-verification.json";
 export const DEFAULT_INVARIANT_SUITE_PATH =
   "tools/milestone-orchestrator/config/invariant-suite.json";
 export const DEFAULT_SLOW_SUITE_REGISTRY_PATH =
@@ -103,6 +112,129 @@ export function loadVerificationManifest(
     requestedPath,
     assertVerificationManifest,
   );
+}
+
+function assertPackageDefaultVerificationProfile(
+  value: unknown,
+): VerificationProfile {
+  if (typeof value !== "object" || value === null || Array.isArray(value))
+    throw new Error("package.json must be an object.");
+  const milestoneLoop = (value as Record<string, unknown>)["milestoneLoop"];
+  if (
+    typeof milestoneLoop !== "object" ||
+    milestoneLoop === null ||
+    Array.isArray(milestoneLoop)
+  )
+    throw new Error(
+      "package.json does not declare milestoneLoop.verification.defaultProfile.",
+    );
+  const verification = (milestoneLoop as Record<string, unknown>)[
+    "verification"
+  ];
+  if (
+    typeof verification !== "object" ||
+    verification === null ||
+    Array.isArray(verification)
+  )
+    throw new Error(
+      "package.json does not declare milestoneLoop.verification.defaultProfile.",
+    );
+  const profile = (verification as Record<string, unknown>)["defaultProfile"];
+  if (profile !== "bootstrap" && profile !== "readiness")
+    throw new Error(
+      "package.json milestoneLoop.verification.defaultProfile must be bootstrap or readiness.",
+    );
+  return profile;
+}
+
+export function loadPackageDefaultVerificationProfile(
+  repositoryRoot: string,
+): Promise<TrackedJson<VerificationProfile>> {
+  return loadTrackedJson(
+    repositoryRoot,
+    "package.json",
+    assertPackageDefaultVerificationProfile,
+  );
+}
+
+export async function loadActiveVerificationManifest(
+  repositoryRoot: string,
+  requestedPath = DEFAULT_VERIFICATION_MANIFEST_PATH,
+): Promise<
+  TrackedJson<VerificationManifest> & {
+    readonly packageDefaultProfile: VerificationProfile;
+  }
+> {
+  const [manifest, packageProfile] = await Promise.all([
+    loadVerificationManifest(repositoryRoot, requestedPath),
+    loadPackageDefaultVerificationProfile(repositoryRoot),
+  ]);
+  return {
+    ...manifest,
+    packageDefaultProfile: resolveVerificationManifestProfile(
+      manifest.value,
+      packageProfile.value,
+    ),
+  };
+}
+
+export type HistoricalVerificationManifestContext =
+  "source-benchmark" | "source-reconciliation" | "ski-tycoon-worked-example";
+
+export async function loadHistoricalVerificationManifest(
+  repositoryRoot: string,
+  context: HistoricalVerificationManifestContext,
+  requestedPath?: string,
+): Promise<
+  TrackedJson<LegacyVerificationManifest> & {
+    readonly historicalRecordCommittedAt: string;
+  }
+> {
+  const allowedPath =
+    context === "ski-tycoon-worked-example"
+      ? SKI_TYCOON_HISTORICAL_VERIFICATION_MANIFEST_PATH
+      : HISTORICAL_VERIFICATION_MANIFEST_PATH;
+  const requested = requestedPath ?? allowedPath;
+  const repositoryRelative = relative(
+    resolve(repositoryRoot),
+    resolve(repositoryRoot, requested),
+  ).replaceAll("\\", "/");
+  if (repositoryRelative !== allowedPath)
+    throw new Error(
+      `Historical verification manifest context ${context} permits only ${allowedPath}.`,
+    );
+  const tracked = await loadTrackedJson(
+    repositoryRoot,
+    repositoryRelative,
+    assertLegacyVerificationManifest,
+  );
+  const commitTime = spawnSync(
+    "git",
+    [
+      "-C",
+      resolve(repositoryRoot),
+      "log",
+      "-1",
+      "--format=%cI",
+      "--",
+      repositoryRelative,
+    ],
+    { encoding: "utf8", windowsHide: true },
+  );
+  const rawTimestamp =
+    typeof commitTime.stdout === "string" ? commitTime.stdout.trim() : "";
+  if (
+    commitTime.error ||
+    commitTime.status !== 0 ||
+    !Number.isFinite(Date.parse(rawTimestamp))
+  )
+    throw new Error(
+      `Historical verification manifest lacks a committed record timestamp: ${repositoryRelative}.`,
+    );
+  return {
+    ...tracked,
+    historicalRecordCommittedAt: new Date(rawTimestamp).toISOString(),
+  };
 }
 
 export function loadInvariantSuiteRegistry(
@@ -225,14 +357,15 @@ export async function loadConfig(
   // A commissioned verification manifest is a verifier-equivalent input:
   // once it exists it joins the enforced protected set, so editing or
   // deleting it trips the diff fence and the recorded hash baseline.
-  const manifestCommissioned = existsSync(
-    resolve(repositoryRoot, DEFAULT_VERIFICATION_MANIFEST_PATH),
-  );
+  const commissionedManifestPaths = [
+    DEFAULT_VERIFICATION_MANIFEST_PATH,
+    HISTORICAL_VERIFICATION_MANIFEST_PATH,
+  ].filter((path) => existsSync(resolve(repositoryRoot, path)));
   return {
     ...config,
     protectedPaths: buildCanonicalProtectedSet(config, [
       ...(sourceIsInsideRepository ? [sourcePath] : []),
-      ...(manifestCommissioned ? [DEFAULT_VERIFICATION_MANIFEST_PATH] : []),
+      ...commissionedManifestPaths,
     ]),
   };
 }

@@ -7,8 +7,9 @@ import { isAbsolute, relative, resolve } from "node:path";
 import { VERIFICATION_TIER_SCHEMA_VERSION } from "./contracts.js";
 import type {
   ExactVerificationIndex,
+  VerificationCommandManifest,
   VerificationCommand,
-  VerificationManifest,
+  VerificationProfile,
   VerificationScopePolicy,
   VerificationTestCounts,
   VerificationTier,
@@ -29,9 +30,11 @@ import {
   type ScopeSelectionResult,
 } from "./affected-scope.js";
 import {
+  loadActiveVerificationManifest,
   loadConfig,
+  loadHistoricalVerificationManifest,
   loadInvariantSuiteRegistry,
-  loadVerificationManifest,
+  loadPackageDefaultVerificationProfile,
   loadVerificationScopePolicy,
 } from "./config.js";
 import { assertManifestProtectedPathsCovered } from "./protected-roots.js";
@@ -56,6 +59,11 @@ import {
   validateCommandReceiptDirectory,
   type ValidatedCommandReceipt,
 } from "./verifier.js";
+import {
+  adaptHistoricalVerificationManifest,
+  assertVerificationManifestRegistryIdentities,
+  resolveVerificationManifestProfile,
+} from "./verification-manifest.js";
 
 const DEFAULT_COMMAND_TIMEOUT_MS = 20 * 60 * 1000;
 const EXACT_CHECK_ID = "exact-readiness";
@@ -184,7 +192,7 @@ export interface VerificationTierPlan {
 export async function planVerificationTier(input: {
   readonly repositoryRoot: string;
   readonly tier: VerificationTier;
-  readonly manifest: VerificationManifest;
+  readonly manifest: VerificationCommandManifest;
   readonly scopePolicy: VerificationScopePolicy;
   readonly scopePolicySha256: string;
   readonly changedPaths: readonly string[];
@@ -467,6 +475,7 @@ async function runExactVerification(input: {
   readonly selectedCheckIds: readonly string[];
   readonly actualCheckIds: readonly string[];
   readonly executionProvider: CandidateExecutionProvider;
+  readonly expectedProfile: VerificationProfile;
 }): Promise<{
   readonly command: VerificationTierCommandRecord;
   readonly exact: ExactVerificationIndex | null;
@@ -551,10 +560,13 @@ async function runExactVerification(input: {
       input.runRoot,
       "exact-verification-result.json",
     );
-    const history = await readinessHistory(
-      input.repositoryRoot,
-      input.candidate.baseCommit,
-    );
+    const history =
+      input.expectedProfile === "readiness"
+        ? await readinessHistory(
+            input.repositoryRoot,
+            input.candidate.baseCommit,
+          )
+        : null;
     const summary = await parseAuthoritativeVerification({
       workspacePath: input.repositoryRoot,
       expectedCommit: input.candidate.gitCommit,
@@ -570,12 +582,12 @@ async function runExactVerification(input: {
       Record<string, unknown> | undefined;
     const profile = parsed["profile"] as Record<string, unknown> | undefined;
     if (
-      summary.profileId !== "readiness" ||
+      summary.profileId !== input.expectedProfile ||
       profile?.["selectedByOverride"] !== false ||
       candidate?.["gitTree"] !== input.candidate.gitTree
     )
       throw new Error(
-        "Exact verification is not package-default readiness for the exact candidate tree.",
+        `Exact verification is not package-default ${input.expectedProfile} for the exact candidate tree.`,
       );
     const contents = await readFile(resultPath);
     exact = {
@@ -585,7 +597,7 @@ async function runExactVerification(input: {
       status: summary.status,
       exitCode: summary.exitCode,
       disposition: summary.disposition,
-      profileId: "readiness",
+      profileId: input.expectedProfile,
       selectedByOverride: false,
       candidateCommit: input.candidate.gitCommit,
       candidateTree: input.candidate.gitTree,
@@ -635,8 +647,8 @@ async function runExactVerification(input: {
     );
     message =
       summary.status === "NOT_READY"
-        ? "Exact no-argument readiness verification remained valid incremental NOT_READY evidence."
-        : "Exact no-argument readiness verification passed.";
+        ? `Exact no-argument ${input.expectedProfile} verification remained valid incremental NOT_READY evidence.`
+        : `Exact no-argument ${input.expectedProfile} verification passed.`;
   } catch (error) {
     message = error instanceof Error ? error.message : String(error);
     failureClass ??= executed.exitCode === 1 ? "product" : "infrastructure";
@@ -730,21 +742,55 @@ export interface RunVerificationTierInput {
   readonly requireClean?: boolean;
   readonly focusedCheckIds?: readonly string[];
   readonly executionProvider?: CandidateExecutionProvider;
+  readonly historicalManifestContext?: "source-reconciliation";
 }
 
 export async function runVerificationTier(
   input: RunVerificationTierInput,
 ): Promise<VerificationTierResult> {
   const startedAt = new Date();
-  const [manifest, invariant, scopePolicy] = await Promise.all([
-    loadVerificationManifest(input.repositoryRoot, input.manifestPath),
+  const [invariant, scopePolicy] = await Promise.all([
     loadInvariantSuiteRegistry(input.repositoryRoot),
     loadVerificationScopePolicy(input.repositoryRoot),
   ]);
-  if (manifest.value.requiredInvariantSuiteId !== invariant.value.id)
-    throw new Error(
-      "Verification manifest references a different invariant suite.",
-    );
+  const historicalManifestContext = input.historicalManifestContext;
+  const manifest = historicalManifestContext
+    ? await (async () => {
+        if (input.tier !== "milestone")
+          throw new Error(
+            "Historical reconciliation manifests are valid only for milestone reconciliation tiers.",
+          );
+        const [historical, packageProfile] = await Promise.all([
+          loadHistoricalVerificationManifest(
+            input.repositoryRoot,
+            historicalManifestContext,
+            input.manifestPath,
+          ),
+          loadPackageDefaultVerificationProfile(input.repositoryRoot),
+        ]);
+        const value = adaptHistoricalVerificationManifest({
+          manifest: historical.value,
+          scopePolicyId: scopePolicy.value.id,
+          historicalRecordCommittedAt: historical.historicalRecordCommittedAt,
+        });
+        return {
+          ...historical,
+          value,
+          packageDefaultProfile: resolveVerificationManifestProfile(
+            value,
+            packageProfile.value,
+          ),
+        };
+      })()
+    : await loadActiveVerificationManifest(
+        input.repositoryRoot,
+        input.manifestPath,
+      );
+  assertVerificationManifestRegistryIdentities(
+    manifest.value,
+    invariant.value.id,
+    scopePolicy.value.id,
+  );
   // A caller-supplied --manifest must satisfy the same coverage guarantee as
   // the default manifest: every protected path it requires is one the
   // controller actually enforces.
@@ -752,7 +798,8 @@ export async function runVerificationTier(
   const executionProvider =
     input.executionProvider ?? createCandidateExecutionProvider(config);
   assertManifestProtectedPathsCovered(manifest.value, config.protectedPaths);
-  const baseCommit = input.baseCommit ?? manifest.value.d031BaselineCommit;
+  const baseCommit =
+    input.baseCommit ?? manifest.value.commissioning.baseCommit;
   const candidate = collectTierCandidateIdentity(
     input.repositoryRoot,
     baseCommit,
@@ -872,6 +919,7 @@ export async function runVerificationTier(
         selectedCheckIds: plan.selectedCheckIds,
         actualCheckIds: [...plan.actualCheckIds, EXACT_CHECK_ID],
         executionProvider,
+        expectedProfile: manifest.packageDefaultProfile,
       });
       commandRecords.push(exactRun.command);
       exact = exactRun.exact;

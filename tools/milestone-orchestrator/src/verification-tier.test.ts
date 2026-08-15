@@ -9,13 +9,11 @@ import type {
   ExactVerificationIndex,
   VerificationTierCommandRecord,
 } from "./contracts.js";
-import {
-  loadVerificationManifest,
-  loadVerificationScopePolicy,
-} from "./config.js";
+import { loadVerificationScopePolicy } from "./config.js";
 import { createCandidateExecutionProvider } from "./execution-provider.js";
 import { validateVerificationTierResult } from "./schema.js";
 import {
+  collectTierCandidateIdentity,
   coordinateTierOutcome,
   exactNoArgumentVerificationCommand,
   planVerificationTier,
@@ -25,10 +23,21 @@ import {
 import {
   trustedTestExecutionProvider,
   trustedTestExecutionProviderIdentity,
+  genericTierVerificationManifest,
   validConfig,
 } from "../test/fixtures.js";
 
 const repositoryRoot = resolve(import.meta.dirname, "../../..");
+
+async function genericPlanningFixture() {
+  const scopePolicy = await loadVerificationScopePolicy(repositoryRoot);
+  return {
+    manifest: genericTierVerificationManifest({
+      scopePolicyId: scopePolicy.value.id,
+    }),
+    scopePolicy,
+  };
+}
 
 function passingCommand(): VerificationTierCommandRecord {
   return {
@@ -70,15 +79,21 @@ function exactNotReady(): ExactVerificationIndex {
 }
 
 describe("verification tier planning", () => {
+  it("fails closed on malformed and nonexistent commissioning bases", () => {
+    expect(() =>
+      collectTierCandidateIdentity(repositoryRoot, "missing"),
+    ).toThrow(/malformed/);
+    expect(() =>
+      collectTierCandidateIdentity(repositoryRoot, "f".repeat(40)),
+    ).toThrow(/not an ancestor/);
+  });
+
   it("keeps leaf UI candidates on the fast unit partition", async () => {
-    const [manifest, scopePolicy] = await Promise.all([
-      loadVerificationManifest(repositoryRoot),
-      loadVerificationScopePolicy(repositoryRoot),
-    ]);
+    const { manifest, scopePolicy } = await genericPlanningFixture();
     const plan = await planVerificationTier({
       repositoryRoot,
       tier: "candidate",
-      manifest: manifest.value,
+      manifest,
       scopePolicy: scopePolicy.value,
       scopePolicySha256: scopePolicy.sha256,
       changedPaths: ["packages/ui/src/index.tsx"],
@@ -101,14 +116,11 @@ describe("verification tier planning", () => {
     "packages/persistence/src/index.ts",
     "unclassified/new-boundary.bin",
   ])("fails broad for high-risk candidate path %s", async (path) => {
-    const [manifest, scopePolicy] = await Promise.all([
-      loadVerificationManifest(repositoryRoot),
-      loadVerificationScopePolicy(repositoryRoot),
-    ]);
+    const { manifest, scopePolicy } = await genericPlanningFixture();
     const plan = await planVerificationTier({
       repositoryRoot,
       tier: "candidate",
-      manifest: manifest.value,
+      manifest,
       scopePolicy: scopePolicy.value,
       scopePolicySha256: scopePolicy.sha256,
       changedPaths: [path],
@@ -134,6 +146,31 @@ describe("verification tier planning", () => {
       parser: "pnpm-verify",
     });
   });
+
+  it.each(["iteration", "candidate", "milestone", "periodic"] as const)(
+    "constructs the %s plan from a generic manifest",
+    async (tier) => {
+      const { manifest, scopePolicy } = await genericPlanningFixture();
+      const plan = await planVerificationTier({
+        repositoryRoot,
+        tier,
+        manifest,
+        scopePolicy: scopePolicy.value,
+        scopePolicySha256: scopePolicy.sha256,
+        changedPaths: ["tools/milestone-orchestrator/src/schema.ts"],
+        changedPathSource: { kind: "fixture", fixtureId: `generic-${tier}` },
+        candidate: {
+          baseCommit: manifest.commissioning.baseCommit,
+          gitCommit: "b".repeat(40),
+          gitTree: "c".repeat(40),
+          workingTreeDirty: false,
+        },
+      });
+      expect(plan.actualCheckIds.length).toBeGreaterThan(0);
+      if (tier === "milestone" || tier === "periodic")
+        expect(plan.actualCheckIds).toContain("exact-readiness");
+    },
+  );
 });
 
 describe("non-authoritative tier outcomes", () => {

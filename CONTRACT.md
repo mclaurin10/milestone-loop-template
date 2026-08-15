@@ -195,8 +195,16 @@ non-passing and telemetry classifications are unchanged.
 
 ## 5. Verification manifest
 
-`.agent/completed/loop-recommissioning-verification.json` is the check
-catalogue everything else references:
+`.agent/verification-manifest.json` is the active, commissioned check
+catalogue. Active manifests use `verification-manifest.v2`; the retained
+`.agent/completed/loop-recommissioning-verification.json` v1 record is
+historical source evidence and is accepted only through explicitly named
+benchmark or reconciliation loaders. It is never an active-manifest fallback.
+
+- `commissioning`: a generic commissioning id, exact base commit,
+  `bootstrap` or `readiness` profile, and canonical creation timestamp. The
+  commissioned profile must equal
+  `package.json#milestoneLoop.verification.defaultProfile`.
 
 - `focusedCommands[]`: `{ id, argv, tiers, expectedArtifactKinds }` for
   every focused check. `argv` must start with `pnpm`, `node`, or `git`.
@@ -213,10 +221,14 @@ catalogue everything else references:
   and `benchmark-matrix.json` (`historical`) must exist in this catalogue,
   and `workspaceChecks` keys must exactly equal the pnpm package-graph
   names (including the root package).
-- `requiredProtectedPaths`, `requiredInvariantSuiteId`,
-  `requiredBenchmarkMatrixId`, `requiredReconciliationReviewChecks`,
-  `nextProposalPath`, and `finalExactVerification` pin the rest of the
-  verification surface.
+- `requiredProtectedPaths`, `requiredInvariantSuiteId`, and `scopePolicyId`
+  pin the trust and selection registries. `exactVerification` permits only
+  literal no-argument `pnpm verify` selected by the package-default profile;
+  an override is never exact. A bootstrap PASS proves only bootstrap
+  completion and is not autonomous-readiness-equivalent.
+- `reconciliationPolicy` names the policy, its contained JSON proposal path,
+  and the ordered generic minimum review checks. Project-specific additions
+  may follow that minimum but cannot replace or reorder it.
 
 ## 6. .agent conventions
 
@@ -226,7 +238,8 @@ catalogue everything else references:
 | `.agent/current-exec-plan.md`             | The single living plan for the active increment, using the required headings.                                                |
 | `.agent/next-milestone.json`              | The queued next proposal in milestone schema `1.2.0`; written by reconciliation, consumed by the planner policy.             |
 | `.agent/readiness-profile-activated.json` | Permanent one-way lifecycle marker (`{schemaVersion, state:"readiness", previousState:"bootstrap", activatedDate, reason}`). |
-| `.agent/completed/`                       | Durable milestone records, including the verification manifest (§5).                                                         |
+| `.agent/verification-manifest.json`       | Active generic commissioned verification manifest (§5).                                                                      |
+| `.agent/completed/`                       | Durable historical milestone records; legacy manifests here are never active fallbacks.                                      |
 
 ## 7. Orchestrator configuration
 

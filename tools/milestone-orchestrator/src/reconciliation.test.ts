@@ -308,6 +308,7 @@ async function focusedCommandRecord(
 async function writeMilestoneTier(
   fixture: Fixture,
   executionProvider: ExecutionProviderIdentity = trustedTestExecutionProviderIdentity(),
+  tierProfileId: "bootstrap" | "readiness" = "readiness",
 ): Promise<string> {
   const runId = "reconciliation-milestone-fixture";
   const exactDirectory = join(fixture.root, "artifacts", runId);
@@ -423,7 +424,7 @@ async function writeMilestoneTier(
       status: "NOT_READY",
       exitCode: 2,
       disposition: "incremental-readiness",
-      profileId: "readiness",
+      profileId: tierProfileId,
       selectedByOverride: false,
       candidateCommit: exact.candidate.gitCommit,
       candidateTree: exact.candidate.gitTree,
@@ -708,6 +709,39 @@ function failureRecoveryScenario() {
 }
 
 describe("controller-boundary reconciliation", { timeout: 60_000 }, () => {
+  it("rejects bootstrap tier evidence before readiness reconciliation", async () => {
+    const fixture = await fixtureRepository();
+    let reviewCalled = false;
+    const controller = await ReconciliationController.open(
+      fixture.root,
+      fixture.configPath,
+      {
+        ...dependencies(fixture),
+        executeMilestoneTier: () =>
+          writeMilestoneTier(
+            fixture,
+            trustedTestExecutionProviderIdentity(),
+            "bootstrap",
+          ),
+        review: async () => {
+          reviewCalled = true;
+          throw new Error("Bootstrap evidence reached readiness review.");
+        },
+      },
+    );
+
+    const error = await captureError(() => controller.run(invocation));
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toMatch(
+      /exact clean incremental-readiness result/,
+    );
+    expect(reviewCalled).toBe(false);
+    expect(controller.state.repository.verifiedCommit).toBe(
+      fixture.sourceCommit,
+    );
+    expect(controller.state.reconciliation.history.at(-1)?.adoption).toBeNull();
+  });
+
   it("rejects internally consistent unsafe-local evidence before review or adoption", async () => {
     const fixture = await fixtureRepository();
     const unsafeProvider = createCandidateExecutionProvider(

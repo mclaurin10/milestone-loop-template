@@ -1,10 +1,14 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { loadConfig } from "./config.js";
+import {
+  DEFAULT_VERIFICATION_MANIFEST_PATH,
+  HISTORICAL_VERIFICATION_MANIFEST_PATH,
+  loadConfig,
+} from "./config.js";
 import { buildCanonicalProtectedSet } from "./protected-roots.js";
 import { validConfig } from "../test/fixtures.js";
 
@@ -132,6 +136,28 @@ describe("orchestrator configuration migration", () => {
     await writeFile(path, `${JSON.stringify(stripped, null, 2)}\n`);
     await expect(loadConfig(root, path)).rejects.toThrow(
       /omits mandatory frozen authority/,
+    );
+  });
+
+  it("protects active and retained historical manifest paths independently", async () => {
+    const root = await mkdtemp(join(tmpdir(), "milestone-loop-config-"));
+    temporaryDirectories.push(root);
+    const path = join(root, "current-config.json");
+    await writeFile(path, `${JSON.stringify(validConfig(), null, 2)}\n`);
+    for (const manifestPath of [
+      DEFAULT_VERIFICATION_MANIFEST_PATH,
+      HISTORICAL_VERIFICATION_MANIFEST_PATH,
+    ]) {
+      const absolute = join(root, ...manifestPath.split("/"));
+      await mkdir(dirname(absolute), { recursive: true });
+      await writeFile(absolute, "{}\n", "utf8");
+    }
+    const config = await loadConfig(root, path);
+    expect(config.protectedPaths).toEqual(
+      expect.arrayContaining([
+        DEFAULT_VERIFICATION_MANIFEST_PATH,
+        HISTORICAL_VERIFICATION_MANIFEST_PATH,
+      ]),
     );
   });
 });

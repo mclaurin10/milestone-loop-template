@@ -8,17 +8,34 @@ describe("verification tier CLI", () => {
       parseVerificationCliArguments([
         "candidate",
         "--manifest",
-        ".agent/completed/loop-recommissioning-verification.json",
+        ".agent/verification-manifest.json",
         "--base",
         "a".repeat(40),
         "--require-clean",
       ]),
     ).toEqual({
       mode: "candidate",
-      manifestPath: ".agent/completed/loop-recommissioning-verification.json",
+      manifestPath: ".agent/verification-manifest.json",
       baseCommit: "a".repeat(40),
       requireClean: true,
       focusedCheckIds: [],
+    });
+  });
+
+  it("requires an explicit source-reconciliation context for the historical manifest", () => {
+    expect(
+      parseVerificationCliArguments([
+        "milestone",
+        "--manifest",
+        ".agent/completed/loop-recommissioning-verification.json",
+        "--historical-source-reconciliation",
+      ]),
+    ).toEqual({
+      mode: "milestone",
+      manifestPath: ".agent/completed/loop-recommissioning-verification.json",
+      requireClean: false,
+      focusedCheckIds: [],
+      historicalManifestContext: "source-reconciliation",
     });
   });
 
@@ -44,6 +61,10 @@ describe("verification tier CLI", () => {
     { args: ["candidate", "--unknown"] },
     { args: ["iteration", "--base"] },
     { args: ["fast-unit", "--require-clean"] },
+    { args: ["candidate", "--historical-source-reconciliation"] },
+    {
+      args: ["milestone", "--historical-source-reconciliation"],
+    },
   ];
 
   it.each(malformedCases)("rejects malformed arguments %#", ({ args }) => {

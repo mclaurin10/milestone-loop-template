@@ -25,8 +25,8 @@ import { pathToFileURL } from "node:url";
 
 import {
   READINESS_VERIFICATION_STAGE_IDS,
+  type LegacyVerificationManifest,
   type VerificationCommand,
-  type VerificationManifest,
   type VerificationTestCounts,
 } from "./contracts.js";
 import {
@@ -42,7 +42,7 @@ import {
 } from "./affected-scope.js";
 import {
   loadConfig,
-  loadVerificationManifest,
+  loadHistoricalVerificationManifest,
   loadVerificationScopePolicy,
 } from "./config.js";
 import { resolvePnpmScript, runCommand } from "./command-runner.js";
@@ -1746,7 +1746,7 @@ async function prepareWorktree(input: {
   readonly outputRoot: string;
   readonly side: "before" | "after";
   readonly revision: string;
-  readonly manifest: VerificationManifest;
+  readonly manifest: LegacyVerificationManifest;
   readonly pnpmVersion: string;
 }): Promise<PreparedWorktree> {
   const startedAt = new Date();
@@ -1950,7 +1950,7 @@ async function selectorPlan(input: {
   readonly worktree: PreparedWorktree;
   readonly paths: readonly string[];
   readonly fixtureId: string;
-  readonly manifest: VerificationManifest;
+  readonly manifest: LegacyVerificationManifest;
   readonly policy: Awaited<ReturnType<typeof loadVerificationScopePolicy>>;
 }): Promise<SelectorPlan> {
   const started = process.hrtime.bigint();
@@ -2033,7 +2033,7 @@ interface FixtureMatrixResult {
 
 async function evaluateShadowFixtureMatrix(input: {
   readonly worktree: PreparedWorktree;
-  readonly manifest: VerificationManifest;
+  readonly manifest: LegacyVerificationManifest;
   readonly policy: Awaited<ReturnType<typeof loadVerificationScopePolicy>>;
   readonly protectedAuthorityPaths?: readonly string[];
 }): Promise<FixtureMatrixResult> {
@@ -2113,7 +2113,7 @@ async function evaluateShadowFixtureMatrix(input: {
 async function unknownExpansion(input: {
   readonly worktree: PreparedWorktree;
   readonly paths: readonly string[];
-  readonly manifest: VerificationManifest;
+  readonly manifest: LegacyVerificationManifest;
   readonly policy: Awaited<ReturnType<typeof loadVerificationScopePolicy>>;
 }): Promise<LoopBenchmarkResult["unknownExpansion"]> {
   const plan = await selectorPlan({
@@ -2383,7 +2383,7 @@ async function exactResultTestCounts(
 async function executeExactClosure(input: {
   readonly mainRepositoryRoot: string;
   readonly outputRoot: string;
-  readonly manifest: VerificationManifest;
+  readonly manifest: LegacyVerificationManifest;
   readonly worktree: PreparedWorktree;
   readonly runIndex: number;
   readonly telemetry: TelemetryStore;
@@ -2716,7 +2716,7 @@ async function runCommandWorkflowClass(input: {
   readonly matrixClass: BenchmarkMatrixClass;
   readonly before: PreparedWorktree;
   readonly after: PreparedWorktree;
-  readonly manifest: VerificationManifest;
+  readonly manifest: LegacyVerificationManifest;
   readonly policy: Awaited<ReturnType<typeof loadVerificationScopePolicy>>;
   readonly catalogue: ScopeCheckCatalogue;
   readonly telemetry: TelemetryStore;
@@ -2840,7 +2840,7 @@ async function runSelectionExpansionClass(input: {
   readonly matrixClass: BenchmarkMatrixClass;
   readonly before: PreparedWorktree;
   readonly after: PreparedWorktree;
-  readonly manifest: VerificationManifest;
+  readonly manifest: LegacyVerificationManifest;
   readonly policy: Awaited<ReturnType<typeof loadVerificationScopePolicy>>;
 }): Promise<BenchmarkClassResult> {
   const beforeRuns: BenchmarkRunMeasurement[] = [];
@@ -2901,7 +2901,7 @@ async function runClosureClass(input: {
   readonly matrixClass: BenchmarkMatrixClass;
   readonly before: PreparedWorktree;
   readonly after: PreparedWorktree;
-  readonly manifest: VerificationManifest;
+  readonly manifest: LegacyVerificationManifest;
   readonly telemetry: TelemetryStore;
   readonly fullClosureCheckIds: readonly string[];
 }): Promise<BenchmarkClassResult> {
@@ -3113,7 +3113,7 @@ export async function benchmarkPlan(
   const root = resolve(repositoryRootPath);
   const [matrix, manifest] = await Promise.all([
     loadBenchmarkMatrix(root),
-    loadVerificationManifest(root),
+    loadHistoricalVerificationManifest(root, "source-benchmark"),
   ]);
   if (matrix.value.id !== manifest.value.requiredBenchmarkMatrixId)
     throw new Error(
@@ -3161,7 +3161,7 @@ export async function runLoopBenchmark(
   await mkdir(outputRoot, { recursive: false });
   const [matrix, manifest, mainConfig] = await Promise.all([
     loadBenchmarkMatrix(root),
-    loadVerificationManifest(root),
+    loadHistoricalVerificationManifest(root, "source-benchmark"),
     loadConfig(root),
   ]);
   if (matrix.value.id !== manifest.value.requiredBenchmarkMatrixId)

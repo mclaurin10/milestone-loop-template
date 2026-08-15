@@ -19,6 +19,7 @@ export interface VerificationCliArguments {
   readonly baseCommit?: string;
   readonly requireClean: boolean;
   readonly focusedCheckIds: readonly string[];
+  readonly historicalManifestContext?: "source-reconciliation";
 }
 
 const MODES = new Set<VerificationCliMode>([
@@ -41,11 +42,16 @@ export function parseVerificationCliArguments(
   let manifestPath: string | undefined;
   let baseCommit: string | undefined;
   let requireClean = false;
+  let historicalSourceReconciliation = false;
   const focusedCheckIds: string[] = [];
   for (let index = 0; index < options.length; index += 1) {
     const option = options[index];
     if (option === "--require-clean") {
       requireClean = true;
+      continue;
+    }
+    if (option === "--historical-source-reconciliation") {
+      historicalSourceReconciliation = true;
       continue;
     }
     if (
@@ -75,12 +81,19 @@ export function parseVerificationCliArguments(
     throw new Error(
       "Explicit --focused checks are allowed only for iteration verification.",
     );
+  if (historicalSourceReconciliation && (mode !== "milestone" || !manifestPath))
+    throw new Error(
+      "--historical-source-reconciliation requires milestone mode and an explicit --manifest path.",
+    );
   return {
     mode,
     ...(manifestPath ? { manifestPath } : {}),
     ...(baseCommit ? { baseCommit } : {}),
     requireClean,
     focusedCheckIds: [...new Set(focusedCheckIds)],
+    ...(historicalSourceReconciliation
+      ? { historicalManifestContext: "source-reconciliation" as const }
+      : {}),
   };
 }
 
@@ -127,6 +140,9 @@ export async function runVerificationCli(
     ...(args.baseCommit ? { baseCommit: args.baseCommit } : {}),
     ...(args.focusedCheckIds.length > 0
       ? { focusedCheckIds: args.focusedCheckIds }
+      : {}),
+    ...(args.historicalManifestContext
+      ? { historicalManifestContext: args.historicalManifestContext }
       : {}),
   });
   return result.exitCode;

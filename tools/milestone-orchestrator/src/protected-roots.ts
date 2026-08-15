@@ -3,7 +3,6 @@ import {
   REQUIRED_PROTECTED_PATHS,
   type OrchestratorConfig,
   type ProtectedFileRecord,
-  type VerificationManifest,
 } from "./contracts.js";
 
 export function casefoldPathKey(path: string): string {
@@ -59,7 +58,7 @@ export function enforcementProtectedPatterns(
 }
 
 export function assertManifestProtectedPathsCovered(
-  manifest: VerificationManifest,
+  manifest: { readonly requiredProtectedPaths: readonly string[] },
   canonical: readonly string[],
 ): void {
   const covered = new Set(canonical.map(casefoldPathKey));

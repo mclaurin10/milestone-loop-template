@@ -29,4 +29,5 @@ export * from "./telemetry-report.js";
 export * from "./telemetry-store.js";
 export * from "./transitions.js";
 export * from "./verifier.js";
+export * from "./verification-manifest.js";
 export * from "./verification-tier.js";
