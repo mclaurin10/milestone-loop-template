@@ -20,6 +20,10 @@ import type {
 import { requiredVerticalConsumerAfterCompletion } from "./milestone-state.js";
 import { humanPlaytestStopReason } from "./readiness-completion.js";
 import { reviewerApproves } from "./reviewer.js";
+import {
+  executionProviderIdentitiesEqual,
+  isExecutionProviderIdentity,
+} from "./execution-provider-identity.js";
 
 const WORKSPACE_PHASE_TRANSITIONS: Readonly<
   Record<WorkspaceCreatePhase, readonly WorkspaceCreatePhase[]>
@@ -332,10 +336,18 @@ export function assertTargetIntegrateContext(
     verification.candidate === null ||
     !isDeepStrictEqual(verification.candidate, operation.candidate) ||
     verification.authoritativeResultSha256 !==
-      operation.verificationResultSha256
+      operation.verificationResultSha256 ||
+    !isExecutionProviderIdentity(verification.executionProvider) ||
+    !verification.executionProvider.completionEligible ||
+    !isExecutionProviderIdentity(operation.executionProvider) ||
+    !operation.executionProvider.completionEligible ||
+    !executionProviderIdentitiesEqual(
+      verification.executionProvider,
+      operation.executionProvider,
+    )
   )
     throw new Error(
-      `Target-integrate operation ${operation.id} does not match the pinned verification.`,
+      `Target-integrate operation ${operation.id} does not match the pinned verification and execution-provider identity.`,
     );
   if (
     !review ||

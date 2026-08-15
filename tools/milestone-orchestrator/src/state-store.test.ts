@@ -714,7 +714,7 @@ describe("atomic state persistence", () => {
 
     const readOnly = new StateStore(directory, "state.json");
     await expect(readOnly.load()).resolves.toMatchObject({
-      schemaVersion: "1.8.0",
+      schemaVersion: "1.9.0",
       revision: 0,
       pendingOperation: null,
     });
@@ -725,7 +725,7 @@ describe("atomic state persistence", () => {
     expect(migrated).not.toBeNull();
     const saved = await mutable.save(migrated!);
     expect(saved).toMatchObject({
-      schemaVersion: "1.8.0",
+      schemaVersion: "1.9.0",
       revision: 1,
       pendingOperation: null,
     });
@@ -751,11 +751,11 @@ describe("atomic state persistence", () => {
     };
     expect(migrateOrchestratorState(prior)).toEqual({
       ...prior,
-      schemaVersion: "1.8.0",
+      schemaVersion: "1.9.0",
     });
   });
 
-  it("preserves an existing 1.6 pending operation while advancing to 1.8", () => {
+  it("blocks a legacy target integration that lacks provider attestation while preserving diagnostics", () => {
     const prior = {
       ...validState(resolve(process.cwd(), "state-1.6-migration-fixture")),
       schemaVersion: "1.6.0",
@@ -767,11 +767,25 @@ describe("atomic state persistence", () => {
     };
     expect(migrateOrchestratorState(prior)).toEqual({
       ...prior,
-      schemaVersion: "1.8.0",
+      schemaVersion: "1.9.0",
+      pendingOperation: {
+        ...prior.pendingOperation,
+        executionProvider: null,
+        phase: "blocked",
+        diagnostic: {
+          classification: "execution-provider-ineligible",
+          message:
+            "Legacy target integration predates execution-provider attestation and cannot resume or adopt.",
+          observedAt: "1970-01-01T00:00:00.000Z",
+          targetHead: null,
+          preservedPaths: [],
+          quarantinePath: null,
+        },
+      },
     });
   });
 
-  it("preserves an existing 1.7 cleanup operation while advancing to 1.8", () => {
+  it("preserves an existing 1.7 cleanup operation while advancing to 1.9", () => {
     const prior = {
       ...validState(resolve(process.cwd(), "state-1.7-migration-fixture")),
       schemaVersion: "1.7.0",
@@ -783,7 +797,7 @@ describe("atomic state persistence", () => {
     };
     expect(migrateOrchestratorState(prior)).toEqual({
       ...prior,
-      schemaVersion: "1.8.0",
+      schemaVersion: "1.9.0",
     });
   });
 
@@ -818,7 +832,7 @@ describe("atomic state persistence", () => {
     delete (legacy["run"] as Record<string, unknown>)["agentInvocations"];
     await writeFile(store.path, `${JSON.stringify(legacy)}\n`, "utf8");
     await expect(store.load()).resolves.toMatchObject({
-      schemaVersion: "1.8.0",
+      schemaVersion: "1.9.0",
       pendingOperation: null,
       run: { agentInvocations: [] },
       evidenceRetention: {
@@ -889,7 +903,7 @@ describe("atomic state persistence", () => {
     await writeFile(store.path, `${JSON.stringify(legacy)}\n`, "utf8");
 
     await expect(store.load()).resolves.toMatchObject({
-      schemaVersion: "1.8.0",
+      schemaVersion: "1.9.0",
       pendingOperation: null,
       evidenceRetention: {
         initializedAt: null,
@@ -937,7 +951,7 @@ describe("atomic state persistence", () => {
     await writeFile(store.path, `${JSON.stringify(legacy)}\n`, "utf8");
 
     await expect(store.load()).resolves.toMatchObject({
-      schemaVersion: "1.8.0",
+      schemaVersion: "1.9.0",
       pendingOperation: null,
       revision: current.revision,
       repository: current.repository,
@@ -990,18 +1004,19 @@ describe("atomic state persistence", () => {
 
     const migrated = await store.load();
     expect(migrated).toMatchObject({
-      schemaVersion: "1.8.0",
+      schemaVersion: "1.9.0",
       pendingOperation: null,
     });
     const summaries = migrated?.milestones[0]?.verificationSummaries;
     expect(summaries).toHaveLength(1);
     expect(summaries?.[0]).toMatchObject({
-      schemaVersion: "1.1.0",
+      schemaVersion: "1.2.0",
       attempt: 1,
       status: "PASS",
       summary: "Pre-fence verification evidence.",
       candidate: null,
       authoritativeResultSha256: null,
+      executionProvider: null,
       changedPaths: ["tools/example.ts"],
     });
   });

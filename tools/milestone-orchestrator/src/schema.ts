@@ -43,6 +43,10 @@ import {
   type VerificationScopePolicy,
   type VerificationTierResult,
 } from "./contracts.js";
+import {
+  executionProviderIdentitiesEqual,
+  isExecutionProviderIdentity,
+} from "./execution-provider-identity.js";
 import { validateAgentModelPolicy } from "./model-policy.js";
 import { strictlyContained } from "./path-safety.js";
 
@@ -309,6 +313,7 @@ function validTargetIntegrateOperation(value: unknown): boolean {
       "workspaceBranch",
       "candidate",
       "verificationResultSha256",
+      "executionProvider",
       "commits",
       "outcomePath",
       "outcomeTemporaryPath",
@@ -342,6 +347,8 @@ function validTargetIntegrateOperation(value: unknown): boolean {
       value["expectedBaseCommit"] ||
     (value["candidate"] as Record<string, unknown>)["clean"] !== true ||
     !sha256(value["verificationResultSha256"]) ||
+    (value["executionProvider"] !== null &&
+      !isExecutionProviderIdentity(value["executionProvider"])) ||
     !stringArray(value["commits"], 1) ||
     value["commits"].some((commit) => !commitId(commit)) ||
     value["commits"].at(-1) !==
@@ -384,6 +391,7 @@ function validTargetIntegrateOperation(value: unknown): boolean {
     ]) ||
     ![
       "candidate-drift",
+      "execution-provider-ineligible",
       "outcome-conflict",
       "state-target-inconsistent",
       "target-branch-mismatch",
@@ -1379,13 +1387,28 @@ function validCandidateIdentity(value: unknown): boolean {
 }
 
 function validVerificationSummaryEnvelope(value: unknown): boolean {
+  const executionProvider = isRecord(value) ? value["executionProvider"] : null;
+  const authoritative = isRecord(value) ? value["authoritative"] : null;
   return (
     isRecord(value) &&
     value["schemaVersion"] === VERIFICATION_SUMMARY_SCHEMA_VERSION &&
     (value["candidate"] === null ||
       validCandidateIdentity(value["candidate"])) &&
     (value["authoritativeResultSha256"] === null ||
-      sha256(value["authoritativeResultSha256"]))
+      sha256(value["authoritativeResultSha256"])) &&
+    (executionProvider === null ||
+      isExecutionProviderIdentity(executionProvider)) &&
+    (executionProvider === null ||
+      value["status"] !== "PASS" ||
+      executionProvider.completionEligible) &&
+    (executionProvider === null ||
+      authoritative === null ||
+      (isRecord(authoritative) &&
+        isExecutionProviderIdentity(authoritative["executionProvider"]) &&
+        executionProviderIdentitiesEqual(
+          authoritative["executionProvider"],
+          executionProvider,
+        )))
   );
 }
 
@@ -1748,6 +1771,7 @@ function validReconciliationRecord(
         "exitCode",
         "disposition",
         "exactResult",
+        "executionProvider",
       ]) ||
       !safeRelativePath(verification["path"]) ||
       !sha256(verification["sha256"]) ||
@@ -1756,6 +1780,8 @@ function validReconciliationRecord(
       verification["status"] !== "NOT_READY" ||
       verification["exitCode"] !== 2 ||
       verification["disposition"] !== "incremental-readiness" ||
+      (verification["executionProvider"] !== null &&
+        !isExecutionProviderIdentity(verification["executionProvider"])) ||
       !validArtifactReference(verification["exactResult"]))
   )
     return false;
@@ -1843,6 +1869,32 @@ export function validateOrchestratorConfig(
   if (!isRecord(value)) {
     return { valid: false, value: null, errors: ["Config must be an object."] };
   }
+  const configKeys = [
+    "schemaVersion",
+    "project",
+    "targetBranch",
+    "statePath",
+    "artifactRoot",
+    "workspaceRoot",
+    "workerSandbox",
+    "plannerSandbox",
+    "reviewerSandbox",
+    "approvalPolicy",
+    "networkAccessEnabled",
+    "candidateExecution",
+    "preserveFailedWorkspaces",
+    "cleanupCompletedWorkspaces",
+    "evidenceRetention",
+    "hiddenValidationEnabled",
+    "agentPolicy",
+    "limits",
+    "protectedPaths",
+  ] as const;
+  if (
+    !hasOnlyKeys(value, configKeys) ||
+    configKeys.some((key) => !(key in value))
+  )
+    errors.push("Config has unknown or missing root fields.");
   if (value["schemaVersion"] !== CONFIG_SCHEMA_VERSION)
     errors.push(`Config schemaVersion must be ${CONFIG_SCHEMA_VERSION}.`);
   const project = value["project"];
@@ -1879,6 +1931,33 @@ export function validateOrchestratorConfig(
     errors.push("Approval policy must be on-request.");
   if (value["networkAccessEnabled"] !== false)
     errors.push("Default Codex network access must be disabled.");
+  const candidateExecution = value["candidateExecution"];
+  const trustedContainer = isRecord(candidateExecution)
+    ? candidateExecution["trustedContainer"]
+    : null;
+  if (
+    !isRecord(candidateExecution) ||
+    !hasOnlyKeys(candidateExecution, ["mode", "trustedContainer"]) ||
+    !["trusted-container", "unsafe-local-diagnostic"].includes(
+      String(candidateExecution["mode"]),
+    ) ||
+    !isRecord(trustedContainer) ||
+    !hasOnlyKeys(trustedContainer, [
+      "runtime",
+      "imageDigest",
+      "mountPolicyVersion",
+      "resourceLimitProfile",
+      "networkDisposition",
+    ]) ||
+    !["docker", "podman"].includes(String(trustedContainer["runtime"])) ||
+    (trustedContainer["imageDigest"] !== null &&
+      (typeof trustedContainer["imageDigest"] !== "string" ||
+        !/^sha256:[a-f0-9]{64}$/.test(trustedContainer["imageDigest"]))) ||
+    !nonEmptyString(trustedContainer["mountPolicyVersion"]) ||
+    !nonEmptyString(trustedContainer["resourceLimitProfile"]) ||
+    trustedContainer["networkDisposition"] !== "denied"
+  )
+    errors.push("Candidate execution provider configuration is malformed.");
   if (
     typeof value["preserveFailedWorkspaces"] !== "boolean" ||
     typeof value["cleanupCompletedWorkspaces"] !== "boolean" ||
@@ -2453,6 +2532,23 @@ export function validateOrchestratorState(
       const candidate = pendingOperation["candidate"];
       const checks = isRecord(review) ? review["checks"] : null;
       const findings = isRecord(review) ? review["findings"] : null;
+      const legacyProviderBlocked =
+        isRecord(verification) &&
+        verification["executionProvider"] === null &&
+        pendingOperation["executionProvider"] === null &&
+        pendingOperation["phase"] === "blocked" &&
+        isRecord(pendingOperation["diagnostic"]) &&
+        pendingOperation["diagnostic"]["classification"] ===
+          "execution-provider-ineligible";
+      const providerEligibleAndEqual =
+        isRecord(verification) &&
+        isExecutionProviderIdentity(verification["executionProvider"]) &&
+        isExecutionProviderIdentity(pendingOperation["executionProvider"]) &&
+        executionProviderIdentitiesEqual(
+          verification["executionProvider"],
+          pendingOperation["executionProvider"],
+        ) &&
+        verification["executionProvider"].completionEligible;
       if (
         value["activeMilestoneId"] !== pendingOperation["milestoneId"] ||
         milestone["status"] !== "reviewing" ||
@@ -2473,6 +2569,7 @@ export function validateOrchestratorState(
           JSON.stringify(candidate) ||
         verification["authoritativeResultSha256"] !==
           pendingOperation["verificationResultSha256"] ||
+        (!legacyProviderBlocked && !providerEligibleAndEqual) ||
         !isRecord(review) ||
         review["schemaVersion"] !== REVIEW_SCHEMA_VERSION ||
         review["decision"] !== "approve" ||
@@ -2913,6 +3010,8 @@ export function validateVerificationTierResult(
     "status",
     "exitCode",
     "authoritative",
+    "executionProvider",
+    "providerCompletionEligible",
     "candidate",
     "changedPaths",
     "invariantSuiteId",
@@ -2935,6 +3034,7 @@ export function validateVerificationTierResult(
   const candidate = value["candidate"];
   const candidateFinal = value["candidateFinal"];
   const identityDrift = value["identityDrift"];
+  const executionProvider = value["executionProvider"];
   const validStatus = ["PASS", "NOT_READY", "FAIL", "ERROR"].includes(
     String(value["status"]),
   );
@@ -2959,6 +3059,11 @@ export function validateVerificationTierResult(
     !validStatus ||
     ![0, 1, 2, 3].includes(Number(value["exitCode"])) ||
     value["authoritative"] !== false ||
+    !isExecutionProviderIdentity(executionProvider) ||
+    value["providerCompletionEligible"] !==
+      (isExecutionProviderIdentity(executionProvider)
+        ? executionProvider.completionEligible
+        : false) ||
     !candidateShape(candidate) ||
     !candidateShape(candidateFinal) ||
     !isRecord(identityDrift) ||
@@ -3057,6 +3162,7 @@ export function validateVerificationTierResult(
       "testCounts",
       "failureClass",
       "message",
+      "executionProvider",
     ] as const;
     if (!isRecord(command)) {
       errors.push("Verification tier contains a non-object command record.");
@@ -3104,6 +3210,12 @@ export function validateVerificationTierResult(
         command["failureClass"] as never,
       ) ||
       !nonEmptyString(command["message"]) ||
+      !isExecutionProviderIdentity(command["executionProvider"]) ||
+      (isExecutionProviderIdentity(executionProvider) &&
+        !executionProviderIdentitiesEqual(
+          command["executionProvider"],
+          executionProvider,
+        )) ||
       (receipt === null && !nonEmptyString(command["receiptAbsenceReason"])) ||
       (receipt !== null && command["receiptAbsenceReason"] !== null)
     ) {
@@ -3126,6 +3238,7 @@ export function validateVerificationTierResult(
       "selectedByOverride",
       "candidateCommit",
       "candidateTree",
+      "executionProvider",
     ] as const;
     if (
       !isRecord(exact) ||
@@ -3144,6 +3257,12 @@ export function validateVerificationTierResult(
       exact["selectedByOverride"] !== false ||
       !commitId(exact["candidateCommit"]) ||
       !commitId(exact["candidateTree"]) ||
+      !isExecutionProviderIdentity(exact["executionProvider"]) ||
+      (isExecutionProviderIdentity(executionProvider) &&
+        !executionProviderIdentitiesEqual(
+          exact["executionProvider"],
+          executionProvider,
+        )) ||
       (isRecord(candidate) &&
         (exact["candidateCommit"] !== candidate["gitCommit"] ||
           exact["candidateTree"] !== candidate["gitTree"]))

@@ -11,6 +11,43 @@ import {
   type ReconciliationRecord,
 } from "../src/contracts.js";
 import { createInitialState } from "../src/state-store.js";
+import {
+  executionProviderIdentity,
+  type ExecutionProviderIdentity,
+} from "../src/execution-provider-identity.js";
+import type {
+  CandidateCommandExecutor,
+  CandidateExecutionProvider,
+} from "../src/execution-provider.js";
+
+export function trustedTestExecutionProviderIdentity(): ExecutionProviderIdentity {
+  return executionProviderIdentity({
+    provider: "trusted-container",
+    implementation: "pinned-oci-container-executor",
+    runtimeName: "docker",
+    runtimeVersion: "Docker test-double 1.0.0",
+    imageDigest: `sha256:${"e".repeat(64)}`,
+    mountPolicyVersion: "oci-mount-policy-v1",
+    resourceLimitProfile: "oci-resource-limits-v1",
+    networkDisposition: "denied",
+    capabilityStatus: "ready",
+    controlPlaneBound: true,
+  });
+}
+
+export function trustedTestExecutionProvider(
+  execute: CandidateCommandExecutor,
+): CandidateExecutionProvider {
+  const identity = trustedTestExecutionProviderIdentity();
+  return {
+    identity,
+    capability: null,
+    execute: async (command, options) => ({
+      ...(await execute(command, options)),
+      executionProvider: identity,
+    }),
+  };
+}
 
 export function validProposal(
   overrides: Partial<MilestoneProposal> = {},
@@ -214,6 +251,16 @@ export function validConfig(
     reviewerSandbox: "read-only",
     approvalPolicy: "on-request",
     networkAccessEnabled: false,
+    candidateExecution: {
+      mode: "trusted-container",
+      trustedContainer: {
+        runtime: "docker",
+        imageDigest: null,
+        mountPolicyVersion: "oci-mount-policy-v1",
+        resourceLimitProfile: "oci-resource-limits-v1",
+        networkDisposition: "denied",
+      },
+    },
     preserveFailedWorkspaces: true,
     cleanupCompletedWorkspaces: true,
     evidenceRetention: {

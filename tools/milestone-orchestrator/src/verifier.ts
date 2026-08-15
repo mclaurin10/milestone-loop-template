@@ -24,7 +24,15 @@ import {
   candidateIdentitiesEqual,
   candidateIdentityFrom,
 } from "./candidate-identity.js";
-import { runCommand } from "./command-runner.js";
+import {
+  createCandidateExecutionProvider,
+  type CandidateExecutionProvider,
+} from "./execution-provider.js";
+import {
+  executionProviderIdentitiesEqual,
+  isExecutionProviderIdentity,
+  type ExecutionProviderIdentity,
+} from "./execution-provider-identity.js";
 import { assertProtectedFiles, inspectAttempt } from "./git-isolation.js";
 import { enforceDiffPolicy } from "./policy.js";
 import { enforcementProtectedPatterns } from "./protected-roots.js";
@@ -103,6 +111,8 @@ export async function validateReconciliationMilestoneTier(input: {
     result.status !== "NOT_READY" ||
     result.exitCode !== 2 ||
     result.authoritative !== false ||
+    !result.providerCompletionEligible ||
+    !result.executionProvider.completionEligible ||
     result.reviewRequired !== true ||
     result.candidate.gitCommit !== input.candidateCommit ||
     result.candidate.gitTree !== input.candidateTree ||
@@ -203,6 +213,7 @@ export async function validateReconciliationMilestoneTier(input: {
     Record<string, unknown> | undefined;
   const exactIdentityDrift = exact["identityDrift"] as
     Record<string, unknown> | undefined;
+  const exactExecutionProvider = exact["executionProvider"];
   const exactPassCount = stages.filter(
     (stage) => stage["status"] === "PASS",
   ).length;
@@ -231,6 +242,16 @@ export async function validateReconciliationMilestoneTier(input: {
     exactCandidateFinal["gitTree"] !== input.candidateTree ||
     exactCandidateFinal["workingTreeDirty"] !== false ||
     exactIdentityDrift?.["detected"] !== false ||
+    !isExecutionProviderIdentity(exactExecutionProvider) ||
+    !executionProviderIdentitiesEqual(
+      exactExecutionProvider,
+      result.executionProvider,
+    ) ||
+    !result.exactVerification.executionProvider.completionEligible ||
+    !executionProviderIdentitiesEqual(
+      result.exactVerification.executionProvider,
+      result.executionProvider,
+    ) ||
     stages.length !== READINESS_VERIFICATION_STAGE_IDS.length ||
     stages.some(
       (stage, index) =>
@@ -772,6 +793,7 @@ export async function parseAuthoritativeVerification(input: {
   readonly resultPath: string;
   readonly copiedResultPath: string;
   readonly readinessHistory?: ReadinessHistoryEvidence;
+  readonly expectedExecutionProvider: ExecutionProviderIdentity;
 }): Promise<AuthoritativeVerificationSummary> {
   if (!existsSync(input.resultPath))
     throw new Error("Authoritative verifier did not produce result.json.");
@@ -808,12 +830,17 @@ export async function parseAuthoritativeVerification(input: {
   const expectedClaim =
     profile === "readiness" ? "autonomous_readiness" : "bootstrap_complete";
   const expectedExitCode = status === "PASS" ? 0 : 2;
-  const expectedReasons =
-    status === "PASS" ? [] : ["verification_status_not_pass"];
+  const expectedReasons = [
+    ...(status === "PASS" ? [] : ["verification_status_not_pass"]),
+    ...(input.expectedExecutionProvider.completionEligible
+      ? []
+      : ["execution_provider_not_completion_eligible"]),
+  ];
   const reasons = completion["reasons"];
   const profileAutonomousReadinessEquivalent = profile === "readiness";
   const candidateFinal = parsed["candidateFinal"];
   const identityDrift = parsed["identityDrift"];
+  const executionProvider = parsed["executionProvider"];
   if (
     parsed["schemaVersion"] !== "2.1.0" ||
     parsed["runId"] !== input.expectedRunId ||
@@ -840,6 +867,12 @@ export async function parseAuthoritativeVerification(input: {
     candidateFinal["workingTreeDirty"] !== false ||
     !isRecord(identityDrift) ||
     identityDrift["detected"] !== false ||
+    !isExecutionProviderIdentity(executionProvider) ||
+    !executionProviderIdentitiesEqual(
+      executionProvider,
+      input.expectedExecutionProvider,
+    ) ||
+    (status === "PASS" && !executionProvider.completionEligible) ||
     (status === "NOT_READY" && profile !== "readiness")
   )
     throw malformed();
@@ -950,7 +983,12 @@ export async function parseAuthoritativeVerification(input: {
         !Number.isSafeInteger(command["durationMs"]) ||
         Number(command["durationMs"]) < 0 ||
         typeof command["message"] !== "string" ||
-        command["message"].length === 0
+        command["message"].length === 0 ||
+        !isExecutionProviderIdentity(command["executionProvider"]) ||
+        !executionProviderIdentitiesEqual(
+          command["executionProvider"],
+          executionProvider,
+        )
       )
         throw malformed();
       const commandStatus = command["status"];
@@ -1065,6 +1103,7 @@ export async function parseAuthoritativeVerification(input: {
     previouslyPassingStageIds,
     sourceResultPath: input.resultPath,
     copiedResultPath: input.copiedResultPath,
+    executionProvider,
   };
 }
 
@@ -1085,11 +1124,13 @@ export async function verifyMilestone(input: {
   readonly protectedFiles: readonly ProtectedFileRecord[];
   readonly artifactDirectory: string;
   readonly readinessHistory?: ReadinessHistoryEvidence;
-  readonly executeCommand?: typeof runCommand;
+  readonly executionProvider?: CandidateExecutionProvider;
   readonly telemetry?: TelemetryStore;
 }): Promise<VerificationSummary> {
   const startedAt = new Date();
   await mkdir(input.artifactDirectory, { recursive: true });
+  const executionProvider =
+    input.executionProvider ?? createCandidateExecutionProvider(input.config);
   const inspection = inspectAttempt(input.workspacePath, input.baseCommit);
   const startIdentity = candidateIdentityFrom(input.baseCommit, inspection);
   const artifacts = [
@@ -1111,6 +1152,7 @@ export async function verifyMilestone(input: {
       authoritativeResultSha256: null,
       changedPaths: inspection.changedPaths,
       artifactPaths: artifacts,
+      executionProvider: executionProvider.identity,
     };
     await atomicWriteJson(artifacts[0] ?? "", summary);
     return summary;
@@ -1133,6 +1175,7 @@ export async function verifyMilestone(input: {
       authoritativeResultSha256: null,
       changedPaths: inspection.changedPaths,
       artifactPaths: artifacts,
+      executionProvider: executionProvider.identity,
     };
     await atomicWriteJson(artifacts[0] ?? "", summary);
     return summary;
@@ -1158,6 +1201,7 @@ export async function verifyMilestone(input: {
       authoritativeResultSha256: null,
       changedPaths: inspection.changedPaths,
       artifactPaths: artifacts,
+      executionProvider: executionProvider.identity,
     };
     await atomicWriteJson(artifacts[0] ?? "", summary);
     return summary;
@@ -1193,7 +1237,7 @@ export async function verifyMilestone(input: {
             args: [...command.args, "--", "--run-id", verifyId],
           }
         : command;
-    let result = await (input.executeCommand ?? runCommand)(effectiveCommand, {
+    let result = await executionProvider.execute(effectiveCommand, {
       workingDirectory: input.workspacePath,
       artifactDirectory: resolve(commandRoot, "logs"),
       timeoutMs: input.config.limits.commandMs,
@@ -1234,6 +1278,23 @@ export async function verifyMilestone(input: {
           }
         : {}),
     });
+    if (
+      !executionProviderIdentitiesEqual(
+        result.executionProvider,
+        executionProvider.identity,
+      )
+    ) {
+      result = {
+        ...result,
+        status: "ERROR",
+        message:
+          "Candidate command result is missing the controller-owned execution-provider identity.",
+        receipt: null,
+        receiptAbsenceReason:
+          "Execution-provider identity did not match the controller boundary.",
+        executionProvider: executionProvider.identity,
+      };
+    }
     if (command.parser === "exit-code") {
       if (existsSync(resolve(evidenceRoot, "result.json"))) {
         try {
@@ -1319,6 +1380,7 @@ export async function verifyMilestone(input: {
           ...(input.readinessHistory
             ? { readinessHistory: input.readinessHistory }
             : {}),
+          expectedExecutionProvider: executionProvider.identity,
         });
         authoritativeResultSha256 = createHash("sha256")
           .update(await readFile(copied))
@@ -1379,10 +1441,12 @@ export async function verifyMilestone(input: {
       command.status === "PASS" &&
       command.receipt === null,
   );
+  const providerIneligible = !executionProvider.identity.completionEligible;
   const status =
     !commandFailure &&
     !passWithoutReceipt &&
     !changedDuringVerification &&
+    !providerIneligible &&
     authoritative
       ? "PASS"
       : "FAIL";
@@ -1391,6 +1455,7 @@ export async function verifyMilestone(input: {
       ? null
       : parseError ||
           passWithoutReceipt ||
+          providerIneligible ||
           commandFailure?.status === "ERROR" ||
           commandFailure?.status === "TIMEOUT"
         ? "infrastructure"
@@ -1411,9 +1476,11 @@ export async function verifyMilestone(input: {
         : (parseError ??
           (changedDuringVerification
             ? "Verification changed tracked attempt state or HEAD."
-            : passWithoutReceipt
-              ? `Command ${passWithoutReceipt.id} passed without a validated command-owned receipt.`
-              : (commandFailure?.message ?? "Verification failed."))),
+            : providerIneligible
+              ? `Execution provider ${executionProvider.identity.provider} is completion-ineligible (${executionProvider.identity.capabilityStatus}).`
+              : passWithoutReceipt
+                ? `Command ${passWithoutReceipt.id} passed without a validated command-owned receipt.`
+                : (commandFailure?.message ?? "Verification failed."))),
     startedAt: startedAt.toISOString(),
     finishedAt: new Date().toISOString(),
     commands: commandResults,
@@ -1422,6 +1489,7 @@ export async function verifyMilestone(input: {
     authoritativeResultSha256,
     changedPaths: inspection.changedPaths,
     artifactPaths: artifacts,
+    executionProvider: executionProvider.identity,
   };
   await atomicWriteJson(artifacts[0] ?? "", summary);
   return summary;

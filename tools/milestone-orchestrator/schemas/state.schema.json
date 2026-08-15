@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://milestone-loop.local/schemas/orchestrator-state-1.8.0.json",
+  "$id": "https://milestone-loop.local/schemas/orchestrator-state-1.9.0.json",
   "title": "Example Project Orchestrator State",
   "type": "object",
   "additionalProperties": false,
@@ -23,7 +23,7 @@
     "updatedAt"
   ],
   "properties": {
-    "schemaVersion": { "const": "1.8.0" },
+    "schemaVersion": { "const": "1.9.0" },
     "revision": { "type": "integer", "minimum": 0 },
     "repository": { "type": "object" },
     "queue": {
@@ -139,6 +139,63 @@
     "updatedAt": { "type": "string", "format": "date-time" }
   },
   "$defs": {
+    "executionProvider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "provider",
+        "implementation",
+        "runtime",
+        "imageDigest",
+        "mountPolicyVersion",
+        "resourceLimitProfile",
+        "networkDisposition",
+        "capabilityId",
+        "capabilityStatus",
+        "controlPlaneBound",
+        "completionEligible"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "provider": {
+          "enum": ["trusted-container", "unsafe-local-diagnostic"]
+        },
+        "implementation": { "type": ["string", "null"], "minLength": 1 },
+        "runtime": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "version"],
+          "properties": {
+            "name": { "type": ["string", "null"], "minLength": 1 },
+            "version": { "type": ["string", "null"], "minLength": 1 }
+          }
+        },
+        "imageDigest": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+          ]
+        },
+        "mountPolicyVersion": { "type": "string", "minLength": 1 },
+        "resourceLimitProfile": { "type": "string", "minLength": 1 },
+        "networkDisposition": { "enum": ["denied", "host-inherited"] },
+        "capabilityId": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "capabilityStatus": {
+          "enum": [
+            "ready",
+            "missing-implementation",
+            "missing-runtime",
+            "missing-pinned-image",
+            "policy-mismatch",
+            "unattested",
+            "invalid-configuration"
+          ]
+        },
+        "controlPlaneBound": { "type": "boolean" },
+        "completionEligible": { "type": "boolean" }
+      }
+    },
     "workspaceCreateOperation": {
       "type": "object",
       "additionalProperties": false,
@@ -255,6 +312,7 @@
         "workspaceBranch",
         "candidate",
         "verificationResultSha256",
+        "executionProvider",
         "commits",
         "outcomePath",
         "outcomeTemporaryPath",
@@ -315,6 +373,9 @@
         "verificationResultSha256": {
           "type": "string",
           "pattern": "^[a-f0-9]{64}$"
+        },
+        "executionProvider": {
+          "oneOf": [{ "$ref": "#/$defs/executionProvider" }, { "type": "null" }]
         },
         "commits": {
           "type": "array",

@@ -16,6 +16,14 @@ import type {
   ReadinessHistoryEvidence,
 } from "./contracts.js";
 import { loadConfig } from "./config.js";
+import {
+  executionProviderIdentity,
+  type ExecutionProviderIdentity,
+} from "./execution-provider-identity.js";
+import {
+  trustedTestExecutionProvider,
+  trustedTestExecutionProviderIdentity,
+} from "../test/fixtures.js";
 import { parseAuthoritativeVerification, verifyMilestone } from "./verifier.js";
 
 type FixtureStatus = "PASS" | "NOT_READY" | "FAIL" | "ERROR";
@@ -61,6 +69,7 @@ interface FixtureCommand {
   artifactDirectory?: string;
   evidence: FixtureEvidence | null;
   message: string;
+  executionProvider: ExecutionProviderIdentity;
 }
 
 interface FixtureCheck {
@@ -94,6 +103,7 @@ interface FixtureResult {
     eligible: boolean;
     reasons: string[];
   };
+  executionProvider: ExecutionProviderIdentity;
   candidate: { gitCommit: string; gitTree: string; workingTreeDirty: boolean };
   candidateFinal: {
     gitCommit: string;
@@ -401,6 +411,7 @@ async function passingCommand(
       })),
     },
     message: "Command passed with validated evidence.",
+    executionProvider: trustedTestExecutionProviderIdentity(),
   };
 }
 
@@ -421,6 +432,7 @@ function notReadyCommand(
     log: null,
     evidence: null,
     message: `Required package script "${commandId}" is not defined.`,
+    executionProvider: trustedTestExecutionProviderIdentity(),
   };
 }
 
@@ -523,6 +535,7 @@ async function createFixture(input: {
       eligible: input.status === "PASS",
       reasons: input.status === "PASS" ? [] : ["verification_status_not_pass"],
     },
+    executionProvider: trustedTestExecutionProviderIdentity(),
     candidate: {
       gitCommit: commit,
       gitTree: "c".repeat(40),
@@ -582,6 +595,7 @@ interface ParseFixtureInput {
   expectedRunId?: string;
   observedExitCode?: number;
   readinessHistory?: ReadinessHistoryEvidence | null;
+  expectedExecutionProvider?: ExecutionProviderIdentity;
 }
 
 function parseFixture(
@@ -607,6 +621,8 @@ function parseFixture(
     observedExitCode: input.observedExitCode ?? fixture.result.exitCode,
     resultPath: fixture.resultPath,
     copiedResultPath: fixture.copiedResultPath,
+    expectedExecutionProvider:
+      input.expectedExecutionProvider ?? trustedTestExecutionProviderIdentity(),
     ...(readinessHistory ? { readinessHistory } : {}),
   });
 }
@@ -825,7 +841,9 @@ describe("authoritative verifier result parsing", () => {
         mode: "durable-records",
         previouslyPassingStageIds: ["unit-domain"],
       },
-      executeCommand: async () => commandSummary(),
+      executionProvider: trustedTestExecutionProvider(async () =>
+        commandSummary(),
+      ),
     });
 
     expect(summary).toMatchObject({
@@ -920,10 +938,10 @@ describe("authoritative verifier result parsing", () => {
           mode: "durable-records",
           previouslyPassingStageIds: ["unit-domain"],
         },
-        executeCommand: async () => {
+        executionProvider: trustedTestExecutionProvider(async () => {
           await mutate(fixture.workspace);
           return commandSummary();
-        },
+        }),
       });
       expect(summary).toMatchObject({
         status: "FAIL",
@@ -962,12 +980,13 @@ describe("authoritative verifier result parsing", () => {
         mode: "first-readiness-transition",
         previouslyPassingStageIds: [],
       },
-      executeCommand: async () =>
+      executionProvider: trustedTestExecutionProvider(async () =>
         commandSummary({
           status: "TIMEOUT",
           exitCode: 2,
           message: "Command timed out.",
         }),
+      ),
     });
 
     expect(summary).toMatchObject({
@@ -1021,6 +1040,52 @@ describe("authoritative verifier result parsing", () => {
       name: "malformed schema",
       mutate: (fixture) => {
         fixture.result.schemaVersion = "1.0.0";
+      },
+    },
+    {
+      name: "missing execution-provider identity",
+      mutate: (fixture) => {
+        delete (fixture.result as unknown as Record<string, unknown>)[
+          "executionProvider"
+        ];
+      },
+    },
+    {
+      name: "tampered execution-provider identity",
+      mutate: (fixture) => {
+        fixture.result.executionProvider = executionProviderIdentity({
+          provider: "trusted-container",
+          implementation: "pinned-oci-container-executor",
+          runtimeName: "docker",
+          runtimeVersion: "candidate-substituted-runtime",
+          imageDigest: `sha256:${"e".repeat(64)}`,
+          mountPolicyVersion: "oci-mount-policy-v1",
+          resourceLimitProfile: "oci-resource-limits-v1",
+          networkDisposition: "denied",
+          capabilityStatus: "ready",
+          controlPlaneBound: true,
+        });
+      },
+    },
+    {
+      name: "inconsistent command execution-provider identity",
+      mutate: (fixture) => {
+        const command = fixture.result.stages.flatMap(
+          (entry) => entry.commands,
+        )[0];
+        if (!command) throw new Error("Fixture has no candidate command.");
+        command.executionProvider = executionProviderIdentity({
+          provider: "trusted-container",
+          implementation: "pinned-oci-container-executor",
+          runtimeName: "podman",
+          runtimeVersion: "candidate-substituted-runtime",
+          imageDigest: `sha256:${"e".repeat(64)}`,
+          mountPolicyVersion: "oci-mount-policy-v1",
+          resourceLimitProfile: "oci-resource-limits-v1",
+          networkDisposition: "denied",
+          capabilityStatus: "ready",
+          controlPlaneBound: true,
+        });
       },
     },
     {
@@ -1430,23 +1495,25 @@ describe("milestone verifier command receipts", () => {
         mode: "durable-records",
         previouslyPassingStageIds: ["unit-domain"],
       },
-      executeCommand: async (command, options) => {
-        environments.set(command.id, options.extraEnvironment);
-        if (command.id === "focused-check") {
-          await input.onFocusedCommand?.({
-            environment: options.extraEnvironment,
-            stageId: expectedStageId,
-          });
-          return commandSummary({
-            id: "focused-check",
-            parser: "exit-code",
-            status: "PASS",
-            exitCode: 0,
-            message: "Command exited zero.",
-          });
-        }
-        return commandSummary();
-      },
+      executionProvider: trustedTestExecutionProvider(
+        async (command, options) => {
+          environments.set(command.id, options.extraEnvironment);
+          if (command.id === "focused-check") {
+            await input.onFocusedCommand?.({
+              environment: options.extraEnvironment,
+              stageId: expectedStageId,
+            });
+            return commandSummary({
+              id: "focused-check",
+              parser: "exit-code",
+              status: "PASS",
+              exitCode: 0,
+              message: "Command exited zero.",
+            });
+          }
+          return commandSummary();
+        },
+      ),
     });
     return { summary, environments, expectedStageId, artifactDirectory };
   }
@@ -1614,7 +1681,7 @@ describe("milestone verifier command receipts", () => {
           "artifacts",
           "tamper-evidence",
         ),
-        executeCommand: async (command) => {
+        executionProvider: trustedTestExecutionProvider(async (command) => {
           if (command.id === "focused-check") {
             // Simulate a command that patches a protected verifier input
             // while identity endpoints will still compare equal later.
@@ -1632,7 +1699,7 @@ describe("milestone verifier command receipts", () => {
             });
           }
           return commandSummary();
-        },
+        }),
       }),
     ).rejects.toThrow(/Protected file changed: frozen\.txt/);
   }, 20_000);
@@ -1659,7 +1726,7 @@ describe("milestone verifier command receipts", () => {
         mode: "durable-records",
         previouslyPassingStageIds: ["unit-domain"],
       },
-      executeCommand: async (command) =>
+      executionProvider: trustedTestExecutionProvider(async (command) =>
         command.id === "focused-check"
           ? commandSummary({
               id: "focused-check",
@@ -1669,6 +1736,7 @@ describe("milestone verifier command receipts", () => {
               message: "Command exited 1.",
             })
           : commandSummary(),
+      ),
     });
     expect(summary.commands[0]).toMatchObject({
       status: "FAIL",
@@ -1695,9 +1763,9 @@ describe("milestone verifier command receipts", () => {
       config: await loadConfig(process.cwd()),
       protectedFiles: [],
       artifactDirectory: join(fixture.workspace, "artifacts", "legacy-gate"),
-      executeCommand: async () => {
+      executionProvider: trustedTestExecutionProvider(async () => {
         throw new Error("Legacy proposals must never execute commands.");
-      },
+      }),
     });
     expect(summary).toMatchObject({
       status: "FAIL",

@@ -1,11 +1,12 @@
 export const LEGACY_MILESTONE_SCHEMA_VERSION = "1.0.0" as const;
 export const PREVIOUS_MILESTONE_SCHEMA_VERSION = "1.1.0" as const;
 export const MILESTONE_SCHEMA_VERSION = "1.2.0" as const;
-export const STATE_SCHEMA_VERSION = "1.8.0" as const;
-export const CONFIG_SCHEMA_VERSION = "1.5.0" as const;
+export const STATE_SCHEMA_VERSION = "1.9.0" as const;
+export const CONFIG_SCHEMA_VERSION = "1.6.0" as const;
 export const REVIEW_LEGACY_SCHEMA_VERSION = "1.0.0" as const;
 export const REVIEW_SCHEMA_VERSION = "1.1.0" as const;
-export const VERIFICATION_SUMMARY_SCHEMA_VERSION = "1.1.0" as const;
+export const LEGACY_VERIFICATION_SUMMARY_SCHEMA_VERSION = "1.1.0" as const;
+export const VERIFICATION_SUMMARY_SCHEMA_VERSION = "1.2.0" as const;
 export const RECONCILIATION_SCHEMA_VERSION = "1.0.0" as const;
 export const RECONCILIATION_REVIEW_SCHEMA_VERSION = "1.0.0" as const;
 export const CONTROLLER_ARCHIVE_SCHEMA_VERSION = "1.0.0" as const;
@@ -14,7 +15,7 @@ export const AGENT_INVOCATION_SCHEMA_VERSION = "1.0.0" as const;
 export const WORKSPACE_CLEANUP_SCHEMA_VERSION = "1.0.0" as const;
 export const OPERATION_INTENT_SCHEMA_VERSION = "1.0.0" as const;
 export const EVIDENCE_RETENTION_SCHEMA_VERSION = "1.0.0" as const;
-export const VERIFICATION_TIER_SCHEMA_VERSION = "1.1.0" as const;
+export const VERIFICATION_TIER_SCHEMA_VERSION = "1.2.0" as const;
 export const VERIFICATION_MANIFEST_SCHEMA_VERSION =
   "verification-manifest.v1" as const;
 
@@ -22,6 +23,11 @@ export {
   DEFAULT_COMMAND_KILL_GRACE_MS,
   DEFAULT_COMMAND_OUTPUT_LIMIT_BYTES,
 } from "./process-supervisor.js";
+export type { ExecutionProviderIdentity } from "./execution-provider-identity.js";
+import type {
+  ExecutionMode,
+  ExecutionProviderIdentity,
+} from "./execution-provider-identity.js";
 
 export const AGENT_ROLES = [
   "planner",
@@ -372,6 +378,7 @@ export interface VerificationTierCommandRecord {
   readonly testCounts: VerificationTestCounts | null;
   readonly failureClass: "product" | "infrastructure" | null;
   readonly message: string;
+  readonly executionProvider: ExecutionProviderIdentity;
 }
 
 export interface ExactVerificationIndex {
@@ -385,6 +392,7 @@ export interface ExactVerificationIndex {
   readonly selectedByOverride: false;
   readonly candidateCommit: string;
   readonly candidateTree: string;
+  readonly executionProvider: ExecutionProviderIdentity;
 }
 
 export interface VerificationTierResult {
@@ -394,6 +402,8 @@ export interface VerificationTierResult {
   readonly status: "PASS" | "NOT_READY" | "FAIL" | "ERROR";
   readonly exitCode: 0 | 1 | 2 | 3;
   readonly authoritative: false;
+  readonly executionProvider: ExecutionProviderIdentity;
+  readonly providerCompletionEligible: boolean;
   readonly candidate: {
     readonly baseCommit: string;
     readonly gitCommit: string;
@@ -577,6 +587,7 @@ export interface CommandExecutionSummary {
   readonly receiptAbsenceReason: string | null;
   readonly telemetryError?: string;
   readonly supervision?: SupervisionReport;
+  readonly executionProvider?: ExecutionProviderIdentity | null;
 }
 
 export type AuthoritativeVerificationDisposition =
@@ -615,6 +626,7 @@ export interface AuthoritativeVerificationSummary {
   readonly previouslyPassingStageIds: readonly string[];
   readonly sourceResultPath: string;
   readonly copiedResultPath: string;
+  readonly executionProvider: ExecutionProviderIdentity;
 }
 
 export type VerificationDisposition =
@@ -643,6 +655,7 @@ export interface VerificationSummary {
   readonly authoritativeResultSha256: string | null;
   readonly changedPaths: readonly string[];
   readonly artifactPaths: readonly string[];
+  readonly executionProvider: ExecutionProviderIdentity | null;
 }
 
 export interface ReviewFinding {
@@ -755,6 +768,7 @@ export type TargetIntegratePhase = (typeof TARGET_INTEGRATE_PHASES)[number];
 
 export type TargetIntegrateBlockedClassification =
   | "candidate-drift"
+  | "execution-provider-ineligible"
   | "outcome-conflict"
   | "state-target-inconsistent"
   | "target-branch-mismatch"
@@ -790,6 +804,7 @@ export interface TargetIntegrateOperation {
   readonly workspaceBranch: string;
   readonly candidate: CandidateIdentity;
   readonly verificationResultSha256: string;
+  readonly executionProvider: ExecutionProviderIdentity | null;
   readonly commits: readonly string[];
   readonly outcomePath: string;
   readonly outcomeTemporaryPath: string;
@@ -1150,6 +1165,7 @@ export interface ReconciliationVerificationReference extends DurableArtifactRefe
   readonly exitCode: 2;
   readonly disposition: "incremental-readiness";
   readonly exactResult: DurableArtifactReference;
+  readonly executionProvider: ExecutionProviderIdentity | null;
 }
 
 export interface ReconciliationReviewReference extends DurableArtifactReference {
@@ -1294,6 +1310,19 @@ export interface ProjectProfile {
   };
 }
 
+export interface TrustedContainerExecutionConfig {
+  readonly runtime: "docker" | "podman";
+  readonly imageDigest: string | null;
+  readonly mountPolicyVersion: string;
+  readonly resourceLimitProfile: string;
+  readonly networkDisposition: "denied";
+}
+
+export interface CandidateExecutionConfig {
+  readonly mode: ExecutionMode;
+  readonly trustedContainer: TrustedContainerExecutionConfig;
+}
+
 export interface OrchestratorConfig {
   readonly schemaVersion: typeof CONFIG_SCHEMA_VERSION;
   readonly project: ProjectProfile;
@@ -1306,6 +1335,7 @@ export interface OrchestratorConfig {
   readonly reviewerSandbox: "read-only";
   readonly approvalPolicy: "on-request";
   readonly networkAccessEnabled: false;
+  readonly candidateExecution: CandidateExecutionConfig;
   readonly preserveFailedWorkspaces: boolean;
   readonly cleanupCompletedWorkspaces: boolean;
   readonly evidenceRetention: {

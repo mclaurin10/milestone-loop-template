@@ -38,6 +38,7 @@ import {
   validFeatureProposal,
   validProposal,
   validState,
+  trustedTestExecutionProviderIdentity,
 } from "../test/fixtures.js";
 import { planTargetIntegrateOperation } from "./target-integration.js";
 
@@ -178,7 +179,7 @@ function approvedIntegrationState(root: string): {
         attempts: 1,
         verificationSummaries: [
           {
-            schemaVersion: "1.1.0",
+            schemaVersion: "1.2.0",
             attempt: 1,
             status: "PASS",
             disposition: "incremental-readiness",
@@ -192,6 +193,7 @@ function approvedIntegrationState(root: string): {
             authoritativeResultSha256: verificationResultSha256,
             changedPaths: ["change.txt"],
             artifactPaths: ["verification-summary.json"],
+            executionProvider: trustedTestExecutionProviderIdentity(),
           },
         ],
         reviewerDecisions: [
@@ -267,6 +269,7 @@ function approvedIntegrationState(root: string): {
       workspaceBranch,
       candidate,
       verificationResultSha256,
+      executionProvider: trustedTestExecutionProviderIdentity(),
       commits: [candidate.commit],
       outcomePath: resolve(root, "artifacts", "runs", "git-outcome.json"),
       runId: "target-run",
@@ -636,6 +639,28 @@ describe("target-integrate operation intent", () => {
     expect(blocked.repository).toEqual(fixture.state.repository);
     expect(blocked.milestones).toEqual(fixture.state.milestones);
     expect(validateOrchestratorState(blocked)).toMatchObject({ valid: true });
+  });
+
+  it("rejects target intent publication when persisted provider evidence is missing", () => {
+    const root = resolve(process.cwd(), "target-operation-fixture");
+    const fixture = approvedIntegrationState(root);
+    const milestone = fixture.state.milestones[0];
+    if (!milestone) throw new Error("Target fixture lost its milestone.");
+    const verification = milestone.verificationSummaries[0];
+    if (!verification) throw new Error("Target fixture lost its verification.");
+    const state = {
+      ...fixture.state,
+      milestones: [
+        {
+          ...milestone,
+          verificationSummaries: [{ ...verification, executionProvider: null }],
+        },
+      ],
+    };
+
+    expect(() => setTargetIntegrateOperation(state, fixture.operation)).toThrow(
+      /execution-provider identity/,
+    );
   });
 });
 

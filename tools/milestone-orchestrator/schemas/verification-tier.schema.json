@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://milestone-loop.local/schemas/verification-tier.schema.json",
+  "$id": "https://milestone-loop.local/schemas/verification-tier-1.2.0.json",
   "title": "Example Project verification manifest and non-authoritative tier result",
   "oneOf": [{ "$ref": "#/$defs/manifest" }, { "$ref": "#/$defs/result" }],
   "$defs": {
@@ -15,6 +15,63 @@
       "type": "array",
       "minItems": 2,
       "items": { "type": "string", "minLength": 1 }
+    },
+    "executionProvider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "provider",
+        "implementation",
+        "runtime",
+        "imageDigest",
+        "mountPolicyVersion",
+        "resourceLimitProfile",
+        "networkDisposition",
+        "capabilityId",
+        "capabilityStatus",
+        "controlPlaneBound",
+        "completionEligible"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "provider": {
+          "enum": ["trusted-container", "unsafe-local-diagnostic"]
+        },
+        "implementation": { "type": ["string", "null"], "minLength": 1 },
+        "runtime": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "version"],
+          "properties": {
+            "name": { "type": ["string", "null"], "minLength": 1 },
+            "version": { "type": ["string", "null"], "minLength": 1 }
+          }
+        },
+        "imageDigest": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+          ]
+        },
+        "mountPolicyVersion": { "type": "string", "minLength": 1 },
+        "resourceLimitProfile": { "type": "string", "minLength": 1 },
+        "networkDisposition": { "enum": ["denied", "host-inherited"] },
+        "capabilityId": { "$ref": "#/$defs/sha256" },
+        "capabilityStatus": {
+          "enum": [
+            "ready",
+            "missing-implementation",
+            "missing-runtime",
+            "missing-pinned-image",
+            "policy-mismatch",
+            "unattested",
+            "invalid-configuration"
+          ]
+        },
+        "controlPlaneBound": { "type": "boolean" },
+        "completionEligible": { "type": "boolean" }
+      }
     },
     "focusedCommand": {
       "type": "object",
@@ -176,7 +233,8 @@
         "artifactBytes",
         "testCounts",
         "failureClass",
-        "message"
+        "message",
+        "executionProvider"
       ],
       "properties": {
         "id": { "type": "string", "minLength": 1 },
@@ -201,7 +259,8 @@
         "failureClass": {
           "enum": ["product", "infrastructure", null]
         },
-        "message": { "type": "string", "minLength": 1 }
+        "message": { "type": "string", "minLength": 1 },
+        "executionProvider": { "$ref": "#/$defs/executionProvider" }
       }
     },
     "exactVerification": {
@@ -217,7 +276,8 @@
         "profileId",
         "selectedByOverride",
         "candidateCommit",
-        "candidateTree"
+        "candidateTree",
+        "executionProvider"
       ],
       "properties": {
         "invokedWithNoArguments": { "const": true },
@@ -231,7 +291,8 @@
         "profileId": { "const": "readiness" },
         "selectedByOverride": { "const": false },
         "candidateCommit": { "$ref": "#/$defs/commit" },
-        "candidateTree": { "$ref": "#/$defs/commit" }
+        "candidateTree": { "$ref": "#/$defs/commit" },
+        "executionProvider": { "$ref": "#/$defs/executionProvider" }
       }
     },
     "result": {
@@ -244,6 +305,8 @@
         "status",
         "exitCode",
         "authoritative",
+        "executionProvider",
+        "providerCompletionEligible",
         "candidate",
         "changedPaths",
         "invariantSuiteId",
@@ -264,12 +327,14 @@
         "durationMs"
       ],
       "properties": {
-        "schemaVersion": { "const": "1.1.0" },
+        "schemaVersion": { "const": "1.2.0" },
         "runId": { "type": "string", "minLength": 1 },
         "tier": { "enum": ["iteration", "candidate", "milestone", "periodic"] },
         "status": { "enum": ["PASS", "NOT_READY", "FAIL", "ERROR"] },
         "exitCode": { "enum": [0, 1, 2, 3] },
         "authoritative": { "const": false },
+        "executionProvider": { "$ref": "#/$defs/executionProvider" },
+        "providerCompletionEligible": { "type": "boolean" },
         "candidate": { "$ref": "#/$defs/candidate" },
         "changedPaths": { "$ref": "#/$defs/stringArray" },
         "invariantSuiteId": { "type": "string", "minLength": 1 },

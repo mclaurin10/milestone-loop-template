@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.5.0",
+  "schemaVersion": "1.6.0",
   "project": {
     "name": "Ski Tycoon",
     "authorityFile": "SKI_TYCOON_GOAL.md",
@@ -26,6 +26,16 @@
   "reviewerSandbox": "read-only",
   "approvalPolicy": "on-request",
   "networkAccessEnabled": false,
+  "candidateExecution": {
+    "mode": "trusted-container",
+    "trustedContainer": {
+      "runtime": "docker",
+      "imageDigest": null,
+      "mountPolicyVersion": "oci-mount-policy-v1",
+      "resourceLimitProfile": "oci-resource-limits-v1",
+      "networkDisposition": "denied"
+    }
+  },
   "preserveFailedWorkspaces": true,
   "cleanupCompletedWorkspaces": true,
   "evidenceRetention": {

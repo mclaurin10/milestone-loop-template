@@ -12,6 +12,7 @@ import {
   RECONCILIATION_PHASES,
   RECONCILIATION_REVIEW_CHECK_IDS,
   type OrchestratorState,
+  type ExecutionProviderIdentity,
   type ReconciliationPhase,
   type ReconciliationReview,
 } from "./contracts.js";
@@ -22,8 +23,13 @@ import {
   type ReconciliationDependencies,
 } from "./reconciliation.js";
 import { buildCanonicalProtectedSet } from "./protected-roots.js";
+import { createCandidateExecutionProvider } from "./execution-provider.js";
 import { createInitialState } from "./state-store.js";
-import { validConfig, validFeatureProposal } from "../test/fixtures.js";
+import {
+  trustedTestExecutionProviderIdentity,
+  validConfig,
+  validFeatureProposal,
+} from "../test/fixtures.js";
 
 const temporaryDirectories: string[] = [];
 
@@ -197,7 +203,7 @@ async function fixtureRepository(): Promise<Fixture> {
   };
 }
 
-function exactCommandRecord() {
+function exactCommandRecord(executionProvider: ExecutionProviderIdentity) {
   return {
     id: "exact-readiness",
     argv: ["pnpm", "verify"],
@@ -216,6 +222,7 @@ function exactCommandRecord() {
     testCounts: null,
     failureClass: null,
     message: "Exact readiness remains NOT_READY.",
+    executionProvider,
   } as const;
 }
 
@@ -227,6 +234,7 @@ async function focusedCommandRecord(
     readonly expectedArtifactKinds: readonly string[];
   },
   index: number,
+  executionProvider: ExecutionProviderIdentity,
 ) {
   const evidenceDirectory = join(
     fixture.root,
@@ -293,10 +301,14 @@ async function focusedCommandRecord(
     testCounts: null,
     failureClass: null,
     message: "Focused command passed.",
+    executionProvider,
   };
 }
 
-async function writeMilestoneTier(fixture: Fixture): Promise<string> {
+async function writeMilestoneTier(
+  fixture: Fixture,
+  executionProvider: ExecutionProviderIdentity = trustedTestExecutionProviderIdentity(),
+): Promise<string> {
   const runId = "reconciliation-milestone-fixture";
   const exactDirectory = join(fixture.root, "artifacts", runId);
   await mkdir(exactDirectory, { recursive: true });
@@ -323,11 +335,17 @@ async function writeMilestoneTier(fixture: Fixture): Promise<string> {
     completion: {
       claim: "autonomous_readiness",
       eligible: false,
-      reasons: ["verification_status_not_pass"],
+      reasons: [
+        "verification_status_not_pass",
+        ...(executionProvider.completionEligible
+          ? []
+          : ["execution_provider_not_completion_eligible"]),
+      ],
     },
     candidate: exactCandidate,
     candidateFinal: exactCandidate,
     identityDrift: { detected: false, fields: [] },
+    executionProvider,
     summary: {
       stageCounts: { PASS: 5, NOT_READY: 10, FAIL: 0, ERROR: 0 },
       requiredStageCount: 15,
@@ -370,7 +388,9 @@ async function writeMilestoneTier(fixture: Fixture): Promise<string> {
   const requiredIds = requiredCommands.map((command) => command.id);
   const commandRecords = [];
   for (const [index, command] of requiredCommands.entries())
-    commandRecords.push(await focusedCommandRecord(fixture, command, index));
+    commandRecords.push(
+      await focusedCommandRecord(fixture, command, index, executionProvider),
+    );
   const tierCandidate = {
     baseCommit: fixture.sourceCommit,
     gitCommit: exact.candidate.gitCommit,
@@ -378,12 +398,14 @@ async function writeMilestoneTier(fixture: Fixture): Promise<string> {
     workingTreeDirty: false,
   };
   const tier = {
-    schemaVersion: "1.1.0",
+    schemaVersion: "1.2.0",
     runId: "verification-tier-milestone-fixture",
     tier: "milestone",
     status: "NOT_READY",
     exitCode: 2,
     authoritative: false,
+    executionProvider,
+    providerCompletionEligible: executionProvider.completionEligible,
     candidate: tierCandidate,
     changedPaths: ["external-work.txt"],
     invariantSuiteId: "fixture-invariants",
@@ -393,7 +415,7 @@ async function writeMilestoneTier(fixture: Fixture): Promise<string> {
     selectedCheckIds: requiredIds,
     actualCheckIds: requiredIds,
     fullClosureCheckIds: requiredIds,
-    commands: [...commandRecords, exactCommandRecord()],
+    commands: [...commandRecords, exactCommandRecord(executionProvider)],
     exactVerification: {
       invokedWithNoArguments: true,
       resultPath: exactRelative,
@@ -405,6 +427,7 @@ async function writeMilestoneTier(fixture: Fixture): Promise<string> {
       selectedByOverride: false,
       candidateCommit: exact.candidate.gitCommit,
       candidateTree: exact.candidate.gitTree,
+      executionProvider,
     },
     candidateFinal: tierCandidate,
     identityDrift: { detected: false, fields: [] },
@@ -685,6 +708,42 @@ function failureRecoveryScenario() {
 }
 
 describe("controller-boundary reconciliation", { timeout: 60_000 }, () => {
+  it("rejects internally consistent unsafe-local evidence before review or adoption", async () => {
+    const fixture = await fixtureRepository();
+    const unsafeProvider = createCandidateExecutionProvider(
+      validConfig({
+        candidateExecution: {
+          ...validConfig().candidateExecution,
+          mode: "unsafe-local-diagnostic",
+        },
+      }),
+    ).identity;
+    let reviewCalled = false;
+    const controller = await ReconciliationController.open(
+      fixture.root,
+      fixture.configPath,
+      {
+        ...dependencies(fixture),
+        executeMilestoneTier: () => writeMilestoneTier(fixture, unsafeProvider),
+        review: async () => {
+          reviewCalled = true;
+          throw new Error("Unsafe evidence reached independent review.");
+        },
+      },
+    );
+
+    const error = await captureError(() => controller.run(invocation));
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toMatch(
+      /exact clean incremental-readiness result/,
+    );
+    expect(reviewCalled).toBe(false);
+    expect(controller.state.repository.verifiedCommit).toBe(
+      fixture.sourceCommit,
+    );
+    expect(controller.state.reconciliation.history.at(-1)?.adoption).toBeNull();
+  });
+
   it("records the complete continuous external commit range with exact metadata and citations", async () => {
     const { fixture, manifest } = await happyLifecycleScenario();
 
@@ -708,7 +767,7 @@ describe("controller-boundary reconciliation", { timeout: 60_000 }, () => {
 
     expect(repeatedStatus.active).toBeNull();
     expect(finalState).toMatchObject({
-      schemaVersion: "1.8.0",
+      schemaVersion: "1.9.0",
       repository: { verifiedCommit: fixture.candidateCommit },
       queue: ["complete-operations-base-utilities"],
       activeMilestoneId: null,
@@ -734,6 +793,7 @@ describe("controller-boundary reconciliation", { timeout: 60_000 }, () => {
       ),
     ) as Record<string, unknown>;
     expect(adoption).toMatchObject({
+      executionProvider: trustedTestExecutionProviderIdentity(),
       priorRun: archive?.priorRun,
       priorQueue: archive?.priorQueue,
       priorActiveMilestoneId: archive?.priorActiveMilestoneId,

@@ -18,6 +18,11 @@ import {
   DEFAULT_COMMAND_OUTPUT_LIMIT_BYTES,
   superviseCommand,
 } from "../tools/milestone-orchestrator/src/process-supervisor.ts";
+import {
+  EXECUTION_PROVIDER_IDENTITY_ENV,
+  decodeExecutionProviderIdentity,
+  unattestedExecutionProviderIdentity,
+} from "../tools/milestone-orchestrator/src/execution-provider-identity.ts";
 
 const RESULT_SCHEMA_VERSION = "2.1.0";
 const EVIDENCE_RECEIPT_SCHEMA_VERSION = "1.0.0";
@@ -63,6 +68,13 @@ const readinessActivationMarkerPath = resolve(
   repositoryRoot,
   ".agent",
   "readiness-profile-activated.json",
+);
+const orchestratorConfigPath = resolve(
+  repositoryRoot,
+  "tools",
+  "milestone-orchestrator",
+  "config",
+  "default.json",
 );
 
 const contractStage = Object.freeze({
@@ -444,6 +456,20 @@ async function readJson(path) {
   return JSON.parse(await readFile(path, "utf8"));
 }
 
+async function executionProviderForRun() {
+  const attested = decodeExecutionProviderIdentity(
+    process.env[EXECUTION_PROVIDER_IDENTITY_ENV],
+  );
+  if (attested) return attested;
+  let config = null;
+  try {
+    config = await readJson(orchestratorConfigPath);
+  } catch {
+    // The identity factory records invalid configuration without inventing facts.
+  }
+  return unattestedExecutionProviderIdentity(config, process.versions.node);
+}
+
 async function sha256File(path) {
   const contents = await readFile(path);
   return createHash("sha256").update(contents).digest("hex");
@@ -583,6 +609,7 @@ async function evaluateEnvironment(
   profile,
   candidate,
   fullRun,
+  executionProvider,
 ) {
   const started = Date.now();
   const checks = [];
@@ -848,6 +875,7 @@ async function evaluateEnvironment(
         packageJson,
         artifactRoot,
         index,
+        executionProvider,
       ),
     );
   }
@@ -1396,6 +1424,7 @@ async function runPackageScript(
   packageJson,
   artifactRoot,
   index,
+  executionProvider,
 ) {
   const commandStarted = Date.now();
   const safeName = scriptName.replaceAll(":", "-");
@@ -1417,6 +1446,7 @@ async function runPackageScript(
       log: null,
       evidence: null,
       message: `Required package script "${scriptName}" is not defined.`,
+      executionProvider,
     };
   }
 
@@ -1547,10 +1577,16 @@ async function runPackageScript(
           },
     supervision,
     message,
+    executionProvider,
   };
 }
 
-async function evaluateScriptStage(stage, packageJson, artifactRoot) {
+async function evaluateScriptStage(
+  stage,
+  packageJson,
+  artifactRoot,
+  executionProvider,
+) {
   const started = Date.now();
   const checks =
     stage.kind === "contract" ? await validateAcceptanceManifest() : [];
@@ -1563,6 +1599,7 @@ async function evaluateScriptStage(stage, packageJson, artifactRoot) {
         packageJson,
         artifactRoot,
         index,
+        executionProvider,
       ),
     );
   }
@@ -1609,6 +1646,7 @@ function buildSummary(result) {
     `- Completion eligible: \`${result.completion.eligible}\``,
     `- Completion claim: \`${result.completion.claim}\``,
     `- Autonomous-readiness equivalent: \`${result.profile.autonomousReadinessEquivalent}\``,
+    `- Execution provider: \`${result.executionProvider.provider}\` (${result.executionProvider.capabilityStatus}, completion eligible: ${result.executionProvider.completionEligible})`,
     `- Started: \`${result.startedAt}\``,
     `- Finished: \`${result.finishedAt}\``,
     `- Git commit: \`${result.candidate.gitCommit ?? "unavailable"}\``,
@@ -1686,6 +1724,7 @@ async function runVerification(options) {
   await mkdir(resolve(artifactRoot, "logs"), { recursive: true });
 
   const startedAt = new Date();
+  const executionProvider = await executionProviderForRun();
   const pnpmVersion = await detectPnpmVersion();
   const candidate = await collectCandidateIdentity(packageJson, pnpmVersion);
   const profileResult = {
@@ -1707,6 +1746,7 @@ async function runVerification(options) {
     fullRun,
     selectedStages: [...selectedIds],
     candidate,
+    executionProvider,
   };
   await atomicWriteJson(
     resolve(artifactRoot, "run-manifest.json"),
@@ -1730,8 +1770,14 @@ async function runVerification(options) {
             profile,
             candidate,
             fullRun,
+            executionProvider,
           )
-        : await evaluateScriptStage(stage, packageJson, artifactRoot);
+        : await evaluateScriptStage(
+            stage,
+            packageJson,
+            artifactRoot,
+            executionProvider,
+          );
     stages.push(result);
     console.log(`[${result.status}] ${result.id} - ${result.name}`);
   }
@@ -1774,6 +1820,8 @@ async function runVerification(options) {
     completionReasons.push("working_tree_not_proven_clean");
   if (identityDrift.detected)
     completionReasons.push("candidate_identity_drift");
+  if (!executionProvider.completionEligible)
+    completionReasons.push("execution_provider_not_completion_eligible");
   const completion = {
     claim: profile.completionClaim,
     eligible: completionReasons.length === 0,
@@ -1797,6 +1845,7 @@ async function runVerification(options) {
     repositoryRoot,
     artifactRoot: relativeFromRepository(artifactRoot),
     profile: profileResult,
+    executionProvider,
     completion,
     candidate,
     candidateFinal,

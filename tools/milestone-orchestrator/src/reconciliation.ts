@@ -920,6 +920,7 @@ async function defaultMilestoneTier(input: {
       ...(input.killGraceMs !== undefined
         ? { killGraceMs: input.killGraceMs }
         : {}),
+      trustedControllerCommand: true,
     },
   );
   if (result.exitCode !== 2 || result.signal !== null)
@@ -1280,6 +1281,7 @@ export class ReconciliationController {
             exitCode: 2,
             disposition: "incremental-readiness",
             exactResult: validated.exactResult,
+            executionProvider: validated.result.executionProvider,
           },
         },
       ),
@@ -1303,6 +1305,8 @@ export class ReconciliationController {
         schemaVersion: "1.0.0",
         runId: result.runId,
         candidate: result.candidate,
+        executionProvider: result.executionProvider,
+        providerCompletionEligible: result.providerCompletionEligible,
         tierResult: validated.tierResult,
         commands: result.commands.map((command) => ({
           id: command.id,
@@ -1415,7 +1419,8 @@ export class ReconciliationController {
       !record.exactVerification ||
       !record.focusedEvidenceIndex ||
       !record.independentReview ||
-      record.independentReview.decision !== "approve"
+      record.independentReview.decision !== "approve" ||
+      !record.exactVerification.executionProvider?.completionEligible
     )
       throw new Error("Reconciliation adoption lacks approved exact evidence.");
     if (record.phase === "review-approved") {
@@ -1472,6 +1477,7 @@ export class ReconciliationController {
         sourceVerifiedCommit: adopting.sourceVerifiedCommit,
         candidateCommit: adopting.candidateCommit,
         candidateTree: adopting.candidateTree,
+        executionProvider: adopting.exactVerification!.executionProvider,
         priorRun: archive.priorRun,
         priorQueue: archive.priorQueue,
         priorActiveMilestoneId: archive.priorActiveMilestoneId,

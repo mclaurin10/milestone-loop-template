@@ -8,6 +8,10 @@ import {
   DEFAULT_COMMAND_OUTPUT_LIMIT_BYTES,
   REQUIRED_PROTECTED_PATHS,
 } from "./contracts.js";
+import {
+  TRUSTED_MOUNT_POLICY_VERSION,
+  TRUSTED_RESOURCE_LIMIT_PROFILE,
+} from "./execution-provider-identity.js";
 import type {
   InvariantSuiteRegistry,
   OrchestratorConfig,
@@ -139,7 +143,7 @@ function migrateConfig(value: unknown): unknown {
     typeof value !== "object" ||
     value === null ||
     Array.isArray(value) ||
-    !["1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0"].includes(
+    !["1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0", "1.5.0"].includes(
       String((value as Record<string, unknown>)["schemaVersion"]),
     )
   )
@@ -158,7 +162,7 @@ function migrateConfig(value: unknown): unknown {
       : {};
   return {
     ...legacy,
-    schemaVersion: "1.5.0",
+    schemaVersion: "1.6.0",
     evidenceRetention:
       legacy["schemaVersion"] === "1.0.0"
         ? {
@@ -178,6 +182,16 @@ function migrateConfig(value: unknown): unknown {
       commandOutputLimitBytes: DEFAULT_COMMAND_OUTPUT_LIMIT_BYTES,
       commandKillGraceMs: DEFAULT_COMMAND_KILL_GRACE_MS,
       ...legacyLimits,
+    },
+    candidateExecution: {
+      mode: "trusted-container",
+      trustedContainer: {
+        runtime: "docker",
+        imageDigest: null,
+        mountPolicyVersion: TRUSTED_MOUNT_POLICY_VERSION,
+        resourceLimitProfile: TRUSTED_RESOURCE_LIMIT_PROFILE,
+        networkDisposition: "denied",
+      },
     },
     protectedPaths: [
       ...new Set([...legacyProtectedPaths, ...REQUIRED_PROTECTED_PATHS]),

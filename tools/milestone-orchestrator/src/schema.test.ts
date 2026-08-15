@@ -15,11 +15,13 @@ import { RECONCILIATION_REVIEW_CHECK_IDS } from "./contracts.js";
 import { createMilestoneRecord } from "./milestone-state.js";
 import {
   legacyProposal,
+  trustedTestExecutionProviderIdentity,
   validConfig,
   validProposal,
   validReconciliationRecord,
   validState,
 } from "../test/fixtures.js";
+import { executionProviderIdentity } from "./execution-provider-identity.js";
 
 describe("versioned orchestrator schemas", () => {
   it("accepts a complete bounded milestone and rejects missing objective evidence", () => {
@@ -414,6 +416,66 @@ describe("versioned orchestrator schemas", () => {
     ).toMatchObject({ valid: false });
   });
 
+  it("rejects persisted verification whose authoritative provider identity differs", () => {
+    const state = validState(process.cwd());
+    const milestone = createMilestoneRecord(
+      validProposal(),
+      "2026-08-02T00:00:00.000Z",
+    );
+    const executionProvider = trustedTestExecutionProviderIdentity();
+    const differentProvider = executionProviderIdentity({
+      provider: "trusted-container",
+      implementation: "pinned-oci-container-executor",
+      runtimeName: "docker",
+      runtimeVersion: "Docker test-double 2.0.0",
+      imageDigest: `sha256:${"e".repeat(64)}`,
+      mountPolicyVersion: "oci-mount-policy-v1",
+      resourceLimitProfile: "oci-resource-limits-v1",
+      networkDisposition: "denied",
+      capabilityStatus: "ready",
+      controlPlaneBound: true,
+    });
+    const withSummary = {
+      ...state,
+      queue: [milestone.proposal.id],
+      milestones: [
+        {
+          ...milestone,
+          verificationSummaries: [
+            {
+              schemaVersion: "1.2.0",
+              status: "PASS",
+              candidate: null,
+              authoritativeResultSha256: null,
+              executionProvider,
+              authoritative: { executionProvider },
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(validateOrchestratorState(withSummary)).toMatchObject({
+      valid: true,
+    });
+    expect(
+      validateOrchestratorState({
+        ...withSummary,
+        milestones: [
+          {
+            ...withSummary.milestones[0],
+            verificationSummaries: [
+              {
+                ...withSummary.milestones[0]?.verificationSummaries[0],
+                authoritative: { executionProvider: differentProvider },
+              },
+            ],
+          },
+        ],
+      }),
+    ).toMatchObject({ valid: false });
+  });
+
   it("ships parseable versioned JSON Schema artifacts", async () => {
     for (const file of [
       "milestone.schema.json",
@@ -424,6 +486,7 @@ describe("versioned orchestrator schemas", () => {
       "artifact-inventory.schema.json",
       "reconciliation.schema.json",
       "reconciliation-review.schema.json",
+      "verification-tier.schema.json",
     ]) {
       const schema = JSON.parse(
         await readFile(
@@ -440,12 +503,14 @@ describe("versioned orchestrator schemas", () => {
       expect(schema.$schema).toContain("2020-12");
       expect(schema.$id).toContain(
         file === "state.schema.json"
-          ? "1.8.0"
+          ? "1.9.0"
           : file === "milestone.schema.json"
             ? "1.2.0"
-            : file === "review.schema.json"
-              ? "1.1.0"
-              : "1.0.0",
+            : file === "verification-tier.schema.json"
+              ? "1.2.0"
+              : file === "review.schema.json"
+                ? "1.1.0"
+                : "1.0.0",
       );
     }
   });

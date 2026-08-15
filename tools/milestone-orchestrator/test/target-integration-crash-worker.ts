@@ -20,7 +20,11 @@ import {
   TARGET_INTEGRATION_FAULT_POINTS,
   type TargetIntegrationFaultPoint,
 } from "../src/target-integration.js";
-import { validConfig, validFeatureProposal } from "./fixtures.js";
+import {
+  trustedTestExecutionProviderIdentity,
+  validConfig,
+  validFeatureProposal,
+} from "./fixtures.js";
 import { createIsolatedWorkspaceFixture } from "./workspace-fixture.js";
 
 const NOW = "2026-08-02T18:00:00.000Z";
@@ -145,9 +149,10 @@ async function main(): Promise<void> {
     previouslyPassingStageIds: [],
     sourceResultPath: "artifacts/target-integration-run/result.json",
     copiedResultPath,
+    executionProvider: trustedTestExecutionProviderIdentity(),
   };
   const summary: VerificationSummary = {
-    schemaVersion: "1.1.0",
+    schemaVersion: "1.2.0",
     attempt: 1,
     status: "PASS",
     disposition: "incremental-readiness",
@@ -161,6 +166,7 @@ async function main(): Promise<void> {
     authoritativeResultSha256: resultSha256,
     changedPaths: ["change.txt"],
     artifactPaths: [join(verificationDirectory, "verification-summary.json")],
+    executionProvider: trustedTestExecutionProviderIdentity(),
   };
   const proposal = validFeatureProposal({
     id: milestoneId,

@@ -18,6 +18,7 @@ import {
   inspectReadinessLifecycle,
   readinessHistoryEvidenceForCandidate,
 } from "./orchestrator.js";
+import { trustedTestExecutionProviderIdentity } from "../test/fixtures.js";
 
 const NOW = "2026-08-01T00:00:00.000Z";
 const temporaryDirectories: string[] = [];
@@ -76,6 +77,7 @@ function authoritative(
     previouslyPassingStageIds: [],
     sourceResultPath: "artifacts/readiness-result/result.json",
     copiedResultPath: "verification/authoritative-verify-result.json",
+    executionProvider: trustedTestExecutionProviderIdentity(),
     ...input.overrides,
   };
 }
@@ -120,7 +122,7 @@ function verification(
   evidence: AuthoritativeVerificationSummary,
 ): VerificationSummary {
   return {
-    schemaVersion: "1.1.0",
+    schemaVersion: "1.2.0",
     attempt: 1,
     status: "PASS",
     disposition: evidence.disposition,
@@ -140,6 +142,7 @@ function verification(
     authoritativeResultSha256: "f".repeat(64),
     changedPaths: ["tools/example.ts"],
     artifactPaths: ["verification/verification-summary.json"],
+    executionProvider: evidence.executionProvider,
   };
 }
 

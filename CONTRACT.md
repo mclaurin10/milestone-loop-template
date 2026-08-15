@@ -103,6 +103,18 @@ tsconfig the `typecheck` evidence covers.
   between the two captures forces `FAIL` with completion reason
   `candidate_identity_drift`, and completion eligibility reads the final
   cleanliness, never the starting snapshot.
+- **Execution-provider identity**: every candidate-authored command and the
+  exact aggregate are launched through the controller-selected provider. The
+  aggregate manifest, result, stage commands, tier result, and durable
+  verification boundaries carry the same strict provider identity (provider,
+  implementation, runtime name/version, image digest or honest absence,
+  mount policy, resource profile, network disposition, capability identity,
+  and eligibility). Missing or inconsistent identity fails closed. Only a
+  complete `trusted-container` capability can be completion-eligible;
+  `unsafe-local-diagnostic` is explicitly selected, supervised, visible, and
+  never eligible for integration or reconciliation adoption. WP3c does not
+  claim OCI containment: the actual executor and disposable container setup
+  are WP3d.
 - **Focused runs**: `--stage <id>` always bundles `environment` and
   `contract-integrity`, and is marked completion-ineligible.
 - **contract-integrity stage**: validates the immutable lock hash, the lock
@@ -233,6 +245,10 @@ rejection of every canonical path including case variants.
 ## 8. Environment
 
 - Node and pnpm exactly matching the package pins.
+- Candidate execution configured under `candidateExecution`. Doctor reports
+  missing executor implementation, OCI runtime, pinned image, or isolation
+  policy separately and never infers readiness from Docker/Podman presence
+  alone. There is no trusted-to-local fallback.
 - Git available; the loop clones into `artifacts/orchestrator/workspaces`
   and operates only through validated, contained paths.
 - Codex SDK authentication for planner/worker/reviewer roles
@@ -262,14 +278,16 @@ rejection of every canonical path including case variants.
   `loop:status`/`loop:dry-run` are read-only and lease-free; their state load
   cannot authorize publication or repair the mirror. Normal branch pushes do
   not include either private ref.
-- Recoverable workspace creation: state schema `1.8.0` permits exactly one
+- Recoverable workspace creation: state schema `1.9.0` permits exactly one
   exclusive pending operation. A `workspace-create` intent is published by
   state CAS before any directory creation or `git clone` and binds the operation ID,
   run/milestone/attempt, exact input generation and revision, target base,
   controller-derived branch, temporary/final paths, timestamps, phase, and
-  fixed recovery policy. Canonical `1.4.0`/`1.5.0`/`1.6.0`/`1.7.0`
+  fixed recovery policy. Canonical `1.4.0`/`1.5.0`/`1.6.0`/`1.7.0`/`1.8.0`
   generations migrate virtually for read-only compatibility and are written
-  as `1.8.0` by the next successful CAS save. While an intent is pending,
+  as `1.9.0` by the next successful CAS save. Legacy target-integration intent
+  without provider attestation becomes an explicit non-adoptable blocked
+  operation with its diagnostic paths preserved. While an intent is pending,
   unrelated state mutations fail closed.
   The clone is created with no hardlinks under a unique contained temporary
   path, converted to a clean standalone remote-free repository, and published
@@ -288,7 +306,8 @@ rejection of every canonical path including case variants.
   `target-integrate` intent before writing the outcome artifact, fetching the
   candidate, or changing the target ref/index/worktree. The intent pins the
   exact state generation and revision, repository/target/workspace identities,
-  approved candidate and commits, verification-result digest, deterministic
+  approved candidate and commits, verification-result digest, completion-
+  eligible trusted execution-provider identity, deterministic
   outcome and temporary paths, timestamps, phases, and recovery policy. Leased
   startup runs this recovery before ordinary target-drift handling. It resumes
   from only the exact clean base or adopts only the exact clean candidate,

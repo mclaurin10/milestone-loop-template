@@ -10,7 +10,10 @@ import type {
   ReviewerReport,
   VerificationSummary,
 } from "./contracts.js";
-import { validProposal } from "../test/fixtures.js";
+import {
+  trustedTestExecutionProviderIdentity,
+  validProposal,
+} from "../test/fixtures.js";
 
 function report(overrides: Partial<ReviewerReport> = {}): ReviewerReport {
   return {
@@ -74,7 +77,7 @@ const RESULT_SHA256 = "e".repeat(64);
 
 function verificationSummary(): VerificationSummary {
   return {
-    schemaVersion: "1.1.0",
+    schemaVersion: "1.2.0",
     attempt: 1,
     status: "PASS",
     disposition: "incremental-readiness",
@@ -88,6 +91,7 @@ function verificationSummary(): VerificationSummary {
     authoritativeResultSha256: RESULT_SHA256,
     changedPaths: [],
     artifactPaths: [],
+    executionProvider: trustedTestExecutionProviderIdentity(),
   };
 }
 

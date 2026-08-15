@@ -13,6 +13,10 @@ import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { runDoctorDiagnostic } from "./doctor.js";
+import {
+  inspectTrustedExecutionCapability,
+  type ExecutionProviderCapabilityProbe,
+} from "./execution-provider.js";
 import { buildCanonicalProtectedSet } from "./protected-roots.js";
 import {
   validConfig,
@@ -48,7 +52,7 @@ async function repositoryFixture(
     );
   await writeJson(
     join(root, "tools/milestone-orchestrator/config/default.json"),
-    validConfig(),
+    doctorConfig(),
   );
   for (const path of buildCanonicalProtectedSet(validConfig())) {
     const absolute = join(root, path);
@@ -75,6 +79,29 @@ const pinnedEnvironment = {
   npm_config_user_agent: "pnpm/11.15.1 npm/? node/v24.18.0 win32 x64",
 } satisfies NodeJS.ProcessEnv;
 const storedHead = "a".repeat(40);
+const pinnedImageDigest = `sha256:${"e".repeat(64)}`;
+
+function doctorConfig() {
+  return validConfig({
+    candidateExecution: {
+      mode: "trusted-container",
+      trustedContainer: {
+        runtime: "docker",
+        imageDigest: pinnedImageDigest,
+        mountPolicyVersion: "oci-mount-policy-v1",
+        resourceLimitProfile: "oci-resource-limits-v1",
+        networkDisposition: "denied",
+      },
+    },
+  });
+}
+
+const readyExecutionProviderProbe: ExecutionProviderCapabilityProbe = {
+  implementation: () => ({ available: true, version: "test-executor-1" }),
+  runtime: () => ({ available: true, version: "Docker test-runtime-1" }),
+  image: () => ({ available: true }),
+  policy: () => ({ compatible: true, reason: null }),
+};
 
 describe("read-only orchestrator doctor", () => {
   it("reports a ready versioned diagnostic without reading or exposing local login contents", async () => {
@@ -94,11 +121,12 @@ describe("read-only orchestrator doctor", () => {
         nodeVersion: "v24.18.0",
         gitProbe: () => ({ clean: true }),
         headProbe: () => storedHead,
+        executionProviderProbe: readyExecutionProviderProbe,
       },
     );
 
     expect(diagnostic).toEqual({
-      schemaVersion: "1.6.0",
+      schemaVersion: "1.7.0",
       diagnostic: "orchestrator-doctor",
       status: "ready",
       readOnly: true,
@@ -119,6 +147,16 @@ describe("read-only orchestrator doctor", () => {
         },
         gitCleanliness: { status: "pass", clean: true },
         configuration: { status: "pass", valid: true },
+        executionProvider: {
+          status: "pass",
+          configuredProvider: "trusted-container",
+          trustedAvailable: true,
+          trustedCapability: inspectTrustedExecutionCapability(
+            doctorConfig().candidateExecution.trustedContainer,
+            readyExecutionProviderProbe,
+          ),
+          message: "The complete trusted-container capability is available.",
+        },
         state: {
           status: "pass",
           reference: "refs/milestone-loop/state",
@@ -173,6 +211,7 @@ describe("read-only orchestrator doctor", () => {
         nodeVersion: "24.18.0",
         gitProbe: () => ({ clean: true }),
         headProbe: () => storedHead,
+        executionProviderProbe: readyExecutionProviderProbe,
       },
     );
 
@@ -195,6 +234,70 @@ describe("read-only orchestrator doctor", () => {
     await expect(readFile(fixture.statePath, "utf8")).rejects.toMatchObject({
       code: "ENOENT",
     });
+  });
+
+  it.each([
+    {
+      name: "an OCI runtime without the trusted executor implementation",
+      expectedStatus: "missing-implementation",
+      probe: {
+        ...readyExecutionProviderProbe,
+        implementation: () => ({ available: false, version: null }),
+      } satisfies ExecutionProviderCapabilityProbe,
+    },
+    {
+      name: "a missing OCI runtime",
+      expectedStatus: "missing-runtime",
+      probe: {
+        ...readyExecutionProviderProbe,
+        runtime: () => ({ available: false, version: null }),
+      } satisfies ExecutionProviderCapabilityProbe,
+    },
+    {
+      name: "a missing pinned image",
+      expectedStatus: "missing-pinned-image",
+      probe: {
+        ...readyExecutionProviderProbe,
+        image: () => ({ available: false }),
+      } satisfies ExecutionProviderCapabilityProbe,
+    },
+    {
+      name: "an incompatible isolation policy",
+      expectedStatus: "policy-mismatch",
+      probe: {
+        ...readyExecutionProviderProbe,
+        policy: () => ({
+          compatible: false,
+          reason: "Test host cannot enforce the required policy.",
+        }),
+      } satisfies ExecutionProviderCapabilityProbe,
+    },
+  ])("reports attention for $name", async ({ expectedStatus, probe }) => {
+    const fixture = await repositoryFixture();
+    const diagnostic = await runDoctorDiagnostic(
+      { repositoryRoot: fixture.root },
+      {
+        environment: {
+          ...pinnedEnvironment,
+          CODEX_API_KEY: "available-but-private",
+        },
+        nodeVersion: "24.18.0",
+        gitProbe: () => ({ clean: true }),
+        headProbe: () => storedHead,
+        executionProviderProbe: probe,
+      },
+    );
+
+    expect(diagnostic.status).toBe("attention");
+    expect(diagnostic.checks.executionProvider).toMatchObject({
+      status: "attention",
+      configuredProvider: "trusted-container",
+      trustedAvailable: false,
+      trustedCapability: { status: expectedStatus, available: false },
+    });
+    expect(diagnostic.checks.executionProvider.message.length).toBeGreaterThan(
+      0,
+    );
   });
 
   it("reports a missing controller trust root as attention", async () => {

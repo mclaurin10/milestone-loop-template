@@ -14,6 +14,8 @@ import { dirname, join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { candidateIdentityFrom } from "./candidate-identity.js";
+import type { ExecutionProviderIdentity } from "./execution-provider-identity.js";
+import { createCandidateExecutionProvider } from "./execution-provider.js";
 import { inspectAttempt } from "./git-isolation.js";
 import {
   fastForwardTargetIntegration,
@@ -25,6 +27,10 @@ import {
   targetIntegrationOutcome,
 } from "./target-integration.js";
 import { createIsolatedWorkspaceFixture } from "../test/workspace-fixture.js";
+import {
+  trustedTestExecutionProviderIdentity,
+  validConfig,
+} from "../test/fixtures.js";
 
 const NOW = "2026-08-06T00:00:00.000Z";
 const temporaryDirectories: string[] = [];
@@ -49,7 +55,9 @@ function git(repository: string, ...args: string[]): string {
   return result.stdout.trim();
 }
 
-async function fixture() {
+async function fixture(
+  executionProvider: ExecutionProviderIdentity = trustedTestExecutionProviderIdentity(),
+) {
   const root = await mkdtemp(join(tmpdir(), "milestone-loop-target-action-"));
   temporaryDirectories.push(root);
   git(root, "init", "-b", "main");
@@ -90,6 +98,7 @@ async function fixture() {
     workspaceBranch: workspace.branch,
     candidate,
     verificationResultSha256: "b".repeat(64),
+    executionProvider,
     commits: attempt.commits,
     outcomePath,
     runId: "target-run",
@@ -101,6 +110,44 @@ async function fixture() {
 }
 
 describe("target integration classification and action", () => {
+  it(
+    "rejects unsafe-local planning and blocks missing or substituted persisted provider evidence",
+    { timeout: 60_000 },
+    async () => {
+      const unsafeProvider = createCandidateExecutionProvider(
+        validConfig({
+          candidateExecution: {
+            ...validConfig().candidateExecution,
+            mode: "unsafe-local-diagnostic",
+          },
+        }),
+      ).identity;
+      await expect(fixture(unsafeProvider)).rejects.toThrow(
+        /completion-eligible trusted execution provider/,
+      );
+
+      const input = await fixture();
+      await expect(
+        inspectTargetIntegrationOperation({
+          ...input.operation,
+          executionProvider: null,
+        }),
+      ).resolves.toMatchObject({
+        classification: "execution-provider-ineligible",
+        nextSafeAction: "manual-reconciliation-required",
+      });
+      await expect(
+        inspectTargetIntegrationOperation({
+          ...input.operation,
+          executionProvider: unsafeProvider,
+        }),
+      ).resolves.toMatchObject({
+        classification: "execution-provider-ineligible",
+        nextSafeAction: "manual-reconciliation-required",
+      });
+    },
+  );
+
   it(
     "classifies the exact base, fetches, and fast-forwards only the pinned candidate",
     { timeout: 60_000 },

@@ -12,9 +12,11 @@ import {
 } from "./candidate-identity.js";
 import type {
   CandidateIdentity,
+  ExecutionProviderIdentity,
   TargetIntegrateBlockedClassification,
   TargetIntegrateOperation,
 } from "./contracts.js";
+import { isExecutionProviderIdentity } from "./execution-provider-identity.js";
 import { strictlyContained } from "./path-safety.js";
 import { atomicWriteJson } from "./state-store.js";
 
@@ -308,6 +310,7 @@ export function planTargetIntegrateOperation(input: {
   readonly workspaceBranch: string;
   readonly candidate: CandidateIdentity;
   readonly verificationResultSha256: string;
+  readonly executionProvider: ExecutionProviderIdentity;
   readonly commits: readonly string[];
   readonly outcomePath: string;
   readonly runId: string;
@@ -331,6 +334,13 @@ export function planTargetIntegrateOperation(input: {
     throw new Error(
       "Resolved target-integrate paths are not safely contained.",
     );
+  if (
+    !isExecutionProviderIdentity(input.executionProvider) ||
+    !input.executionProvider.completionEligible
+  )
+    throw new Error(
+      `Target integration requires a completion-eligible trusted execution provider; received ${input.executionProvider.provider}/${input.executionProvider.capabilityStatus}.`,
+    );
   return {
     schemaVersion: "1.0.0",
     kind: "target-integrate",
@@ -347,6 +357,7 @@ export function planTargetIntegrateOperation(input: {
     workspaceBranch: input.workspaceBranch,
     candidate: { ...input.candidate },
     verificationResultSha256: input.verificationResultSha256,
+    executionProvider: input.executionProvider,
     commits: [...input.commits],
     outcomePath,
     outcomeTemporaryPath,
@@ -576,6 +587,7 @@ export function targetIntegrationOutcome(
     tree: operation.candidate.tree,
     changedEntriesDigest: operation.candidate.changedEntriesDigest,
     verificationResultSha256: operation.verificationResultSha256,
+    executionProvider: operation.executionProvider,
     commits: operation.commits,
     recordedAt: operation.completionAt,
   };
@@ -670,6 +682,18 @@ export async function inspectTargetIntegrationOperation(
     inspectTargetIntegrationCandidate(operation),
     inspectTargetIntegrationOutcome(operation),
   ]);
+  if (
+    !isExecutionProviderIdentity(operation.executionProvider) ||
+    !operation.executionProvider.completionEligible
+  )
+    return blockedInspection(
+      operation,
+      "execution-provider-ineligible",
+      target,
+      candidate,
+      outcome,
+      "Target integration evidence lacks a completion-eligible trusted execution-provider identity.",
+    );
   if (candidate.classification !== "ready")
     return blockedInspection(
       operation,

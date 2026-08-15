@@ -46,6 +46,7 @@ import {
   loadVerificationScopePolicy,
 } from "./config.js";
 import { resolvePnpmScript, runCommand } from "./command-runner.js";
+import { createCandidateExecutionProvider } from "./execution-provider.js";
 import { assertArtifactInventory } from "./artifact-inventory.js";
 import { parseVitestCounts } from "./invariant-suite.js";
 import {
@@ -2399,7 +2400,9 @@ async function executeExactClosure(input: {
     input.worktree.side === "after"
       ? measuredTelemetryProxy(input.telemetry)
       : null;
-  const execution = await runCommand(
+  const config = await loadConfig(input.mainRepositoryRoot);
+  const executionProvider = createCandidateExecutionProvider(config);
+  const execution = await executionProvider.execute(
     {
       id: "exact-readiness",
       executable: "pnpm",
@@ -2449,7 +2452,6 @@ async function executeExactClosure(input: {
   const raw = JSON.parse(resultContents.toString("utf8")) as unknown;
   if (!isRecord(raw) || !nonEmptyString(raw["runId"]))
     throw new Error("Benchmark exact closure result lacks a run ID.");
-  const config = await loadConfig(input.mainRepositoryRoot);
   const state = await new StateStore(
     input.mainRepositoryRoot,
     config.statePath,
@@ -2478,6 +2480,7 @@ async function executeExactClosure(input: {
     resultPath,
     copiedResultPath: resolve(resultRoot, "benchmark-copied-result.json"),
     readinessHistory: history,
+    expectedExecutionProvider: executionProvider.identity,
   });
   if (
     summary.status !== "NOT_READY" ||

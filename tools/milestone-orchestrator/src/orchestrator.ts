@@ -56,6 +56,7 @@ import {
   enforcementProtectedPatterns,
 } from "./protected-roots.js";
 import { runCommand } from "./command-runner.js";
+import { executionProviderIdentitiesEqual } from "./execution-provider-identity.js";
 import {
   buildEvidenceRetentionPlan,
   discoverManagedEvidenceRuns,
@@ -565,6 +566,12 @@ export function readinessHistoryEvidenceForCandidate(
       authoritative.notReadyStageIds.length > 0;
     const recordIsUntrustworthy =
       verification?.status !== "PASS" ||
+      !verification.executionProvider?.completionEligible ||
+      !authoritative.executionProvider?.completionEligible ||
+      !executionProviderIdentitiesEqual(
+        verification.executionProvider,
+        authoritative.executionProvider,
+      ) ||
       verification.disposition !== authoritative.disposition ||
       verification.failureKind !== null ||
       authoritative.completionClaim !== "autonomous_readiness" ||
@@ -1023,6 +1030,10 @@ export class MilestoneOrchestrator {
           `Pending workspace-create operation ${operation.id} has non-canonical controller paths.`,
         );
     } else if (operation?.kind === "target-integrate") {
+      if (!operation.executionProvider?.completionEligible)
+        throw new Error(
+          `Pending target-integrate operation ${operation.id} lacks completion-eligible execution-provider evidence.`,
+        );
       const milestone = milestoneById(this.stateValue, operation.milestoneId);
       const planned = planTargetIntegrateOperation({
         operationId: operation.id,
@@ -1035,6 +1046,7 @@ export class MilestoneOrchestrator {
         workspaceBranch: operation.workspaceBranch,
         candidate: operation.candidate,
         verificationResultSha256: operation.verificationResultSha256,
+        executionProvider: operation.executionProvider,
         commits: operation.commits,
         outcomePath: resolve(
           this.attemptDirectory(milestone),
@@ -3178,13 +3190,23 @@ export class MilestoneOrchestrator {
     const verified = verification.candidate;
     const resultSha256 = verification.authoritativeResultSha256;
     const copiedResultPath = verification.authoritative?.copiedResultPath;
-    if (!verified || !resultSha256 || !copiedResultPath) {
+    if (
+      !verified ||
+      !resultSha256 ||
+      !copiedResultPath ||
+      !verification.executionProvider?.completionEligible ||
+      !verification.authoritative?.executionProvider.completionEligible ||
+      !executionProviderIdentitiesEqual(
+        verification.executionProvider,
+        verification.authoritative.executionProvider,
+      )
+    ) {
       await this.escalateCandidateIdentityDrift(
         id,
         "review-entry",
         verified,
         null,
-        "Persisted verification predates the candidate identity fence; re-verification is required before review.",
+        "Persisted verification predates the candidate identity fence or lacks eligible execution-provider identity; re-verification is required before review.",
       );
       return;
     }
@@ -3389,9 +3411,18 @@ export class MilestoneOrchestrator {
     const verification = milestone.verificationSummaries.at(-1);
     const verificationResultSha256 = verification?.authoritativeResultSha256;
     const runId = this.stateValue.run.id;
-    if (!verificationResultSha256 || !runId)
+    if (
+      !verificationResultSha256 ||
+      !runId ||
+      !verification?.executionProvider?.completionEligible ||
+      !verification.authoritative?.executionProvider.completionEligible ||
+      !executionProviderIdentitiesEqual(
+        verification.executionProvider,
+        verification.authoritative.executionProvider,
+      )
+    )
       throw new Error(
-        "Target integration requires an active run and pinned verification result hash.",
+        "Target integration requires an active run, pinned verification result hash, and completion-eligible execution-provider identity.",
       );
     const outcomePath = resolve(
       this.attemptDirectory(milestone),
@@ -3409,6 +3440,7 @@ export class MilestoneOrchestrator {
       workspaceBranch: milestone.workspace.branch,
       candidate: verified,
       verificationResultSha256,
+      executionProvider: verification.executionProvider,
       commits,
       outcomePath,
       runId,

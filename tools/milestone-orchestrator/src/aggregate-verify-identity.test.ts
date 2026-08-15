@@ -51,6 +51,7 @@ async function verifierFixture(mutator: string): Promise<string> {
   for (const path of [
     "scripts/verify.mjs",
     "tools/milestone-orchestrator/src/process-supervisor.ts",
+    "tools/milestone-orchestrator/src/execution-provider-identity.ts",
   ]) {
     await mkdir(dirname(join(root, path)), { recursive: true });
     await cp(join(repositoryRoot, path), join(root, path));
@@ -190,8 +191,33 @@ describe("aggregate verifier end-of-run identity", () => {
         fields: string[];
       };
       const completion = result["completion"] as { reasons: string[] };
+      const executionProvider = result["executionProvider"] as Record<
+        string,
+        unknown
+      >;
       expect(identityDrift).toEqual({ detected: false, fields: [] });
       expect(completion.reasons).not.toContain("candidate_identity_drift");
+      expect(completion.reasons).toContain(
+        "execution_provider_not_completion_eligible",
+      );
+      expect(executionProvider).toMatchObject({
+        provider: "trusted-container",
+        capabilityStatus: "invalid-configuration",
+        controlPlaneBound: false,
+        completionEligible: false,
+      });
+      const manifest = JSON.parse(
+        await readFile(
+          join(root, "artifacts", "ignored-control-case", "run-manifest.json"),
+          "utf8",
+        ),
+      ) as Record<string, unknown>;
+      expect(manifest["executionProvider"]).toEqual(executionProvider);
+      for (const stage of result["stages"] as {
+        commands: { executionProvider: unknown }[];
+      }[])
+        for (const command of stage.commands)
+          expect(command.executionProvider).toEqual(executionProvider);
       const candidate = result["candidate"] as Record<string, unknown>;
       const candidateFinal = result["candidateFinal"] as Record<
         string,

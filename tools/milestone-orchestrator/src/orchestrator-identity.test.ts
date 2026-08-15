@@ -20,7 +20,11 @@ import { createMilestoneRecord } from "./milestone-state.js";
 import { MilestoneOrchestrator } from "./orchestrator.js";
 import { StateStore, createInitialState } from "./state-store.js";
 import { TelemetryStore } from "./telemetry-store.js";
-import { validConfig, validProposal } from "../test/fixtures.js";
+import {
+  trustedTestExecutionProviderIdentity,
+  validConfig,
+  validProposal,
+} from "../test/fixtures.js";
 
 const NOW = "2026-08-02T18:00:00.000Z";
 const temporaryDirectories: string[] = [];
@@ -77,6 +81,7 @@ function authoritativeIncrement(
     previouslyPassingStageIds: [],
     sourceResultPath: "artifacts/identity-run/result.json",
     copiedResultPath,
+    executionProvider: trustedTestExecutionProviderIdentity(),
   };
 }
 
@@ -156,7 +161,7 @@ async function reviewingFixture(options?: {
     .digest("hex");
 
   const summary: VerificationSummary = {
-    schemaVersion: "1.1.0",
+    schemaVersion: "1.2.0",
     attempt: 1,
     status: "PASS",
     disposition: "incremental-readiness",
@@ -174,6 +179,9 @@ async function reviewingFixture(options?: {
       : resultSha256,
     changedPaths: ["change.txt"],
     artifactPaths: [join(verificationDirectory, "verification-summary.json")],
+    executionProvider: options?.legacyUnpinnedSummary
+      ? null
+      : trustedTestExecutionProviderIdentity(),
   };
 
   const proposal = validProposal({

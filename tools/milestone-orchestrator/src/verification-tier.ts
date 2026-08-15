@@ -35,7 +35,11 @@ import {
   loadVerificationScopePolicy,
 } from "./config.js";
 import { assertManifestProtectedPathsCovered } from "./protected-roots.js";
-import { runCommand } from "./command-runner.js";
+import {
+  createCandidateExecutionProvider,
+  type CandidateExecutionProvider,
+} from "./execution-provider.js";
+import { executionProviderIdentitiesEqual } from "./execution-provider-identity.js";
 import { parseVitestCounts } from "./invariant-suite.js";
 import { buildPackageGraph } from "./package-graph.js";
 import { redactSensitiveText } from "./redaction.js";
@@ -299,12 +303,12 @@ export async function tierCommandRecord(input: {
   readonly candidate: TierCandidateIdentity;
   readonly selectedCheckIds: readonly string[];
   readonly actualCheckIds: readonly string[];
-  readonly executeCommand?: typeof runCommand;
+  readonly executionProvider: CandidateExecutionProvider;
 }): Promise<VerificationTierCommandRecord> {
   const directoryName = `${String(input.index + 1).padStart(2, "0")}-${input.command.id.replaceAll(/[^A-Za-z0-9._-]/g, "-")}`;
   const commandRoot = resolve(input.runRoot, "commands", directoryName);
   const evidenceRoot = resolve(commandRoot, "evidence");
-  const execution = await (input.executeCommand ?? runCommand)(
+  let execution = await input.executionProvider.execute(
     commandFromPlan(input.command),
     {
       workingDirectory: input.repositoryRoot,
@@ -334,6 +338,23 @@ export async function tierCommandRecord(input: {
         : {}),
     },
   );
+  if (
+    !executionProviderIdentitiesEqual(
+      execution.executionProvider,
+      input.executionProvider.identity,
+    )
+  ) {
+    execution = {
+      ...execution,
+      status: "ERROR",
+      message:
+        "Tier command result is missing the controller-owned execution-provider identity.",
+      receipt: null,
+      receiptAbsenceReason:
+        "Execution-provider identity did not match the tier controller boundary.",
+      executionProvider: input.executionProvider.identity,
+    };
+  }
   let validated: ValidatedCommandReceipt | null = null;
   let receiptAbsenceReason: string | null = null;
   let evidenceFailure: string | null = null;
@@ -356,8 +377,12 @@ export async function tierCommandRecord(input: {
     receiptAbsenceReason =
       "The command did not pass; failing commands retain no receipt.";
   }
+  const trustedProviderUnavailable =
+    input.executionProvider.identity.provider === "trusted-container" &&
+    !input.executionProvider.identity.completionEligible;
   const failureClass =
     evidenceFailure !== null ||
+    trustedProviderUnavailable ||
     execution.status === "ERROR" ||
     execution.status === "TIMEOUT" ||
     execution.exitCode === 3
@@ -389,6 +414,7 @@ export async function tierCommandRecord(input: {
     testCounts: validated ? await countsFromReceipt(validated) : null,
     failureClass,
     message: evidenceFailure ?? execution.message,
+    executionProvider: input.executionProvider.identity,
   };
 }
 
@@ -440,6 +466,7 @@ async function runExactVerification(input: {
   readonly telemetry: TelemetryStore | null;
   readonly selectedCheckIds: readonly string[];
   readonly actualCheckIds: readonly string[];
+  readonly executionProvider: CandidateExecutionProvider;
 }): Promise<{
   readonly command: VerificationTierCommandRecord;
   readonly exact: ExactVerificationIndex | null;
@@ -450,28 +477,45 @@ async function runExactVerification(input: {
     "commands",
     `${String(input.commandIndex + 1).padStart(2, "0")}-${EXACT_CHECK_ID}`,
   );
-  const executed = await runCommand(exactNoArgumentVerificationCommand(), {
-    workingDirectory: input.repositoryRoot,
-    artifactDirectory: resolve(commandRoot, "logs"),
-    timeoutMs: DEFAULT_COMMAND_TIMEOUT_MS,
-    ...(input.telemetry
-      ? {
-          telemetry: {
-            store: input.telemetry,
-            phase: "verification" as const,
-            candidate: {
-              baseCommit: input.candidate.baseCommit,
-              commit: input.candidate.gitCommit,
-              tree: input.candidate.gitTree,
-              dirty: input.candidate.workingTreeDirty,
+  let executed = await input.executionProvider.execute(
+    exactNoArgumentVerificationCommand(),
+    {
+      workingDirectory: input.repositoryRoot,
+      artifactDirectory: resolve(commandRoot, "logs"),
+      timeoutMs: DEFAULT_COMMAND_TIMEOUT_MS,
+      ...(input.telemetry
+        ? {
+            telemetry: {
+              store: input.telemetry,
+              phase: "verification" as const,
+              candidate: {
+                baseCommit: input.candidate.baseCommit,
+                commit: input.candidate.gitCommit,
+                tree: input.candidate.gitTree,
+                dirty: input.candidate.workingTreeDirty,
+              },
+              checkSetId: "verification-tier-exact-readiness",
+              selectedCheckIds: input.selectedCheckIds,
+              actualCheckIds: input.actualCheckIds,
             },
-            checkSetId: "verification-tier-exact-readiness",
-            selectedCheckIds: input.selectedCheckIds,
-            actualCheckIds: input.actualCheckIds,
-          },
-        }
-      : {}),
-  });
+          }
+        : {}),
+    },
+  );
+  if (
+    !executionProviderIdentitiesEqual(
+      executed.executionProvider,
+      input.executionProvider.identity,
+    )
+  ) {
+    executed = {
+      ...executed,
+      status: "ERROR",
+      message:
+        "Exact aggregate result is missing the controller-owned execution-provider identity.",
+      executionProvider: input.executionProvider.identity,
+    };
+  }
   let exact: ExactVerificationIndex | null = null;
   let exactArtifactCount = 0;
   let exactArtifactBytes = 0;
@@ -519,6 +563,7 @@ async function runExactVerification(input: {
       observedExitCode: executed.exitCode,
       resultPath,
       copiedResultPath,
+      expectedExecutionProvider: input.executionProvider.identity,
       ...(history ? { readinessHistory: history } : {}),
     });
     const candidate = parsed["candidate"] as
@@ -544,6 +589,7 @@ async function runExactVerification(input: {
       selectedByOverride: false,
       candidateCommit: input.candidate.gitCommit,
       candidateTree: input.candidate.gitTree,
+      executionProvider: input.executionProvider.identity,
     };
     const retainedArtifacts = Array.isArray(parsed["stages"])
       ? parsed["stages"].flatMap((stage) => {
@@ -621,6 +667,7 @@ async function runExactVerification(input: {
       testCounts: null,
       failureClass,
       message,
+      executionProvider: input.executionProvider.identity,
     },
   };
 }
@@ -682,6 +729,7 @@ export interface RunVerificationTierInput {
   readonly baseCommit?: string;
   readonly requireClean?: boolean;
   readonly focusedCheckIds?: readonly string[];
+  readonly executionProvider?: CandidateExecutionProvider;
 }
 
 export async function runVerificationTier(
@@ -701,6 +749,8 @@ export async function runVerificationTier(
   // the default manifest: every protected path it requires is one the
   // controller actually enforces.
   const config = await loadConfig(input.repositoryRoot);
+  const executionProvider =
+    input.executionProvider ?? createCandidateExecutionProvider(config);
   assertManifestProtectedPathsCovered(manifest.value, config.protectedPaths);
   const baseCommit = input.baseCommit ?? manifest.value.d031BaselineCommit;
   const candidate = collectTierCandidateIdentity(
@@ -798,6 +848,7 @@ export async function runVerificationTier(
           candidate,
           selectedCheckIds: plan.selectedCheckIds,
           actualCheckIds: plan.actualCheckIds,
+          executionProvider,
         });
         commandRecords.push(record);
         if (record.status !== "PASS") break;
@@ -820,6 +871,7 @@ export async function runVerificationTier(
         telemetry,
         selectedCheckIds: plan.selectedCheckIds,
         actualCheckIds: [...plan.actualCheckIds, EXACT_CHECK_ID],
+        executionProvider,
       });
       commandRecords.push(exactRun.command);
       exact = exactRun.exact;
@@ -883,6 +935,8 @@ export async function runVerificationTier(
       status: outcome.status,
       exitCode: outcome.exitCode,
       authoritative: false,
+      executionProvider: executionProvider.identity,
+      providerCompletionEligible: executionProvider.identity.completionEligible,
       candidate: {
         baseCommit: candidate.baseCommit,
         gitCommit: candidate.gitCommit,

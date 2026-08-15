@@ -16,6 +16,11 @@ import {
 } from "./controller-lease.js";
 import type { OrchestratorConfig } from "./contracts.js";
 import {
+  inspectTrustedExecutionCapability,
+  type ExecutionProviderCapabilityProbe,
+  type TrustedExecutionCapability,
+} from "./execution-provider.js";
+import {
   assertManifestProtectedPathsCovered,
   buildCanonicalProtectedSet,
 } from "./protected-roots.js";
@@ -38,7 +43,7 @@ import {
   type RetentionApplyRecoveryClassification,
 } from "./retention-apply-operation.js";
 
-export const DOCTOR_SCHEMA_VERSION = "1.6.0" as const;
+export const DOCTOR_SCHEMA_VERSION = "1.7.0" as const;
 
 type CheckStatus = "pass" | "attention";
 
@@ -52,6 +57,7 @@ export interface DoctorDependencies {
   readonly homeDirectory?: string;
   readonly gitProbe?: (repositoryRoot: string) => DoctorGitProbe;
   readonly headProbe?: (repositoryRoot: string) => string | null;
+  readonly executionProviderProbe?: ExecutionProviderCapabilityProbe;
 }
 
 export interface DoctorDiagnostic {
@@ -81,6 +87,14 @@ export interface DoctorDiagnostic {
     readonly configuration: {
       readonly status: CheckStatus;
       readonly valid: boolean;
+    };
+    readonly executionProvider: {
+      readonly status: CheckStatus;
+      readonly configuredProvider:
+        "trusted-container" | "unsafe-local-diagnostic" | null;
+      readonly trustedAvailable: boolean;
+      readonly trustedCapability: TrustedExecutionCapability | null;
+      readonly message: string;
     };
     readonly state: {
       readonly status: CheckStatus;
@@ -535,6 +549,28 @@ export async function runDoctorDiagnostic(
     status: config ? "pass" : "attention",
     valid: config !== null,
   };
+  const trustedCapability = config
+    ? inspectTrustedExecutionCapability(
+        config.candidateExecution.trustedContainer,
+        dependencies.executionProviderProbe,
+      )
+    : null;
+  const executionProvider: DoctorDiagnostic["checks"]["executionProvider"] = {
+    status:
+      config?.candidateExecution.mode === "trusted-container" &&
+      trustedCapability?.available === true
+        ? "pass"
+        : "attention",
+    configuredProvider: config?.candidateExecution.mode ?? null,
+    trustedAvailable: trustedCapability?.available ?? false,
+    trustedCapability,
+    message: !config
+      ? "Execution-provider capability cannot be evaluated until configuration is valid."
+      : config.candidateExecution.mode === "unsafe-local-diagnostic"
+        ? "Unsafe local diagnostics are explicitly selected and cannot support completion or integration."
+        : (trustedCapability?.message ??
+          "Trusted execution capability is unavailable."),
+  };
   const head = (dependencies.headProbe ?? defaultHeadProbe)(repositoryRoot);
   const state = await stateOutcome(repositoryRoot, config, head);
   const codexAuthentication = await authenticationCheck(
@@ -550,6 +586,7 @@ export async function runDoctorDiagnostic(
     runtimePins,
     gitCleanliness,
     configuration,
+    executionProvider,
     state,
     codexAuthentication,
     protectedTrustRoots,

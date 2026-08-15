@@ -111,9 +111,19 @@ report `NOT_READY`, never pass.
    pnpm loop:demo-safety
    ```
 
-   `loop:doctor` validates runtime pins, config, state readability, and SDK
-   authentication; `loop:demo-safety` proves retry, recovery, retry-limit
-   stop, and protected-file rejection end to end.
+   `loop:doctor` validates runtime pins, config, state readability, SDK
+   authentication, and the complete configured execution-provider capability;
+   Docker or Podman presence alone is never reported as trusted readiness.
+   `loop:demo-safety` proves retry, recovery, retry-limit stop, and
+   protected-file rejection end to end.
+
+   Candidate-authored build, test, and exact `pnpm verify` commands use the
+   controller-owned `candidateExecution` provider. The default
+   `trusted-container` mode deliberately fails closed in WP3c until the WP3d
+   pinned OCI executor exists, with no automatic local fallback. Explicit
+   `unsafe-local-diagnostic` mode still uses the shared bounded supervisor, but
+   its evidence is visibly marked, completion-ineligible, and cannot authorize
+   target integration or reconciliation adoption.
 
 6. **Run the loop**: `pnpm loop:plan` for one planning pass, `pnpm loop:run`
    for the autonomous loop, `pnpm loop:status` / `loop:resume` /
@@ -151,7 +161,7 @@ report `NOT_READY`, never pass.
    pushes do not include either private ref.
 
    Isolated clone creation is a durable state operation, not a direct
-   filesystem call. State schema `1.8.0` records one exclusive pending
+   filesystem call. State schema `1.9.0` records one exclusive pending
    operation; a `workspace-create` intent is bound to the exact input state
    generation before any directory or clone side effect. The clone is built
    under a unique controller-derived `.create-<hash>` path, made standalone and
@@ -171,8 +181,9 @@ report `NOT_READY`, never pass.
    Approved target integration uses the same exclusive operation authority.
    A strict `target-integrate` intent pins the run, milestone, attempt, exact
    input generation, target base and branch, standalone workspace, approved
-   candidate identity and commits, verification-result digest, and canonical
-   outcome paths before `git-outcome.json`, fetch, or fast-forward side
+   candidate identity and commits, verification-result digest, completion-
+   eligible trusted execution-provider identity, and canonical outcome paths
+   before `git-outcome.json`, fetch, or fast-forward side
    effects. Leased restart revalidates protected files and candidate identity,
    then resumes only from the exact clean base or adopts only the exact clean
    candidate. Deterministic pending/integrated outcome bytes are adopted or
@@ -182,8 +193,10 @@ report `NOT_READY`, never pass.
    or unexpected state is preserved with a durable blocked diagnostic. A
    reviewer approval without the operation never authorizes implicit target
    adoption. `loop:status` and `loop:doctor` classify recovery read-only.
-   Canonical `1.4.0`/`1.5.0`/`1.6.0`/`1.7.0` state is migrated virtually on
-   read and becomes `1.8.0` on its next successful CAS publication.
+   Canonical `1.4.0`/`1.5.0`/`1.6.0`/`1.7.0`/`1.8.0` state is migrated
+   virtually on read and becomes `1.9.0` on its next successful CAS
+   publication. A legacy pending target integration is preserved as an
+   explicit non-adoptable block when it predates provider attestation.
 
    Terminal workspace cleanup is also an exclusive durable state operation.
    A strict `workspace-cleanup` intent pins the exact state generation,

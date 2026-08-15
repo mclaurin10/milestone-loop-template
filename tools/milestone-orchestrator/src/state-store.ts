@@ -13,6 +13,7 @@ import { dirname, resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 
 import {
+  LEGACY_VERIFICATION_SUMMARY_SCHEMA_VERSION,
   STATE_SCHEMA_VERSION,
   type OrchestratorState,
   type ProtectedFileRecord,
@@ -455,7 +456,124 @@ export function migrateOrchestratorState(value: unknown): unknown {
     };
   }
   if (migrated["schemaVersion"] === "1.7.0")
-    migrated = { ...migrated, schemaVersion: STATE_SCHEMA_VERSION };
+    migrated = { ...migrated, schemaVersion: "1.8.0" };
+  if (migrated["schemaVersion"] === "1.8.0") {
+    const milestones = Array.isArray(migrated["milestones"])
+      ? migrated["milestones"].map((entry) => {
+          if (
+            typeof entry !== "object" ||
+            entry === null ||
+            Array.isArray(entry)
+          )
+            return entry;
+          const milestone = entry as Record<string, unknown>;
+          const summaries = Array.isArray(milestone["verificationSummaries"])
+            ? milestone["verificationSummaries"].map((summary) =>
+                typeof summary === "object" &&
+                summary !== null &&
+                !Array.isArray(summary) &&
+                (summary as Record<string, unknown>)["schemaVersion"] ===
+                  LEGACY_VERIFICATION_SUMMARY_SCHEMA_VERSION
+                  ? {
+                      ...(summary as Record<string, unknown>),
+                      schemaVersion: "1.2.0",
+                      executionProvider: null,
+                    }
+                  : summary,
+              )
+            : milestone["verificationSummaries"];
+          return { ...milestone, verificationSummaries: summaries };
+        })
+      : migrated["milestones"];
+    const pendingOperation =
+      typeof migrated["pendingOperation"] === "object" &&
+      migrated["pendingOperation"] !== null &&
+      !Array.isArray(migrated["pendingOperation"]) &&
+      (migrated["pendingOperation"] as Record<string, unknown>)["kind"] ===
+        "target-integrate"
+        ? (() => {
+            const operation = migrated["pendingOperation"] as Record<
+              string,
+              unknown
+            >;
+            const observedAt =
+              typeof operation["updatedAt"] === "string"
+                ? operation["updatedAt"]
+                : typeof operation["createdAt"] === "string"
+                  ? operation["createdAt"]
+                  : "1970-01-01T00:00:00.000Z";
+            const preservedPaths = [
+              operation["workspacePath"],
+              operation["outcomePath"],
+              operation["outcomeTemporaryPath"],
+            ].filter((path): path is string => typeof path === "string");
+            return {
+              ...operation,
+              executionProvider: null,
+              phase: "blocked",
+              diagnostic: {
+                classification: "execution-provider-ineligible",
+                message:
+                  "Legacy target integration predates execution-provider attestation and cannot resume or adopt.",
+                observedAt,
+                targetHead: null,
+                preservedPaths,
+                quarantinePath: null,
+              },
+            };
+          })()
+        : migrated["pendingOperation"];
+    const migrateReconciliationRecord = (record: unknown): unknown => {
+      if (
+        typeof record !== "object" ||
+        record === null ||
+        Array.isArray(record)
+      )
+        return record;
+      const value = record as Record<string, unknown>;
+      const exactVerification =
+        typeof value["exactVerification"] === "object" &&
+        value["exactVerification"] !== null &&
+        !Array.isArray(value["exactVerification"])
+          ? {
+              ...(value["exactVerification"] as Record<string, unknown>),
+              executionProvider: null,
+            }
+          : value["exactVerification"];
+      return { ...value, exactVerification };
+    };
+    const reconciliation =
+      typeof migrated["reconciliation"] === "object" &&
+      migrated["reconciliation"] !== null &&
+      !Array.isArray(migrated["reconciliation"])
+        ? {
+            ...(migrated["reconciliation"] as Record<string, unknown>),
+            active: migrateReconciliationRecord(
+              (migrated["reconciliation"] as Record<string, unknown>)["active"],
+            ),
+            history: Array.isArray(
+              (migrated["reconciliation"] as Record<string, unknown>)[
+                "history"
+              ],
+            )
+              ? (
+                  (migrated["reconciliation"] as Record<string, unknown>)[
+                    "history"
+                  ] as unknown[]
+                ).map(migrateReconciliationRecord)
+              : (migrated["reconciliation"] as Record<string, unknown>)[
+                  "history"
+                ],
+          }
+        : migrated["reconciliation"];
+    migrated = {
+      ...migrated,
+      schemaVersion: STATE_SCHEMA_VERSION,
+      milestones,
+      pendingOperation,
+      reconciliation,
+    };
+  }
   return migrated;
 }
 

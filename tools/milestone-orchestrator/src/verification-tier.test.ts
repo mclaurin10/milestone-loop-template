@@ -13,6 +13,7 @@ import {
   loadVerificationManifest,
   loadVerificationScopePolicy,
 } from "./config.js";
+import { createCandidateExecutionProvider } from "./execution-provider.js";
 import { validateVerificationTierResult } from "./schema.js";
 import {
   coordinateTierOutcome,
@@ -21,6 +22,11 @@ import {
   tierCommandRecord,
   tierIdentityDrift,
 } from "./verification-tier.js";
+import {
+  trustedTestExecutionProvider,
+  trustedTestExecutionProviderIdentity,
+  validConfig,
+} from "../test/fixtures.js";
 
 const repositoryRoot = resolve(import.meta.dirname, "../../..");
 
@@ -43,6 +49,7 @@ function passingCommand(): VerificationTierCommandRecord {
     testCounts: null,
     failureClass: null,
     message: "passed",
+    executionProvider: trustedTestExecutionProviderIdentity(),
   };
 }
 
@@ -58,6 +65,7 @@ function exactNotReady(): ExactVerificationIndex {
     selectedByOverride: false,
     candidateCommit: "b".repeat(40),
     candidateTree: "c".repeat(40),
+    executionProvider: trustedTestExecutionProviderIdentity(),
   };
 }
 
@@ -260,7 +268,7 @@ describe("tier focused-command classification", () => {
       },
       selectedCheckIds: [execution.id],
       actualCheckIds: [execution.id],
-      executeCommand: async () => execution,
+      executionProvider: trustedTestExecutionProvider(async () => execution),
     });
   }
 
@@ -326,6 +334,53 @@ describe("tier focused-command classification", () => {
       }),
     ).toEqual({ status: "ERROR", exitCode: 3 });
   });
+
+  it("classifies an unavailable trusted provider as infrastructure NOT_READY", async () => {
+    const runRoot = await mkdtemp(join(tmpdir(), "tier-provider-unavailable-"));
+    temporaryDirectories.push(runRoot);
+    const provider = createCandidateExecutionProvider(validConfig());
+    const record = await tierCommandRecord({
+      repositoryRoot: runRoot,
+      tier: "candidate",
+      runRoot,
+      index: 0,
+      command: {
+        id: "test-invariants",
+        argv: ["pnpm", "test:invariants"],
+        tiers: ["candidate"],
+        expectedArtifactKinds: ["orchestrator-vitest-report"],
+      },
+      telemetry: null,
+      candidate: {
+        baseCommit: "a".repeat(40),
+        gitCommit: "b".repeat(40),
+        gitTree: "c".repeat(40),
+        workingTreeDirty: false,
+        changedPaths: [],
+      },
+      selectedCheckIds: ["test-invariants"],
+      actualCheckIds: ["test-invariants"],
+      executionProvider: provider,
+    });
+
+    expect(record).toMatchObject({
+      status: "NOT_READY",
+      exitCode: null,
+      failureClass: "infrastructure",
+      executionProvider: {
+        provider: "trusted-container",
+        capabilityStatus: "missing-implementation",
+        completionEligible: false,
+      },
+    });
+    expect(
+      coordinateTierOutcome({
+        tier: "candidate",
+        focusedCommands: [record],
+        exactVerification: null,
+      }),
+    ).toEqual({ status: "ERROR", exitCode: 3 });
+  });
 });
 
 describe("tier end-of-run identity", () => {
@@ -363,7 +418,7 @@ describe("tier end-of-run identity", () => {
       workingTreeDirty: false,
     };
     const base = {
-      schemaVersion: "1.1.0",
+      schemaVersion: "1.2.0",
       runId: "candidate-fixture",
       tier: "candidate" as const,
       status: "PASS" as const,
@@ -380,6 +435,8 @@ describe("tier end-of-run identity", () => {
       fullClosureCheckIds: [],
       commands: [],
       exactVerification: null,
+      executionProvider: trustedTestExecutionProviderIdentity(),
+      providerCompletionEligible: true,
       candidateFinal: candidate,
       identityDrift: { detected: false, fields: [] },
       reviewRequired: false,
@@ -389,6 +446,25 @@ describe("tier end-of-run identity", () => {
       durationMs: 1000,
     };
     expect(validateVerificationTierResult(base).valid).toBe(true);
+
+    const unsafeProvider = createCandidateExecutionProvider(
+      validConfig({
+        candidateExecution: {
+          ...validConfig().candidateExecution,
+          mode: "unsafe-local-diagnostic",
+        },
+      }),
+    ).identity;
+    const command = passingCommand();
+    expect(
+      validateVerificationTierResult({
+        ...base,
+        selectedCheckIds: [command.id],
+        actualCheckIds: [command.id],
+        fullClosureCheckIds: [command.id],
+        commands: [{ ...command, executionProvider: unsafeProvider }],
+      }).valid,
+    ).toBe(false);
 
     const driftedWithoutError = {
       ...base,

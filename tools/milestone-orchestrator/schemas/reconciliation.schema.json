@@ -87,7 +87,8 @@
             "status",
             "exitCode",
             "disposition",
-            "exactResult"
+            "exactResult",
+            "executionProvider"
           ],
           "properties": {
             "path": { "$ref": "#/$defs/path" },
@@ -97,7 +98,13 @@
             "status": { "const": "NOT_READY" },
             "exitCode": { "const": 2 },
             "disposition": { "const": "incremental-readiness" },
-            "exactResult": { "$ref": "#/$defs/artifactReference" }
+            "exactResult": { "$ref": "#/$defs/artifactReference" },
+            "executionProvider": {
+              "oneOf": [
+                { "$ref": "#/$defs/executionProvider" },
+                { "type": "null" }
+              ]
+            }
           }
         }
       ]
@@ -188,6 +195,63 @@
     }
   },
   "$defs": {
+    "executionProvider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "provider",
+        "implementation",
+        "runtime",
+        "imageDigest",
+        "mountPolicyVersion",
+        "resourceLimitProfile",
+        "networkDisposition",
+        "capabilityId",
+        "capabilityStatus",
+        "controlPlaneBound",
+        "completionEligible"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "provider": {
+          "enum": ["trusted-container", "unsafe-local-diagnostic"]
+        },
+        "implementation": { "type": ["string", "null"], "minLength": 1 },
+        "runtime": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "version"],
+          "properties": {
+            "name": { "type": ["string", "null"], "minLength": 1 },
+            "version": { "type": ["string", "null"], "minLength": 1 }
+          }
+        },
+        "imageDigest": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+          ]
+        },
+        "mountPolicyVersion": { "type": "string", "minLength": 1 },
+        "resourceLimitProfile": { "type": "string", "minLength": 1 },
+        "networkDisposition": { "enum": ["denied", "host-inherited"] },
+        "capabilityId": { "$ref": "#/$defs/sha256" },
+        "capabilityStatus": {
+          "enum": [
+            "ready",
+            "missing-implementation",
+            "missing-runtime",
+            "missing-pinned-image",
+            "policy-mismatch",
+            "unattested",
+            "invalid-configuration"
+          ]
+        },
+        "controlPlaneBound": { "type": "boolean" },
+        "completionEligible": { "type": "boolean" }
+      }
+    },
     "path": {
       "type": "string",
       "minLength": 1,
