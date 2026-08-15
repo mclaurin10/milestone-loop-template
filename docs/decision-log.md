@@ -3,6 +3,51 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-14 — Fail-closed candidate execution provider control plane (WP3c)
+
+**Decision.** Candidate-authored focused verification and exact aggregate
+commands now resolve through one controller-owned execution-provider boundary.
+`trusted-container` is the default and every legacy config migration selects
+it; until WP3d supplies the pinned OCI executor, it returns a deterministic
+NOT_READY/infrastructure result before invoking any candidate launch function.
+`unsafe-local-diagnostic` exists only as explicit controller configuration,
+uses the WP3a/WP3b bounded supervisor, records host-inherited network and the
+absence of image/mount containment, and is always completion-ineligible. There
+is no automatic fallback between modes.
+
+Provider evidence uses one strict, versioned identity containing mode,
+implementation, runtime, image digest, mount-policy version, resource profile,
+network disposition, capability identity/status, and completion eligibility.
+The controller overwrites candidate-supplied identity and every
+completion-relevant parse, review, target-integration, readiness-history, and
+reconciliation boundary validates semantic equality with the authoritative
+identity. Direct focused diagnostics are explicitly unattested/ineligible.
+Legacy stored evidence migrates to `null`/unattested rather than being blessed;
+a legacy pending target-integration operation with no provider attestation is
+preserved as blocked with an `execution-provider-ineligible` diagnostic.
+Doctor reports implementation, runtime, pinned image, and policy facts
+independently, so runtime discovery cannot imply a complete trusted capability.
+
+**Why.** A bounded host process is not containment, and candidate evidence
+cannot attest the boundary that executed it. Making policy and identity
+controller-owned closes the adoption/control-plane gap now while failing
+honestly until the separate WP3d data-plane executor exists. Alternatives
+rejected: implicit local fallback (would silently weaken containment), treating
+Docker/Podman discovery as readiness (does not prove the executor/image/policy),
+accepting structurally similar candidate identity (self-attestation), and
+retroactively marking legacy local evidence trusted (fabricated provenance).
+
+**Known residuals.** WP3c does not implement OCI/native containment,
+disposable clones, mount construction, resource enforcement, or adversarial
+escape coverage. The two POSIX-only process-tree tests remain explicit WP5
+skips on Windows. Product placeholders, calibration, autonomous-readiness, and
+human-verification gates remain open; no completion/readiness claim is made.
+
+**Affected files.** `execution-provider-identity.ts`, `execution-provider.ts`,
+config/schema/state/verifier/tier/integration/reconciliation/doctor paths and
+tests, `scripts/verify.mjs`, default/example configs, `CONTRACT.md`, and
+`README.md`.
+
 ## 2026-08-08 — Shared supervision at verifier and evidence trust roots (WP3b)
 
 **Decision.** Every process launch owned directly by `scripts/verify.mjs` or

@@ -3,6 +3,64 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-14 — WP3c fail-closed execution provider control plane
+
+**Objective.** Add the controller-owned provider selection and evidence
+identity required before candidate-authored verification can be moved into a
+pinned OCI environment, without claiming that WP3d containment already exists
+or weakening the existing supervisor, receipt, integration, and readiness
+gates.
+
+**Outcome.** Config schema `1.6.0` defaults and migrates every prior version to
+`trusted-container`; the absent WP3d executor fails closed before candidate
+spawn and never falls back. Explicit `unsafe-local-diagnostic` execution uses
+the bounded shared supervisor and stays completion-ineligible. A strict
+provider identity is propagated through command/tier/aggregate/state/target/
+reconciliation evidence and is validated for presence, eligibility, and exact
+semantic equality wherever evidence could support adoption. Candidate-returned
+identity is not trusted. State migrations preserve old evidence as
+unattested/ineligible and block legacy pending target operations safely. Doctor
+now distinguishes implementation, runtime, pinned-image, and policy failures.
+
+**Verification.** All commands used Node `24.18.0` and pnpm `11.15.1`.
+The complete focused matrix passed 46/46 suites and 205 tests with 0 failures
+and exactly the two explicit WP5 POSIX skips at
+`artifacts/manual/invariant-vitest-520/`; its 71,507-byte report matches
+SHA-256 `4634557d8296a2e4d3cddc0a606bb71fc1f47cbc8fd37ea80722cfac4b8ddf1b`.
+The later hardening subset passed 65/65 at
+`artifacts/manual/invariant-vitest-7812/`. The final isolated orchestrator
+aggregate passed 137/137 suites, 436 tests, 0 failures, and the same two skips
+at `artifacts/manual/test-orchestrator-10220/`; its 152,919-byte report matches
+SHA-256 `fcb4d768222acc67427da7fcf4175d3fe6b3d45c1db5d336699e6cbc0de60cd3`.
+The earlier unit aggregate passed 446 tests, 0 failures, and the same two skips
+at `artifacts/manual/test-unit-21396/`. A user-directed stop of a redundant
+pre-freeze rerun left `artifacts/manual/test-unit-1420/` with no receipt, so it
+is not cited as evidence.
+
+Receipt-owning typecheck, lint, and format gates passed at
+`artifacts/manual/typecheck-3064/`, `artifacts/manual/lint-25080/`, and
+`artifacts/manual/format-check-13384/`; every receipt and declared artifact
+byte count/SHA-256 was independently recomputed and matched. Safety demo passed
+all six scenarios at
+`artifacts/orchestrator/runs/safety-demonstration/safety-demonstration-20260815010034386-d9e187ef.json`.
+The immutable lock remains
+`d1166088b00c54af65e8654188adc58a3cabd9d7908820809fe66af28c933050`,
+all governed baseline/active hashes remain equal, and the protected human file
+remains outside the commit at blob
+`d0abdd24f404d9dc335818c355e39f7cfc531300`. A single post-freeze consolidated
+verification is the final handoff check; no process-supervision suites are run
+concurrently and already-valid focused/orchestrator evidence is reused.
+
+**Commit.** `cc17d8e5f22beb3eb3be9871bb6fed5efa9c031b` (tree
+`44050eba6c69bdf9ced6cc388a18c51b72348576`).
+
+**Known gaps.** WP3d must implement the pinned OCI executor, disposable clone,
+mount/network/resource containment, and adversarial escape matrix. The two
+POSIX-only process-tree tests remain explicit WP5 skips; no unsupported-platform
+coverage is claimed. Product placeholders, calibration, autonomous-readiness,
+and human-verification gates remain open. This increment makes no product
+completion or readiness claim and is not pushed.
+
 ## 2026-08-08 — WP3b verifier and evidence trust-root supervision
 
 **Objective.** Convert every process launch owned directly by the protected
