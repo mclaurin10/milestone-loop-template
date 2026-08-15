@@ -112,9 +112,13 @@ tsconfig the `typecheck` evidence covers.
   and eligibility). Missing or inconsistent identity fails closed. Only a
   complete `trusted-container` capability can be completion-eligible;
   `unsafe-local-diagnostic` is explicitly selected, supervised, visible, and
-  never eligible for integration or reconciliation adoption. WP3c does not
-  claim OCI containment: the actual executor and disposable container setup
-  are WP3d.
+  never eligible for integration or reconciliation adoption. The WP3d Docker
+  executor must independently inspect the immutable image and the runtime's
+  interpreted policy before launch, run every command from an exact disposable
+  clone in a fresh disposable container, and retain a controller-owned
+  containment report with the daemon version, image-input hash, policy,
+  lifecycle, bounded-volume, cleanup, and exported-artifact facts. Intent-only
+  argv tests or mocked containment are not real containment evidence.
 - **Focused runs**: `--stage <id>` always bundles `environment` and
   `contract-integrity`, and is marked completion-ineligible.
 - **contract-integrity stage**: validates the immutable lock hash, the lock
@@ -247,8 +251,21 @@ rejection of every canonical path including case variants.
 - Node and pnpm exactly matching the package pins.
 - Candidate execution configured under `candidateExecution`. Doctor reports
   missing executor implementation, OCI runtime, pinned image, or isolation
-  policy separately and never infers readiness from Docker/Podman presence
-  alone. There is no trusted-to-local fallback.
+  policy separately and never infers readiness from runtime presence alone.
+  Executor version 1.0.0 supports a reachable Docker Engine; Podman is
+  fail-closed until its interpreted policy has dedicated implementation and
+  real coverage. The configured image must be a local immutable `sha256:` ID
+  whose non-root user and controller-owned image/toolchain/input labels match.
+  There is no trusted-to-local or implicit WSL fallback.
+- Trusted execution needs a controller-owned pnpm v11 store populated for the
+  candidate lockfile. It is mounted read-only and installation is offline,
+  frozen, store-integrity-checked, and copy-materialized into a bounded
+  container-local workspace. The exact clean candidate clone and store are the
+  only host binds and are read-only. Writable workspace/evidence/temp storage
+  is bounded; a read-only in-container preflight must reject linked, special,
+  over-count, or over-byte output before host copy. Only regular, unlinked files
+  under declared roots may then be published, with independently checked size
+  and SHA-256.
 - Git available; the loop clones into `artifacts/orchestrator/workspaces`
   and operates only through validated, contained paths.
 - Codex SDK authentication for planner/worker/reviewer roles

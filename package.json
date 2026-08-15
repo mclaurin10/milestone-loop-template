@@ -16,7 +16,7 @@
   "scripts": {
     "verify": "node scripts/verify.mjs",
     "verify:dependencies": "node tools/placeholder-check.mjs verify:dependencies",
-    "format": "prettier --write scripts tools eslint.config.mjs package.json pnpm-workspace.yaml tsconfig.base.json tsconfig.tools.json vitest.config.ts",
+    "format": "prettier --write scripts tools fixtures/oci-candidate eslint.config.mjs package.json pnpm-workspace.yaml tsconfig.base.json tsconfig.tools.json vitest.config.ts",
     "format:check": "tsx tools/run-tool-evidence.mjs format",
     "lint": "tsx tools/run-tool-evidence.mjs lint",
     "lint:architecture": "node tools/placeholder-check.mjs lint:architecture",
@@ -27,6 +27,7 @@
     "test:unit:fast": "tsx tools/milestone-orchestrator/src/verification-cli.ts fast-unit",
     "test:unit:migrations": "tsx tools/milestone-orchestrator/src/verification-cli.ts migration-unit",
     "test:orchestrator": "tsx tools/run-tool-evidence.mjs orchestrator",
+    "test:oci-container": "tsx tools/milestone-orchestrator/src/container-executor.oci.ts",
     "verify:domain-construction-standard": "node tools/placeholder-check.mjs verify:domain-construction-standard",
     "verify:domain-resources": "node tools/placeholder-check.mjs verify:domain-resources",
     "verify:domain-networks": "node tools/placeholder-check.mjs verify:domain-networks",

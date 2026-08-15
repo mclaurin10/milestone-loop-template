@@ -1,0 +1,21 @@
+{
+  "name": "milestone-loop-oci-candidate-fixture",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "24.18.0"
+  },
+  "packageManager": "pnpm@11.15.1",
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test:smoke": "vitest run --config vitest.config.ts --reporter=json --outputFile=artifacts/vitest-report.json",
+    "verify": "node scripts/verify.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "typescript": "5.9.3",
+    "vitest": "4.1.10"
+  }
+}

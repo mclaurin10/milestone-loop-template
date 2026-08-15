@@ -28,11 +28,14 @@ their contents, guided by the templates.
   worker-escalation policy.
 - `candidateExecution` — the controller-owned execution-provider selection.
   `trusted-container` is the default and never falls back to the host. In this
-  WP3c control-plane increment it remains fail-closed until the WP3d pinned OCI
-  executor exists. A trusted capability is ready only when the executor
-  implementation, configured Docker/Podman runtime and version, digest-pinned
-  image, mount policy, resource-limit profile, and denied-network policy are
-  all available. `unsafe-local-diagnostic` is an explicit operator opt-in; it
+  WP3d data-plane increment a trusted capability is ready only when the
+  executor implementation, reachable Docker Engine/server version, immutable
+  local image ID and labels, mount policy, resource-limit profile, and
+  denied-network policy are all available. Version 1.0.0 intentionally rejects
+  Podman as a policy mismatch pending dedicated interpreted-policy support.
+  Every trusted command uses a fresh exact clone/container and bounded
+  container-local workspace/evidence volumes; only the unchanged image may be
+  reused. `unsafe-local-diagnostic` is an explicit operator opt-in; it
   continues to use the bounded process supervisor, but its results are visibly
   identified, completion-ineligible, and forbidden from target integration or
   reconciliation adoption.

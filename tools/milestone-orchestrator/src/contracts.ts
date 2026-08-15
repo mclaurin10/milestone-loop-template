@@ -588,6 +588,12 @@ export interface CommandExecutionSummary {
   readonly telemetryError?: string;
   readonly supervision?: SupervisionReport;
   readonly executionProvider?: ExecutionProviderIdentity | null;
+  readonly containmentReport?: {
+    readonly schemaVersion: "1.0.0";
+    readonly path: string;
+    readonly sha256: string;
+    readonly bytes: number;
+  } | null;
 }
 
 export type AuthoritativeVerificationDisposition =

@@ -27,6 +27,11 @@ import {
   type CommandRunnerOptions,
 } from "./command-runner.js";
 import { redactSensitiveText } from "./redaction.js";
+import {
+  CONTAINER_EXECUTOR_VERSION,
+  createContainerCommandExecutor,
+  parseContainerImageInspection,
+} from "./container-executor.js";
 
 export const EXECUTION_PROVIDER_CAPABILITY_SCHEMA_VERSION = "1.0.0" as const;
 export const TRUSTED_CONTAINER_IMPLEMENTATION =
@@ -82,7 +87,11 @@ export interface TrustedExecutionCapability {
 }
 
 function runtimeProbe(name: "docker" | "podman") {
-  const result = spawnSync(name, ["--version"], {
+  const args =
+    name === "docker"
+      ? ["version", "--format", "{{.Server.Version}}"]
+      : ["version", "--format", "{{.Version}}"];
+  const result = spawnSync(name, args, {
     encoding: "utf8",
     windowsHide: true,
     timeout: 10_000,
@@ -96,7 +105,10 @@ function runtimeProbe(name: "docker" | "podman") {
 
 export const defaultExecutionProviderCapabilityProbe: ExecutionProviderCapabilityProbe =
   Object.freeze({
-    implementation: () => ({ available: false, version: null }),
+    implementation: () => ({
+      available: true,
+      version: CONTAINER_EXECUTOR_VERSION,
+    }),
     runtime: runtimeProbe,
     image: (runtime: "docker" | "podman", digest: string) => {
       const result = spawnSync(runtime, ["image", "inspect", digest], {
@@ -105,10 +117,20 @@ export const defaultExecutionProviderCapabilityProbe: ExecutionProviderCapabilit
         timeout: 10_000,
         maxBuffer: 1024 * 1024,
       });
-      return { available: !result.error && result.status === 0 };
+      if (result.error || result.status !== 0) return { available: false };
+      try {
+        parseContainerImageInspection(
+          Buffer.from(result.stdout, "utf8"),
+          digest,
+        );
+        return { available: true };
+      } catch {
+        return { available: false };
+      }
     },
     policy: (config: TrustedContainerExecutionConfig) => {
       const compatible =
+        config.runtime === "docker" &&
         config.mountPolicyVersion === TRUSTED_MOUNT_POLICY_VERSION &&
         config.resourceLimitProfile === TRUSTED_RESOURCE_LIMIT_PROFILE &&
         config.networkDisposition === "denied";
@@ -116,7 +138,9 @@ export const defaultExecutionProviderCapabilityProbe: ExecutionProviderCapabilit
         compatible,
         reason: compatible
           ? null
-          : `Trusted execution requires mount policy ${TRUSTED_MOUNT_POLICY_VERSION}, resource profile ${TRUSTED_RESOURCE_LIMIT_PROFILE}, and denied networking.`,
+          : config.runtime !== "docker"
+            ? "Trusted executor version 1.0.0 supports Docker Engine only; Podman policy attestation is not yet implemented."
+            : `Trusted execution requires mount policy ${TRUSTED_MOUNT_POLICY_VERSION}, resource profile ${TRUSTED_RESOURCE_LIMIT_PROFILE}, and denied networking.`,
       };
     },
   });
@@ -143,7 +167,7 @@ function statusMessage(
 ): string {
   switch (status) {
     case "missing-implementation":
-      return "Trusted container execution is not implemented in WP3c; install the WP3d OCI executor before autonomous candidate verification.";
+      return "Trusted container executor implementation is unavailable.";
     case "missing-runtime":
       return `Configured OCI runtime ${config.runtime} is unavailable.`;
     case "missing-pinned-image":
@@ -331,21 +355,10 @@ export function createCandidateExecutionProvider(
     return Object.freeze(provider);
   }
 
-  let capability = inspectTrustedExecutionCapability(
+  const capability = inspectTrustedExecutionCapability(
     config.candidateExecution.trustedContainer,
     dependencies.capabilityProbe,
   );
-  if (!dependencies.trustedExecutor && capability.implementation.available) {
-    const delegate =
-      dependencies.capabilityProbe ?? defaultExecutionProviderCapabilityProbe;
-    capability = inspectTrustedExecutionCapability(
-      config.candidateExecution.trustedContainer,
-      {
-        ...delegate,
-        implementation: () => ({ available: false, version: null }),
-      },
-    );
-  }
   const identity = executionProviderIdentity({
     provider: "trusted-container",
     implementation: capability.implementation.available
@@ -360,12 +373,14 @@ export function createCandidateExecutionProvider(
     capabilityStatus: capability.status,
     controlPlaneBound: true,
   });
-  const trustedExecutor = dependencies.trustedExecutor;
+  const trustedExecutor =
+    dependencies.trustedExecutor ??
+    createContainerCommandExecutor(config.candidateExecution.trustedContainer);
   const provider: CandidateExecutionProvider = {
     identity,
     capability,
     execute: async (command, options) => {
-      if (!capability.available || !trustedExecutor)
+      if (!capability.available)
         return unavailableResult(
           command,
           options,

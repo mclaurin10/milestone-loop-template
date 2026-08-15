@@ -3,6 +3,71 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-14 — Docker-attested disposable OCI data plane (WP3d)
+
+**Decision.** Trusted candidate execution now uses Docker Engine through one
+fixed, versioned executor. Version 1.0.0 rejects Podman at capability policy
+evaluation because its interpreted create/inspect semantics have not been
+implemented or exercised. There is no implicit Windows-to-WSL or local
+fallback. Every command begins with a new origin-free, no-alternates,
+no-hardlinks clone of the exact clean candidate commit and creates a uniquely
+named candidate container, read-only artifact-exporter container, and two
+uniquely named Docker local-driver tmpfs volumes. Containers and volumes are
+removed and their absence independently inspected after every outcome; only an
+immutable image whose controller-owned input labels match may be reused.
+
+The candidate sees exactly two read-only host binds: the disposable source
+clone and the controller's pnpm v11 store. Its mutable workspace, evidence, and
+temporary filesystems are bounded container-local storage. The root filesystem
+is read-only; the process is `65532:65532`, has no network, capabilities,
+new-privilege path, host PID/IPC namespace, port/device/socket, host home,
+credential, target, or controller-state mount, and has fixed CPU, memory, PID,
+file, and core limits. Before launch, image identity/labels, bounded-volume
+options, and Docker's interpreted container policy are parsed independently of
+the argv builder. Randomized candidate/exporter names must be proven unused
+before create; once a create request is attempted, cleanup and absence
+confirmation run even when the client response is interrupted or malformed.
+The real hang case is accepted only after a controller-retained descendant PID
+marker proves that setup completed before the bounded deadline fired.
+The exporter starts before the candidate and keeps the tmpfs
+volumes alive after candidate exit while exposing them read-only; a fixed
+in-container preflight rejects links, special files, and combined size/count
+breaches before any host copy. Publication then uses an exclusively opened
+destination inode plus repeated size/hash checks.
+
+Dependency installation is offline with a frozen lockfile, read-only frozen
+store, explicit store-integrity verification, and copy materialization. The
+lockfile is a mandatory protected trust root. `--trust-lockfile` is required so
+pnpm 11 does not attempt network-backed supply-chain-policy revalidation inside
+the deliberately networkless container; it does not make the store writable or
+relax the frozen lockfile. Controller-owned containment evidence records the
+Docker server version, exact image ID/input hash, candidate commit/tree,
+capability identity, interpreted policy, lifecycle, bounded-volume cleanup,
+and artifact inventories.
+
+**Why.** A daemon-owned container can survive termination of its client, and a
+plain bind-mounted writable clone cannot be bounded by bytes or inodes. Explicit
+daemon stop/kill/remove plus Docker-managed tmpfs volumes makes termination and
+storage limits inspectable. A minimal read-only helper preserves the volumes
+long enough for export without making candidate containers reusable. Alternatives
+rejected: host writable workspaces/evidence (unbounded host authority), copying
+from a stopped tmpfs-backed container (Docker releases its tmpfs mount),
+auto-remove (prevents post-exit inspection/export), a writable/shared pnpm store
+(cross-command mutation), and claiming Podman or WSL equivalence from mocked
+argv alone.
+
+**Known residuals.** Real containment is currently evidenced on Docker Engine
+29.1.3 under WSL2 Linux, not by the Windows controller and not on Podman or a
+native POSIX CI host. The default template intentionally has no configured
+image ID, so doctor remains `NOT_READY` until commissioning supplies one.
+Product placeholders, calibration, autonomous readiness, hidden validation,
+and human verification remain open.
+
+**Affected files.** `container-executor.ts`, `container-image.ts`,
+`container-artifacts.ts`, `verification-clone.ts`, their semantic and real OCI
+fixtures/tests, execution-provider wiring, command/report contracts, package
+scripts, configuration documentation, `CONTRACT.md`, and `README.md`.
+
 ## 2026-08-14 — Fail-closed candidate execution provider control plane (WP3c)
 
 **Decision.** Candidate-authored focused verification and exact aggregate

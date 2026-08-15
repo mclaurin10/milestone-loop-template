@@ -338,7 +338,14 @@ describe("tier focused-command classification", () => {
   it("classifies an unavailable trusted provider as infrastructure NOT_READY", async () => {
     const runRoot = await mkdtemp(join(tmpdir(), "tier-provider-unavailable-"));
     temporaryDirectories.push(runRoot);
-    const provider = createCandidateExecutionProvider(validConfig());
+    const provider = createCandidateExecutionProvider(validConfig(), {
+      capabilityProbe: {
+        implementation: () => ({ available: true, version: "1.0.0" }),
+        runtime: () => ({ available: false, version: null }),
+        image: () => ({ available: false }),
+        policy: () => ({ compatible: true, reason: null }),
+      },
+    });
     const record = await tierCommandRecord({
       repositoryRoot: runRoot,
       tier: "candidate",
@@ -369,7 +376,7 @@ describe("tier focused-command classification", () => {
       failureClass: "infrastructure",
       executionProvider: {
         provider: "trusted-container",
-        capabilityStatus: "missing-implementation",
+        capabilityStatus: "missing-runtime",
         completionEligible: false,
       },
     });

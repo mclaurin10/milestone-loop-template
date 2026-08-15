@@ -12,6 +12,8 @@ import {
 } from "./execution-provider-identity.js";
 import {
   createCandidateExecutionProvider,
+  defaultExecutionProviderCapabilityProbe,
+  inspectTrustedExecutionCapability,
   type ExecutionProviderCapabilityProbe,
 } from "./execution-provider.js";
 import { validConfig } from "../test/fixtures.js";
@@ -57,12 +59,38 @@ const readyProbe: ExecutionProviderCapabilityProbe = {
 };
 
 describe("candidate execution provider", () => {
+  it("fails closed for Podman until its runtime-policy inspection is implemented", () => {
+    const trusted = {
+      ...validConfig().candidateExecution.trustedContainer,
+      runtime: "podman" as const,
+      imageDigest: `sha256:${"a".repeat(64)}`,
+    };
+    const capability = inspectTrustedExecutionCapability(trusted, {
+      implementation: () => ({ available: true, version: "1.0.0" }),
+      runtime: () => ({ available: true, version: "99.0.0" }),
+      image: () => ({ available: true }),
+      policy: defaultExecutionProviderCapabilityProbe.policy,
+    });
+    expect(capability).toMatchObject({
+      status: "policy-mismatch",
+      available: false,
+      policy: { compatible: false },
+    });
+    expect(capability.message).toMatch(/Docker Engine only/);
+  });
+
   it("defaults to trusted-container and fails closed before any candidate executor is called", async () => {
     const root = await mkdtemp(join(tmpdir(), "milestone-loop-provider-"));
     temporaryDirectories.push(root);
     const candidateTrap = vi.fn(async () => summary(root));
     const provider = createCandidateExecutionProvider(validConfig(), {
       localExecutor: candidateTrap,
+      capabilityProbe: {
+        implementation: () => ({ available: true, version: "1.0.0" }),
+        runtime: () => ({ available: false, version: null }),
+        image: () => ({ available: false }),
+        policy: () => ({ compatible: true, reason: null }),
+      },
     });
 
     const first = await provider.execute(
@@ -97,13 +125,13 @@ describe("candidate execution provider", () => {
     expect(first.exitCode).toBeNull();
     expect(first.executionProvider).toMatchObject({
       provider: "trusted-container",
-      implementation: null,
-      capabilityStatus: "missing-implementation",
+      implementation: "pinned-oci-container-executor",
+      capabilityStatus: "missing-runtime",
       controlPlaneBound: true,
       completionEligible: false,
     });
     expect(await readFile(first.stderrPath, "utf8")).toMatch(
-      /not implemented in WP3c/,
+      /runtime docker is unavailable/,
     );
     expect({
       status: second.status,

@@ -119,11 +119,39 @@ report `NOT_READY`, never pass.
 
    Candidate-authored build, test, and exact `pnpm verify` commands use the
    controller-owned `candidateExecution` provider. The default
-   `trusted-container` mode deliberately fails closed in WP3c until the WP3d
-   pinned OCI executor exists, with no automatic local fallback. Explicit
-   `unsafe-local-diagnostic` mode still uses the shared bounded supervisor, but
-   its evidence is visibly marked, completion-ineligible, and cannot authorize
-   target integration or reconciliation adoption.
+   `trusted-container` mode uses the WP3d pinned OCI executor and still fails
+   closed unless a reachable Docker Engine, an immutable local image ID with
+   matching controller-owned labels, and the complete fixed policy are
+   available. Executor version 1.0.0 supports Docker Engine; a configured
+   Podman runtime remains an actionable policy mismatch until its interpreted
+   policy is implemented and tested. There is no automatic local or WSL
+   fallback. Explicit `unsafe-local-diagnostic` mode still uses the shared
+   bounded supervisor, but its evidence is visibly marked,
+   completion-ineligible, and cannot authorize target integration or
+   reconciliation adoption.
+
+   Each trusted command gets a fresh origin-free clone of its exact clean
+   commit and a fresh disposable container. The source and pnpm v11 store are
+   read-only host binds; the mutable workspace and evidence roots are bounded
+   container-local tmpfs volumes held only long enough for a separate
+   read-only exporter to reject links and quota breaches before host copy, then
+   publish regular files through repeated file-count, byte-count, hash, and
+   exclusive-destination checks. The container has no network,
+   socket, home/credential, target, or controller-state mount, runs as
+   `65532:65532`, and has a read-only root, no capabilities, no-new-privileges,
+   and fixed CPU, memory, PID, file, temp, and artifact limits. Candidate
+   containers and exporter containers are never reused and cleanup uncertainty
+   is non-passing.
+
+   `pnpm test:oci-container -- --output artifacts/<fresh-id>` runs the serial
+   normal/adversarial Docker matrix on a Linux controller with exact Node/pnpm
+   pins and a populated read-only pnpm v11 store. It hashes the image inputs,
+   builds at most once for an unchanged hash, reuses only the immutable image,
+   validates command receipts and every containment-report size/hash, and
+   proves no labeled container or volume remains. A WSL engine does not make a
+   Windows controller ready; run this matrix from Linux (or WSL with a
+   Linux-native dependency/controller build) and retain that distinction in
+   the evidence.
 
 6. **Run the loop**: `pnpm loop:plan` for one planning pass, `pnpm loop:run`
    for the autonomous loop, `pnpm loop:status` / `loop:resume` /
@@ -271,6 +299,9 @@ examples/ski-tycoon/         fully worked configuration from the source project
 ## Requirements
 
 Node 24 (exact pin in `package.json#engines`), pnpm 11 (exact pin in
-`packageManager`), and a Codex SDK login for the agent roles. The
+`packageManager`), and a Codex SDK login for the agent roles. Trusted candidate
+execution additionally requires a reachable Docker Engine and the configured
+immutable WP3d image ID; ordinary source/semantic checks remain available when
+that runtime is absent, but trusted execution stays `NOT_READY`. The
 orchestrator test suite (`pnpm test:orchestrator`) and `pnpm typecheck` run
 without any product wiring.

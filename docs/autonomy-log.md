@@ -3,6 +3,160 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-14 — WP3d disposable Docker execution candidate
+
+**Objective.** Implement the OCI data plane behind WP3c's fail-closed provider:
+an exact disposable verification clone, immutable image/input identity, fixed
+runtime policy with independent inspection, bounded daemon-owned lifecycle and
+storage, safe artifact export, real normal/adversarial containment coverage,
+and no local or WSL fallback.
+
+**Outcome before final milestone verification.** Docker-only executor version
+1.0.0 is wired into `trusted-container`; Podman remains an explicit policy
+mismatch. Every command uses a fresh exact clone, candidate container, read-only
+exporter, and bounded workspace/evidence tmpfs volumes. Source and the pnpm v11
+store are the only host binds and are read-only. The image, interpreted mount,
+network, privilege, namespace, resource, and volume policies are inspected
+before launch. Timeouts and output breaches stop/kill at the daemon, and every
+container/volume removal must be confirmed. Export accepts only regular
+single-link files, enforces combined file/byte limits, writes through an
+exclusive open inode, and repeats source/destination size/hash checks. The
+controller-owned report binds the daemon version, image ID/input hash,
+provider capability, candidate commit/tree, lifecycle, policy, cleanup, and
+artifact inventory.
+
+**Implementation evidence.** The committed WP3c handoff evidence and hashes,
+tree status, plan/logs, audit CD-01/P0.2, provider call sites, and
+`pnpm loop:doctor` were inspected without a full-verifier baseline. With the
+user's authorization, Ubuntu Docker Engine/client `29.1.3`, containerd `2.2.1`,
+runc `1.3.4`, exact Linux Node `24.18.0`, and pnpm `11.15.1` were commissioned
+inside the existing WSL2 distribution. The pinned base is
+`node:24.18.0-bookworm@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059`.
+Image input SHA-256
+`0392ec049d9c168fdefb9ab22fe38f9127953639aa96701a6369fa10ed9556a3`
+was built once to immutable local image
+`sha256:e405e2790e743243dd669f8e58eeaff6c585df3cbc77e9a4316a7f07b4e2eaad`;
+subsequent unchanged-input probes reused the image and never a candidate
+container.
+
+A focused real normal-path diagnostic passed at
+`artifacts/wp3d-oci-normal-policy-repro-20260814-r14/result.json` (2,401 bytes,
+SHA-256 `6b08bf27811432831e84a84ff620c73dccc8f700a8b5de0049d5356603b01503`),
+covering offline install, build, typecheck, Vitest, read-only Git, a valid
+command receipt, artifact export, and confirmed cleanup. It predates the final
+stable candidate and is diagnostic only, not reused as milestone evidence.
+During hardening, the combined focused shard correctly exposed two 5-second
+artifact-copy stalls at
+`artifacts/manual/invariant-vitest-4604/`; after replacing the stream-close
+dependency with bounded handle-based copying, the artifact suite passed 5/5 at
+`artifacts/manual/invariant-vitest-428/`. After adding the strict environment
+allowlist, pre-copy artifact preflight, and malformed-volume cleanup regression,
+the affected executor suite passed 10/10 in 5,729 ms at
+`artifacts/manual/invariant-vitest-13336/` and typecheck passed in 8,122 ms at
+`artifacts/manual/typecheck-22284/`. The final regression proves cleanup is
+attempted when a daemon may have accepted a create whose client response timed
+out. Both command-owned receipts and their declared artifacts were independently
+byte/hash checked. Earlier runtime-backed failures were
+diagnosed one case at a time (Linux/Windows tool binary mismatch, emitted
+module resolution, Docker option normalization, unsupported `docker start`
+flag, stopped-container tmpfs lifetime, pnpm store selection, offline trust
+revalidation, and fixture discovery); no failed run is counted as containment
+evidence. A WSL-created Linux symlink dependency tree that Windows could not
+read was moved intact to ignored
+`artifacts/wp3d-wsl-node-modules-quarantine/`; a clean pinned Windows install
+was materialized before continuing.
+
+Independent inspection rejected the first nominal all-case result at
+`artifacts/wp3d-oci-milestone-20260815/`: although its harness status was PASS,
+the 1,500 ms hang deadline expired during offline installation and both its
+artifact preflight and published-command inventories contained zero files. It
+therefore did not exercise the claimed stubborn descendant and is not counted
+as evidence. The focused repair changed only that real-case deadline to 12,000
+ms and required a retained valid `child.json` PID marker. The focused
+reproduction passed at
+`artifacts/wp3d-oci-hang-repro-20260815-r1/result.json` (2,867 bytes, SHA-256
+`a80f3554c8e63e942ee9878170d814545a8967328aead5c74d6a23c6cfd09e9a`):
+the case timed out after 14,948 ms, published one descendant marker, reused the
+unchanged image with zero builds, and left no managed container or volume. Its
+10,076-byte containment report independently matched SHA-256
+`263ff5cee4f93b1b8fde61980f7df757ca809ba923642089059538971d454b31`.
+This focused result remains diagnostic because recording it changes the final
+staged tree.
+
+The corrected all-case matrix then passed on its frozen staged tree at
+`artifacts/wp3d-oci-milestone-20260815-r2/result.json` (6,923 bytes, SHA-256
+`a70ddbf431068ad28b4619579c9149ab12d29a3986739752dc1ae65485d88560`):
+all six expected dispositions, the retained hang marker, unique disposable
+container IDs, zero image builds, and zero remaining managed resources were
+independently validated. It is no longer final evidence because the first
+serial orchestrator aggregate subsequently exposed one stale test expectation.
+That aggregate ran 2,303,297 ms and wrote
+`artifacts/manual/test-orchestrator-24192/orchestrator-report.json`: 460 tests,
+457 passed, one failed, and the same two explicit WP5 skips; the failed command
+correctly produced no passing receipt. The sole failure was a WP3c-era
+`missing-implementation` expectation in `verification-tier.test.ts`. A focused
+reproduction failed at `artifacts/manual/invariant-vitest-19880/`; the repair
+now injects a missing runtime deterministically and preserves the exact
+NOT_READY/no-local-fallback meaning under WP3d's real implementation. The
+focused file passed 14/14 in 7,024 ms at
+`artifacts/manual/invariant-vitest-5736/`; its 5,269-byte declared report
+independently matched SHA-256
+`9da5c71e5eca1e4ff0f8b70054469c7e3d4ca6dd287df08536c8db6df22bfa0c`.
+
+The next exact-tree matrix passed at
+`artifacts/wp3d-oci-milestone-20260815-r3/result.json` (6,923 bytes, SHA-256
+`2d8c428b3b07c9bc8ce4cde169cbd687df3432de19e6bb992cb0a8346302c06e`),
+with all report/artifact identities and cleanup independently checked. The
+required orchestrator rerun passed 458/460 with the two unchanged WP5 skips in
+2,254,714 ms at `artifacts/manual/test-orchestrator-14780/`; its 161,116-byte
+report independently matched SHA-256
+`ad4346de23a05e526742510e44894202c905b63e9d685f3d12b5b02342ad746b`.
+The unit aggregate passed 471/473 with the same skips in 2,291,871 ms at
+`artifacts/manual/test-unit-15604/`; its 165,029-byte report matched SHA-256
+`f1f7f96dd75931132dacf552c560856c65dbd4d979e401cd384dc9de7371c0a3`.
+The safety demonstration passed in 3,406 ms; its 11,931-byte artifact matched
+SHA-256
+`8cbd2787aa81681204aaa729bdc6b1fd053abfe60ac7d171a69ebbfa1cb7eaf6`.
+Typecheck passed in 11,807 ms at `artifacts/manual/typecheck-1752/`.
+
+Static inspection then found two harness-only useless initial assignments in
+the OCI result accumulator. Removing those initializers passed lint in 10,409
+ms at `artifacts/manual/lint-14612/` and typecheck in 7,617 ms at
+`artifacts/manual/typecheck-11464/`. Format inspection separately caught the
+new fixture lockfile before the freeze; formatting only that lockfile passed in
+10,718 ms at `artifacts/manual/format-check-7128/`. Those source/fixture changes
+invalidate the otherwise-passing r3 and aggregate receipts for a final-tree
+claim; none will be reused. The final commands below run again only because
+exact-tree evidence is mandatory.
+
+Report-span comparison attributes only 6,239 ms (0.28%) of orchestrator wall
+time and 5,882 ms (0.26%) of unit wall time to wrapper overhead. The long stage
+times are overwhelmingly the crash-boundary assertions themselves, not a
+recurring launch/receipt harness tax. No separate harness optimization is
+justified in WP3d; changing those tests would risk coverage for negligible
+wrapper savings.
+
+**Stable-tree milestone protocol.** Source, tests, this log, the execution plan,
+and documentation freeze before the final commands. The serial OCI matrix will
+write `artifacts/wp3d-oci-milestone-20260815-r4/result.json`; receipt-owning
+orchestrator, unit, typecheck, lint, and format gates will write fresh ignored
+evidence, and their reports provide stage/test durations. Outcomes are retained
+in those machine-owned artifacts and the final handoff rather than backfilled
+into tracked files, so the verified candidate tree does not change underneath
+its evidence. The required no-argument verifier runs only after the same tree
+is committed and clean; its expected product-placeholder failures are not
+suppressed or relabeled.
+
+**Commit.** Assigned only after the frozen candidate passes the applicable
+WP3d checks; identify it as the newest commit touching this entry.
+
+**Known gaps.** The real matrix is Docker/WSL2 Linux evidence, not native
+Windows, Podman, or native Linux CI evidence. The default image ID remains
+uncommissioned by design, so the shipped template doctor is `NOT_READY`.
+Product placeholders, calibration, autonomous readiness, hidden validation,
+and human verification remain open; this increment makes no product or
+readiness claim and is not pushed.
+
 ## 2026-08-14 — WP3c fail-closed execution provider control plane
 
 **Objective.** Add the controller-owned provider selection and evidence

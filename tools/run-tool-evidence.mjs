@@ -35,6 +35,7 @@ const definitions = {
         "--check",
         "scripts",
         "tools",
+        "fixtures/oci-candidate",
         "eslint.config.mjs",
         "package.json",
         "pnpm-workspace.yaml",
@@ -49,7 +50,16 @@ const definitions = {
     commandId: "lint",
     kind: "lint-report",
     timeoutMs: 300_000,
-    commands: [["exec", "eslint", "scripts", "tools", "vitest.config.ts"]],
+    commands: [
+      [
+        "exec",
+        "eslint",
+        "scripts",
+        "tools",
+        "fixtures/oci-candidate",
+        "vitest.config.ts",
+      ],
+    ],
   },
   typecheck: {
     stageId: "typecheck",

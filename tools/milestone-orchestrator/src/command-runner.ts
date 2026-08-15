@@ -83,7 +83,7 @@ export interface CommandRunnerOptions {
   };
 }
 
-async function recordTelemetry(
+export async function recordTelemetry(
   command: VerificationCommand,
   options: CommandRunnerOptions,
   summary: CommandExecutionSummary,
