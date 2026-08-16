@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://milestone-loop.local/schemas/orchestrator-model-policy-1.0.0.json",
-  "title": "Example Project Orchestrator Agent Model Policy",
+  "title": "Milestone Loop Orchestrator Agent Model Policy",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -74,6 +74,59 @@
     },
     "overrides": {
       "type": "array",
+      "allOf": [
+        {
+          "contains": {
+            "type": "object",
+            "required": ["role"],
+            "properties": { "role": { "const": "planner" } }
+          },
+          "minContains": 0,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "type": "object",
+            "required": ["role"],
+            "properties": {
+              "role": { "const": "feature-worker-initial" }
+            }
+          },
+          "minContains": 0,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "type": "object",
+            "required": ["role"],
+            "properties": {
+              "role": { "const": "feature-worker-escalated" }
+            }
+          },
+          "minContains": 0,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "type": "object",
+            "required": ["role"],
+            "properties": { "role": { "const": "reviewer" } }
+          },
+          "minContains": 0,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "type": "object",
+            "required": ["role"],
+            "properties": {
+              "role": { "const": "lightweight-reporting" }
+            }
+          },
+          "minContains": 0,
+          "maxContains": 1
+        }
+      ],
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -92,7 +145,7 @@
           "reasoningEffort": {
             "enum": ["low", "medium", "high", "xhigh", "max"]
           },
-          "reason": { "type": "string", "minLength": 1 }
+          "reason": { "type": "string", "pattern": "\\S" }
         }
       }
     }

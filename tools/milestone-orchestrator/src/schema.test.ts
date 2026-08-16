@@ -484,6 +484,7 @@ describe("versioned orchestrator schemas", () => {
     for (const file of [
       "milestone.schema.json",
       "model-policy.schema.json",
+      "orchestrator-config.schema.json",
       "state.schema.json",
       "review.schema.json",
       "manual-evidence-manifest.schema.json",
@@ -512,13 +513,15 @@ describe("versioned orchestrator schemas", () => {
       expect(schema.$id).toContain(
         file === "state.schema.json"
           ? "1.9.0"
-          : file === "milestone.schema.json"
-            ? "1.2.0"
-            : file === "verification-tier.schema.json"
-              ? "2.0.0"
-              : file === "review.schema.json"
-                ? "1.1.0"
-                : "1.0.0",
+          : file === "orchestrator-config.schema.json"
+            ? "1.6.0"
+            : file === "milestone.schema.json"
+              ? "1.2.0"
+              : file === "verification-tier.schema.json"
+                ? "2.0.0"
+                : file === "review.schema.json"
+                  ? "1.1.0"
+                  : "1.0.0",
       );
       if (file === "verification-tier.schema.json")
         expect(JSON.stringify(schema.$defs?.["manifest"])).not.toMatch(

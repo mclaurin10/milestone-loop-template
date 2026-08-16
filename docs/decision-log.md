@@ -3,6 +3,53 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-16 — Current-config schema and differential parity boundary (WP5d)
+
+**Decision.** Publish the current `OrchestratorConfig` contract as strict JSON
+Schema 2020-12 artifact `orchestrator-config.schema.json` at version `1.6.0`.
+It references, rather than copies, the separately versioned strict
+`model-policy.schema.json`; generated adopter packages carry both schemas and
+must validate their generated config against them. The model-policy schema is
+aligned with existing runtime semantics for non-whitespace override reasons
+and at most one override per role.
+
+One shared named corpus is the executable parity boundary. Each current-input
+case is parsed through the real read-only runtime loader and independently
+evaluated against the shipped schemas, with both expected disposition and
+runtime/schema equality required. Closed property/required inventories and the
+mandatory protected floor also receive structural equality assertions. A
+test-only dependency-free evaluator implements only the 2020-12 keywords used
+by these schemas, resolves local/external references, and fails on every
+unsupported keyword. It is not runtime configuration authority and is not
+packaged into adopters.
+
+The JSON Schema is current-input-only. Existing runtime migration remains the
+sole authority for legacy `1.0.0` through `1.5.0` input, and runtime validation
+remains stricter for installation-, repository-, and cross-field-dependent
+facts that portable JSON Schema cannot express, such as requiring the selected
+authority path itself in `protectedPaths`. The raw placeholder template remains
+invalid until generation/substitution; it is not mislabeled as a current valid
+configuration.
+
+**Why.** Unknown-root rejection already existed in runtime, but adopters had no
+corresponding top-level schema and tests only proved selected schema files were
+parseable. Duplicating the model-policy shape inside a new config schema would
+create immediate drift, while replacing runtime parsing with JSON Schema would
+lose migration and repository semantics. The frozen package graph exposes no
+declared 2020-12 validator; its only Ajv is an undeclared ESLint transitive at
+version 6, which demonstrably predates `minContains` and misinterprets the
+duplicate-role constraints. Alternatives rejected: adding a dependency and
+changing package/lock files, importing transitive Ajv internals, applying the
+current schema directly to legacy bytes, loosening runtime checks for schema
+equivalence, duplicating model policy, accepting boolean equality without
+expected outcomes, silently ignoring unsupported schema keywords, or omitting
+the schemas from generated adopters.
+
+**Affected files.** Current config and model-policy schemas; dependency-free
+schema test evaluator; differential corpus and schema/adopter tests; adopter
+runtime inventory; configuration guide, repository contract, execution plan,
+and autonomy log.
+
 ## 2026-08-16 — Shared contract-integrity owner and ineligible adapter (WP5c)
 
 **Decision.** The 13 ordered `contract-integrity` checks have one

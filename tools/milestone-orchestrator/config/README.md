@@ -27,6 +27,23 @@ base commit named by the input and active manifest.
 
 ## default.json (`OrchestratorConfig`, schema 1.6.0)
 
+The machine-readable current-input contract is
+[`../schemas/orchestrator-config.schema.json`](../schemas/orchestrator-config.schema.json).
+It is strict at the root and every closed nested object, and references the
+shipped strict `model-policy.schema.json`. A shared differential corpus runs
+each maintained acceptance/rejection case through both the real
+`loadConfigForInspection` path and an independent JSON Schema 2020-12 evaluator;
+unknown root/nested fields, missing keys, and representative invalid values
+must receive the same disposition. The fresh-adopter generator copies both
+schemas and its generated `default.json` must satisfy them.
+
+The schema describes current `1.6.0` input. Runtime migration remains the sole
+owner of legacy `1.0.0` through `1.5.0` acceptance, and the raw
+`default.template.json` remains an authoring skeleton whose model placeholders
+are deliberately invalid until substituted. Repository-dependent checks that
+JSON Schema cannot express—most notably requiring the configured authority
+path itself to occur in `protectedPaths`—remain stricter runtime checks.
+
 - `project.name` — interpolated into the planner/worker/reviewer prompt
   preambles ("You are the read-only Planner for the _<name>_ autonomous
   milestone loop.").

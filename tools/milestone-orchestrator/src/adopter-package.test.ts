@@ -13,6 +13,7 @@ import {
   createAdopterPackage,
 } from "./adopter-package.js";
 import { parseAdopterPackageCliArguments } from "./adopter-package-cli.js";
+import { validateJsonSchema202012 } from "../test/json-schema-2020-12.js";
 
 const temporaryDirectories: string[] = [];
 const definitionPath = freshAdopterDefinitionPath;
@@ -187,6 +188,36 @@ describe("fresh adopter package creation", () => {
       }),
     );
 
+    const generatedConfig = JSON.parse(
+      await readFile(
+        join(outputRoot, "tools/milestone-orchestrator/config/default.json"),
+        "utf8",
+      ),
+    ) as unknown;
+    const generatedConfigSchema = JSON.parse(
+      await readFile(
+        join(
+          outputRoot,
+          "tools/milestone-orchestrator/schemas/orchestrator-config.schema.json",
+        ),
+        "utf8",
+      ),
+    ) as unknown;
+    const generatedModelPolicySchema = JSON.parse(
+      await readFile(
+        join(
+          outputRoot,
+          "tools/milestone-orchestrator/schemas/model-policy.schema.json",
+        ),
+        "utf8",
+      ),
+    ) as unknown;
+    expect(
+      validateJsonSchema202012(generatedConfigSchema, generatedConfig, [
+        generatedModelPolicySchema,
+      ]),
+    ).toEqual({ valid: true, errors: [] });
+
     const verifier = await readFile(
       join(outputRoot, "scripts/verify.mjs"),
       "utf8",
@@ -252,6 +283,8 @@ describe("fresh adopter package creation", () => {
         "tools/milestone-orchestrator/config/verification-scope-policy.json",
         "tools/milestone-orchestrator/config/slow-suite-registry.json",
         "tools/milestone-orchestrator/config/commissioning-input.json",
+        "tools/milestone-orchestrator/schemas/model-policy.schema.json",
+        "tools/milestone-orchestrator/schemas/orchestrator-config.schema.json",
       ].map((path) => readFile(join(outputRoot, path), "utf8")),
     );
     expect(activeSurface.join("\n")).not.toMatch(

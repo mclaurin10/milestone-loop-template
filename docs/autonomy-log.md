@@ -3,6 +3,103 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-16 — WP5d strict configuration schema parity
+
+**Objective.** Complete one bounded WP5 strict-config increment by publishing
+the missing current `OrchestratorConfig` JSON Schema and proving one shared
+acceptance/rejection corpus through both real runtime parsing and the schema.
+Preserve the earlier runtime rejection of unknown root fields, every supported
+legacy migration, and all WP4d/WP5a-c contracts and evidence.
+
+**Outcome before commit.** The runtime was already strict at the root; the
+reproduced gap was the absence of
+`schemas/orchestrator-config.schema.json` and any executable runtime/schema
+parity corpus. The new strict `1.6.0` schema closes every root and nested object,
+references the existing model-policy schema, expresses the mandatory protected
+floor, and is copied with its reference into generated adopter packages. The
+model-policy schema now matches existing runtime rejection of whitespace-only
+override reasons and duplicate override roles; runtime policy behavior did not
+change.
+
+A dependency-free test-only JSON Schema 2020-12 evaluator resolves local and
+external references, enforces the exact keyword subset used by both schemas,
+and throws on unsupported keywords. Forty named cases each assert the expected
+disposition independently under `loadConfigForInspection` and schema
+evaluation, then assert differential equality. They cover maintained valid
+source/example configurations, valid boundary variants, the intentionally
+invalid raw placeholder template, unknown root and closed nested keys, missing
+keys, and representative value/path/list failures. Structural assertions bind
+all closed property/required sets and the schema's protected floor to runtime
+fixtures/constants. Legacy `1.0.0` through `1.5.0` inputs remain owned by the
+unchanged migration path; repository-dependent cross-field checks remain
+strict runtime-only semantics.
+
+**Verification.** Under pinned Node `24.18.0` and pnpm `11.15.1`, the
+receipt-owning affected shard passed 69/69 tests with zero skips across 11/11
+suites at
+`artifacts/manual/wp5d-config-schema-focused-final/invariant-vitest-report.json`
+(23,154 bytes, SHA-256
+`77b344f481a412b94810943b7cf4985d861e481a0133fcadeffab3f7b55b64f5`).
+This includes 42/42 parity/structure/evaluator tests and a real generated
+adopter whose config validates against its copied schemas. The wrapper's
+optional direct-telemetry begin hook could not load the TypeScript-only
+`path-safety.js` import under plain Node, so telemetry is null; the semantic
+report and PASS receipt are complete.
+
+Direct `pnpm test:invariants` passed all four serial commands in 29,059 ms,
+below its 60-second warm target, at
+`artifacts/manual/wp5d-invariants-final/invariant-suite-report.json` (7,232
+bytes, SHA-256
+`7cd9a4cce21063a09430d0c3226d2eca9caa5756820f2823af331e6a4d833693`).
+The outer report remained explicitly completion-ineligible. Its children
+passed contract integrity 13/13, schema 7/7, policy 15/15, and fail-closed
+evidence 61/61. The direct contract report remained completion-ineligible at
+`entries/protected-integrity/contract-integrity-report.json` (3,531 bytes,
+SHA-256
+`18a7c2029615685dbb349a65db07486e939d96474497910282847cbb8850d6d7`).
+
+The orchestrator aggregate passed 577/579 tests with zero failures and only the
+two declared Windows POSIX process-group skips across 174/174 suites at
+`artifacts/manual/wp5d-test-orchestrator-final/orchestrator-report.json`
+(201,850 bytes, SHA-256
+`6ea09b0d6431166ea88030159e77b3e9a33de019bfe6cfd5056d3e7afd217c20`).
+The unit aggregate passed 590/592 with the same two skips across 176/176 suites
+at `artifacts/manual/wp5d-test-unit-final/test-report.json` (206,052 bytes,
+SHA-256
+`a23980c4376548dc247cd8e3d5eab35ccf1d5fe2cba135f8132704b29891de23`).
+Receipt-owning typecheck, lint, and format passed at
+`artifacts/manual/wp5d-typecheck-final`, `wp5d-lint-final`, and
+`wp5d-format-final`; their report hashes are respectively
+`2540e3c6155ab20c1971bb940ebbb4eb6cd784e787e0de4ad4b6e15fb1c6fe53`,
+`012193e1acb18740e236708f9f394cf589285030adb1d06ec4a0c613724d10ec`,
+and `53633d763f14ac37272fd7801634c524fa7658e42a348edd7bfa7009314f08ca`.
+An independent audit matched all 11 PASS receipts to all 11 declared artifacts
+(474,994 artifact bytes) and independently confirmed every reported test total,
+failure, and skip.
+
+The frozen authority, immutable lock, active/historical commissioning,
+readiness marker, exact verifier, invariant registry, Doctor `2.0.0`, Status
+`1.0.0`, default readiness profile, package/lock files, maintained configs,
+worked example, private ref/path absence, and both retained WP4d artifacts all
+matched their entry identities. The protected human plan retained all three
+required identities and remained the sole user-owned untracked path. No source
+no-argument verifier, OCI matrix, safety demonstration, completed fresh-adopter
+proof rerun, mutating loop command, dependency install, recommissioning, push,
+or ref mutation occurred. OCI/safety evidence was not applicable because this
+increment changes neither provider execution nor controller mutation/recovery.
+
+**Commit.** Assigned by the single cohesive WP5d commit containing this entry;
+identify it as the newest commit touching the entry. No push is authorized.
+
+**Known gaps.** Remaining WP5 work is exact-runtime Linux and Windows CI with
+fresh-adopter smoke plus an applicable real trusted-container CI job, followed
+by any final canonical-documentation reconciliation supported by those runs.
+WP6 verification-efficiency work remains later and separately gated. The
+source remains honestly blocked from autonomous readiness by its placeholder
+product/build/runtime/state conditions. WP5d is not full WP5, cross-platform
+proof, readiness repair, product implementation, autonomous readiness, or a
+push.
+
 ## 2026-08-16 — WP5c shared contract-integrity invariant
 
 **Objective.** Complete one bounded WP5 independent-invariant increment by

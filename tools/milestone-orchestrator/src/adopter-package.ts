@@ -62,6 +62,8 @@ const runtimeRootFiles = [
   "tools/run-tool-evidence.mjs",
   "tools/workspace-typecheck.mjs",
   "tools/milestone-orchestrator/package.json",
+  "tools/milestone-orchestrator/schemas/model-policy.schema.json",
+  "tools/milestone-orchestrator/schemas/orchestrator-config.schema.json",
   "tools/milestone-orchestrator/tsconfig.json",
   "tsconfig.base.json",
 ] as const;

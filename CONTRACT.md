@@ -306,6 +306,16 @@ canonical set — controller startup, reconciliation, and doctor all
 validate the coverage — and `pnpm loop:demo-safety` demonstrates the
 rejection of every canonical path including case variants.
 
+The strict current `OrchestratorConfig` contract is also published as
+`schemas/orchestrator-config.schema.json`, which references the strict
+`model-policy.schema.json`; generated adopter packages carry both. A shared
+acceptance/rejection corpus must agree under the real runtime inspection loader
+and an independent fail-closed JSON Schema 2020-12 evaluator. The schema covers
+current `1.6.0` inputs, while `src/config.ts` remains the authority for legacy
+`1.0.0` through `1.5.0` migration and for repository-dependent cross-field
+checks that portable JSON Schema cannot express. Unknown root or closed nested
+fields are invalid in both contracts.
+
 ## 8. Operational diagnostics and environment
 
 `pnpm loop:doctor` is the authoritative, read-only operational wiring
