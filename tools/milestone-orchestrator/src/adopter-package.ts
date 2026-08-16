@@ -656,16 +656,27 @@ function generatedInvariantRegistry(definition: AdopterPackageDefinition) {
     entries: [
       {
         id: "protected-integrity",
-        ownerPaths: ["PROJECT_GOAL.md", "evals/", "scripts/verify.mjs"],
+        ownerPaths: [
+          "PROJECT_GOAL.md",
+          "evals/",
+          "scripts/verify.mjs",
+          "tools/milestone-orchestrator/src/contract-integrity.ts",
+        ],
         triggerPaths: [
           "PROJECT_GOAL.md",
           "AGENTS.md",
           "evals/",
           ".agent/",
           "scripts/verify.mjs",
+          "tools/milestone-orchestrator/src/contract-integrity.ts",
         ],
-        argv: ["pnpm", "verify", "--", "--stage", "contract-integrity"],
-        expectedArtifactKinds: ["focused-verify-result"],
+        argv: [
+          "node",
+          "node_modules/tsx/dist/cli.mjs",
+          "tools/milestone-orchestrator/src/verification-cli.ts",
+          "contract-integrity",
+        ],
+        expectedArtifactKinds: ["contract-integrity-report"],
       },
       {
         id: "bootstrap-kernel-parity",

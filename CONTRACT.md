@@ -127,7 +127,19 @@ tsconfig the `typecheck` evidence covers.
   calibration state, then derives adopter-specific acceptance expectations
   from that frozen base. Universal profile, exact-command, gate aggregation,
   no-compensation, and hidden-custody rules remain verifier-owned. Adopters do
-  not edit verifier source or insert a lock hash constant.
+  not edit verifier source or insert a lock hash constant. The check
+  implementation lives in the controller-owned
+  `src/contract-integrity.ts`; `scripts/verify.mjs` delegates this stage to
+  that shared evaluator without changing aggregate stage selection or
+  completion semantics.
+- **Independent contract invariant**: the invariant registry's
+  `protected-integrity` entry invokes a receipt-owning adapter around the same
+  evaluator. It does not launch `pnpm verify`, inherit `environment`, or write
+  an aggregate verifier result. Its `contract-integrity-report.v1` artifact
+  and invariant-suite report explicitly set `completionEligible:false`. Every
+  shared check must pass before the adapter writes a PASS receipt; corruption
+  retains a failing report and no receipt. This fast signal cannot authorize
+  integration or replace exact no-argument verification.
 
 ## 4. Command-owned evidence receipts
 

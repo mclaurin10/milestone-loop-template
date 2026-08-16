@@ -3,6 +3,101 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-16 — WP5c shared contract-integrity invariant
+
+**Objective.** Complete one bounded WP5 independent-invariant increment by
+extracting the existing 13-check contract-integrity evaluation into one
+controller-owned module consumed by both the authoritative verifier and a
+completion-ineligible invariant adapter. Preserve ordinary focused verifier
+semantics while removing the invariant suite's unrelated dependency on the
+environment stage.
+
+**Outcome before commit.** `src/contract-integrity.ts` now owns the exact
+ordered contract checks and accepts the existing commissioned-authority
+validator as an explicit dependency, which keeps it directly loadable from
+plain Node. `scripts/verify.mjs` delegates its unchanged contract stage to that
+module. The source and generated-adopter `protected-integrity` registry entries
+invoke `verification-cli.ts contract-integrity` directly and require a
+`contract-integrity-report`; no package command, registry ID, profile/stage
+selection, or completion path changed. The adapter requires the exact healthy
+check identity, retains a failing diagnostic without a receipt, and marks both
+its `contract-integrity-report.v1` and the outer invariant-suite `1.1.0` report
+`completionEligible:false`. Tier implementation loading is deferred until a
+tier mode is selected, so the narrow contract command does not load unrelated
+SDK/tier dependencies.
+
+**Verification.** Under pinned Node `24.18.0` and pnpm `11.15.1`, the accepted
+receipt-owning contract/routing/package/verifier shard passed 28/28 tests with
+zero skips across 14/14 suites at
+`artifacts/manual/wp5c-contract-focused-final-3/invariant-vitest-report.json`
+(10,135 bytes, SHA-256
+`7042cb4b802d2b42ea0424142dfa2ba5f479258ed03c100c7e83e51ac8e380f8`).
+It proves exact healthy check ordering, authoritative-verifier parity with the
+unchanged `environment,contract-integrity` focused selection, generated-adopter
+routing, and a real commissioned-contract corruption that exits 1, retains an
+ineligible failing report, and writes no PASS receipt.
+
+Direct `pnpm test:invariants` passed all four serial commands in 27,751 ms,
+below its 60-second warm target, at
+`artifacts/manual/wp5c-invariants-final/invariant-suite-report.json` (7,232
+bytes, SHA-256
+`2b65afaf50a8e8ab5b8f8f76389c61f8fdd1ba34db0ff3f6cc68934a8161798a`).
+Its first argv is the direct adapter, not `pnpm verify`; the child report is
+completion-ineligible and passed all 13 checks at
+`entries/protected-integrity/contract-integrity-report.json` (3,531 bytes,
+SHA-256
+`9e6b1eeb8ada30e398745bcc0d690f967ebb24293a3db2e6f04435f1d5bc8945`).
+The other receipt-owning children passed schema 7/7, policy 15/15, and
+fail-closed verifier 61/61, with no environment or aggregate verifier result.
+
+The orchestrator aggregate passed 535/537 tests with zero failures and only
+the two declared Windows POSIX process-group skips across 172/172 suites at
+`artifacts/manual/wp5c-test-orchestrator-final/orchestrator-report.json`
+(188,743 bytes, SHA-256
+`489c1c570ded68a41c628ca2ab1acf5e4e4ab8a41aeff32d0cb4bd8bff2a0341`).
+The unit aggregate passed 548/550 with the same two skips across 174/174 suites
+at `artifacts/manual/test-unit-3532/test-report.json` (192,753 bytes, SHA-256
+`f6e05cf9e111d163e874ace11682bff36ce5826e296452c5bf6229612f167e9c`).
+Receipt-owning typecheck, lint, and format passed at
+`artifacts/manual/wp5c-typecheck-final`,
+`artifacts/manual/wp5c-lint-final`, and
+`artifacts/manual/wp5c-format-final`; their report hashes are respectively
+`a864a46d8fbda1d2056ea61073b815a9551bb42da37936ff35f460dfff5f71e0`,
+`2f759e5b623a519e4cd9333dbfb5c124953093fa5e2fb86b3b5255940066ecb3`,
+and `63128dac587b1252fbab116839b9a7a4fd1c318f1bf68a35bd10958b9a8b8c5d`.
+Every cited receipt, nested receipt, and declared artifact byte count/SHA-256
+independently matched.
+
+Two earlier affected-shard attempts correctly retained no PASS receipt at
+27/28: the disposable corruption process first inherited an evidence context
+for the source repository, then exposed that the source-installed evidence
+runtime could not own a receipt for a different clone. The accepted fixture
+copies the current adapter/evaluator/CLI into the commissioned clone so its
+evaluation and receipt authority agree. The focused wrapper's optional direct
+telemetry begin hook remained unavailable because its plain-Node path resolved
+a TypeScript-only transitive module as a missing `.js`; this was non-semantic,
+and the command-owned PASS receipt/report are complete. No source no-argument
+verifier, OCI matrix, safety demonstration, fresh-adopter proof rerun, mutating
+loop command, recommissioning, readiness repair, or push occurred.
+
+The immutable authority, active/historical commissioning, readiness marker,
+default/scope/slow/benchmark registries, package/lock files, worked example,
+fresh-adopter fixture, private ref/path absence, and both retained WP4d
+artifacts remained unchanged. The protected human plan remains the sole
+user-owned untracked path after the intended WP5c files are staged and retains
+its required byte/hash/blob identities.
+
+**Commit.** Assigned by the single cohesive WP5c commit containing this entry;
+identify it as the newest commit touching the entry. No push is authorized.
+
+**Known gaps.** Remaining WP5 work owns strict rejection of unknown config
+fields plus its differential schema corpus, exact-runtime Linux and Windows CI
+including fresh-adopter smoke, and an applicable real trusted-container CI
+job. The source remains honestly blocked by the protected human plan, absent
+production build, active product placeholders, unavailable trusted runtime/
+image, and absent exact canonical state. WP5c is not full WP5, readiness
+repair, autonomous readiness, product implementation, or a push.
+
 ## 2026-08-16 — WP5b canonical lifecycle status
 
 **Objective.** Complete the bounded Status slice of WP5 by making

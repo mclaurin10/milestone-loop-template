@@ -9,17 +9,24 @@
       "ownerPaths": [
         "<YOUR_AUTHORITY_FILE>.md",
         "evals/",
-        "scripts/verify.mjs"
+        "scripts/verify.mjs",
+        "tools/milestone-orchestrator/src/contract-integrity.ts"
       ],
       "triggerPaths": [
         "<YOUR_AUTHORITY_FILE>.md",
         "AGENTS.md",
         "evals/",
         ".agent/",
-        "scripts/verify.mjs"
+        "scripts/verify.mjs",
+        "tools/milestone-orchestrator/src/contract-integrity.ts"
       ],
-      "argv": ["pnpm", "verify", "--", "--stage", "contract-integrity"],
-      "expectedArtifactKinds": ["focused-verify-result"]
+      "argv": [
+        "node",
+        "node_modules/tsx/dist/cli.mjs",
+        "tools/milestone-orchestrator/src/verification-cli.ts",
+        "contract-integrity"
+      ],
+      "expectedArtifactKinds": ["contract-integrity-report"]
     },
     {
       "id": "<YOUR_CORE_INVARIANT_ID>",

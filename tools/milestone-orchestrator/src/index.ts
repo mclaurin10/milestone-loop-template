@@ -8,6 +8,7 @@ export * from "./commissioning.js";
 export * from "./commissioning-cli.js";
 export * from "./command-policy.js";
 export * from "./config.js";
+export * from "./contract-integrity.js";
 export * from "./contracts.js";
 export * from "./controller-lease.js";
 export * from "./doctor.js";

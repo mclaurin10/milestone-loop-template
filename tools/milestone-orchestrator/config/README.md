@@ -129,10 +129,14 @@ Each entry pins the files that own the invariant (`ownerPaths` must exist),
 the paths that trigger it, and an exact argv. Optional `testFile`/`testTitle`
 pin one named test whose title must literally appear in that file. Every
 entry must declare nonempty `expectedArtifactKinds`, and a missing receipt
-fails the invariant. `pnpm exec vitest run …` and `pnpm verify -- --stage …`
-argvs are routed through `tools/run-tool-evidence.mjs` receipt wrappers
-(`invariant-vitest` produces `invariant-vitest-report`; `focused-verify`
-retains the stage's authoritative `result.json` as `focused-verify-result`).
+fails the invariant. The `protected-integrity` entry invokes the
+controller-owned contract evaluator directly through `verification-cli.ts`
+and requires its completion-ineligible `contract-integrity-report`; it does
+not inherit the verifier environment stage. `pnpm exec vitest run …` and any
+other `pnpm verify -- --stage …` argvs are routed through
+`tools/run-tool-evidence.mjs` receipt wrappers (`invariant-vitest` produces
+`invariant-vitest-report`; `focused-verify` retains the stage's authoritative
+`result.json` as `focused-verify-result`).
 
 ## slow-suite-registry.json (`SlowSuiteRegistry`)
 

@@ -4,14 +4,18 @@ import { pathToFileURL } from "node:url";
 
 import type { VerificationTier } from "./contracts.js";
 import {
+  runContractIntegrityInvariant,
   runInvariantSuite,
   runUnitPartition,
   VerificationCheckFailure,
 } from "./invariant-suite.js";
-import { runVerificationTier } from "./verification-tier.js";
 
 export type VerificationCliMode =
-  "invariants" | "fast-unit" | "migration-unit" | VerificationTier;
+  | "contract-integrity"
+  | "invariants"
+  | "fast-unit"
+  | "migration-unit"
+  | VerificationTier;
 
 export interface VerificationCliArguments {
   readonly mode: VerificationCliMode;
@@ -23,6 +27,7 @@ export interface VerificationCliArguments {
 }
 
 const MODES = new Set<VerificationCliMode>([
+  "contract-integrity",
   "invariants",
   "fast-unit",
   "migration-unit",
@@ -71,7 +76,8 @@ export function parseVerificationCliArguments(
     throw new Error(`Unknown verification option: ${option ?? "(missing)"}.`);
   }
   if (
-    (mode === "invariants" ||
+    (mode === "contract-integrity" ||
+      mode === "invariants" ||
       mode === "fast-unit" ||
       mode === "migration-unit") &&
     (manifestPath || baseCommit || requireClean || focusedCheckIds.length > 0)
@@ -117,6 +123,13 @@ export async function runVerificationCli(
   args: VerificationCliArguments,
   repositoryRoot = verificationRepositoryRoot(),
 ): Promise<number> {
+  if (args.mode === "contract-integrity") {
+    const result = await runContractIntegrityInvariant(repositoryRoot);
+    process.stdout.write(
+      `Contract integrity passed ${result.checkCount} checks through the completion-ineligible invariant adapter.\n`,
+    );
+    return 0;
+  }
   if (args.mode === "invariants") {
     const result = await runInvariantSuite(repositoryRoot);
     process.stdout.write(
@@ -132,6 +145,7 @@ export async function runVerificationCli(
     );
     return 0;
   }
+  const { runVerificationTier } = await import("./verification-tier.js");
   const result = await runVerificationTier({
     repositoryRoot,
     tier: args.mode,

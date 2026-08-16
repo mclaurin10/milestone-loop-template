@@ -3,6 +3,21 @@ import { describe, expect, it } from "vitest";
 import { parseVerificationCliArguments } from "./verification-cli.js";
 
 describe("verification tier CLI", () => {
+  it("parses only the option-free contract-integrity adapter mode", () => {
+    expect(parseVerificationCliArguments(["contract-integrity"])).toEqual({
+      mode: "contract-integrity",
+      requireClean: false,
+      focusedCheckIds: [],
+    });
+    expect(() =>
+      parseVerificationCliArguments([
+        "contract-integrity",
+        "--manifest",
+        ".agent/verification-manifest.json",
+      ]),
+    ).toThrow(/does not accept tier options/i);
+  });
+
   it("parses an exact candidate request without rewriting argv", () => {
     expect(
       parseVerificationCliArguments([

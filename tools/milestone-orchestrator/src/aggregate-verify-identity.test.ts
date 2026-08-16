@@ -51,6 +51,7 @@ async function verifierFixture(mutator: string): Promise<string> {
   for (const path of [
     "scripts/verify.mjs",
     "tools/milestone-orchestrator/src/authority-anchor.ts",
+    "tools/milestone-orchestrator/src/contract-integrity.ts",
     "tools/milestone-orchestrator/src/process-supervisor.ts",
     "tools/milestone-orchestrator/src/execution-provider-identity.ts",
   ]) {

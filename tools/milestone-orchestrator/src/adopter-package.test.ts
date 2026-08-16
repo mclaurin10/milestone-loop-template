@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -197,6 +198,47 @@ describe("fresh adopter package creation", () => {
     expect(result.generated.immutableContractLockSha256).not.toBe(
       "d1166088b00c54af65e8654188adc58a3cabd9d7908820809fe66af28c933050",
     );
+
+    const invariantRegistry = JSON.parse(
+      await readFile(
+        join(
+          outputRoot,
+          "tools/milestone-orchestrator/config/invariant-suite.json",
+        ),
+        "utf8",
+      ),
+    ) as {
+      readonly entries: readonly {
+        readonly id: string;
+        readonly ownerPaths: readonly string[];
+        readonly argv: readonly string[];
+        readonly expectedArtifactKinds: readonly string[];
+      }[];
+    };
+    expect(
+      invariantRegistry.entries.find(
+        (entry) => entry.id === "protected-integrity",
+      ),
+    ).toMatchObject({
+      ownerPaths: expect.arrayContaining([
+        "tools/milestone-orchestrator/src/contract-integrity.ts",
+      ]),
+      argv: [
+        "node",
+        "node_modules/tsx/dist/cli.mjs",
+        "tools/milestone-orchestrator/src/verification-cli.ts",
+        "contract-integrity",
+      ],
+      expectedArtifactKinds: ["contract-integrity-report"],
+    });
+    expect(
+      existsSync(
+        join(
+          outputRoot,
+          "tools/milestone-orchestrator/src/contract-integrity.ts",
+        ),
+      ),
+    ).toBe(true);
 
     const activeSurface = await Promise.all(
       [

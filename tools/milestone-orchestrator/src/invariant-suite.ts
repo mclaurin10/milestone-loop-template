@@ -11,7 +11,14 @@ import type {
   VerificationTestCounts,
 } from "./contracts.js";
 import { loadInvariantSuiteRegistry, loadSlowSuiteRegistry } from "./config.js";
+import { validateCommissionedAuthorityAnchor } from "./authority-anchor.js";
 import { runCommand } from "./command-runner.js";
+import {
+  CONTRACT_INTEGRITY_CHECK_IDS,
+  CONTRACT_INTEGRITY_OWNER_PATH,
+  CONTRACT_INTEGRITY_REPORT_SCHEMA_VERSION,
+  evaluateContractIntegrity,
+} from "./contract-integrity.js";
 import { validateCommandReceiptDirectory } from "./verifier.js";
 
 function slash(path: string): string {
@@ -19,6 +26,95 @@ function slash(path: string): string {
 }
 
 export class VerificationCheckFailure extends Error {}
+
+export const INVARIANT_SUITE_REPORT_SCHEMA_VERSION = "1.1.0" as const;
+
+export interface ContractIntegrityInvariantRunResult {
+  readonly reportPath: string;
+  readonly checkCount: number;
+  readonly completionEligible: false;
+}
+
+export async function runContractIntegrityInvariant(
+  repositoryRoot: string,
+): Promise<ContractIntegrityInvariantRunResult> {
+  const context = await evidenceContext(
+    "invariant-suite",
+    "contract-integrity",
+  );
+  if (resolve(context.repositoryRoot) !== resolve(repositoryRoot))
+    throw new Error(
+      "Contract-integrity evidence context does not match the evaluated repository root.",
+    );
+  const startedAt = new Date();
+  const checks = await evaluateContractIntegrity({
+    repositoryRoot,
+    validateAuthorityAnchor: validateCommissionedAuthorityAnchor,
+  });
+  const finishedAt = new Date();
+  const counts = {
+    total: checks.length,
+    pass: checks.filter((item) => item.status === "PASS").length,
+    fail: checks.filter((item) => item.status === "FAIL").length,
+    notReady: checks.filter((item) => item.status === "NOT_READY").length,
+  };
+  const checkIdentityValid =
+    checks.length === CONTRACT_INTEGRITY_CHECK_IDS.length &&
+    checks.every(
+      (item, index) => item.id === CONTRACT_INTEGRITY_CHECK_IDS[index],
+    );
+  const passed = checkIdentityValid && counts.pass === counts.total;
+  const reportPath = resolve(
+    context.artifactDirectory,
+    "contract-integrity-report.json",
+  );
+  await writeJson(reportPath, {
+    schemaVersion: CONTRACT_INTEGRITY_REPORT_SCHEMA_VERSION,
+    status: passed ? "PASS" : "FAIL",
+    completionEligible: false,
+    completionIneligibilityReason: "independent-invariant-adapter",
+    owner: {
+      path: CONTRACT_INTEGRITY_OWNER_PATH,
+      authoritativeVerifierConsumer: "scripts/verify.mjs",
+    },
+    startedAt: startedAt.toISOString(),
+    finishedAt: finishedAt.toISOString(),
+    durationMs: finishedAt.getTime() - startedAt.getTime(),
+    counts,
+    checkIdentityValid,
+    expectedCheckIds: CONTRACT_INTEGRITY_CHECK_IDS,
+    checks,
+  });
+  if (!passed)
+    throw new VerificationCheckFailure(
+      `Contract-integrity invariant failed; diagnostic report retained at ${reportPath}.`,
+    );
+  await writeReceipt(
+    context,
+    [
+      {
+        id: "shared-contract-integrity",
+        summary: `All ${checks.length} checks passed through the controller-owned evaluator shared with scripts/verify.mjs.`,
+      },
+      {
+        id: "completion-ineligible-adapter",
+        summary:
+          "This invariant adapter is explicitly completion-ineligible and cannot replace exact pnpm verify evidence.",
+      },
+    ],
+    [
+      {
+        path: "contract-integrity-report.json",
+        kind: "contract-integrity-report",
+      },
+    ],
+  );
+  return {
+    reportPath,
+    checkCount: checks.length,
+    completionEligible: false,
+  };
+}
 
 export function commandFromArgv(
   id: string,
@@ -113,6 +209,7 @@ export interface InvariantSuiteRunResult {
   readonly durationMs: number;
   readonly runtimeTargetMet: boolean;
   readonly commandCount: number;
+  readonly completionEligible: false;
 }
 
 export async function invariantEntryReceipt(input: {
@@ -217,8 +314,10 @@ export async function runInvariantSuite(
     "invariant-suite-report.json",
   );
   await writeJson(reportPath, {
-    schemaVersion: "1.0.0",
+    schemaVersion: INVARIANT_SUITE_REPORT_SCHEMA_VERSION,
     status: failed ? "FAIL" : "PASS",
+    completionEligible: false,
+    completionIneligibilityReason: "incremental-invariant-suite",
     registry: {
       id: tracked.value.id,
       path: tracked.path,
@@ -252,6 +351,11 @@ export async function runInvariantSuite(
         id: "runtime-target-recorded",
         summary: `The measured 60-second warm target was ${durationMs <= tracked.value.warmRuntimeTargetMs ? "met" : "missed without dropping coverage"}.`,
       },
+      {
+        id: "completion-ineligible-suite",
+        summary:
+          "The invariant suite is explicitly completion-ineligible and cannot replace exact pnpm verify evidence.",
+      },
     ],
     [{ path: "invariant-suite-report.json", kind: "invariant-suite-report" }],
   );
@@ -262,6 +366,7 @@ export async function runInvariantSuite(
     durationMs,
     runtimeTargetMet: durationMs <= tracked.value.warmRuntimeTargetMs,
     commandCount: commands.length,
+    completionEligible: false,
   };
 }
 

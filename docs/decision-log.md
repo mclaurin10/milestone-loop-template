@@ -3,6 +3,47 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-16 — Shared contract-integrity owner and ineligible adapter (WP5c)
+
+**Decision.** The 13 ordered `contract-integrity` checks have one
+controller-owned implementation in `src/contract-integrity.ts`. The module is
+plain-Node-loadable: it accepts the existing commissioned-authority-anchor
+validator as an explicit dependency, so `scripts/verify.mjs` can import the
+same evaluator directly under pinned Node while controller commands consume it
+through `tsx`. The authoritative verifier still selects and aggregates stages
+exactly as before; only its former inline check body moved.
+
+The invariant registry's `protected-integrity` entry now calls a narrow
+`verification-cli.ts contract-integrity` adapter instead of a focused
+`pnpm verify`. The adapter requires the exact healthy check identity and all
+PASS statuses, retains `contract-integrity-report.v1`, and writes a
+command-owned receipt only after success. The report always states
+`completionEligible:false`; the outer invariant-suite report advances to
+`1.1.0` to state the same. Failure retains the diagnostic and no PASS receipt.
+The verification CLI loads the full tier implementation only after selecting
+a tier mode, so the contract adapter does not require the Codex SDK or other
+unrelated tier dependencies merely to start.
+Source and generated-adopter registries use the same argv, owner path, and
+artifact kind without adding a package script or changing their commissioned
+registry IDs.
+
+**Why.** Focused verifier selection deliberately includes `environment`, so
+using it as an invariant made correct contract checks depend on unrelated
+dependency, placeholder, production, and runtime wiring. Duplicating the
+checks in the controller would let invariant and exact verification meanings
+drift. A shared evaluator preserves one authority, while the separate evidence
+adapter gives fast corruption feedback without creating a second completion
+path. Alternatives rejected: changing focused verifier stage selection,
+special-casing environment success, retaining the aggregate wrapper, copying
+the 13 checks into the invariant suite, accepting exit zero without a receipt,
+making the adapter completion-eligible, adding a public package command, or
+rerunning the completed WP4d adopter proof merely to refresh evidence.
+
+**Affected files.** Shared contract evaluator/tests/export; authoritative
+verifier import; invariant adapter/report/CLI/tests; source/template/generated
+invariant registries; aggregate verifier fixture dependency; README,
+configuration guide, repository contract, execution plan, and autonomy log.
+
 ## 2026-08-16 — Generation-bound canonical lifecycle status (WP5b)
 
 **Decision.** `pnpm loop:status -- --json` emits one versioned

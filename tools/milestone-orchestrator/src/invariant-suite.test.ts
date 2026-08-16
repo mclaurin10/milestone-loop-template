@@ -34,7 +34,23 @@ describe("always-run invariant registry", () => {
     expect(
       tracked.value.entries.find((entry) => entry.id === "protected-integrity")
         ?.ownerPaths,
-    ).toEqual(["PROJECT_GOAL.md", "evals/", "scripts/verify.mjs"]);
+    ).toEqual([
+      "PROJECT_GOAL.md",
+      "evals/",
+      "scripts/verify.mjs",
+      "tools/milestone-orchestrator/src/contract-integrity.ts",
+    ]);
+    expect(
+      tracked.value.entries.find((entry) => entry.id === "protected-integrity"),
+    ).toMatchObject({
+      argv: [
+        "node",
+        "node_modules/tsx/dist/cli.mjs",
+        "tools/milestone-orchestrator/src/verification-cli.ts",
+        "contract-integrity",
+      ],
+      expectedArtifactKinds: ["contract-integrity-report"],
+    });
     expect(
       tracked.value.entries.find((entry) => entry.id === "fail-closed-evidence")
         ?.ownerPaths,
@@ -102,6 +118,23 @@ describe("invariant receipt wrappers", () => {
   }
 
   it("routes vitest and focused-verify invariants through receipt wrappers", () => {
+    expect(
+      commandFromArgv("protected-integrity", [
+        "node",
+        "node_modules/tsx/dist/cli.mjs",
+        "tools/milestone-orchestrator/src/verification-cli.ts",
+        "contract-integrity",
+      ]),
+    ).toEqual({
+      id: "protected-integrity",
+      executable: "node",
+      args: [
+        "node_modules/tsx/dist/cli.mjs",
+        "tools/milestone-orchestrator/src/verification-cli.ts",
+        "contract-integrity",
+      ],
+      parser: "exit-code",
+    });
     expect(
       commandFromArgv("schema-invariant", [
         "pnpm",
