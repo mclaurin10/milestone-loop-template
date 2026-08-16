@@ -3,6 +3,43 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-15 — Self-validating legacy worked-example package (WP4c)
+
+**Decision.** Keep the Ski Tycoon files at their existing
+`examples/ski-tycoon/` location and preserve all six JSON payloads byte-for-byte.
+A sibling `worked-example.v1` descriptor now names the exact package file set,
+source and template-introduction commits, legacy-only/inactive semantics,
+per-file provenance disposition, roles, byte counts, SHA-256 values, paths, and
+cross-file identities. `pnpm loop:example:validate -- --descriptor <file>` is
+the only supported inspection route. It requires an explicitly supplied,
+contained, regular, tracked descriptor; rejects missing, extra, linked,
+untracked, drifted, malformed, or incoherent payloads; validates every strict
+schema and legacy registry/check/protected link; and emits deterministic static
+results without executing, migrating, commissioning, or rewriting the example.
+
+The benchmark matrix, slow-suite registry, and scope policy remain labeled as
+unchanged source snapshots. The orchestrator config, invariant suite, and
+legacy manifest are labeled maintained compatibility adapters because they
+received post-extraction trust-boundary updates. Active configuration keeps no
+example identity: the source slow-suite registry is renamed to
+`milestone-loop-explicit-migration-suites.v1`, while the example retains its
+historical D-032 ID and the benchmark template uses an adopter placeholder.
+
+**Why.** The WP4 source plan already requires the historical configuration at
+the location it occupies, so a move or rewrite would add risk without closing a
+gap. The actual gap was that the directory's README misstated provenance and
+schema age, and only one file had a purpose-limited loader test; no boundary
+proved the package as a coherent, non-active whole. A separate pinned
+descriptor preserves recoverability and makes later drift explicit without
+turning legacy v1 into an active fallback. Alternatives rejected: moving the
+directory, converting its manifest to v2 (would erase historical semantics),
+loading it through active config, executing unavailable historical commits,
+or relying on documentation and ad hoc tests without byte identities.
+
+**Affected files.** Worked-example descriptor/validator/CLI/tests and export,
+package command, active slow-suite ID, benchmark template, example/root/config
+documentation, `CONTRACT.md`, and WP4c plan/logs.
+
 ## 2026-08-15 — Deterministic one-shot commissioning (WP4b)
 
 **Decision.** A repository creates its active generic v2 verification manifest

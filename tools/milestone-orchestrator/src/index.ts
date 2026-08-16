@@ -32,4 +32,5 @@ export * from "./telemetry-store.js";
 export * from "./transitions.js";
 export * from "./verifier.js";
 export * from "./verification-manifest.js";
+export * from "./worked-example.js";
 export * from "./verification-tier.js";

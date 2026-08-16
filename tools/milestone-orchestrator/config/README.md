@@ -3,8 +3,12 @@
 Each `*.json` file here is loaded and strictly validated at runtime. The
 matching `*.template.json` is a placeholder-annotated skeleton you fill in for
 your project (JSON cannot carry comments, so the placeholders and this file are
-the documentation). A fully worked configuration for a real project lives in
-[`examples/ski-tycoon/`](../../../examples/ski-tycoon/) at the repository root.
+the documentation). A historical worked configuration for a real project lives
+in [`examples/ski-tycoon/`](../../../examples/ski-tycoon/) at the repository
+root. Its `worked-example.v1` descriptor is validated only through the explicit
+read-only `pnpm loop:example:validate -- --descriptor
+examples/ski-tycoon/worked-example.json` command. The legacy v1 manifest and
+D-031/D-032 identities there are never active defaults or commissioning input.
 
 The shipped `*.json` files are a minimal, valid configuration for this template
 repository itself (workspace = the orchestrator package only), so the
@@ -127,10 +131,13 @@ list is the "fast unit" partition; the registry files are the "migration
 unit" partition. Every listed file must be discoverable by vitest, and the
 two partitions must be an exact disjoint union of discovery.
 
-## benchmark-matrix.json (`BenchmarkMatrix`)
+## benchmark-matrix.json (`BenchmarkMatrix`, historical source context)
 
-The commissioned paired-benchmark instrument (D-032). Structure, thresholds,
+The retained paired-benchmark instrument from D-032. Structure, thresholds,
 and class ids are pinned by `assertBenchmarkMatrix` and cannot be weakened.
+It is consumed only by the explicit historical benchmark context; generic v2
+commissioning does not load or require it. The template uses an adopter-owned
+ID placeholder so it cannot silently copy the source milestone identity.
 
 - `classes[].paths` — representative files in _your_ repo for each benchmark
   class.

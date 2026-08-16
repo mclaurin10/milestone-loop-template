@@ -1,0 +1,84 @@
+{
+  "schemaVersion": "worked-example.v1",
+  "id": "ski-tycoon-historical-loop-configuration.v1",
+  "source": {
+    "projectName": "Ski Tycoon",
+    "sourceCommit": "8928aecc19e8d3ade663063e0ed41740483774e3",
+    "templateIntroductionCommit": "69c1cab2726a7e75ed0f57017adf99cc4c7895d3"
+  },
+  "semantics": {
+    "disposition": "historical-worked-example",
+    "manifestSchema": "verification-manifest.v1",
+    "activeRuntimeEligible": false,
+    "implicitFallbackAllowed": false,
+    "commissioningAllowed": false,
+    "executionAllowed": false
+  },
+  "links": {
+    "documentationPath": "README.md",
+    "benchmarkMatrixPath": "benchmark-matrix.json",
+    "configPath": "default.json",
+    "invariantSuitePath": "invariant-suite.json",
+    "legacyVerificationManifestPath": "loop-recommissioning-verification.json",
+    "slowSuiteRegistryPath": "slow-suite-registry.json",
+    "scopePolicyPath": "verification-scope-policy.json"
+  },
+  "identities": {
+    "legacyMilestoneId": "d032-loop-efficiency-recommissioning",
+    "benchmarkMatrixId": "d032-loop-efficiency.v1",
+    "invariantSuiteId": "d032-core-invariants.v1",
+    "slowSuiteRegistryId": "d032-explicit-migration-suites.v1",
+    "scopePolicyId": "d032-shadow-scope-policy.v1"
+  },
+  "files": [
+    {
+      "path": "README.md",
+      "role": "documentation",
+      "provenance": "template-documentation",
+      "bytes": 2665,
+      "sha256": "b6e2021acb9a7160024ff17e353eccabecf43dd6e13600bc67fdf918823937a5"
+    },
+    {
+      "path": "benchmark-matrix.json",
+      "role": "benchmark-matrix",
+      "provenance": "source-snapshot",
+      "bytes": 2927,
+      "sha256": "3995b8ac18054967f2d08d4a677f7af152cc74abd8dd5246f64ed3c26c9ce8ec"
+    },
+    {
+      "path": "default.json",
+      "role": "orchestrator-config",
+      "provenance": "maintained-compatibility-adapter",
+      "bytes": 3391,
+      "sha256": "9d01d1316a8a44c2156be362407e5483dcab893712b031eccf364b0c54f2213e"
+    },
+    {
+      "path": "invariant-suite.json",
+      "role": "invariant-suite",
+      "provenance": "maintained-compatibility-adapter",
+      "bytes": 4476,
+      "sha256": "ef40b3a7c2aadd22c17c5b739c4c9720decb6ab1ce8922e1334669e4ccc404e7"
+    },
+    {
+      "path": "loop-recommissioning-verification.json",
+      "role": "legacy-verification-manifest",
+      "provenance": "maintained-compatibility-adapter",
+      "bytes": 7013,
+      "sha256": "8768b979632ed47df34de8683cb0003067e8558ed2bd34753066616f482fca40"
+    },
+    {
+      "path": "slow-suite-registry.json",
+      "role": "slow-suite-registry",
+      "provenance": "source-snapshot",
+      "bytes": 463,
+      "sha256": "625400e4797c141a2954c4a82727909e9df25c29d6c3890a33675ec52f34876b"
+    },
+    {
+      "path": "verification-scope-policy.json",
+      "role": "verification-scope-policy",
+      "provenance": "source-snapshot",
+      "bytes": 5802,
+      "sha256": "cd0a37a2b309303f75a187975139a5c62b64212d7a4bca2ccc4e26d00000847e"
+    }
+  ]
+}

@@ -15,7 +15,7 @@ still proves every recorded identity and isolation fact.
 Extracted from a battle-tested production loop (source repository pinned at
 commit `8928aecc19e8d3ade663063e0ed41740483774e3`); behavior is preserved,
 with project-specific facts moved into configuration. The original project's
-full configuration ships as a worked example in
+configuration ships as an explicitly validated, legacy-only worked example in
 [`examples/ski-tycoon/`](examples/ski-tycoon/README.md).
 
 ## What is in the box
@@ -283,6 +283,19 @@ report `NOT_READY`, never pass.
    (`src/workspace-cleanup-operation.ts`) remains a separate automatic
    temporary-workspace policy governed by the durable operation above.
 
+The Ski Tycoon package is useful as a configuration reference, but it is not
+an adoption input or active-manifest fallback. Validate its pinned static
+contents explicitly with:
+
+```bash
+pnpm loop:example:validate -- --descriptor examples/ski-tycoon/worked-example.json
+```
+
+This command checks the tracked package, schemas, identities, cross-links, and
+hashes without executing its historical benchmark or commissioning its legacy
+v1 manifest. A PASS describes only the worked-example package; it is not
+bootstrap or readiness evidence.
+
 ## Extension points
 
 - **Agent provider** — `src/codex-gateway.ts` is the single adapter between
@@ -296,9 +309,10 @@ report `NOT_READY`, never pass.
   `src/affected-scope.ts` encodes a conventional monorepo layout
   (`packages/foundation|protocol|persistence|simulation|ui|renderer`,
   `apps/web|headless`). It is shadow-only; adapt it if your layout differs.
-- **Benchmark classes** — the five commissioned benchmark classes are pinned
-  in `src/benchmark.ts`; point their `paths` at representative files of your
-  repository in `benchmark-matrix.json`.
+- **Historical benchmark classes** — the retained D-032 benchmark has five
+  pinned classes in `src/benchmark.ts`. It is an explicit source-history tool,
+  not part of generic v2 commissioning; use the matrix template only when
+  deliberately creating a comparable historical before/after instrument.
 - **Prompt preambles** — interpolate `project.name` / `project.authorityFile`
   from config; the sentences themselves live in `src/planner.ts`,
   `src/orchestrator.ts`, `src/reviewer.ts`, `src/reconciliation-reviewer.ts`.
@@ -316,7 +330,7 @@ scripts/verify.mjs           authoritative profile-based verification
 tools/evidence.mjs           command-owned receipt/hashing helpers
 tools/run-tool-evidence.mjs  pinned tool boundary (format/lint/typecheck/…)
 tools/milestone-orchestrator orchestrator package (config/, schemas/, src/)
-examples/ski-tycoon/         fully worked configuration from the source project
+examples/ski-tycoon/         pinned legacy-only worked-example package
 ```
 
 ## Requirements

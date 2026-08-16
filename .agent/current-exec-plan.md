@@ -1,184 +1,194 @@
 # Current Execution Plan
 
-**Status:** WP4b implementation complete; frozen verification pending
+**Status:** WP4c implementation complete; frozen verification in progress
 **Updated:** 2026-08-15
 **Owner:** autonomous loop
 
 ## Objective
 
-Implement one bounded WP4b increment: add a deterministic, fail-closed
-`pnpm loop:commission -- --input <file>` workflow and use that workflow to
-publish this repository's active `.agent/verification-manifest.json`.
+Implement one bounded WP4c increment that makes the already-placed
+`examples/ski-tycoon/` configuration an explicit, self-validating historical
+worked-example package while keeping it outside active source commissioning.
 
-The workflow will bind the active manifest to the real target branch, a strict
-ancestor commissioning base, the package-default `bootstrap` or `readiness`
-profile, the immutable authority lock, the current generic invariant/scope
-registries, the canonical protected floor, the focused command catalogue, and
-the generic exact/reconciliation policies. It will stage and validate complete
-bytes before one no-clobber atomic publication and will report every generated
-path, byte count, and SHA-256.
+Add a versioned descriptor and deterministic read-only validation command that
+prove the complete example file set, exact byte/hash identities, historical
+provenance dispositions, strict schemas, cross-file registry links, protected
+coverage, and legacy-only/no-fallback semantics. Correct the stale example and
+adoption documentation and remove the remaining D-032 identity from the active
+slow-suite registry. Do not move or rewrite the six example JSON payloads.
 
-This is a commissioning/lifecycle increment, not product feature work and not
-an autonomous-readiness claim.
+This is historical packaging and active-configuration hygiene, not product
+feature work, fresh-adopter bootstrap completion, or autonomous readiness.
 
 ## Goal Constraints
 
 - Preserve `PROJECT_GOAL.md`, `evals/ACCEPTANCE.md`,
   `evals/acceptance-manifest.json`, `evals/HIDDEN_VALIDATION_PROTOCOL.md`,
   `evals/immutable-contract-lock.json`, and
-  `.agent/readiness-profile-activated.json` byte-for-byte. Commissioning may
-  validate them but may not regenerate or amend source authority.
-- Preserve `.agent/completed/loop-recommissioning-verification.json` and the
-  Ski Tycoon worked example byte-for-byte. Historical v1 access remains closed
-  to the explicit benchmark/reconciliation/example contexts.
-- Preserve exact verification as literal no-argument `pnpm verify`, the stable
-  `exact-readiness` check id, tier-result wire schema `1.2.0`, combined
-  manifest/result JSON Schema `2.0.0`, and bootstrap's non-readiness meaning.
-- Preserve WP3 recovery, provider, supervision, OCI, receipt, integration, and
-  reconciliation semantics. No container/executor/provider/process deadline
-  owner changes are planned, so no real OCI matrix is in scope.
-- Do not replace adopting-project placeholders, change verifier deadlines or
-  verification partitions, move/rewrite the Ski Tycoon example, push, or claim
-  readiness.
+  `.agent/readiness-profile-activated.json` byte-for-byte. CAL-1 remains open
+  and all active immutable hashes remain equal to their baselines.
+- Preserve `.agent/completed/loop-recommissioning-verification.json`,
+  `.agent/verification-manifest.json`, and
+  `tools/milestone-orchestrator/config/source-commissioning-input.json`
+  byte-for-byte. Active v2 loading remains strict and historical v1 loading
+  remains available only through explicit benchmark, reconciliation, or
+  worked-example contexts; there is no implicit fallback.
+- Preserve the six current JSON payloads under `examples/ski-tycoon/`
+  byte-for-byte. Their D-031/D-032 and Ski Tycoon identities are intentional
+  historical/example data, never generic active configuration.
+- Preserve literal no-argument `pnpm verify`, package-default profile
+  selection, bootstrap's non-readiness meaning, `exact-readiness`, tier-result
+  schema `1.2.0`, combined manifest/result schema `2.0.0`, generic active
+  invariant/scope IDs, and current reconciliation/provider/supervision rules.
+- Do not implement product-domain placeholders, change verifier deadlines or
+  verification partitioning, modify container/runtime owners, run the real OCI
+  matrix, push, or claim readiness.
+- The remaining source-plan acceptance that a fresh adopter reaches a truthful
+  bootstrap PASS is a separate WP4d increment. WP4c may retain and extend the
+  commissioning fixture boundary but may not fabricate a bootstrap PASS.
 - Never edit, stage, move, hide, delete, or re-encode the user-owned untracked
   `Implementation-ready improvement plan 8-5-26.txt`.
-- Real commissioning requires an entirely clean tracked and untracked tree.
-  Because the protected human file intentionally makes the source checkout
-  unclean, generate the source manifest through the workflow in a clean
-  temporary clone of the exact staged candidate, then bring back only the
-  deterministic generated manifest bytes with `apply_patch`.
-- Use pinned Node `24.18.0` and pnpm `11.15.1`. Run all focused, aggregate,
-  reconciliation, supervision, and static commands serially.
+- Use pinned Node `24.18.0` and pnpm `11.15.1`. Run focused, aggregate, and
+  static commands serially.
 
 ## Baseline Evidence
 
-- Entry identity is `HEAD` `0f4ab3e5ef39bda07d6e77356ad53fca9136cdd5`,
-  tree `51421b18f8c4e3deae2e925945101bca3aa94879`, on `master`, one
-  commit ahead of `origin/master`; the tracked/staged tree is clean and the
-  only untracked path is the protected human plan.
-- The human plan is 78,574 bytes with raw SHA-256
+- Entry identity is `HEAD`
+  `345591818b220964618dc4e80cce3c0e0213783c`, tree
+  `d63a88e749dbfe64c1cbc86310c43b8b70054d76`, on `master`, two commits
+  ahead of `origin/master`. The tracked/staged tree is clean and the only
+  untracked path is the protected human plan.
+- The protected human plan is 78,574 bytes with raw SHA-256
   `53ea98fb1cb880163a02d3b1d9365963e3fe891025ae3630f00bd4c9232293b1`,
-  no-filter blob `9890a3cdd5288708a04102d27ff6fce9f0ebb90b`, and canonical
-  path-filtered blob `d0abdd24f404d9dc335818c355e39f7cfc531300`.
-- WP4a is committed and the source intentionally has no active manifest.
-  Active v2 loading is strict; v1 loading requires explicit historical
-  context; both active and retained source paths are protected while present.
-- `package.json` selects `readiness`; the permanent readiness marker is valid,
-  present, and has remained in history since
-  `0cc21776b3b31f58893675f225badea14651a9b0`.
-- `tools/milestone-orchestrator/config/default.json` incorrectly names
-  `main` while the actual target is `master`. The active invariant and scope
-  IDs are still `d032-core-invariants.v1` and
-  `d032-shadow-scope-policy.v1`; they must become generic before the active
-  manifest is commissioned. Historical benchmark IDs and records remain
-  legacy inputs.
-- The immutable lock is schema `1.0.0`, CAL-1 is open/not started, every
-  baseline equals its active hash, every governed file matches, and the lock's
-  SHA-256 is the verifier-anchored
-  `d1166088b00c54af65e8654188adc58a3cabd9d7908820809fe66af28c933050`.
-- The retained WP4a focused receipts, aggregates, static receipts, safety
-  report, and honest non-passing readiness result were inspected at the paths
-  named in the handoff. They are orientation evidence only and will not be
-  reused for WP4b's changed tree. No broad suite or verifier was rerun during
-  orientation.
+  no-filter blob `9890a3cdd5288708a04102d27ff6fce9f0ebb90b`, and
+  path-filtered canonical blob `d0abdd24f404d9dc335818c355e39f7cfc531300`.
+- WP4b is committed and its retained receipts/artifacts were inspected without
+  rerunning commands. The two focused shards passed 88/88 and 34/34; the
+  orchestrator aggregate passed 488 with two POSIX-only skips out of 490; the
+  unit aggregate passed 501 with the same two skips out of 503; safety,
+  typecheck, lint, format, and diff checks passed. The sole post-commit
+  no-argument verifier honestly failed on the protected untracked file,
+  project placeholders, and the unchanged 900,000 ms `unit-domain` deadline;
+  contract integrity passed and completion was ineligible.
+- The active manifest is strict v2 at 7,124 bytes / SHA-256
+  `f765765d8082280282151253e616f87a460dbe8c38f17909aa22d7dcb7930dd9`;
+  its 6,561-byte source input has SHA-256
+  `59f053d0b4ed195e2fda8746f8ee018ea3c97706c07f53a37908c40ef41b8629`.
+  Neither contains D-031/D-032 or Ski Tycoon identity.
+- The immutable lock is 1,363 bytes / SHA-256
+  `d1166088b00c54af65e8654188adc58a3cabd9d7908820809fe66af28c933050`;
+  the readiness marker is 238 bytes / SHA-256
+  `2d5d6628e31343dcfde01b4cadd1ff0891eb2abd3197e3018bc766d104077dc2`;
+  the retained source v1 manifest is 6,661 bytes / SHA-256
+  `c8a5923ef90a20a6aa460b26d9ee741cb8633aa81e5b4d6613478830413c1cea`.
+- WP4 source requirements place the Ski Tycoon manifest, benchmark, and policy
+  under `examples/ski-tycoon/`, require it to validate as an example rather
+  than active runtime, and prohibit implicit legacy fallback. The directory
+  already exists, so a move is not justified.
+- The directory currently has seven files. Its README incorrectly says the
+  template loads none of them, calls `default.json` schema `1.3.0` although it
+  is `1.6.0`, and calls all remaining files verbatim although the manifest and
+  invariant registry received mandatory-receipt compatibility updates after
+  extraction. Only the legacy manifest has an explicit example loader test;
+  no command validates the package as a coherent whole.
+- Current example JSON identities to preserve are:
+  - `benchmark-matrix.json`: 2,927 bytes / SHA-256
+    `3995b8ac18054967f2d08d4a677f7af152cc74abd8dd5246f64ed3c26c9ce8ec`;
+  - `default.json`: 3,391 bytes / SHA-256
+    `9d01d1316a8a44c2156be362407e5483dcab893712b031eccf364b0c54f2213e`;
+  - `invariant-suite.json`: 4,476 bytes / SHA-256
+    `ef40b3a7c2aadd22c17c5b739c4c9720decb6ab1ce8922e1334669e4ccc404e7`;
+  - `loop-recommissioning-verification.json`: 7,013 bytes / SHA-256
+    `8768b979632ed47df34de8683cb0003067e8558ed2bd34753066616f482fca40`;
+  - `slow-suite-registry.json`: 463 bytes / SHA-256
+    `625400e4797c141a2954c4a82727909e9df25c29d6c3890a33675ec52f34876b`;
+  - `verification-scope-policy.json`: 5,802 bytes / SHA-256
+    `cd0a37a2b309303f75a187975139a5c62b64212d7a4bca2ccc4e26d00000847e`.
+- The only D-031/D-032 identity in active configuration is
+  `d032-explicit-migration-suites.v1` in the root slow-suite registry. Its
+  schema accepts generic IDs and no manifest or runtime contract requires that
+  literal, so rename it to a source-independent ID while retaining the Ski
+  example's historical ID.
 
 ### Affected-test Matrix
 
-| Production owner changed                                                                                                                  | Focused acceptance coverage                                                                                                                                                                                                                                                                      | Broader regression surface                              | Required evidence                                                                                                                                           |
-| ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Commissioning input parser, Git/branch/base/profile/marker inspection, authority/lock validation, and deterministic manifest construction | new `commissioning.test.ts`: valid readiness and fresh bootstrap fixtures; dirty tracked/untracked; existing manifest; missing/non-ancestor base; wrong/detached branch; unsupported/mismatched profile; incompatible marker history; malformed authority/lock/anchor; deterministic twin clones | `test:orchestrator`, `test:unit`, typecheck/lint/format | receipt-owned focused report; generated bytes/hash comparison; no D-031/D-032 fixture identity                                                              |
-| Staged temporary output, partial-write cleanup, no-clobber publication, post-publication doctor, and CLI output                           | `commissioning.test.ts`: partial stage write, pre-publish drift, existing destination, post-validation rollback, exact printed path/bytes/SHA                                                                                                                                                    | aggregates plus doctor/config tests                     | no active file or temp residue after every injected fault; successful publication identity independently recomputed                                         |
-| Manifest target-branch binding, generic registry IDs, protected coverage, source all-tier construction                                    | `verification-manifest.test.ts`, `schema.test.ts`, `config.test.ts`, `verification-tier.test.ts`, `doctor.test.ts`, `protected-roots.test.ts`                                                                                                                                                    | both aggregates and safety demo                         | source manifest loads; all four plans build from active v2 with historical path absent from the fixture; combined schema remains 2.0.0/result remains 1.2.0 |
-| Closed historical adapter after active registry rename                                                                                    | `benchmark.test.ts`, `reconciliation.test.ts`, `verification-cli.test.ts`, `orchestrator-cleanup.test.ts`                                                                                                                                                                                        | both aggregates                                         | source benchmark/reconciliation remain explicit legacy; no implicit v1 fallback; recovery/provider/supervision cases unchanged                              |
-| Source command/config/input/docs/log/schema and immutable/protected identities                                                            | parseable JSON/schema checks, CLI invocation in clean clone, `git diff --check`, `git diff --cached --check`                                                                                                                                                                                     | static receipts and final exact verifier                | generated manifest provenance/result; receipt/artifact hash/count/duration audit; protected file identities unchanged                                       |
+| Production owner changed | Focused acceptance coverage | Broader regression surface | Required evidence |
+| --- | --- | --- | --- |
+| Worked-example descriptor/parser, contained tracked-file reader, hash inventory, schema and cross-link validator | new `worked-example.test.ts`: canonical package; traversal/symlink/untracked/duplicate/missing/extra files; byte/hash drift; malformed descriptor/JSON/schema; broken manifest-registry/check/protected links; deterministic output | `test:orchestrator`, `test:unit`, typecheck/lint/format | exact report path/bytes/SHA for all six payloads; explicit legacy-only and no-fallback disposition |
+| Explicit validation CLI and package route | CLI parsing rejects missing/duplicate/unknown/escaping input; command validates only an explicitly supplied descriptor and reports every file | aggregates and package/config tests | direct pinned command succeeds; no default active loader or v1 fallback is introduced |
+| Active slow-suite identity and example isolation | invariant/config/schema/manifest/protected tests; active-boundary regression scans active manifest/input/config registries for D-031/D-032/Ski identity while permitting explicit historical/example paths | both aggregates | active slow registry has generic ID; all six example JSON hashes and retained source identities remain exact |
+| README, contract, config docs, example provenance labels, plan/logs | documentation/path/script consistency assertions plus diff checks | static checks | no claim that adapted files are verbatim; no claim of bootstrap PASS or readiness |
 
 ## Steps
 
-1. [x] Read the frozen goal, agent contract, plan standard, WP4 source plan,
-       committed WP4a plan/log/decision, retained evidence, Git identities,
-       package profile, immutable lock, readiness-marker history, active and
-       historical manifest paths, config/registry facts, doctor/CLI routing,
-       tier construction, fixtures, and historical consumers. Replace the
-       stale WP4a plan with this bounded WP4b plan before production edits.
-2. [x] Define a strict commissioning-input contract and shared
-       read-only inspection: clean Git status including untracked files, exact
-       current/target branch, strict ancestor base, deterministic Git-derived
-       timestamp, package profile, one-way readiness history, authority files,
-       immutable-lock lifecycle/hash/verifier anchor, registry/catalogue,
-       protected coverage, exact policy, and reconciliation minimum.
-3. [x] Implement deterministic generation and publication. Construct fixed-
-       order v2 bytes, validate staged bytes and four tier plans, recheck Git
-       identity/status, publish the absent active path atomically without
-       clobber, validate the published file through the normal loader and a
-       commissioning doctor, roll back only the newly published inode on a
-       post-publication failure, clean owned temporary output, and print the
-       generated path/bytes/SHA-256.
-4. [x] Add standalone CLI routing and the `loop:commission` package command.
-       Add deterministic fault hooks/dependencies only at owned boundaries and
-       exhaustive temporary-Git-repository tests from the matrix, including a
-       genuinely fresh bootstrap adopter whose manifest and evidence are not
-       readiness-equivalent and contain no source-project IDs.
-5. [x] Correct the source target branch to `master`, migrate only the active
-       invariant/scope IDs to generic identities, bind the historical adapter
-       explicitly to the current registry/target configuration, and add the
-       tracked source commissioning input using WP4a `HEAD` as its strict
-       ancestor base. Keep all historical bytes and identities unchanged.
-6. [x] Run focused diagnostics only. Once interfaces stabilize, stage only
-       WP4b paths, apply the staged diff in a clean temporary clone on `master`,
-       commit that disposable candidate, run `pnpm loop:commission -- --input
- <tracked input>`, independently verify its output, and add the identical
-       generated manifest bytes to the source candidate. Preserve the protected
-       untracked human file throughout; the fresh-repository fault suite proves
-       that any untracked path makes real commissioning fail closed.
-7. [x] Update `README.md`, `CONTRACT.md`, config documentation, decision log,
-       autonomy log, schema artifacts, and this plan. Freeze source, tests,
-       generated manifest/input, docs, and logs before receipt-owning gates.
-8. [in progress] Execute the final serial command budget. Independently validate every
-   receipt/artifact SHA/byte count, suite/test count, skip, duration,
-   candidate identity, immutable hash, protected-file identity, and five
-   slowest tests. Repair only through a focused reproduction and rerun only
-   invalidated evidence.
-9. [ ] Commit the cohesive verified WP4b tree without pushing. From the clean
-       committed tracked tree, with the protected human file still untracked,
-       run literal no-argument `pnpm verify` exactly once and report its honest
-       readiness result without changing placeholders, authority, deadlines,
-       or success criteria.
+1. [x] Confirm handoff Git/tree/divergence/status, protected identities, recent
+       commits, WP4b retained evidence, frozen lock/marker state, WP4 source
+       requirements, example placement/history/hashes, active and historical
+       loader boundaries, docs, tests, and residual active identity leakage.
+       Replace the stale WP4b plan with this bounded WP4c plan before source
+       implementation.
+2. [x] Define a strict `worked-example.v1` descriptor and read-only
+       loader. Require a contained regular tracked descriptor and exact
+       descriptor-relative file set; exact bytes/SHA-256; explicit provenance
+       disposition per payload; strict schemas; manifest/invariant/benchmark,
+       scope/check-catalogue, and protected-path coherence; and literal
+       historical-legacy-only/non-active/no-implicit-fallback declarations.
+3. [x] Add an explicit CLI/package route requiring the descriptor path. Emit a
+       deterministic validation result containing the descriptor and every
+       payload path, role, provenance, byte count, and SHA-256. It must never
+       commission, rewrite, migrate, or execute the example.
+4. [x] Add exhaustive temporary-directory and repository-boundary tests plus a
+       source-boundary regression. Preserve all six example JSON bytes. Rename
+       only the root active slow-suite registry ID to
+       `milestone-loop-explicit-migration-suites.v1` and make the benchmark
+       template ID an adopter placeholder if its current D-032 default remains
+       presented as reusable input.
+5. [x] Update the example README, root README, `CONTRACT.md`, config docs,
+       decision log, autonomy log, and this plan. Accurately distinguish the
+       three unchanged source-snapshot payloads from the three maintained
+       compatibility adapters and explain that explicit validation is not an
+       active runtime load or readiness evidence.
+6. [x] Run focused diagnostics while interfaces stabilize. Freeze source,
+       tests, descriptor, docs, plan, and logs before receipt-owning gates.
+7. [in progress] Execute the final serial command budget. Independently validate every
+       receipt/artifact SHA/byte count, suite/test count, skip, duration,
+       candidate identity, immutable/marker/active/historical/example/human
+       identity, and five slowest tests. Repair only through focused
+       reproduction and rerun only invalidated evidence.
+8. [ ] Commit the cohesive verified WP4c tree without pushing. From the final
+       commit, run literal no-argument `pnpm verify` exactly once and report its
+       honest result without changing deadlines, hiding the protected human
+       file, weakening success criteria, or claiming readiness.
 
 ## Acceptance Criteria
 
-- `pnpm loop:commission -- --input <file>` is strict, deterministic for equal
-  input/Git identity, and reports every generated path with exact bytes and
-  SHA-256.
-- The command rejects any tracked or untracked dirt, an existing active
-  manifest, missing/non-commit/non-ancestor/equal bases, wrong or detached
-  branches, unsupported or package-mismatched profiles, invalid one-way marker
-  history, invalid authority/lock/anchor data, registry/catalogue drift, unsafe
-  or uncovered paths, and weakened exact/reconciliation policies.
-- Partial stage writes, pre-publication drift/races, publication conflicts, and
-  post-publication validation faults leave no partial active manifest and no
-  owned temporary residue. The destination is never overwritten.
-- Creation time is derived canonically from the commissioning base's real Git
-  commit time; no wall clock enters generated bytes.
-- A fresh clean bootstrap Git fixture commissions with its own explicit
-  authority/lock/config/input and no D-031, D-032, Ski Tycoon, or source-project
-  identity. Its profile remains bootstrap and cannot satisfy readiness or
-  reconciliation completion.
-- Source configuration names target `master`; the active invariant/scope IDs
-  are generic; `.agent/verification-manifest.json` is produced by the workflow
-  with real target/base/readiness profile, current registry IDs, canonical
-  protected paths, current focused catalogue, and generic exact/reconciliation
-  policy. Its serialized bytes contain no D-031/D-032 identity.
-- Iteration, candidate, milestone, and periodic source plans construct from the
-  active v2 manifest without reading a historical manifest. Exact closure is
-  still no-argument package-default `pnpm verify`; bootstrap remains
-  non-readiness-equivalent.
-- Historical benchmark and source reconciliation remain explicit v1 legacy
-  paths and pass after the active registry rename. The retained source and Ski
-  manifests are byte-identical to entry.
-- Frozen authority, lock lifecycle, readiness-marker bytes/history, result
-  schema `1.2.0`, combined schema `2.0.0`, provider identity, protected-root
-  behavior, recovery, reconciliation, and supervision are not weakened.
-- Focused receipts, safety demo, both applicable aggregates, typecheck, lint,
+- The existing Ski Tycoon directory remains in place and all six JSON payloads
+  retain their entry byte counts and SHA-256 values.
+- One strict versioned descriptor enumerates exactly those payloads, pins their
+  hashes/bytes/roles, records source commit
+  `8928aecc19e8d3ade663063e0ed41740483774e3`, distinguishes unchanged source
+  snapshots from maintained compatibility adapters, and declares the package
+  historical, legacy-only, inactive, and never an implicit fallback.
+- The explicit validation command fails closed for unsafe/untracked/linked or
+  unexpected paths, malformed/duplicate descriptors, file drift, invalid JSON
+  or schema, cross-file ID/check-catalogue/protected-path mismatch, or weakened
+  legacy disposition. Equal bytes produce equal output.
+- Successful validation reports every payload with exact path, role,
+  provenance, bytes, and SHA-256. It does not mutate Git, config, authority,
+  manifests, or the example.
+- Active source config, active manifest, source commissioning input, and
+  package-default verification remain independent of Ski Tycoon and D-031/
+  D-032 identity. The root slow-suite registry uses a generic ID; historical
+  source benchmark/reconciliation and Ski example records retain their legacy
+  identities only in explicit contexts.
+- `.agent/completed/loop-recommissioning-verification.json`, the active v2
+  manifest/input, frozen authority/lock, readiness marker/history, exact
+  command, profiles, schemas, protected floor, provider, recovery,
+  reconciliation, and supervision behavior are unchanged.
+- Documentation no longer claims all payloads are verbatim or that nothing can
+  explicitly validate them; it clearly distinguishes validation from runtime
+  loading, commissioning, execution, bootstrap PASS, and readiness.
+- Focused receipt evidence, both applicable aggregates, typecheck, lint,
   format, and both diff checks pass. The final committed no-argument verifier
   result is reported honestly and is not presented as readiness.
 
@@ -188,95 +198,87 @@ All commands prepend `.tools/node-v24.18.0-win-x64` to `PATH`, verify Node
 `24.18.0` and pnpm `11.15.1`, use unique ignored artifact directories, and run
 serially.
 
+Implementation diagnostics:
+
+1. Direct `pnpm exec vitest run` on only `worked-example.test.ts` until its
+   contract stabilizes.
+2. One direct affected-files diagnostic covering worked-example, config,
+   invariant-suite, manifest, schema, protected-root, and commissioning tests.
+3. Direct explicit example-validation command and read-only identity audits.
+
 Final frozen-tree command budget:
 
-1. At most two receipt-owning `invariant-vitest` shards via
-   `node tools/run-tool-evidence.mjs invariant-vitest ...
---fileParallelism=false`:
-   - commissioning/config/schema/manifest/tier/doctor/protected/CLI tests;
-   - historical benchmark/reconciliation/orchestrator-cleanup tests.
-2. One `pnpm loop:demo-safety` run because the literal protected catalogue and
-   active commissioning path change. No OCI matrix and no standalone process-
-   supervision suite unless a focused failure proves that owner changed.
-3. One `pnpm test:orchestrator`, followed by one `pnpm test:unit`; never overlap
-   either with each other or any focused/reconciliation command.
-4. One each of `pnpm typecheck`, `pnpm lint`, and `pnpm format:check`, with
+1. One receipt-owning `invariant-vitest` shard for the exact affected test
+   files with `--fileParallelism=false`.
+2. One `pnpm test:orchestrator`, followed by one `pnpm test:unit`; never overlap
+   them with each other or any focused command.
+3. One each of `pnpm typecheck`, `pnpm lint`, and `pnpm format:check`, with
    their command-owned receipts.
-5. `git diff --check`, `git diff --cached --check`, staged-path review, source
-   commissioning output audit, immutable/marker/historical/human-file hash
-   audit, and independent receipt/report validation including the five slowest
-   tests.
+4. No OCI matrix: no container/executor/provider owner changes. No safety demo:
+   the canonical protected catalogue and enforcement algorithm do not change.
+5. `git diff --check`, `git diff --cached --check`, staged-path review,
+   explicit validator output audit, and independent receipt/report validation
+   including the five slowest tests and all protected/example identities.
 6. Commit once. Then literal no-argument `pnpm verify` exactly once from the
-   final commit. Its default profile remains readiness; any unrelated product
-   placeholder or infrastructure failure remains non-passing and honest.
+   final commit. Its default profile remains readiness; known unrelated
+   placeholder, dirty-tree, provider, or deadline failures remain honest.
 
 Evidence invalidation:
 
-- Any production/type/schema/config/manifest change invalidates both focused
-  shards, both aggregates, and all static receipts touching that surface.
+- Any worked-example production/schema/CLI/config change invalidates the
+  focused shard, both aggregates, and typecheck/lint/format.
 - A test-only repair invalidates its focused shard and affected aggregate.
 - Docs/plan/log-only edits after semantic evidence require diff/static
   reinspection; all tracked content freezes before broad commands.
-- The commit changes commit identity but not tree identity. Frozen-tree receipts
-  support the implementation increment; the sole post-commit verifier owns the
-  committed candidate identity.
+- The commit changes commit identity but not tree identity. Frozen-tree
+  receipts support WP4c; the sole post-commit verifier owns the committed
+  candidate identity.
 
 ## Risks and Recovery
 
-- Multi-file publication would make rollback ambiguous. WP4b therefore
-  validates existing source authority/config and publishes only the absent
-  active manifest; target/registry corrections are ordinary reviewed source
-  edits made before commissioning. One no-clobber link/rename boundary is the
-  only publication commit point.
-- Adding target-branch identity to strict v2 could break the historical adapter.
-  Require it for active v2, inject the current configured branch and registry
-  IDs only inside the closed historical reconciliation adapter, and retain all
-  v1 bytes.
-- A permissive clean-tree exception for the protected human file would violate
-  the requested contract. Use a clean temporary clone; direct source execution
-  must fail and must not touch the file.
-- A lock validator could accidentally authorize regeneration. WP4b accepts only
-  existing source bytes whose actual governed hashes, lifecycle, explicit
-  commissioning-input lock hash, and verifier anchor all agree. It never writes
-  source authority or lock data.
-- Publication cleanup must never remove a pre-existing file. Refuse the active
-  path before staging, publish no-clobber, record the published file identity,
-  and roll back only that exact newly created output if strict post-validation
-  fails.
-- Recovery is normal source-control reversal of this cohesive commit. No remote
-  mutation, history rewrite, external service, OCI runtime change, or protected
-  authority mutation is required.
+- Rewriting or moving historical JSON would blur provenance and break retained
+  links. Keep the six payloads unchanged; add a sibling descriptor and update
+  only explanatory documentation. Recovery is ordinary reversal of the WP4c
+  commit.
+- Hashes can become platform-dependent if line endings drift. The repository's
+  `.gitattributes` enforces LF; validation hashes raw checked-out bytes and
+  tests prove the recorded counts/hashes on the supported runtime.
+- A generic example loader could become an implicit v1 fallback. Require an
+  explicit descriptor argument, keep active `loadVerificationManifest`
+  unchanged, and test that active paths never consult the example.
+- Importing historical benchmark validation must not execute it or require its
+  unavailable commits. Validate only the static matrix schema and cross-links;
+  do not run the real benchmark or reinterpret it as source evidence.
+- A descriptor could falsely call adapted files verbatim. Pin explicit
+  per-file provenance dispositions and document the post-extraction receipt,
+  protected-root, supervision, and provider compatibility updates.
+- No external mutation, history rewrite, remote push, runtime installation,
+  destructive cleanup, or protected human-file handling is required.
 
 ## Progress and Evidence
 
-- 2026-08-15: Confirmed exact WP4a handoff identities/divergence/status and all
-  four protected human-file identities. Read the frozen goal, plan standard,
-  newest logs/decision, WP4 source section, package/config/registry/lock/marker
-  state, generic/historical manifest implementations, doctor/CLI/tier paths,
-  fixtures, JSON Schema, and retained WP4a evidence without rerunning broad
-  verification. Identified `main`/`master` drift and active D-032 registry IDs
-  as required WP4b corrections. Replaced the committed WP4a pending wording
-  with this bounded executable plan before production work.
-- 2026-08-15: Implemented the strict input, read-only preflight, deterministic
-  construction, one-file staged/no-clobber publication, exact rollback,
-  post-generation commissioning doctor, standalone CLI, package command, and
-  temporary-Git fixtures. Commissioning diagnostics passed 13/13; the six
-  directly affected manifest/config/schema/tier/doctor/protected files passed
-  66/66; the pinned tools TypeScript diagnostic passed.
-- 2026-08-15: Corrected the source target to `master`, renamed only the active
-  registries to generic identities, and retained the closed historical adapter.
-  The workflow ran in a clean clone of the exact staged candidate and produced
-  the source manifest at 7,124 bytes / SHA-256
-  `f765765d8082280282151253e616f87a460dbe8c38f17909aa22d7dcb7930dd9`
-  from the 6,561-byte input / SHA-256
-  `59f053d0b4ed195e2fda8746f8ee018ea3c97706c07f53a37908c40ef41b8629`.
-  The read-only commissioning doctor passed all four plans; active bytes contain
-  no D-031/D-032 or Ski identity. Source, tests, schema, generated artifacts,
-  plan, logs, and docs now freeze for the final serial command budget.
+- 2026-08-15: Confirmed the exact WP4b commit/tree/divergence/status and all
+  protected human-file identities. Read the frozen goal, plan standard, latest
+  logs/decision, WP4 source section, active/historical manifest/config/code
+  boundaries, package/docs/tests, example Git history and hashes, retained
+  WP4b receipts, and honest verifier result without rerunning any broad suite.
+  Determined that placement is already correct, a move is unjustified, the
+  missing coherent validation/provenance boundary is the smallest WP4c slice,
+  and truthful fresh-adopter bootstrap PASS remains a later WP4 increment.
+- 2026-08-15: Added the strict descriptor, read-only validator, explicit CLI
+  and package route, public export, nine focused cases, generic active
+  slow-suite identity, adopter-owned benchmark-template placeholder, and
+  accurate example/adoption/contract/config documentation. The six historical
+  JSON payload hashes remain exact. The new file passed 9/9; the seven-file
+  affected diagnostic passed 66/66; direct TypeScript and new-file lint passed.
+  The explicit command reported the 2,948-byte descriptor at SHA-256
+  `e4f3c1496603ae5dbd3189f02177cd5e200693cf42ff5a8f6e683712920faa70`
+  and all seven package files deterministically without mutation. Source,
+  tests, descriptor, docs, plan, and logs now freeze for final receipt gates.
 
 ## Next Action
 
-Implement the strict commissioning input/inspection and deterministic manifest
-builder with temporary-Git-fixture tests. Run only the new focused test file
-until that boundary is stable; do not run aggregates, the safety demo, or the
-full verifier during implementation.
+Run the one receipt-owning affected-test shard, then the serial orchestrator and
+unit aggregates and receipt-owning static gates. Audit all evidence and frozen
+identities, stage only WP4c paths, commit once without pushing, and run the sole
+post-commit no-argument verifier honestly.

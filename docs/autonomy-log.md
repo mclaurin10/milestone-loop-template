@@ -3,6 +3,59 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-15 — WP4c explicit historical worked-example boundary
+
+**Objective.** Complete one bounded WP4c packaging increment by making the
+already-placed Ski Tycoon configuration self-validating and explicitly
+legacy-only, without moving or rewriting its historical JSON payloads or
+allowing any example identity into active source commissioning.
+
+**Outcome before final milestone verification.** A strict
+`worked-example.v1` descriptor pins the complete package, source provenance,
+legacy/inactive/no-fallback semantics, per-file provenance, roles, byte counts,
+hashes, paths, and identities. The read-only
+`pnpm loop:example:validate -- --descriptor <file>` route requires exact
+contained regular tracked files, validates all six JSON schemas plus manifest/
+registry/check/protected cross-links, and deterministically reports every
+payload. It never runs the historical benchmark, requires its unavailable
+commits, commissions the v1 manifest, or mutates repository state. The three
+unchanged source snapshots are distinguished from the three maintained
+compatibility adapters. All six example JSON payloads remain byte-identical to
+entry. The active slow-suite ID is now generic, the reusable benchmark template
+no longer defaults to D-032, and active manifest/input/config registries remain
+free of D-031/D-032 and Ski Tycoon identity.
+
+**Implementation diagnostics.** No broad suite or verifier was used for
+orientation. Under pinned Node `24.18.0` and pnpm `11.15.1`, the new focused
+file passed 9/9 cases covering exact/deterministic validation, descriptor and
+CLI strictness, containment, regular/tracked/exact file sets, byte/hash drift,
+JSON/schema drift, cross-links, and active/legacy isolation. The seven-file
+affected diagnostic passed 66/66, including the unchanged commissioning,
+config, invariant, manifest, schema, and protected-root boundaries. Direct
+TypeScript and new-file lint diagnostics passed. The explicit source command
+reported the 2,948-byte descriptor at SHA-256
+`e4f3c1496603ae5dbd3189f02177cd5e200693cf42ff5a8f6e683712920faa70`
+and all seven pinned package files with no mutation. These are iteration
+diagnostics, not final receipts.
+
+**Stable-tree milestone protocol.** Source, tests, descriptor, documentation,
+this log, and the execution plan freeze before one receipt-owning focused
+shard, serial orchestrator and unit aggregates, and receipt-owning typecheck,
+lint, and format gates. No OCI matrix or safety demonstration is applicable
+because no executor/provider or canonical protected-catalogue owner changes.
+Every receipt, artifact, count, skip, duration, candidate identity, and
+immutable/protected/example hash is independently checked before the cohesive
+commit. Literal no-argument `pnpm verify` runs exactly once afterward and any
+unrelated product, provider, dirty-tree, or deadline gaps remain honest.
+
+**Commit.** Assigned only after the frozen candidate passes the applicable
+WP4c checks; identify it as the newest commit touching this entry.
+
+**Known gaps.** A later WP4 increment must prove a fresh distributable adopter
+reaches a truthful bootstrap PASS. Product placeholders, calibration, trusted
+default-Windows execution, autonomous readiness, hidden validation, and human
+verification remain open. WP4c makes no readiness claim.
+
 ## 2026-08-15 — WP4b deterministic source commissioning
 
 **Objective.** Add one deterministic, fail-closed commissioning workflow and

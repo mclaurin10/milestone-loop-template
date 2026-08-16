@@ -252,6 +252,17 @@ validation must pass; an owned partial stage is cleaned, and a post-publication
 fault removes only the exact inode and hash that this invocation created. The
 command reports every generated path, byte count, and SHA-256.
 
+The Ski Tycoon configuration at `examples/ski-tycoon/` is a historical worked
+example, not an active or fallback contract. Its strict `worked-example.v1`
+descriptor pins the exact package files, provenance dispositions, schemas,
+legacy identities, cross-links, bytes, and hashes. It may be inspected only by
+the explicit read-only command
+`pnpm loop:example:validate -- --descriptor examples/ski-tycoon/worked-example.json`.
+That command never commissions, migrates, or executes the legacy v1 manifest,
+and its PASS is neither bootstrap nor readiness evidence. Generic active
+configuration and commissioning input must not acquire Ski Tycoon or D-031/
+D-032 identity from the example.
+
 ## 6. .agent conventions
 
 | Path                                      | Convention                                                                                                                   |
