@@ -1,10 +1,12 @@
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
   mkdtemp,
   mkdir,
   readFile,
   realpath,
   rm,
+  symlink,
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -12,15 +14,25 @@ import { dirname, join } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { runDoctorDiagnostic } from "./doctor.js";
+import { doctorExitCode, runDoctorDiagnostic } from "./doctor.js";
 import type { CommissioningDoctorDiagnostic } from "./commissioning.js";
 import {
+  READINESS_VERIFICATION_STAGE_IDS,
+  VERIFICATION_SUMMARY_SCHEMA_VERSION,
+  type AuthoritativeVerificationSummary,
+  type VerificationSummary,
+} from "./contracts.js";
+import {
   inspectTrustedExecutionCapability,
+  TRUSTED_CONTAINER_IMPLEMENTATION,
   type ExecutionProviderCapabilityProbe,
 } from "./execution-provider.js";
+import { executionProviderIdentity } from "./execution-provider-identity.js";
 import { buildCanonicalProtectedSet } from "./protected-roots.js";
+import { createMilestoneRecord } from "./milestone-state.js";
 import {
   validConfig,
+  validProposal,
   validReconciliationRecord,
   validState,
 } from "../test/fixtures.js";
@@ -35,6 +47,118 @@ afterEach(async () => {
 async function writeJson(path: string, value: unknown): Promise<void> {
   await mkdir(dirname(path), { recursive: true });
   await writeFile(path, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+}
+
+async function validDoctorState(root: string) {
+  const initial = validState(root);
+  const authority = await readFile(join(root, "PROJECT_GOAL.md"));
+  return {
+    ...initial,
+    repository: {
+      ...initial.repository,
+      protectedFiles: [
+        {
+          path: "PROJECT_GOAL.md",
+          sha256: createHash("sha256").update(authority).digest("hex"),
+        },
+      ],
+    },
+  };
+}
+
+async function writeCompletionEligibleExactState(
+  root: string,
+  statePath: string,
+): Promise<void> {
+  const resultPath = join(root, "artifacts", "exact", "result.json");
+  await writeJson(resultPath, { status: "PASS", candidateCommit: storedHead });
+  const resultSha256 = createHash("sha256")
+    .update(await readFile(resultPath))
+    .digest("hex");
+  const executionProvider = executionProviderIdentity({
+    provider: "trusted-container",
+    implementation: TRUSTED_CONTAINER_IMPLEMENTATION,
+    runtimeName: "docker",
+    runtimeVersion: "Docker test-runtime-1",
+    imageDigest: pinnedImageDigest,
+    mountPolicyVersion: "oci-mount-policy-v1",
+    resourceLimitProfile: "oci-resource-limits-v1",
+    networkDisposition: "denied",
+    capabilityStatus: "ready",
+    controlPlaneBound: true,
+  });
+  const stages = READINESS_VERIFICATION_STAGE_IDS.map((id) => ({
+    id,
+    status: "PASS" as const,
+  }));
+  const authoritative: AuthoritativeVerificationSummary = {
+    runId: "doctor-exact-readiness",
+    status: "PASS",
+    exitCode: 0,
+    disposition: "completion-eligible",
+    profileId: "readiness",
+    completionClaim: "autonomous_readiness",
+    completionEligible: true,
+    profileAutonomousReadinessEquivalent: true,
+    autonomousReadinessEquivalent: true,
+    readinessHistoryMode: "durable-records",
+    candidateCommit: storedHead,
+    requiredStageCount: stages.length,
+    validatedArtifactCount: 1,
+    stages,
+    passingStageIds: stages.map((stage) => stage.id),
+    notReadyStageIds: [],
+    previouslyPassingStageIds: stages.map((stage) => stage.id),
+    sourceResultPath: "artifacts/exact/result.json",
+    copiedResultPath: "artifacts/exact/result.json",
+    executionProvider,
+  };
+  const summary: VerificationSummary = {
+    schemaVersion: VERIFICATION_SUMMARY_SCHEMA_VERSION,
+    attempt: 1,
+    status: "PASS",
+    disposition: "completion-eligible",
+    failureKind: null,
+    summary: "Exact readiness verification passed.",
+    startedAt: "2026-08-01T01:00:00.000Z",
+    finishedAt: "2026-08-01T01:01:00.000Z",
+    commands: [],
+    authoritative,
+    candidate: {
+      baseCommit: "9".repeat(40),
+      commit: storedHead,
+      tree: "c".repeat(40),
+      clean: true,
+      changedEntriesDigest: "e".repeat(64),
+    },
+    authoritativeResultSha256: resultSha256,
+    changedPaths: [],
+    artifactPaths: [resultPath],
+    executionProvider,
+  };
+  const now = "2026-08-01T01:02:00.000Z";
+  const milestone = createMilestoneRecord(validProposal(), now);
+  const state = await validDoctorState(root);
+  await writeJson(statePath, {
+    ...state,
+    milestones: [
+      {
+        ...milestone,
+        status: "completed",
+        attempts: 1,
+        timestamps: {
+          ...milestone.timestamps,
+          readyAt: now,
+          startedAt: now,
+          completedAt: now,
+          updatedAt: now,
+        },
+        verificationSummaries: [summary],
+        commits: [storedHead],
+        nextAllowedAction: "plan",
+      },
+    ],
+  });
 }
 
 async function repositoryFixture(
@@ -65,9 +189,17 @@ async function repositoryFixture(
   await writeJson(join(root, "package.json"), {
     engines: { node: "24.18.0" },
     packageManager: "pnpm@11.15.1",
+    milestoneLoop: {
+      productionBuild: {
+        script: "build:production",
+        outputRoots: ["dist"],
+      },
+    },
+    scripts: { "build:production": "node tools/build-production.mjs" },
   });
   const statePath = join(root, "artifacts/orchestrator/state/state.json");
-  if (state === "valid") await writeJson(statePath, validState(root));
+  if (state === "valid")
+    await writeJson(statePath, await validDoctorState(root));
   if (state === "invalid")
     await writeJson(statePath, {
       schemaVersion: "0.0.0",
@@ -96,7 +228,7 @@ function readyCommissioningDiagnostic(): CommissioningDoctorDiagnostic {
     repository: {
       targetBranch: "main",
       baseCommit: "a".repeat(40),
-      headCommit: "b".repeat(40),
+      headCommit: storedHead,
       headTree: "c".repeat(40),
       profile: "readiness",
     },
@@ -158,39 +290,52 @@ describe("read-only orchestrator doctor", () => {
       },
     );
 
-    expect(diagnostic).toEqual({
-      schemaVersion: "1.8.0",
+    expect(diagnostic).toMatchObject({
+      schemaVersion: "2.0.0",
       diagnostic: "orchestrator-doctor",
       status: "ready",
       readOnly: true,
       networkCallsPerformed: 0,
+      summary: {
+        blockCount: 0,
+        autonomousIntegrationEligible: false,
+      },
       checks: {
         runtimePins: {
           status: "pass",
-          node: {
-            configured: "24.18.0",
-            running: "24.18.0",
-            matches: true,
-          },
-          pnpm: {
-            configured: "11.15.1",
-            running: "11.15.1",
-            matches: true,
-          },
+          node: { configured: "24.18.0", running: "24.18.0", matches: true },
+          pnpm: { configured: "11.15.1", running: "11.15.1", matches: true },
         },
         gitCleanliness: { status: "pass", clean: true },
         configuration: { status: "pass", valid: true },
+        sdkCompatibility: {
+          status: "pass",
+          package: "@openai/codex-sdk",
+          configuredVersion: "0.146.0",
+          installedVersion: "0.146.0",
+          matches: true,
+        },
         commissioning: {
           status: "pass",
-          manifestPath: ".agent/verification-manifest.json",
+          manifest: {
+            path: ".agent/verification-manifest.json",
+            bytes: 100,
+            sha256: "f".repeat(64),
+          },
           commissioned: true,
           targetBranch: "main",
           baseCommit: "a".repeat(40),
+          headCommit: storedHead,
+          headTree: "c".repeat(40),
           profile: "readiness",
+          immutableContractLockSha256: "d".repeat(64),
           invariantSuiteId: "generic-invariants.v1",
           scopePolicyId: "generic-scope.v1",
-          message: "Active verification commissioning is valid.",
+          tierPlans: readyCommissioningDiagnostic().tierPlans,
         },
+        productionBuild: { status: "pass", configured: true },
+        placeholderScripts: { status: "pass", scripts: [] },
+        configuredPaths: { status: "pass" },
         executionProvider: {
           status: "pass",
           configuredProvider: "trusted-container",
@@ -199,16 +344,20 @@ describe("read-only orchestrator doctor", () => {
             doctorConfig().candidateExecution.trustedContainer,
             readyExecutionProviderProbe,
           ),
-          message: "The complete trusted-container capability is available.",
         },
         state: {
           status: "pass",
           reference: "refs/milestone-loop/state",
-          canonicalGeneration: null,
           source: "legacy",
           mirror: "legacy",
+          verifiedCommit: storedHead,
+          protectedIntegrity: "verified",
           pendingOperation: null,
           outcome: "valid",
+        },
+        latestExactVerification: {
+          status: "warning",
+          available: false,
         },
         codexAuthentication: {
           status: "pass",
@@ -230,8 +379,19 @@ describe("read-only orchestrator doctor", () => {
           malformed: false,
           owner: null,
         },
+        autonomousIntegrationEligibility: {
+          status: "warning",
+          eligible: false,
+          reasons: ["latestExactVerification"],
+        },
       },
     });
+    expect(diagnostic.issues.map((issue) => issue.check)).toEqual([
+      "latestExactVerification",
+      "autonomousIntegrationEligibility",
+    ]);
+    expect(doctorExitCode(diagnostic, false)).toBe(0);
+    expect(doctorExitCode(diagnostic, true)).toBe(0);
     const serialized = JSON.stringify(diagnostic);
     expect(serialized).not.toContain("never-print-this-local-secret");
     expect(serialized).not.toContain(codexHome);
@@ -261,23 +421,342 @@ describe("read-only orchestrator doctor", () => {
     );
 
     expect(diagnostic.status).toBe("ready");
-    expect(diagnostic.checks.state).toEqual({
-      status: "pass",
+    expect(diagnostic.checks.state).toMatchObject({
+      status: "warning",
+      code: "state-uninitialized",
       reference: "refs/milestone-loop/state",
       canonicalGeneration: null,
       source: "absent",
       mirror: "missing",
+      verifiedCommit: null,
+      protectedIntegrity: "uninitialized",
       pendingOperation: null,
       outcome: "missing",
     });
-    expect(diagnostic.checks.codexAuthentication).toEqual({
+    expect(diagnostic.checks.codexAuthentication).toMatchObject({
       status: "pass",
       available: true,
       source: "environment",
     });
+    expect(diagnostic.nextAction).toEqual({
+      command: "pnpm loop:plan",
+      reason:
+        "Controller state is absent and can be initialized by the first plan.",
+    });
     expect(JSON.stringify(diagnostic)).not.toContain(apiKey);
     await expect(readFile(fixture.statePath, "utf8")).rejects.toMatchObject({
       code: "ENOENT",
+    });
+  });
+
+  it("reports current completion-eligible readiness evidence and integration eligibility", async () => {
+    const fixture = await repositoryFixture();
+    await writeCompletionEligibleExactState(fixture.root, fixture.statePath);
+
+    const diagnostic = await runDoctorDiagnostic(
+      { repositoryRoot: fixture.root },
+      {
+        environment: {
+          ...pinnedEnvironment,
+          CODEX_API_KEY: "available-but-private",
+        },
+        nodeVersion: "24.18.0",
+        gitProbe: () => ({ clean: true }),
+        headProbe: () => storedHead,
+        executionProviderProbe: readyExecutionProviderProbe,
+        commissioningProbe: async () => readyCommissioningDiagnostic(),
+      },
+    );
+
+    expect(diagnostic.status).toBe("ready");
+    expect(diagnostic.summary).toEqual({
+      passCount: 16,
+      warningCount: 0,
+      blockCount: 0,
+      autonomousIntegrationEligible: true,
+    });
+    expect(diagnostic.issues).toEqual([]);
+    expect(diagnostic.checks.latestExactVerification).toMatchObject({
+      status: "pass",
+      available: true,
+      runId: "doctor-exact-readiness",
+      resultPath: "artifacts/exact/result.json",
+      resultHashMatches: true,
+      profile: "readiness",
+      candidateCommit: storedHead,
+      current: true,
+      verificationStatus: "PASS",
+      completionEligible: true,
+      autonomousReadinessEquivalent: true,
+      providerMatchesCurrent: true,
+    });
+    expect(diagnostic.checks.autonomousIntegrationEligibility).toEqual({
+      status: "pass",
+      code: "ok",
+      message:
+        "The current target satisfies every autonomous-integration prerequisite.",
+      remediation: null,
+      command: null,
+      eligible: true,
+      reasons: [],
+    });
+    expect(diagnostic.nextAction).toEqual({
+      command: "pnpm loop:plan",
+      reason: "Canonical state permits planning.",
+    });
+    expect(doctorExitCode(diagnostic, true)).toBe(0);
+  });
+
+  it("rejects exact evidence redirected outside the repository through a linked parent", async () => {
+    const fixture = await repositoryFixture();
+    await writeCompletionEligibleExactState(fixture.root, fixture.statePath);
+    const exactRoot = join(fixture.root, "artifacts", "exact");
+    const resultContents = await readFile(join(exactRoot, "result.json"));
+    const outside = await mkdtemp(join(tmpdir(), "milestone-loop-exact-link-"));
+    temporaryDirectories.push(outside);
+    await writeFile(join(outside, "result.json"), resultContents);
+    await rm(exactRoot, { recursive: true });
+    await symlink(
+      outside,
+      exactRoot,
+      process.platform === "win32" ? "junction" : "dir",
+    );
+
+    const diagnostic = await runDoctorDiagnostic(
+      { repositoryRoot: fixture.root },
+      {
+        environment: {
+          ...pinnedEnvironment,
+          CODEX_API_KEY: "available-but-private",
+        },
+        nodeVersion: "24.18.0",
+        gitProbe: () => ({ clean: true }),
+        headProbe: () => storedHead,
+        executionProviderProbe: readyExecutionProviderProbe,
+        commissioningProbe: async () => readyCommissioningDiagnostic(),
+      },
+    );
+
+    expect(diagnostic.checks.latestExactVerification).toMatchObject({
+      status: "warning",
+      code: "exact-verification-artifact-invalid",
+      available: true,
+      resultHashMatches: false,
+      providerMatchesCurrent: true,
+    });
+    expect(diagnostic.checks.autonomousIntegrationEligibility).toMatchObject({
+      eligible: false,
+      reasons: ["latestExactVerification"],
+    });
+  });
+
+  it("requires exact evidence to match the active trusted-provider identity", async () => {
+    const fixture = await repositoryFixture();
+    await writeCompletionEligibleExactState(fixture.root, fixture.statePath);
+    const changedRuntimeProbe: ExecutionProviderCapabilityProbe = {
+      ...readyExecutionProviderProbe,
+      runtime: () => ({
+        available: true,
+        version: "Docker test-runtime-2",
+      }),
+    };
+
+    const diagnostic = await runDoctorDiagnostic(
+      { repositoryRoot: fixture.root },
+      {
+        environment: {
+          ...pinnedEnvironment,
+          CODEX_API_KEY: "available-but-private",
+        },
+        nodeVersion: "24.18.0",
+        gitProbe: () => ({ clean: true }),
+        headProbe: () => storedHead,
+        executionProviderProbe: changedRuntimeProbe,
+        commissioningProbe: async () => readyCommissioningDiagnostic(),
+      },
+    );
+
+    expect(diagnostic.checks.executionProvider.status).toBe("pass");
+    expect(diagnostic.checks.latestExactVerification).toMatchObject({
+      status: "warning",
+      code: "exact-verification-provider-mismatch",
+      resultHashMatches: true,
+      providerMatchesCurrent: false,
+    });
+    expect(diagnostic.checks.autonomousIntegrationEligibility).toMatchObject({
+      eligible: false,
+      reasons: ["latestExactVerification"],
+    });
+  });
+
+  it("reports production-build and active placeholder blockers in stable order", async () => {
+    const fixture = await repositoryFixture();
+    const packagePath = join(fixture.root, "package.json");
+    const packageJson = JSON.parse(await readFile(packagePath, "utf8")) as {
+      milestoneLoop: Record<string, unknown>;
+      scripts: Record<string, string>;
+    };
+    delete packageJson.milestoneLoop["productionBuild"];
+    packageJson.scripts["verify:dependencies"] =
+      "node tools/placeholder-check.mjs verify:dependencies";
+    await writeJson(packagePath, packageJson);
+
+    const diagnostic = await runDoctorDiagnostic(
+      { repositoryRoot: fixture.root },
+      {
+        environment: {
+          ...pinnedEnvironment,
+          CODEX_API_KEY: "available-but-private",
+        },
+        nodeVersion: "24.18.0",
+        gitProbe: () => ({ clean: true }),
+        headProbe: () => storedHead,
+        executionProviderProbe: readyExecutionProviderProbe,
+        commissioningProbe: async () => readyCommissioningDiagnostic(),
+      },
+    );
+
+    expect(diagnostic.status).toBe("blocked");
+    expect(diagnostic.checks.productionBuild).toMatchObject({
+      status: "block",
+      code: "production-build-invalid",
+      configured: false,
+    });
+    expect(diagnostic.checks.placeholderScripts).toMatchObject({
+      status: "block",
+      code: "active-placeholder-scripts",
+      scripts: ["verify:dependencies"],
+    });
+    expect(
+      diagnostic.issues
+        .filter((issue) => issue.severity === "block")
+        .map((issue) => issue.check),
+    ).toEqual(["productionBuild", "placeholderScripts"]);
+    expect(diagnostic.nextAction).toEqual({
+      command: "pnpm loop:doctor -- --strict",
+      reason:
+        "Manual repair is required for the earliest blocker; rerun strict Doctor afterward.",
+    });
+    expect(doctorExitCode(diagnostic, false)).toBe(0);
+    expect(doctorExitCode(diagnostic, true)).toBe(2);
+  });
+
+  it("separates structural configuration from installed SDK compatibility", async () => {
+    const fixture = await repositoryFixture();
+    const diagnostic = await runDoctorDiagnostic(
+      { repositoryRoot: fixture.root },
+      {
+        environment: {
+          ...pinnedEnvironment,
+          CODEX_API_KEY: "available-but-private",
+        },
+        nodeVersion: "24.18.0",
+        gitProbe: () => ({ clean: true }),
+        headProbe: () => storedHead,
+        installedSdkVersionProbe: () => "0.145.0",
+        executionProviderProbe: readyExecutionProviderProbe,
+        commissioningProbe: async () => readyCommissioningDiagnostic(),
+      },
+    );
+
+    expect(diagnostic.checks.configuration).toMatchObject({
+      status: "pass",
+      valid: true,
+    });
+    expect(diagnostic.checks.sdkCompatibility).toMatchObject({
+      status: "block",
+      code: "sdk-version-mismatch",
+      configuredVersion: "0.146.0",
+      installedVersion: "0.145.0",
+      matches: false,
+    });
+    expect(diagnostic.nextAction.command).toBe(
+      "pnpm install --frozen-lockfile --offline",
+    );
+  });
+
+  it("blocks a configured workspace junction escape without changing either tree", async () => {
+    const fixture = await repositoryFixture();
+    const outside = await mkdtemp(join(tmpdir(), "milestone-loop-outside-"));
+    temporaryDirectories.push(outside);
+    const workspaceRoot = join(
+      fixture.root,
+      "artifacts",
+      "orchestrator",
+      "workspaces",
+    );
+    await mkdir(dirname(workspaceRoot), { recursive: true });
+    await symlink(outside, workspaceRoot, "junction");
+    const stateBefore = await readFile(fixture.statePath);
+
+    const diagnostic = await runDoctorDiagnostic(
+      { repositoryRoot: fixture.root },
+      {
+        environment: {
+          ...pinnedEnvironment,
+          CODEX_API_KEY: "available-but-private",
+        },
+        nodeVersion: "24.18.0",
+        gitProbe: () => ({ clean: true }),
+        headProbe: () => storedHead,
+        executionProviderProbe: readyExecutionProviderProbe,
+        commissioningProbe: async () => readyCommissioningDiagnostic(),
+      },
+    );
+
+    expect(diagnostic.checks.configuredPaths).toMatchObject({
+      status: "block",
+      code: "configured-path-unsafe",
+    });
+    expect(
+      diagnostic.checks.configuredPaths.paths.find(
+        (entry) => entry.id === "workspaces",
+      ),
+    ).toMatchObject({
+      exists: true,
+      lexicalContained: true,
+      realpathContained: false,
+      kindValid: false,
+    });
+    expect(await readFile(fixture.statePath)).toEqual(stateBefore);
+    expect(await realpath(workspaceRoot)).toBe(await realpath(outside));
+  });
+
+  it("blocks a configured path whose nearest existing ancestor is not a directory", async () => {
+    const fixture = await repositoryFixture("missing");
+    const controllerArtifacts = join(fixture.root, "artifacts", "orchestrator");
+    await mkdir(dirname(controllerArtifacts), { recursive: true });
+    await writeFile(controllerArtifacts, "wrong-kind\n", "utf8");
+
+    const diagnostic = await runDoctorDiagnostic(
+      { repositoryRoot: fixture.root },
+      {
+        environment: {
+          ...pinnedEnvironment,
+          CODEX_API_KEY: "available-but-private",
+        },
+        nodeVersion: "24.18.0",
+        gitProbe: () => ({ clean: true }),
+        headProbe: () => storedHead,
+        executionProviderProbe: readyExecutionProviderProbe,
+        commissioningProbe: async () => readyCommissioningDiagnostic(),
+      },
+    );
+
+    expect(diagnostic.checks.configuredPaths).toMatchObject({
+      status: "block",
+      code: "configured-path-unsafe",
+    });
+    expect(
+      diagnostic.checks.configuredPaths.paths.find(
+        (entry) => entry.id === "state",
+      ),
+    ).toMatchObject({
+      exists: false,
+      nearestExistingPath: "artifacts/orchestrator",
+      lexicalContained: true,
+      realpathContained: true,
+      kindValid: false,
     });
   });
 
@@ -317,7 +796,7 @@ describe("read-only orchestrator doctor", () => {
         }),
       } satisfies ExecutionProviderCapabilityProbe,
     },
-  ])("reports attention for $name", async ({ expectedStatus, probe }) => {
+  ])("reports a blocker for $name", async ({ expectedStatus, probe }) => {
     const fixture = await repositoryFixture();
     const diagnostic = await runDoctorDiagnostic(
       { repositoryRoot: fixture.root },
@@ -333,9 +812,9 @@ describe("read-only orchestrator doctor", () => {
       },
     );
 
-    expect(diagnostic.status).toBe("attention");
+    expect(diagnostic.status).toBe("blocked");
     expect(diagnostic.checks.executionProvider).toMatchObject({
-      status: "attention",
+      status: "block",
       configuredProvider: "trusted-container",
       trustedAvailable: false,
       trustedCapability: { status: expectedStatus, available: false },
@@ -345,7 +824,7 @@ describe("read-only orchestrator doctor", () => {
     );
   });
 
-  it("reports a missing controller trust root as attention", async () => {
+  it("reports a missing controller trust root as a blocker", async () => {
     const fixture = await repositoryFixture();
     await rm(join(fixture.root, "scripts", "verify.mjs"));
 
@@ -359,13 +838,49 @@ describe("read-only orchestrator doctor", () => {
       },
     );
 
-    expect(diagnostic.status).toBe("attention");
-    expect(diagnostic.checks.protectedTrustRoots.status).toBe("attention");
+    expect(diagnostic.status).toBe("blocked");
+    expect(diagnostic.checks.protectedTrustRoots.status).toBe("block");
     expect(
       diagnostic.checks.protectedTrustRoots.roots.find(
         (root) => root.path === "scripts/verify.mjs",
       ),
-    ).toEqual({ path: "scripts/verify.mjs", present: false });
+    ).toEqual({
+      path: "scripts/verify.mjs",
+      present: false,
+      regularFile: false,
+      realpathContained: false,
+    });
+  });
+
+  it("rejects a protected trust root redirected through a junction", async () => {
+    const fixture = await repositoryFixture();
+    const outside = await mkdtemp(join(tmpdir(), "milestone-loop-root-link-"));
+    temporaryDirectories.push(outside);
+    const protectedPath = join(fixture.root, "scripts", "verify.mjs");
+    await rm(protectedPath);
+    await symlink(outside, protectedPath, "junction");
+
+    const diagnostic = await runDoctorDiagnostic(
+      { repositoryRoot: fixture.root },
+      {
+        environment: { ...pinnedEnvironment, CODEX_API_KEY: "private" },
+        nodeVersion: "24.18.0",
+        gitProbe: () => ({ clean: true }),
+        headProbe: () => storedHead,
+      },
+    );
+
+    expect(diagnostic.checks.protectedTrustRoots.status).toBe("block");
+    expect(
+      diagnostic.checks.protectedTrustRoots.roots.find(
+        (root) => root.path === "scripts/verify.mjs",
+      ),
+    ).toEqual({
+      path: "scripts/verify.mjs",
+      present: true,
+      regularFile: false,
+      realpathContained: false,
+    });
   });
 
   it("reports dirty Git, runtime drift, invalid state, and unavailable authentication without leaking details", async () => {
@@ -384,22 +899,22 @@ describe("read-only orchestrator doctor", () => {
       },
     );
 
-    expect(diagnostic.status).toBe("attention");
+    expect(diagnostic.status).toBe("blocked");
     expect(diagnostic.checks.runtimePins).toMatchObject({
-      status: "attention",
+      status: "block",
       node: { matches: false },
       pnpm: { matches: false },
     });
-    expect(diagnostic.checks.gitCleanliness).toEqual({
-      status: "attention",
+    expect(diagnostic.checks.gitCleanliness).toMatchObject({
+      status: "block",
       clean: false,
     });
-    expect(diagnostic.checks.configuration).toEqual({
+    expect(diagnostic.checks.configuration).toMatchObject({
       status: "pass",
       valid: true,
     });
-    expect(diagnostic.checks.state).toEqual({
-      status: "attention",
+    expect(diagnostic.checks.state).toMatchObject({
+      status: "block",
       reference: "refs/milestone-loop/state",
       canonicalGeneration: null,
       source: "invalid",
@@ -407,8 +922,8 @@ describe("read-only orchestrator doctor", () => {
       pendingOperation: null,
       outcome: "invalid-or-unreadable",
     });
-    expect(diagnostic.checks.codexAuthentication).toEqual({
-      status: "attention",
+    expect(diagnostic.checks.codexAuthentication).toMatchObject({
+      status: "block",
       available: false,
       source: "none",
     });
@@ -439,19 +954,24 @@ describe("read-only orchestrator doctor", () => {
       },
     );
 
-    expect(diagnostic.status).toBe("attention");
-    expect(diagnostic.checks.configuration).toEqual({
-      status: "attention",
+    expect(diagnostic.status).toBe("blocked");
+    expect(diagnostic.checks.configuration).toMatchObject({
+      status: "block",
       valid: false,
     });
-    expect(diagnostic.checks.state).toEqual({
-      status: "attention",
+    expect(diagnostic.checks.state).toMatchObject({
+      status: "warning",
       reference: "refs/milestone-loop/state",
       canonicalGeneration: null,
       source: "not-checked",
       mirror: "not-checked",
       pendingOperation: null,
       outcome: "not-checked",
+    });
+    expect(diagnostic.nextAction).toEqual({
+      command: "pnpm loop:doctor -- --strict",
+      reason:
+        "Manual repair is required for the earliest blocker; rerun strict Doctor afterward.",
     });
     expect(JSON.stringify(diagnostic)).not.toContain(
       "never-print-this-config-secret",
@@ -473,8 +993,8 @@ describe("read-only orchestrator doctor", () => {
       { repositoryRoot: fixture.root },
       { ...common, headProbe: () => "b".repeat(40) },
     );
-    expect(gap.checks.state).toEqual({
-      status: "attention",
+    expect(gap.checks.state).toMatchObject({
+      status: "block",
       reference: "refs/milestone-loop/state",
       canonicalGeneration: null,
       source: "legacy",
@@ -483,7 +1003,7 @@ describe("read-only orchestrator doctor", () => {
       outcome: "reconciliation-required",
     });
 
-    const baseState = validState(fixture.root);
+    const baseState = await validDoctorState(fixture.root);
     const record = validReconciliationRecord();
     const activeState = {
       ...baseState,
@@ -511,8 +1031,8 @@ describe("read-only orchestrator doctor", () => {
       { repositoryRoot: fixture.root },
       { ...common, headProbe: () => "b".repeat(40) },
     );
-    expect(active.checks.state).toEqual({
-      status: "attention",
+    expect(active.checks.state).toMatchObject({
+      status: "block",
       reference: "refs/milestone-loop/state",
       canonicalGeneration: null,
       source: "legacy",
@@ -524,7 +1044,7 @@ describe("read-only orchestrator doctor", () => {
 
   it("classifies retention apply without changing state, journal, or targets", async () => {
     const fixture = await repositoryFixture();
-    const baseState = validState(fixture.root);
+    const baseState = await validDoctorState(fixture.root);
     const verificationRoot = join(fixture.root, "artifacts");
     const controllerRoot = join(
       fixture.root,
@@ -610,9 +1130,12 @@ describe("read-only orchestrator doctor", () => {
         diagnostic: null,
       },
     });
-    const [stateBefore, targetBefore] = await Promise.all([
+    const authorityPath = join(fixture.root, "PROJECT_GOAL.md");
+    await writeFile(authorityPath, "protected authority drift\n", "utf8");
+    const [stateBefore, targetBefore, authorityBefore] = await Promise.all([
       readFile(fixture.statePath),
       readFile(join(target, "result.json")),
+      readFile(authorityPath),
     ]);
     const diagnostic = await runDoctorDiagnostic(
       { repositoryRoot: fixture.root },
@@ -627,7 +1150,7 @@ describe("read-only orchestrator doctor", () => {
       },
     );
     expect(diagnostic.checks.state).toMatchObject({
-      status: "attention",
+      status: "block",
       pendingOperation: {
         kind: "retention-apply",
         phase: "intent-persisted",
@@ -639,11 +1162,23 @@ describe("read-only orchestrator doctor", () => {
       },
       outcome: "retention-operation-pending",
     });
-    const [stateAfter, targetAfter] = await Promise.all([
+    expect(diagnostic.checks.storedProtectedIntegrity).toMatchObject({
+      status: "block",
+      code: "stored-protected-drift",
+      outcome: "drifted",
+      driftedPaths: ["PROJECT_GOAL.md"],
+    });
+    const issueChecks = diagnostic.issues.map((issue) => issue.check);
+    expect(issueChecks.indexOf("storedProtectedIntegrity")).toBe(
+      issueChecks.indexOf("state") + 1,
+    );
+    const [stateAfter, targetAfter, authorityAfter] = await Promise.all([
       readFile(fixture.statePath),
       readFile(join(target, "result.json")),
+      readFile(authorityPath),
     ]);
     expect(stateAfter).toEqual(stateBefore);
     expect(targetAfter).toEqual(targetBefore);
+    expect(authorityAfter).toEqual(authorityBefore);
   });
 });

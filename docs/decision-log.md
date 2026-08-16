@@ -3,6 +3,51 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-16 — Versioned read-only operational Doctor and strict blocker gate (WP5a)
+
+**Decision.** Operational Doctor schema `2.0.0` uses only `pass`, `warning`,
+and `block` check severities and derives top-level `ready` solely from the
+absence of blocks. Every non-pass check becomes an ordered issue with a stable
+code, remediation, and optional safe command. `nextAction` follows the earliest
+block; if that block requires manual repair, it directs the operator back to
+strict Doctor after repair instead of skipping ahead to a later executable
+action. With no blocks, it selects the earliest actionable warning or the
+canonical state's permitted action.
+
+Ordinary Doctor remains an inspectable exit-zero command even when it reports
+`blocked`. The Doctor-only `--strict` flag prints the identical complete JSON,
+then exits 2 when any block exists; warnings alone exit zero but keep
+autonomous integration ineligible. Other loop commands reject `--strict`
+before repository mutation.
+
+Doctor projects existing read-only authorities rather than creating parallel
+success definitions: commissioning/tier construction, production-build
+declaration, structural configuration, exact installed SDK, provider
+capability and identity, canonical state and pending-operation recovery,
+protected roots and stored identities, lease ownership, authentication, and
+Git identity. The normal config loader still enforces installed-SDK
+compatibility; a narrow inspection loader lets Doctor report structural config
+and installed state separately. Exact evidence is state-owned, hash-checked,
+realpath-contained, current, readiness-only, and bound to the active
+completion-eligible provider identity. Protected drift is a separate blocker
+so it cannot hide a simultaneous recovery operation.
+
+**Why.** The prior coarse `pass/attention` output could not serve as an
+operational gate, omitted material package/path/evidence facts, and rejected
+strict mode before diagnosis. Running verification from Doctor would be slow,
+mutating, and circular; guessing the latest artifact directory would bypass
+canonical state; coupling structural config to installed dependencies would
+hide the actual failure; and treating every first-run warning as a block would
+prevent safe initialization. Alternatives rejected: warnings authorizing
+integration, strict mode suppressing JSON, a generic strict flag for mutating
+commands, following linked paths, probing an unconfigured container provider,
+repairing state or paths, or choosing a later actionable blocker over an
+earlier manual one.
+
+**Affected files.** Doctor/CLI/config inspection source and tests, three
+read-only recovery consumers, `README.md`, `CONTRACT.md`, the active execution
+plan, and autonomy/decision logs.
+
 ## 2026-08-15 — Git-anchored fresh-adopter bootstrap package (WP4d)
 
 **Decision.** Distribute the loop through a strict

@@ -294,7 +294,37 @@ canonical set — controller startup, reconciliation, and doctor all
 validate the coverage — and `pnpm loop:demo-safety` demonstrates the
 rejection of every canonical path including case variants.
 
-## 8. Environment
+## 8. Operational diagnostics and environment
+
+`pnpm loop:doctor` is the authoritative, read-only operational wiring
+diagnostic. Schema `2.0.0` gives every check exactly one of `pass`, `warning`,
+or `block`, plus a stable code, explanation, remediation, and optional safe
+command. The top-level result is `ready` when no block exists and `blocked`
+otherwise. Its ordered issue list and counts are complete for that observation;
+`nextAction` names the earliest safe executable diagnostic/recovery action, or
+strict Doctor itself when manual repair must occur first.
+
+`pnpm loop:doctor -- --strict` prints the same complete JSON and exits 2 after
+output when a block exists. Without `--strict`, a successfully emitted
+diagnostic exits zero even when its status is `blocked`. Other loop commands do
+not accept the flag. Warnings do not authorize integration: current autonomous
+integration eligibility requires exact runtime and SDK pins, a clean target,
+valid readiness commissioning and tier construction, real build and
+non-placeholder package wiring, safe configured roots, a ready trusted
+provider whose identity matches the evidence, canonical state matching target
+HEAD, intact protected identities, available authentication, no active lease,
+operation, or reconciliation, and current intact completion-eligible
+state-owned exact readiness evidence.
+
+Doctor reuses the commissioning and production-build contract loaders. It
+derives latest exact identity only from validated canonical controller state
+and verifies the durable copied-result hash; it never guesses from artifact
+directory names. It checks absent configured paths through the nearest existing
+ancestor and checks existing roots lexically and by realpath without creating,
+repairing, following, moving, or deleting suspicious content. Doctor performs
+zero network calls and never launches a build, verifier, candidate command,
+container, or Codex turn; acquires no lease; creates no state or directory; and
+writes or repairs no file, ref, mirror, evidence, or configuration.
 
 - Node and pnpm exactly matching the package pins.
 - Candidate execution configured under `candidateExecution`. Doctor reports

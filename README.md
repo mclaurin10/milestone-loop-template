@@ -128,13 +128,32 @@ report `NOT_READY`, never pass.
    ```bash
    pnpm typecheck
    pnpm test:orchestrator
-   pnpm loop:doctor
+   pnpm loop:doctor -- --strict
    pnpm loop:demo-safety
    ```
 
-   `loop:doctor` validates runtime pins, config, state readability, SDK
-   authentication, and the complete configured execution-provider capability;
-   Docker or Podman presence alone is never reported as trusted readiness.
+   `loop:doctor` emits the read-only `2.0.0` operational diagnostic. Each
+   check is `pass`, `warning`, or `block`; the ordered `issues` list carries a
+   stable code, remediation, and a safe command where one exists, while
+   `nextAction` selects the earliest safe diagnostic/recovery action. The
+   command validates runtime pins, clean Git identity, structural config and
+   the exact installed Codex SDK separately, active commissioning and all four
+   tier plans, the truthful production-build declaration, active placeholder
+   scripts, lexical/realpath containment, state and protected identities,
+   pending operations, authentication, trust roots, controller ownership, the
+   complete configured execution-provider capability, and the latest
+   state-owned exact verification. Docker or Podman presence alone is never
+   reported as trusted readiness.
+
+   Ordinary Doctor remains an inspectable diagnostic and exits zero after it
+   emits a complete `ready` or `blocked` result. `--strict` emits the same JSON
+   and exits 2 when any operational blocker exists; warnings keep autonomous
+   integration ineligible but allow safe first-run actions such as planning or
+   obtaining fresh exact evidence. Doctor performs no network call, build,
+   verifier, container, Codex invocation, lease acquisition, repair, state/ref
+   write, or directory creation. A strict failure is a real blocker report,
+   not permission to clean user content or weaken the gate.
+
    `loop:demo-safety` proves retry, recovery, retry-limit stop, and
    protected-file rejection end to end.
 

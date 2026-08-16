@@ -331,7 +331,7 @@ function migrateConfig(value: unknown): unknown {
   };
 }
 
-export async function loadConfig(
+export async function loadConfigForInspection(
   repositoryRoot: string,
   requestedPath?: string,
 ): Promise<OrchestratorConfig> {
@@ -345,7 +345,6 @@ export async function loadConfig(
     JSON.parse(await readFile(path, "utf8")) as unknown,
   );
   const config = assertOrchestratorConfig(parsed);
-  assertInstalledSdkCompatibility(config.agentPolicy);
   const sourcePath = relative(resolve(repositoryRoot), path).replaceAll(
     "\\",
     "/",
@@ -368,4 +367,13 @@ export async function loadConfig(
       ...commissionedManifestPaths,
     ]),
   };
+}
+
+export async function loadConfig(
+  repositoryRoot: string,
+  requestedPath?: string,
+): Promise<OrchestratorConfig> {
+  const config = await loadConfigForInspection(repositoryRoot, requestedPath);
+  assertInstalledSdkCompatibility(config.agentPolicy);
+  return config;
 }

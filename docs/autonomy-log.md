@@ -3,6 +3,72 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-16 — WP5a strict operational Doctor
+
+**Objective.** Complete the bounded Doctor slice of WP5 by turning
+`pnpm loop:doctor` into a complete read-only operational diagnostic and adding
+a Doctor-only strict blocker exit, without changing source readiness,
+commissioning, provider policy, product placeholders, or WP4d evidence.
+
+**Outcome before commit.** Doctor schema `2.0.0` gives every check a stable
+`pass`, `warning`, or `block` result with code, message, remediation, and safe
+command where one exists. It emits complete ordered issues, counts, current
+autonomous-integration eligibility, and the earliest safe next action. Ordinary
+Doctor exits zero after an honest `ready` or `blocked` result; `--strict` emits
+the same diagnostic and exits 2 only when a block exists. Structural config and
+the installed SDK are independent facts, while normal config loading retains
+its exact installed-SDK assertion.
+
+The diagnostic reuses active commissioning and all four tier plans, the
+production-build contract, provider capability/identity, canonical state,
+operation recovery, protected-root, protected-identity, and lease authorities.
+Configured paths are checked lexically and through the nearest existing
+ancestor/realpath without creation. Exact verification is accepted only from
+validated canonical state, a current intact copied result, readiness profile,
+and the matching active completion-eligible provider identity. Pending
+operations and simultaneous protected drift remain independently visible.
+Doctor makes no network call and launches no build, verifier, container,
+candidate command, or Codex turn; it writes no path, state, ref, mirror,
+evidence, lease, or configuration.
+
+**Verification.** Under pinned Node `24.18.0` and pnpm `11.15.1`, the accepted
+receipt-owning Doctor/CLI/config shard passed 38/38 at
+`artifacts/manual/invariant-vitest-7236/invariant-vitest-report.json` (13,426
+bytes, SHA-256
+`b7d62bb9cfbfe6b8b489e9802ddee2b77a2a0739e6c131042a0f2e7aafd7358f`).
+The full orchestrator aggregate passed 523/525 with zero failures and only the
+two declared Windows POSIX process-group skips at
+`artifacts/manual/test-orchestrator-19716/orchestrator-report.json` (184,077
+bytes, SHA-256
+`fcc44893f0922bb3006cb6e16114d45e14b5fa89c6f78c9648fcf96232e8aad6`).
+The unit aggregate passed 536/538 with the same two skips at
+`artifacts/manual/test-unit-23304/test-report.json` (188,245 bytes, SHA-256
+`9ab63d42d3ed2f01082799cf016ade0b69ba32125b73ab4018b7b7c41d6f5446`).
+Every report hash/size matched its PASS receipt. Typecheck, lint, and format
+passed with independently matched receipts at
+`artifacts/manual/typecheck-7452`, `artifacts/manual/lint-22044`, and
+`artifacts/manual/format-check-8972`. `pnpm loop:demo-safety` passed every
+scenario at
+`artifacts/orchestrator/runs/safety-demonstration/safety-demonstration-20260816150722143-fe2a229a.json`.
+No source no-argument verifier, OCI matrix, fresh-adopter proof, or mutating
+loop command ran. Final ordinary and strict source Doctor emitted byte-equivalent
+schema `2.0.0` diagnostics with 9 passes, 3 warnings, and the honest 4 blockers
+(dirty protected plan, missing production build, active placeholders, missing
+trusted runtime). Ordinary exited 0, strict exited 2, integration remained
+ineligible, and `git status --short --branch` was the next command. Git status,
+absent state/lease refs, and absent state-path facts were unchanged.
+
+**Commit.** Assigned only after the frozen WP5a candidate passes its final
+Doctor, diff, staged-scope, and protected-identity audits; identify it as the
+newest commit touching this entry.
+
+**Known gaps.** Later WP5 increments still own status expansion, independent
+invariant extraction, strict-config corpus, Linux/CI race coverage, and
+operator documentation beyond Doctor. The source remains deliberately blocked
+by the protected human plan, placeholder scripts, absent production-build
+declaration, unavailable trusted runtime/image, and absent exact state. WP5a is
+not full WP5, autonomous readiness, product implementation, or a push.
+
 ## 2026-08-15 — WP4d fresh-adopter bootstrap packaging
 
 **Objective.** Complete one bounded WP4d distributable-template increment that

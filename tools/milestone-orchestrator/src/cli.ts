@@ -10,7 +10,7 @@ import {
   ControllerLease,
   releaseLeaseWithoutMasking,
 } from "./controller-lease.js";
-import { runDoctorDiagnostic } from "./doctor.js";
+import { doctorExitCode, runDoctorDiagnostic } from "./doctor.js";
 import { buildEvidenceRetentionPlan } from "./evidence-retention.js";
 import { runLiveModelPolicyCheck } from "./model-policy-check.js";
 import {
@@ -29,6 +29,7 @@ export interface LoopCliArguments {
   readonly configPath?: string;
   readonly one: boolean;
   readonly json: boolean;
+  readonly strict: boolean;
   readonly candidate?: string;
   readonly nextProposalPath?: string;
   readonly reason?: string;
@@ -42,6 +43,7 @@ export function parseArguments(values: readonly string[]): LoopCliArguments {
   let configPath: string | undefined;
   let one = false;
   let json = false;
+  let strict = false;
   let candidate: string | undefined;
   let nextProposalPath: string | undefined;
   let reason: string | undefined;
@@ -51,6 +53,7 @@ export function parseArguments(values: readonly string[]): LoopCliArguments {
     const value = values[index];
     if (value === "--one") one = true;
     else if (value === "--json") json = true;
+    else if (value === "--strict") strict = true;
     else if (value === "--config") {
       const candidate = values[index + 1];
       if (!candidate) throw new Error("--config requires a path.");
@@ -90,6 +93,7 @@ export function parseArguments(values: readonly string[]): LoopCliArguments {
     ...(configPath ? { configPath } : {}),
     one,
     json,
+    strict,
     ...(candidate ? { candidate } : {}),
     ...(nextProposalPath ? { nextProposalPath } : {}),
     ...(reason ? { reason } : {}),
@@ -134,6 +138,8 @@ export function assertCommandArguments(args: LoopCliArguments): void {
     );
   if (args.command !== "retention-apply" && Boolean(args.plan || args.sha256))
     throw new Error(`${args.command} does not accept --plan or --sha256.`);
+  if (args.command !== "doctor" && args.strict)
+    throw new Error(`${args.command} does not accept --strict.`);
   if (args.command === "retention-apply") {
     if (!args.plan || !args.sha256)
       throw new Error("retention-apply requires --plan and --sha256.");
@@ -180,13 +186,12 @@ async function main(): Promise<void> {
     return;
   }
   if (args.command === "doctor") {
-    output(
-      await runDoctorDiagnostic({
-        repositoryRoot: root,
-        ...(args.configPath ? { configPath: args.configPath } : {}),
-      }),
-      args.json,
-    );
+    const diagnostic = await runDoctorDiagnostic({
+      repositoryRoot: root,
+      ...(args.configPath ? { configPath: args.configPath } : {}),
+    });
+    output(diagnostic, args.json);
+    process.exitCode = doctorExitCode(diagnostic, args.strict);
     return;
   }
   if (args.command === "check-model-policy") {

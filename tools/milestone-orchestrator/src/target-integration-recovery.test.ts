@@ -271,7 +271,7 @@ describe("target integration crash recovery", () => {
         configPath: crashFixture.configPath,
       });
       expect(doctor.checks.state).toMatchObject({
-        status: "attention",
+        status: "block",
         outcome: "target-operation-pending",
         pendingOperation: {
           kind: "target-integrate",

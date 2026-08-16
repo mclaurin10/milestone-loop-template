@@ -108,3 +108,19 @@ describe("loop CLI retention arguments", () => {
     ).toThrow(/does not accept --plan or --sha256/);
   });
 });
+
+describe("loop CLI strict Doctor arguments", () => {
+  it("accepts strict mode only for Doctor", () => {
+    const doctor = parseArguments(["doctor", "--", "--strict", "--json"]);
+    expect(() => assertCommandArguments(doctor)).not.toThrow();
+    expect(doctor).toMatchObject({
+      command: "doctor",
+      strict: true,
+      json: true,
+    });
+
+    expect(() =>
+      assertCommandArguments(parseArguments(["status", "--strict"])),
+    ).toThrow(/status does not accept --strict/);
+  });
+});

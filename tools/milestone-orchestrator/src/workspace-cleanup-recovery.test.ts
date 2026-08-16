@@ -226,7 +226,7 @@ describe("workspace cleanup crash recovery", () => {
         configPath: crashFixture.configPath,
       });
       expect(doctor.checks.state).toMatchObject({
-        status: "attention",
+        status: "block",
         outcome: "cleanup-operation-pending",
         pendingOperation: {
           kind: "workspace-cleanup",

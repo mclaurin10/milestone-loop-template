@@ -333,7 +333,7 @@ describe("leased workspace-create recovery", () => {
         nextSafeAction: "adopt-final-clone",
       });
       expect(doctor.checks.state).toMatchObject({
-        status: "attention",
+        status: "block",
         outcome: "workspace-operation-pending",
         pendingOperation: {
           id: operation.id,
