@@ -26,6 +26,7 @@ export * from "./reasoning-escalation.js";
 export * from "./reviewer.js";
 export * from "./schema.js";
 export * from "./state-store.js";
+export * from "./status.js";
 export * from "./telemetry-contracts.js";
 export * from "./telemetry-report.js";
 export * from "./telemetry-store.js";

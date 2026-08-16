@@ -3,6 +3,93 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-16 — WP5b canonical lifecycle status
+
+**Objective.** Complete the bounded Status slice of WP5 by making
+`pnpm loop:status -- --json` the single versioned, read-only resume surface for
+uninitialized, ordinary initialized, pending-operation, target-drift, and
+active-reconciliation states. Preserve the accepted WP5a Doctor authority and
+all WP4d evidence while closing the roadmap gap for commissioning/profile,
+target relation, lease, pending side effect, recovery disposition, latest
+milestone/exact verification, integration eligibility, deferred work, and the
+next safe command.
+
+**Outcome before commit.** Status schema `1.0.0` composes accepted Doctor
+schema `2.0.0` facts with validated canonical state and the existing read-only
+operation inspectors; it does not search artifacts or derive completion from
+logs. Target relation is explicitly target-oriented and distinguishes
+`current`, `ahead`, `behind`, `divergent`, `uninitialized`, and fail-closed
+`unavailable`. Recovery is normalized as `automatic`, `blocked`, `external`,
+or `none`. Ordinary status now routes before reconciliation-controller opening,
+so active reconciliation retains the common status contract without acquiring
+a mutation capability. `reconcile-status`, Doctor, dry-run, mutation,
+commissioning, provider, state, and verifier behavior are unchanged.
+
+Doctor and detailed state are fenced to one canonical generation. When valid
+commissioning aligns the branch sources, the Doctor observation, checkout,
+and target-ref HEAD must also agree. Status retries movement once and then
+returns `changed-during-inspection`, suppresses detailed state and integration
+eligibility, and directs the operator to rerun status. Ancestry probes suppress
+optional Git locks. CLI recursive redaction remains in force, and real child
+process tests prove both active-state and missing-state paths leave status,
+refs, state storage, and repository files unchanged.
+
+**Verification.** Under pinned Node `24.18.0` and pnpm `11.15.1`, the
+receipt-owning status/CLI/deterministic-operation shard passed 20/20 with zero
+skips at
+`artifacts/manual/wp5b-status-focused-final/invariant-vitest-report.json`
+(7,566 bytes, SHA-256
+`622931a8a34c2395f9d9af886c96dba7e48eec8b58a63e7ac6c2e393ecc48fd5`).
+Its direct-telemetry begin hook was unavailable because the planned plain-Node
+wrapper could not import a TypeScript module; this was reported as non-semantic,
+while the command-owned PASS receipt and declared report remained complete.
+The orchestrator aggregate passed 532/534 with zero failures and only the two
+declared Windows POSIX skips across 170/170 suites at
+`artifacts/manual/wp5b-test-orchestrator-final/orchestrator-report.json`
+(187,483 bytes, SHA-256
+`3a24a9905d4386a5c7c2de29d564313143ab9af0b49c83bd6d427e565f9e7236`).
+The unit aggregate passed 545/547 with zero failures and the same two skips
+across 172/172 suites at
+`artifacts/manual/wp5b-test-unit-final/test-report.json` (191,507 bytes,
+SHA-256
+`adf81a781c1b9770b5d17984a204d1f7c8fe93b8a64604b20524322e33e9b06f`).
+
+Receipt-owning typecheck, lint, and format all passed at
+`artifacts/manual/wp5b-typecheck-final`,
+`artifacts/manual/wp5b-lint-final`, and
+`artifacts/manual/wp5b-format-final`; their report hashes are respectively
+`69848e5391d2f1cdd5b12f10cc0960a231caa32b6872d79108ff4b863a0fc469`,
+`12ceeddbeabb60e14088a18cd895ac120eca6433c112485a917eb1b9eaa90d84`,
+and `ad28882c2184f6d2a73ccb80cbed5e49239604b1f950079a514c6efa1b15387b`.
+Every receipt, manifest, declared report byte count, and SHA-256 independently
+matched. `pnpm loop:demo-safety` passed all six scenarios at
+`artifacts/orchestrator/runs/safety-demonstration/safety-demonstration-20260816171558718-6e19b0f2.json`
+(14,968 bytes, SHA-256
+`07fbaec742fe438634fa22e72ed4111926e13a4699ed422eae6f69c9ef3dac5d`).
+
+Final source status emitted schema `1.0.0` with a stable snapshot, valid
+readiness commissioning, target `master`, uninitialized canonical relation,
+no lease or pending side effect, recovery `none`, no completed milestone or
+exact verification, unavailable trusted execution, ineligible autonomous
+integration, the accepted 9 passes / 3 warnings / 4 blockers, and
+`git status --short --branch` as the next safe command. The state path and
+private state/lease refs remained absent. HEAD/tree, tracked and staged bytes,
+protected-plan identities, and both retained WP4d artifact identities remained
+unchanged. No no-argument source verifier, OCI matrix, Doctor evidence rerun,
+fresh-adopter proof, mutating loop command, push, or WP6/product/readiness work
+occurred.
+
+**Commit.** Assigned by the single cohesive WP5b commit containing this entry;
+identify it as the newest commit touching the entry. No push is authorized.
+
+**Known gaps.** The next dependency-ordered WP5 area is independent invariant
+extraction. Later WP5 work still owns the strict-config corpus, Linux/CI race
+coverage, and remaining operator documentation. The source remains honestly
+blocked by the protected human plan, absent production build, active
+placeholders, unavailable trusted runtime/image, and absent exact canonical
+state. WP5b is not full WP5, readiness repair, autonomous readiness, product
+implementation, or a push.
+
 ## 2026-08-16 — WP5a strict operational Doctor
 
 **Objective.** Complete the bounded Doctor slice of WP5 by turning

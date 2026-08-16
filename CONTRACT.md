@@ -326,6 +326,41 @@ zero network calls and never launches a build, verifier, candidate command,
 container, or Codex turn; acquires no lease; creates no state or directory; and
 writes or repairs no file, ref, mirror, evidence, or configuration.
 
+`pnpm loop:status -- --json` is the canonical lifecycle resume surface. Its
+versioned `orchestrator-status` schema `1.0.0` is stable across uninitialized,
+ordinary initialized, pending-operation, and active-reconciliation states; an
+active reconciliation does not replace it with the narrower
+`reconcile-status` schema. Status preserves the detailed controller-state and
+storage summary and adds the validated commissioning record/profile, all
+target-branch sources, target HEAD and stored verified commit, target relation,
+lease, normalized pending side effect and recovery, latest completed milestone,
+latest state-owned exact verification, trusted execution and autonomous-
+integration eligibility, deferred cleanup/reconciliation, operational issues,
+and the accepted Doctor next action.
+
+Target relation is oriented from target branch HEAD to the canonical stored
+verified commit: `ahead` means target HEAD descends from verified, `behind`
+means verified descends from target HEAD, and `divergent` means neither.
+`current`, `uninitialized`, and `unavailable` prevent equality, missing state,
+or missing Git objects from being conflated. Pending-operation recovery is
+`automatic` only when the existing operation inspector names a safe resume
+transition and `blocked` when it requires manual reconciliation. Active
+reconciliation and target-history drift are `external`; no recovery is `none`.
+
+Status projects commissioning, provider identity, exact-result integrity and
+currentness, eligibility, issue, and next-action facts from Doctor without
+changing their meaning. Milestone, pending-operation, cleanup, reconciliation,
+and exact-verification provenance come only from validated canonical state.
+Git ancestry probes set `GIT_OPTIONAL_LOCKS=0`. A detailed state projection is
+published only when Doctor and controller inspection name the same canonical
+generation and the commissioned target observation remains stable; status
+retries once on movement, then returns `changed-during-inspection` with a
+status-rerun action instead of combining generations. It does not discover
+artifact directories, open a mutation-capable store or reconciliation
+controller, acquire a lease, initialize/repair state, recover an operation,
+write evidence, update refs, create paths, call the network, or run a build,
+verifier, container, or Codex turn.
+
 - Node and pnpm exactly matching the package pins.
 - Candidate execution configured under `candidateExecution`. Doctor reports
   missing executor implementation, OCI runtime, pinned image, or isolation

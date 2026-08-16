@@ -3,6 +3,53 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-16 — Generation-bound canonical lifecycle status (WP5b)
+
+**Decision.** `pnpm loop:status -- --json` emits one versioned
+`orchestrator-status` schema `1.0.0` for uninitialized, ordinary initialized,
+pending-operation, target-drift, and active-reconciliation states. CLI status
+runs before reconciliation-controller opening, so an active reconciliation is
+reported through the common observational contract rather than replacing it
+with the narrower `reconcile-status` shape or creating a mutation capability.
+
+Status composes two existing authorities. Accepted Doctor schema `2.0.0` owns
+commissioning/profile, operational issues, provider identity, exact-result
+integrity/currentness, eligibility, lease, and earliest safe next action.
+Validated canonical state and existing operation inspectors own detailed
+controller state, pending side effects/recovery, latest completed milestone,
+exact-verification provenance, cleanup, and reconciliation. Status never
+searches artifact directories or treats prose logs as state.
+
+Target relation names target-branch HEAD as the subject: `ahead` means target
+descends from the stored verified commit, `behind` means verified descends
+from target, and `divergent` means neither; `current`, `uninitialized`, and
+fail-closed `unavailable` are distinct. Recovery is normalized as `automatic`
+for an inspector-owned resume, `blocked` for manual reconciliation,
+`external` for reconciliation/history drift, and `none` when no recovery is
+recorded. Git ancestry inspection is optional-lock-suppressed.
+
+Doctor and detailed state must name the same canonical generation. When valid
+commissioning aligns the branch sources, Doctor, checkout, and target-ref HEAD
+must also agree. Status retries movement once, then reports
+`changed-during-inspection`, suppresses the detailed state projection and
+integration eligibility, and returns only a status-rerun action. This prevents
+an individually valid Doctor observation and state generation from being
+combined into a false current-integration claim.
+
+**Why.** The prior status omitted commissioning, relation, exact evidence,
+eligibility, recovery disposition, and a next command, while active
+reconciliation silently changed schemas. Copying Doctor or reimplementing its
+checks would create a competing readiness definition; relying only on raw
+state would omit provider/evidence integrity; sampling both without a
+generation/target fence could produce an internally inconsistent resume
+surface. Alternatives rejected: expanding `ReconciliationStatusSummary`,
+calling the mutation-capable reconciliation controller, artifact-directory
+discovery, log-derived completion, a binary target-drift flag, inverted or
+ambiguous ahead/behind labels, and presenting stale state after a race.
+
+**Affected files.** New status contract/tests/export, CLI status routing,
+README and contract guidance, active plan, autonomy/decision records.
+
 ## 2026-08-16 — Versioned read-only operational Doctor and strict blocker gate (WP5a)
 
 **Decision.** Operational Doctor schema `2.0.0` uses only `pass`, `warning`,

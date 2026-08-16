@@ -23,6 +23,7 @@ import { redactSensitiveValue } from "./redaction.js";
 import { applyEvidenceRetentionPlan } from "./retention-apply-operation.js";
 import { demonstrateSafety } from "./safety-demonstration.js";
 import { atomicWriteJson, StateStore } from "./state-store.js";
+import { runStatusDiagnostic } from "./status.js";
 
 export interface LoopCliArguments {
   readonly command: string;
@@ -194,6 +195,16 @@ async function main(): Promise<void> {
     process.exitCode = doctorExitCode(diagnostic, args.strict);
     return;
   }
+  if (args.command === "status") {
+    output(
+      await runStatusDiagnostic({
+        repositoryRoot: root,
+        ...(args.configPath ? { configPath: args.configPath } : {}),
+      }),
+      args.json,
+    );
+    return;
+  }
   if (args.command === "check-model-policy") {
     output(
       await runLiveModelPolicyCheck({
@@ -308,10 +319,6 @@ async function main(): Promise<void> {
       output(await reconciliation.run(), args.json);
       return;
     }
-    if (args.command === "status") {
-      output(reconciliation.status(), args.json);
-      return;
-    }
     if (args.command === "dry-run") {
       output(
         {
@@ -329,7 +336,7 @@ async function main(): Promise<void> {
       "An active reconciliation must resume before ordinary loop actions.",
     );
   }
-  if (args.command === "status" || args.command === "dry-run") {
+  if (args.command === "dry-run") {
     const inspection = await MilestoneOrchestrator.inspect(
       root,
       args.configPath,
@@ -346,10 +353,6 @@ async function main(): Promise<void> {
       protectedIntegrity: inspection.protectedIntegrity,
       lease: inspection.lease,
     } satisfies Partial<OrchestratorInspection>;
-    if (args.command === "status") {
-      output({ status, inspection: readOnlyFacts }, args.json);
-      return;
-    }
     output(
       {
         mode: "dry-run",

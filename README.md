@@ -154,6 +154,35 @@ report `NOT_READY`, never pass.
    write, or directory creation. A strict failure is a real blocker report,
    not permission to clean user content or weaken the gate.
 
+   `loop:status -- --json` emits the versioned `1.0.0`
+   `orchestrator-status` resume document in uninitialized, ordinary,
+   pending-operation, and active-reconciliation states. It projects the exact
+   commissioning record and profile, target branch sources, target HEAD and
+   stored verified commit, live lease, normalized pending side effect,
+   recovery disposition, latest completed milestone, latest state-owned exact
+   verification, trusted-provider and autonomous-integration eligibility,
+   deferred cleanup/reconciliation, accepted Doctor issues, and one safe next
+   action. Active reconciliation never substitutes a second status schema.
+
+   Target relation names the target branch as its subject: `ahead` means the
+   target descends from the stored verified commit, `behind` means the stored
+   verified commit descends from the target, and `divergent` means neither.
+   `current`, `uninitialized`, and fail-closed `unavailable` are explicit.
+   Pending intent recovery is `automatic` when the existing inspector can
+   resume it and `blocked` when exact manual reconciliation is required;
+   active reconciliation or unexplained target-history drift is `external`.
+   Status binds detailed state to one canonical generation and matching target
+   observation, retries once on movement, and refuses to present a mixed
+   snapshot.
+
+   Status reuses Doctor for operational commissioning, provider, exact-result,
+   issue, eligibility, and next-action facts, and uses validated canonical
+   state for lifecycle facts. It never infers completion from prose logs or
+   artifact directory names. Like Doctor, it makes no network call and runs no
+   build, verifier, container, or Codex turn; it never initializes or repairs
+   state, opens the reconciliation controller, acquires a lease, recovers an
+   operation, updates a ref, or creates a path.
+
    `loop:demo-safety` proves retry, recovery, retry-limit stop, and
    protected-file rejection end to end.
 
