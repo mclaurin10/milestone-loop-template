@@ -6,14 +6,14 @@ validated at runtime (fail-closed) rather than assumed.
 
 ## 1. Frozen authority set
 
-| File                                                              | Role                                                                                                                                                                                               |
-| ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PROJECT_GOAL.md` (name configurable via `project.authorityFile`) | The frozen product authority every agent reads first. Must be listed in `protectedPaths`.                                                                                                          |
-| `AGENTS.md`                                                       | The operating covenant for autonomous agents.                                                                                                                                                      |
-| `evals/ACCEPTANCE.md`                                             | Frozen acceptance prose.                                                                                                                                                                           |
-| `evals/acceptance-manifest.json`                                  | Machine-readable acceptance contract: validation layers, completion metrics, bot requirements, operational chains, seed gates, readiness gate, human gate, planned command surface.                |
-| `evals/HIDDEN_VALIDATION_PROTOCOL.md`                             | Hidden-seed custody rules; seed values never enter the repository.                                                                                                                                 |
-| `evals/immutable-contract-lock.json`                              | Baseline + active SHA-256 for the four files above, plus the one-time `CAL-1` calibration transition state. Its own hash is pinned as `ESTABLISHED_IMMUTABLE_LOCK_SHA256` in `scripts/verify.mjs`. |
+| File                                                              | Role                                                                                                                                                                                                                                                         |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `PROJECT_GOAL.md` (name configurable via `project.authorityFile`) | The frozen product authority every agent reads first. Must be listed in `protectedPaths`.                                                                                                                                                                    |
+| `AGENTS.md`                                                       | The operating covenant for autonomous agents.                                                                                                                                                                                                                |
+| `evals/ACCEPTANCE.md`                                             | Frozen acceptance prose.                                                                                                                                                                                                                                     |
+| `evals/acceptance-manifest.json`                                  | Machine-readable acceptance contract: validation layers, completion metrics, bot requirements, operational chains, seed gates, readiness gate, human gate, planned command surface.                                                                          |
+| `evals/HIDDEN_VALIDATION_PROTOCOL.md`                             | Hidden-seed custody rules; seed values never enter the repository.                                                                                                                                                                                           |
+| `evals/immutable-contract-lock.json`                              | Baseline + active SHA-256 for the four files above, plus the one-time `CAL-1` calibration transition state. The commissioned strict-ancestor base pins its exact bytes and the exact four authority bytes; verifier source carries no adopter-specific hash. |
 
 A hash mismatch is a blocking defect, not permission to regenerate the lock.
 The goal and hidden protocol are human-revision-only; acceptance files may
@@ -121,11 +121,13 @@ tsconfig the `typecheck` evidence covers.
   argv tests or mocked containment are not real containment evidence.
 - **Focused runs**: `--stage <id>` always bundles `environment` and
   `contract-integrity`, and is marked completion-ineligible.
-- **contract-integrity stage**: validates the immutable lock hash, the lock
-  schema and calibration state, every locked file's active hash, and the
-  acceptance manifest's frozen shape (layer/metric/bot/chain/threshold
-  counts and gate aggregation). Re-pin those expectations to your frozen
-  contract when you author it.
+- **contract-integrity stage**: resolves the active v2 manifest's commissioned
+  strict-ancestor base, requires its immutable lock and all four authority
+  files to be byte-identical to the candidate, validates the lock schema and
+  calibration state, then derives adopter-specific acceptance expectations
+  from that frozen base. Universal profile, exact-command, gate aggregation,
+  no-compensation, and hidden-custody rules remain verifier-owned. Adopters do
+  not edit verifier source or insert a lock hash constant.
 
 ## 4. Command-owned evidence receipts
 
@@ -241,8 +243,8 @@ package default; bootstrap forbids readiness-marker tree or history, while
 readiness requires the permanent valid marker at or before the base and at the
 candidate.
 
-The command validates existing authority and lock bytes, the verifier's lock
-anchor, registry identities, the canonical protected floor, package scripts,
+The command validates existing authority and lock bytes against the exact
+strict-ancestor Git base, registry identities, the canonical protected floor, package scripts,
 exact policy, reconciliation minimum, and all four tier plans. It never writes
 or regenerates authority. `createdAt` is the base commit's canonical Git
 timestamp, so equal input and Git identity produce equal bytes. Publication
@@ -427,10 +429,10 @@ rejection of every canonical path including case variants.
 
 ## Adoption checklist
 
-1. Authority set written and locked (§1), lock hash re-pinned.
-2. `package.json` obligations met (§2); placeholders replaced.
-3. `scripts/verify.mjs` stages wired to real project evidence (§3, §4).
-4. Verification manifest authored; config files filled consistently (§5, §7).
-5. `pnpm install && pnpm typecheck && pnpm test:orchestrator` green.
-6. `pnpm loop:doctor` and `pnpm loop:demo-safety` pass.
-7. First plan: `pnpm loop:plan`; then `pnpm loop:run`.
+1. Strict adopter definition and four authority files completed.
+2. `pnpm loop:template:create` produced a fresh attached bootstrap history.
+3. Generated lock/config/registries and strict-ancestor input reviewed.
+4. `pnpm loop:commission` run once; generated manifest reviewed and committed.
+5. Literal no-argument `pnpm verify` proves bootstrap with valid receipts.
+6. Bootstrap PASS recorded as non-readiness; no activation marker exists.
+7. Product evidence and later one-way readiness transition planned explicitly.

@@ -60,58 +60,34 @@ report `NOT_READY`, never pass.
 
 ## Adopting the loop
 
-1. **Copy the template** into a fresh repository (fresh git history). Decide
-   your starting profile: new projects normally delete
-   `.agent/readiness-profile-activated.json` and set
-   `package.json#milestoneLoop.verification.defaultProfile` to `"bootstrap"`
-   (this template ships in `readiness` shape because its own history already
-   contains the marker). Remove the source repository's commissioned
-   `.agent/verification-manifest.json`; a fresh adopter must commission its own
-   manifest from its own Git identity.
-2. **Write your authority set**: replace `PROJECT_GOAL.md` and the `evals/`
-   placeholders, then regenerate `evals/immutable-contract-lock.json` hashes
-   and the `ESTABLISHED_IMMUTABLE_LOCK_SHA256` pin in `scripts/verify.mjs`.
-   Re-pin the acceptance-contract counts in `validateAcceptanceManifest` to
-   your frozen contract.
-3. **Fill the configuration** from the `*.template.json` skeletons in
-   `tools/milestone-orchestrator/config/` (documented in
-   [`config/README.md`](tools/milestone-orchestrator/config/README.md)):
-   project profile, scope policy, invariant suite, slow-suite registry,
-   benchmark matrix.
-4. **Implement the repository contract** in [`CONTRACT.md`](CONTRACT.md):
-   replace every `tools/placeholder-check.mjs` script with a real
-   evidence-producing command, wire your product's verify stages, and
-   keep `build` as the evidence-owning wrapper. Declare the real production
-   boundary in `package.json`, for example:
-
-   ```json
-   {
-     "milestoneLoop": {
-       "productionBuild": {
-         "script": "build:production",
-         "outputRoots": ["dist"]
-       }
-     }
-   }
-   ```
-
-   Until this declaration exists, `pnpm build` and the production-build stage
-   report `NOT_READY` and cannot emit a PASS receipt. A configured build runs
-   from a clean disposable clone, removes stale declared outputs, rejects
-   outside-root mutations and linked outputs, and retains a path/size/SHA-256
-   inventory in `build-report.json`.
-
-5. **Commission the repository once.** Use
-   `tools/milestone-orchestrator/config/source-commissioning-input.json` as the
-   input-shape reference, replacing its source identity, target branch, strict
-   ancestor base commit, profile, immutable-lock hash, registries, protected
-   floor, and focused catalogue with the adopter's values. Keep the input
-   inside the repository and tracked. Commit that input
-   and all prerequisites, make the tracked and untracked tree completely
-   clean, then run:
+1. **Prepare an adopter definition.** Copy `fixtures/fresh-adopter/` to a
+   working location and replace its four authority files plus the project,
+   branch, Git identity, timestamp, and generic ids in `definition.json`. The
+   strict `milestone-loop-adopter-package.v1` definition accepts only contained
+   regular authority files. The shipped fixture is an executable example, not
+   an active fallback for a new project.
+2. **Create the fresh repository.** From this source checkout, run:
 
    ```bash
-   pnpm loop:commission -- --input <commissioning-input.json>
+   pnpm loop:template:create -- --definition <definition.json> --output <absent-directory>
+   ```
+
+   The output parent must exist and the destination must not. The command
+   copies an allowlisted runtime and real bootstrap app, generates the
+   adopter-owned lock/config/registries/package metadata, initializes the
+   requested attached branch with deterministic local Git identity, commits
+   the authority base, then commits a commissioning input bound to that strict
+   ancestor. It prints a sorted path/byte/SHA-256 inventory. It never copies
+   this source repository's readiness marker, active manifest, history, or
+   product identity, and it does not commission automatically.
+
+3. **Install and commission exactly once.** In the generated repository:
+
+   ```bash
+   pnpm install --frozen-lockfile
+   pnpm loop:commission -- --input tools/milestone-orchestrator/config/commissioning-input.json
+   git add .agent/verification-manifest.json
+   git commit -m "activate bootstrap verification manifest"
    ```
 
    Commissioning refuses an existing active manifest, a dirty or detached
@@ -124,10 +100,32 @@ report `NOT_READY`, never pass.
    `.agent/verification-manifest.json`; do not rerun commissioning on that
    repository.
 
-6. **Check the wiring**:
+4. **Prove the technical scaffold.** From the clean committed adopter, run
+   literal no-argument `pnpm verify`. A PASS covers the real static checks,
+   clean-clone production build, Vitest, shared Node/replay/Worker kernel,
+   save/load continuation, and desktop Chromium render/interaction evidence.
+   Its profile is `bootstrap`, its claim is `bootstrap_complete`, and it is
+   explicitly not autonomous-readiness-equivalent.
+5. **Reproduce the packaged proof when changing this distributor.** With the
+   pinned runtime, a populated pnpm store, and supported Chrome or Edge
+   installed, run:
 
    ```bash
-   pnpm install
+   pnpm loop:template:prove -- --definition fixtures/fresh-adopter/definition.json --artifact-dir artifacts/<fresh-proof-id>
+   ```
+
+   The proof uses a temporary fresh history, offline frozen copy-mode install,
+   explicit commissioning, a clean manifest commit, exactly one no-argument
+   verifier run, and an independent receipt/artifact/identity audit. It retains
+   the bootstrap result and screenshot without granting readiness.
+
+6. **Build the actual product and check the loop wiring.** Replace the
+   technical smoke scope with the frozen product authority and real domain
+   evidence under a later executable plan. Do not switch to `readiness` until
+   the permanent activation marker and readiness default are committed in the
+   one-way transition required by [`CONTRACT.md`](CONTRACT.md). Useful checks:
+
+   ```bash
    pnpm typecheck
    pnpm test:orchestrator
    pnpm loop:doctor

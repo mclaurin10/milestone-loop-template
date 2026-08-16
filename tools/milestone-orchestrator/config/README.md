@@ -15,6 +15,16 @@ repository itself (workspace = the orchestrator package only), so the
 orchestrator test suite runs green out of the box. Adopting projects replace
 their contents, guided by the templates.
 
+For a new repository, prefer the strict package workflow over copying and
+editing this source tree. `pnpm loop:template:create -- --definition
+<definition.json> --output <absent-directory>` generates the adopter-owned
+config, registries, immutable lock, bootstrap scripts, and strict-ancestor
+commissioning input in a fresh attached Git history. The executable example is
+`fixtures/fresh-adopter/definition.json`. No adopter-specific hash or
+acceptance count is edited into `scripts/verify.mjs`; commissioning and
+contract-integrity bind the generated lock and authority bytes to the exact
+base commit named by the input and active manifest.
+
 ## default.json (`OrchestratorConfig`, schema 1.6.0)
 
 - `project.name` — interpolated into the planner/worker/reviewer prompt
@@ -151,9 +161,10 @@ ID placeholder so it cannot silently copy the source milestone identity.
 The active `.agent/verification-manifest.json` uses the generic
 `verification-manifest.v2` contract. Create it once with
 `pnpm loop:commission -- --input <file>` using a repository-contained tracked
-input; the tracked
-`source-commissioning-input.json` records this repository's explicit source
-inputs. The command requires a clean tracked and untracked target-branch
+input. A fresh adopter receives that input from `loop:template:create`; the
+tracked `source-commissioning-input.json` records only this repository's
+already-commissioned source context and is not an adoption template. The
+command requires a clean tracked and untracked target-branch
 checkout, an absent active manifest, a strict-ancestor base commit, and an
 explicit package-default `bootstrap` or `readiness` profile with compatible
 marker history. It validates existing frozen authority and lock identities,

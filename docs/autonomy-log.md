@@ -3,6 +3,93 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-15 — WP4d fresh-adopter bootstrap packaging
+
+**Objective.** Complete one bounded WP4d distributable-template increment that
+creates a fresh adopter-owned Git history without verifier source edits and
+proves the generated technical scaffold can reach a truthful package-default
+bootstrap PASS without changing or reinterpreting source readiness.
+
+**Outcome before final milestone verification.** A strict versioned definition
+and public no-clobber package command now generate the authority lock, generic
+active configuration and registries, package metadata, real bootstrap app, two
+deterministic commits, and a strict-ancestor commissioning input. A shared
+Git-base anchor replaces the source-specific verifier hash literal and requires
+the current lock and all four authority files to match the exact commissioned
+base. The scaffold uses one kernel for Node, replay, Worker, persistence, and
+rendering; every bootstrap stage exercises a real boundary and owns hashed
+evidence. A separate retained proof runner adds offline copy-mode installation,
+explicit one-shot commissioning, the manifest commit, one no-argument verifier,
+independent receipt/artifact matching, marker/history checks, source-identity
+scanning, and compact retained browser evidence.
+
+**Implementation diagnostics.** No source aggregate, source no-argument
+verifier, or OCI matrix was used for orientation. Under pinned Node `24.18.0`
+and pnpm `11.15.1`, the authority/commissioning/package files passed 21/21
+focused tests, direct tool TypeScript passed, and the proof auditor passed 3/3
+including post-receipt artifact drift and asserted-PASS rejection. In a newly
+generated commissioned fixture, dependency, format, lint, architecture,
+typecheck, clean-clone build, four Vitest tests, two invariants, persistence,
+Node/replay/Worker simulation, and real Chromium browser commands all passed.
+The single budgeted diagnostic literal no-argument fixture run passed all 9
+bootstrap stages in 40,944 ms with 10 valid command receipts and 18 declared
+artifacts. Its result is 45,280 bytes / SHA-256
+`21621834eaf1999de6034483ae9210a44c0ade1b1d2437ef0d4c3db2bc0a0177` at
+`artifacts/wp4d-package-diagnostic-8/repository/artifacts/verify-2026-08-16T045227-338Z-8888/result.json`.
+It reports `bootstrap_complete`, `autonomousReadinessEquivalent:false`, clean
+candidate identity, and honest provider-based completion ineligibility. The
+122,990-byte screenshot has SHA-256
+`da927d28bc0d2132d4f4e5fe347059d5fb11586452c38c5b40fc9fc808bf0c21`.
+Independent in-app browser inspection observed the readable production layout,
+public Worker action, canonical extracted-4/tick-3 consequence, and no warning
+or error diagnostics.
+
+**Stable-tree milestone protocol.** Source, tests, template assets, definition,
+documentation, this log, and the execution plan freeze before one exact
+receipt-owning affected shard, one retained fresh-adopter proof, serial
+orchestrator and unit aggregates, and receipt-owning typecheck/lint/format
+gates. No OCI matrix or safety demonstration is applicable because no
+executor/provider owner or canonical safety primitive changed. Every source and
+fixture receipt, artifact, count, skip, duration, identity, protected/example
+hash, and package inventory is independently checked before one cohesive
+commit. Literal no-argument source `pnpm verify` runs exactly once afterward
+and its known product/provider/dirty-file/deadline gaps remain honest.
+The first final lint gate exposed and rejected an empty JSON/Markdown-only
+fixture directory passed as an ESLint target. A tested fixture-local definition
+entry point now supplies a real lintable boundary while leaving the package-
+copied evidence runtime byte-identical to the retained proof.
+
+**Audited pre-commit evidence.** The accepted affected shard passed 57/57 at
+`artifacts/manual/invariant-vitest-20152/invariant-vitest-report.json`.
+The retained proof at
+`artifacts/wp4d-fresh-adopter-proof-final-3/proof-result.json` is 2,424 bytes /
+SHA-256 `1561bbf47a910a3a2d54f35b1114ff51b79395d007e35fea8b093af8e27c37ff`;
+its clean fresh repository passed 9/9 bootstrap stages with 10 valid receipts,
+18 matched artifacts (136,506 bytes), 4/4 tests, and verifier result SHA-256
+`1ea5cc51597047eecd6054701989d2096484a7e9162f3cb93afbd3a749b8ff9c`.
+A package-only post-fix regeneration matched all 114 initial retained paths,
+bytes, hashes, commits, and pre-commission tree without another verifier run.
+The exact-tree orchestrator aggregate passed 514/516 at
+`artifacts/manual/test-orchestrator-1576/orchestrator-report.json`; unit passed
+527/529 at `artifacts/manual/test-unit-18672/test-report.json`. Both have zero
+failures/todos and only the two declared Windows skips for POSIX process-group
+termination. All receipt/artifact hashes and sizes, durations, and five slowest
+tests were independently audited. Typecheck, lint, and format passed at
+`artifacts/manual/typecheck-13140`, `artifacts/manual/lint-19384`, and
+`artifacts/manual/format-check-21068`. Immutable/config/example diffs are zero,
+all protected-plan identities match, and the source remains readiness with its
+permanent marker. No OCI matrix applies because no provider/executor owner
+changed.
+
+**Commit.** Assigned only after the frozen WP4d candidate passes the applicable
+checks; identify it as the newest commit touching this entry.
+
+**Known gaps.** Bootstrap is only a technical scaffold. Product-domain breadth,
+CAL-1, trusted default-Windows completion eligibility, hidden validation,
+autonomous readiness, and human verification remain open. A later plan must
+perform the permanent one-way readiness transition before substantive product
+implementation. WP4d makes no readiness claim and does not push.
+
 ## 2026-08-15 — WP4c explicit historical worked-example boundary
 
 **Objective.** Complete one bounded WP4c packaging increment by making the

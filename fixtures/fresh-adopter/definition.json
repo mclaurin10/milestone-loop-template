@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "milestone-loop-adopter-package.v1",
+  "project": {
+    "name": "Alpine Loop Lab",
+    "packageName": "alpine-loop-lab",
+    "targetBranch": "main"
+  },
+  "git": {
+    "userName": "Alpine Loop Maintainer",
+    "userEmail": "maintainer@alpine-loop.invalid",
+    "timestamp": "2026-08-15T19:00:00.000Z"
+  },
+  "authority": {
+    "projectGoalPath": "authority/PROJECT_GOAL.md",
+    "acceptanceProsePath": "authority/ACCEPTANCE.md",
+    "acceptanceManifestPath": "authority/acceptance-manifest.json",
+    "hiddenValidationProtocolPath": "authority/HIDDEN_VALIDATION_PROTOCOL.md"
+  },
+  "identifiers": {
+    "commissioningId": "alpine-loop-lab-commissioning.v1",
+    "invariantSuiteId": "alpine-loop-lab-core-invariants.v1",
+    "scopePolicyId": "alpine-loop-lab-shadow-scope.v1",
+    "slowSuiteRegistryId": "alpine-loop-lab-explicit-migrations.v1",
+    "reconciliationPolicyId": "alpine-loop-lab-reconciliation.v1"
+  }
+}

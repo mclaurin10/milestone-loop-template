@@ -18,6 +18,7 @@ import {
   DEFAULT_COMMAND_OUTPUT_LIMIT_BYTES,
   superviseCommand,
 } from "../tools/milestone-orchestrator/src/process-supervisor.ts";
+import { validateCommissionedAuthorityAnchor } from "../tools/milestone-orchestrator/src/authority-anchor.ts";
 import {
   EXECUTION_PROVIDER_IDENTITY_ENV,
   decodeExecutionProviderIdentity,
@@ -26,9 +27,6 @@ import {
 
 const RESULT_SCHEMA_VERSION = "2.1.0";
 const EVIDENCE_RECEIPT_SCHEMA_VERSION = "1.0.0";
-const IMMUTABLE_LOCK_SCHEMA_VERSION = "1.0.0";
-const ESTABLISHED_IMMUTABLE_LOCK_SHA256 =
-  "d1166088b00c54af65e8654188adc58a3cabd9d7908820809fe66af28c933050";
 const REQUIRED_NODE_MAJOR = 24;
 const REQUIRED_PNPM_MAJOR = 11;
 const IDENTITY_COMMAND_TIMEOUT_MS = 30_000;
@@ -63,6 +61,11 @@ const immutableContractLockPath = resolve(
   repositoryRoot,
   "evals",
   "immutable-contract-lock.json",
+);
+const activeVerificationManifestPath = resolve(
+  repositoryRoot,
+  ".agent",
+  "verification-manifest.json",
 );
 const readinessActivationMarkerPath = resolve(
   repositoryRoot,
@@ -381,7 +384,7 @@ function parseArguments(argv) {
 }
 
 function printHelp() {
-  console.log(`Example Project authoritative verification harness
+  console.log(`Milestone Loop authoritative verification harness
 
 Usage:
   pnpm verify
@@ -900,114 +903,56 @@ async function evaluateEnvironment(
 
 async function validateAcceptanceManifest() {
   const checks = [];
-  const immutablePaths = [
-    "PROJECT_GOAL.md",
-    "evals/ACCEPTANCE.md",
-    "evals/acceptance-manifest.json",
-    "evals/HIDDEN_VALIDATION_PROTOCOL.md",
-  ];
-
-  if (!existsSync(immutableContractLockPath)) {
+  let authorityAnchor;
+  try {
+    if (!existsSync(activeVerificationManifestPath))
+      throw new Error(
+        ".agent/verification-manifest.json is missing; authority has not been commissioned.",
+      );
+    const activeManifest = await readJson(activeVerificationManifestPath);
+    const baseCommit = activeManifest?.commissioning?.baseCommit;
+    if (
+      activeManifest?.schemaVersion !== "verification-manifest.v2" ||
+      typeof baseCommit !== "string" ||
+      !/^[a-f0-9]{40}$/.test(baseCommit)
+    )
+      throw new Error(
+        "Active verification manifest does not name a valid commissioned authority base.",
+      );
+    authorityAnchor = await validateCommissionedAuthorityAnchor({
+      repositoryRoot,
+      baseCommit,
+    });
     checks.push(
       check(
-        "immutable-contract-lock",
-        STATUS.NOT_READY,
-        "evals/immutable-contract-lock.json is missing.",
+        "immutable-contract-lock-hash",
+        STATUS.PASS,
+        "Immutable contract lock exactly matches the commissioned strict-ancestor authority base.",
+        {
+          baseCommit: authorityAnchor.baseCommit,
+          sha256: authorityAnchor.immutableContractLockSha256,
+          bytes: authorityAnchor.immutableContractLockBytes,
+        },
+      ),
+      check(
+        "immutable-contract-lock-schema",
+        STATUS.PASS,
+        "Immutable contract lock has the required schema, lifecycle, and complete authority-file set.",
+      ),
+      check(
+        "immutable-contract-hashes",
+        STATUS.PASS,
+        "Frozen authority bytes match both their lock hashes and commissioned Git-base bytes.",
       ),
     );
-  } else {
-    try {
-      const lockHash = await sha256File(immutableContractLockPath);
-      checks.push(
-        check(
-          "immutable-contract-lock-hash",
-          lockHash === ESTABLISHED_IMMUTABLE_LOCK_SHA256
-            ? STATUS.PASS
-            : STATUS.FAIL,
-          lockHash === ESTABLISHED_IMMUTABLE_LOCK_SHA256
-            ? "Immutable contract lock matches the verifier-anchored established hash."
-            : "Immutable contract lock changed without a corresponding reviewed verifier transition.",
-        ),
-      );
-      const lock = await readJson(immutableContractLockPath);
-      const lockedPaths = Array.isArray(lock.files)
-        ? lock.files.map((entry) => entry.path)
-        : [];
-      const allowedChangeClasses = new Set([
-        "HUMAN_REVISION_ONLY",
-        "CAL1_PROVISIONAL_FIELDS_ONCE_OR_HUMAN_REVISION",
-      ]);
-      const calibrationStateValid =
-        lock.calibrationTransition?.maximumCount === 1 &&
-        ((lock.calibrationTransition?.state === "open_not_started" &&
-          lock.calibrationTransition?.completedCount === 0 &&
-          lock.calibrationTransition?.recordPath === null) ||
-          (lock.calibrationTransition?.state === "calibration_frozen" &&
-            lock.calibrationTransition?.completedCount === 1 &&
-            lock.calibrationTransition?.recordPath ===
-              "evals/CALIBRATION_RECORD.md"));
-      const exactPathSet =
-        lock.schemaVersion === IMMUTABLE_LOCK_SCHEMA_VERSION &&
-        lockedPaths.length === immutablePaths.length &&
-        immutablePaths.every((path) => lockedPaths.includes(path)) &&
-        lock.files.every(
-          (entry) =>
-            allowedChangeClasses.has(entry.changeClass) &&
-            /^[a-f0-9]{64}$/.test(entry.baselineSha256) &&
-            /^[a-f0-9]{64}$/.test(entry.activeSha256),
-        ) &&
-        calibrationStateValid;
-      checks.push(
-        check(
-          "immutable-contract-lock-schema",
-          exactPathSet ? STATUS.PASS : STATUS.FAIL,
-          exactPathSet
-            ? "Immutable contract lock has the required schema and complete authority-file set."
-            : "Immutable contract lock schema or authority-file set is invalid.",
-        ),
-      );
-      if (exactPathSet) {
-        const mismatches = [];
-        for (const entry of lock.files) {
-          const absolutePath = resolve(repositoryRoot, entry.path);
-          if (!existsSync(absolutePath)) {
-            mismatches.push(`${entry.path}:missing`);
-            continue;
-          }
-          const actual = await sha256File(absolutePath);
-          const openCalibrationChanged =
-            lock.calibrationTransition.state === "open_not_started" &&
-            entry.activeSha256 !== entry.baselineSha256;
-          const humanOnlyChanged =
-            entry.changeClass === "HUMAN_REVISION_ONLY" &&
-            entry.activeSha256 !== entry.baselineSha256;
-          if (
-            actual !== entry.activeSha256 ||
-            openCalibrationChanged ||
-            humanOnlyChanged
-          ) {
-            mismatches.push(`${entry.path}:hash_mismatch`);
-          }
-        }
-        checks.push(
-          check(
-            "immutable-contract-hashes",
-            mismatches.length === 0 ? STATUS.PASS : STATUS.FAIL,
-            mismatches.length === 0
-              ? "Frozen goal and original evaluation contracts match their established SHA-256 hashes."
-              : `Frozen authority mismatch: ${mismatches.join(", ")}.`,
-          ),
-        );
-      }
-    } catch (error) {
-      checks.push(
-        check(
-          "immutable-contract-lock-json",
-          STATUS.FAIL,
-          `Immutable contract lock cannot be parsed: ${error.message}`,
-        ),
-      );
-    }
+  } catch (error) {
+    checks.push(
+      check(
+        "immutable-contract-lock-hash",
+        STATUS.FAIL,
+        `Immutable authority anchor validation failed: ${error.message}`,
+      ),
+    );
   }
 
   if (!existsSync(acceptanceManifestPath)) {
@@ -1037,23 +982,44 @@ async function validateAcceptanceManifest() {
     ];
   }
 
-  const layerIds = new Set(
-    Array.isArray(manifest.validationLayers)
-      ? manifest.validationLayers
-          .filter((layer) => layer.required)
-          .map((layer) => layer.id)
-      : [],
-  );
-  const expectedLayerIds = [
-    "AUTO-01",
-    "PLAY-01",
-    "VIS-01",
-    "PERF-GATE-01",
-    "REPLAY-01",
-    "SAVE-01",
-    "FAULT-01",
-  ];
+  let baselineManifest = manifest;
+  let baselineAcceptanceText;
+  if (authorityAnchor) {
+    const baselineManifestFile = authorityAnchor.authorityFiles.find(
+      (file) => file.path === "evals/acceptance-manifest.json",
+    );
+    const baselineAcceptanceFile = authorityAnchor.authorityFiles.find(
+      (file) => file.path === "evals/ACCEPTANCE.md",
+    );
+    try {
+      baselineManifest = JSON.parse(
+        baselineManifestFile.baseContents.toString("utf8"),
+      );
+      baselineAcceptanceText =
+        baselineAcceptanceFile.baseContents.toString("utf8");
+    } catch (error) {
+      checks.push(
+        check(
+          "commissioned-acceptance-data",
+          STATUS.FAIL,
+          `Commissioned acceptance data cannot be parsed: ${error.message}`,
+        ),
+      );
+    }
+  }
+
+  const requiredLayers = Array.isArray(manifest.validationLayers)
+    ? manifest.validationLayers.filter((layer) => layer.required)
+    : [];
+  const layerIdList = requiredLayers.map((layer) => layer.id);
+  const layerIds = new Set(layerIdList);
+  const expectedLayerIds = Array.isArray(baselineManifest.validationLayers)
+    ? baselineManifest.validationLayers
+        .filter((layer) => layer.required)
+        .map((layer) => layer.id)
+    : [];
   const exactLayerSet =
+    layerIdList.length === expectedLayerIds.length &&
     layerIds.size === expectedLayerIds.length &&
     expectedLayerIds.every((id) => layerIds.has(id));
   checks.push(
@@ -1061,12 +1027,14 @@ async function validateAcceptanceManifest() {
       "required-validation-layers",
       exactLayerSet ? STATUS.PASS : STATUS.FAIL,
       exactLayerSet
-        ? "The exact seven original required validation-layer IDs are present and required."
-        : "The original required validation-layer set was changed, duplicated, or made non-required.",
+        ? "The commissioned authority-base validation-layer IDs are present, unique, and required."
+        : "The commissioned authority-base validation-layer set was changed, duplicated, or made non-required.",
     ),
   );
 
-  const expectedBotIds = ["BOT-01", "BOT-02", "BOT-03"];
+  const expectedBotIds = Array.isArray(baselineManifest.botRequirements)
+    ? baselineManifest.botRequirements.map((requirement) => requirement.id)
+    : [];
   const botIds = Array.isArray(manifest.botRequirements)
     ? manifest.botRequirements.map((requirement) => requirement.id)
     : [];
@@ -1078,8 +1046,8 @@ async function validateAcceptanceManifest() {
       "required-bot-requirements",
       exactBotSet ? STATUS.PASS : STATUS.FAIL,
       exactBotSet
-        ? "All original bot requirements are present."
-        : "The original bot requirement set was changed.",
+        ? "All commissioned authority-base bot requirements are present."
+        : "The commissioned authority-base bot requirement set was changed.",
     ),
   );
 
@@ -1101,19 +1069,42 @@ async function validateAcceptanceManifest() {
     manifest.readinessGate?.id,
     manifest.humanAcceptanceGate?.id,
   ];
+  const baselineCompletionMetrics = Array.isArray(
+    baselineManifest.completionMetrics,
+  )
+    ? baselineManifest.completionMetrics
+    : [];
+  const baselineOperationalChains = Array.isArray(
+    baselineManifest.operationalChains,
+  )
+    ? baselineManifest.operationalChains
+    : [];
+  const expectedNormativeIds = [
+    ...baselineCompletionMetrics.map((metric) => metric.id),
+    ...expectedBotIds,
+    ...baselineOperationalChains,
+    ...expectedLayerIds,
+    baselineManifest.seedSets?.benchmark?.gateId,
+    baselineManifest.seedSets?.visibleDevelopment?.gateId,
+    baselineManifest.seedSets?.hidden?.successGateId,
+    baselineManifest.seedSets?.hidden?.integrityGateId,
+    baselineManifest.readinessGate?.id,
+    baselineManifest.humanAcceptanceGate?.id,
+  ];
   const normativeIdsAreComplete =
-    completionMetrics.length === 4 &&
-    operationalChains.length === 2 &&
-    normativeIds.length === 22 &&
+    completionMetrics.length === baselineCompletionMetrics.length &&
+    operationalChains.length === baselineOperationalChains.length &&
+    normativeIds.length === expectedNormativeIds.length &&
     normativeIds.every((id) => typeof id === "string" && id.length > 0) &&
-    new Set(normativeIds).size === normativeIds.length;
+    new Set(normativeIds).size === normativeIds.length &&
+    expectedNormativeIds.every((id) => normativeIds.includes(id));
   checks.push(
     check(
       "complete-normative-id-set",
       normativeIdsAreComplete ? STATUS.PASS : STATUS.FAIL,
       normativeIdsAreComplete
-        ? "Manifest retains 4 metrics, 3 bot requirements, 2 chains, 7 layers, and 22 unique normative IDs."
-        : "Manifest requirement counts or unique normative IDs no longer match the original contract.",
+        ? `Manifest retains the commissioned authority-base requirement counts and ${normativeIds.length} unique normative IDs.`
+        : "Manifest requirement counts or unique normative IDs no longer match the commissioned authority base.",
     ),
   );
 
@@ -1128,11 +1119,24 @@ async function validateAcceptanceManifest() {
       .filter((seedSet) => seedSet?.freeze)
       .map((seedSet) => ({ freeze: seedSet.freeze })),
   ];
+  const baselineThresholds = [
+    ...baselineCompletionMetrics.flatMap((metric) =>
+      Array.isArray(metric.thresholds) ? metric.thresholds : [],
+    ),
+    ...(Array.isArray(baselineManifest.botRequirements)
+      ? baselineManifest.botRequirements.map(
+          (requirement) => requirement.threshold,
+        )
+      : []),
+    ...Object.values(baselineManifest.seedSets ?? {})
+      .filter((seedSet) => seedSet?.freeze)
+      .map((seedSet) => ({ freeze: seedSet.freeze })),
+  ];
   const thresholdClassesValid =
-    thresholds.length === 10 &&
+    thresholds.length === baselineThresholds.length &&
     thresholds.every(
-      (threshold) =>
-        threshold &&
+      (threshold, index) =>
+        threshold?.freeze === baselineThresholds[index]?.freeze &&
         ["IMMUTABLE", "CAL-1_PROVISIONAL"].includes(threshold.freeze),
     );
   checks.push(
@@ -1140,18 +1144,14 @@ async function validateAcceptanceManifest() {
       "threshold-freeze-coverage",
       thresholdClassesValid ? STATUS.PASS : STATUS.FAIL,
       thresholdClassesValid
-        ? "All 10 original threshold objects retain an allowed freeze class."
-        : "Threshold count or freeze-class coverage differs from the original contract.",
+        ? `All ${thresholds.length} authority-base threshold objects retain their commissioned freeze classes.`
+        : "Threshold count or freeze-class coverage differs from the commissioned authority base.",
     ),
   );
 
   const seedRulesValid =
-    manifest.seedSets?.benchmark?.minimumSuccesses === 1 &&
-    manifest.seedSets?.benchmark?.requiredSuccessRate === 1 &&
-    manifest.seedSets?.visibleDevelopment?.requiredRuns === 16 &&
-    manifest.seedSets?.visibleDevelopment?.minimumSuccesses === 13 &&
-    manifest.seedSets?.hidden?.requiredRuns === 20 &&
-    manifest.seedSets?.hidden?.minimumSuccesses === 16 &&
+    JSON.stringify(manifest.seedSets) ===
+      JSON.stringify(baselineManifest.seedSets) &&
     manifest.seedSets?.hidden?.valuesInRepository === false &&
     manifest.seedSets?.benchmark?.requireZeroCatastrophicIntegrityFailures ===
       true &&
@@ -1164,8 +1164,8 @@ async function validateAcceptanceManifest() {
       "seed-and-integrity-gates",
       seedRulesValid ? STATUS.PASS : STATUS.FAIL,
       seedRulesValid
-        ? "Benchmark, visible, hidden, and zero-catastrophic-integrity seed gates retain their frozen aggregation."
-        : "A frozen benchmark, visible, hidden, custody, or integrity seed rule changed.",
+        ? "Benchmark, visible, hidden, custody, and zero-catastrophic-integrity seed rules match the commissioned authority base."
+        : "A commissioned benchmark, visible, hidden, custody, or integrity seed rule changed.",
     ),
   );
 
@@ -1220,13 +1220,16 @@ async function validateAcceptanceManifest() {
       resolve(repositoryRoot, "evals", "ACCEPTANCE.md"),
       "utf8",
     );
+    const acceptanceProseMatchesBase =
+      typeof baselineAcceptanceText === "string" &&
+      acceptanceText === baselineAcceptanceText;
     checks.push(
       check(
         "acceptance-prose-bot-aggregation",
-        acceptanceText.includes("`BOT-01` through `BOT-03` pass.")
-          ? STATUS.PASS
-          : STATUS.FAIL,
-        "Acceptance prose must aggregate BOT-01 through BOT-03 without omitting the score requirement.",
+        acceptanceProseMatchesBase ? STATUS.PASS : STATUS.FAIL,
+        acceptanceProseMatchesBase
+          ? "Acceptance prose exactly matches the commissioned authority-base bytes."
+          : "Acceptance prose differs from the commissioned authority-base contract.",
       ),
     );
   } catch (error) {
@@ -1637,7 +1640,7 @@ function markdownCell(value) {
 
 function buildSummary(result) {
   const lines = [
-    "# Example Project Verification Result",
+    "# Project Verification Result",
     "",
     `- Run: \`${result.runId}\``,
     `- Profile: \`${result.profile.id}\` (${result.profile.name})`,

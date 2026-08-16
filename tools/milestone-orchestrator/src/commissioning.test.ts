@@ -288,7 +288,7 @@ async function repositoryFixture(
   const lock = await authorityLock(root);
   await writeText(
     join(root, "scripts/verify.mjs"),
-    `const ESTABLISHED_IMMUTABLE_LOCK_SHA256 = "${lock.sha256}";\nvoid ESTABLISHED_IMMUTABLE_LOCK_SHA256;\n`,
+    "// Generic fixture verifier; authority is anchored by commissioned Git history.\n",
   );
   git(root, "add", ".");
   git(root, "commit", "-m", "fixture authority base");
@@ -396,6 +396,12 @@ describe("deterministic repository commissioning", () => {
       expect(manifestBytes.toString("utf8")).not.toMatch(
         /d-?0?31|d-?0?32|ski[ -]?tycoon/i,
       );
+      const verifierSource = await readFile(
+        join(fixture.root, "scripts/verify.mjs"),
+        "utf8",
+      );
+      expect(verifierSource).not.toContain(fixture.lockSha256);
+      expect(verifierSource).not.toContain("ESTABLISHED_IMMUTABLE_LOCK_SHA256");
       if (profile === "bootstrap")
         expect(result.repository.profile).not.toBe("readiness");
       await expect(
@@ -601,7 +607,7 @@ describe("deterministic repository commissioning", () => {
     ).rejects.toThrow(/escapes the repository|tracked file inside/);
   });
 
-  it("rejects authority drift, lock-input drift, verifier-anchor drift, and registry drift", async () => {
+  it("rejects authority drift, lock-input drift, base-anchor drift, and registry drift", async () => {
     const authority = await repositoryFixture();
     await writeText(
       join(authority.root, "PROJECT_GOAL.md"),
@@ -631,17 +637,25 @@ describe("deterministic repository commissioning", () => {
 
     const anchor = await repositoryFixture();
     await writeText(
-      join(anchor.root, "scripts/verify.mjs"),
-      `const ESTABLISHED_IMMUTABLE_LOCK_SHA256 = "${"e".repeat(64)}";\n`,
+      join(anchor.root, "PROJECT_GOAL.md"),
+      "# Replacement Goal And Lock\n",
     );
-    git(anchor.root, "add", "scripts/verify.mjs");
-    git(anchor.root, "commit", "-m", "drift verifier anchor");
+    const replacementLock = await authorityLock(anchor.root);
+    const anchorInput = JSON.parse(
+      await readFile(anchor.inputPath, "utf8"),
+    ) as Record<string, unknown>;
+    (anchorInput["sources"] as Record<string, unknown>)[
+      "immutableContractLockSha256"
+    ] = replacementLock.sha256;
+    await writeJson(anchor.inputPath, anchorInput);
+    git(anchor.root, "add", "PROJECT_GOAL.md", "evals", INPUT_PATH);
+    git(anchor.root, "commit", "-m", "replace authority after anchor base");
     await expect(
       commissionRepository({
         repositoryRoot: anchor.root,
         inputPath: anchor.inputPath,
       }),
-    ).rejects.toThrow(/verifier-anchored/);
+    ).rejects.toThrow(/lock differs from the commissioned strict-ancestor/);
 
     const registry = await repositoryFixture();
     await mutateInput(registry, (input) => {

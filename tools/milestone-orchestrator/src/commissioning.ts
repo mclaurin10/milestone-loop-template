@@ -26,6 +26,10 @@ import {
   loadVerificationScopePolicy,
 } from "./config.js";
 import {
+  IMMUTABLE_CONTRACT_LOCK_PATH,
+  validateCommissionedAuthorityAnchor,
+} from "./authority-anchor.js";
+import {
   COMMISSIONING_INPUT_SCHEMA_VERSION,
   GENERIC_RECONCILIATION_REVIEW_CHECK_IDS,
   VERIFICATION_MANIFEST_SCHEMA_VERSION,
@@ -53,20 +57,12 @@ export const COMMISSIONING_RESULT_SCHEMA_VERSION =
   "loop-commissioning-result.v1" as const;
 export const COMMISSIONING_DOCTOR_SCHEMA_VERSION =
   "loop-commissioning-doctor.v1" as const;
-export const IMMUTABLE_CONTRACT_LOCK_PATH =
-  "evals/immutable-contract-lock.json" as const;
+export { IMMUTABLE_CONTRACT_LOCK_PATH } from "./authority-anchor.js";
 
 const READINESS_MARKER_PATH =
   ".agent/readiness-profile-activated.json" as const;
-const VERIFY_SCRIPT_PATH = "scripts/verify.mjs" as const;
 const COMMISSIONING_TEMP_PATH =
   ".agent/.verification-manifest.json.commissioning.tmp" as const;
-const IMMUTABLE_AUTHORITY_PATHS = [
-  "PROJECT_GOAL.md",
-  "evals/ACCEPTANCE.md",
-  "evals/acceptance-manifest.json",
-  "evals/HIDDEN_VALIDATION_PROTOCOL.md",
-] as const;
 
 type JsonRecord = Record<string, unknown>;
 
@@ -536,127 +532,17 @@ async function assertReadinessLifecycle(
 
 async function validateImmutableContractLock(
   repositoryRoot: string,
+  baseCommit: string,
   expectedSha256?: string,
 ): Promise<string> {
-  const bytes = await readContainedRegularFile(
+  const anchor = await validateCommissionedAuthorityAnchor({
     repositoryRoot,
-    IMMUTABLE_CONTRACT_LOCK_PATH,
-    "Immutable contract lock",
-  );
-  const lockSha256 = sha256(bytes);
-  if (expectedSha256 && lockSha256 !== expectedSha256)
-    throw new Error(
-      "Immutable contract lock does not match the explicit commissioning input hash.",
-    );
-  let value: unknown;
-  try {
-    value = JSON.parse(bytes.toString("utf8")) as unknown;
-  } catch {
-    throw new Error("Immutable contract lock is not valid JSON.");
-  }
-  if (
-    !isRecord(value) ||
-    !exactKeys(value, ["schemaVersion", "calibrationTransition", "files"]) ||
-    value["schemaVersion"] !== "1.0.0" ||
-    !isRecord(value["calibrationTransition"]) ||
-    !exactKeys(value["calibrationTransition"], [
-      "state",
-      "completedCount",
-      "maximumCount",
-      "recordPath",
-    ]) ||
-    !Array.isArray(value["files"])
-  )
-    throw new Error("Immutable contract lock schema is invalid.");
-  const calibration = value["calibrationTransition"];
-  const open =
-    calibration["state"] === "open_not_started" &&
-    calibration["completedCount"] === 0 &&
-    calibration["maximumCount"] === 1 &&
-    calibration["recordPath"] === null;
-  const frozen =
-    calibration["state"] === "calibration_frozen" &&
-    calibration["completedCount"] === 1 &&
-    calibration["maximumCount"] === 1 &&
-    calibration["recordPath"] === "evals/CALIBRATION_RECORD.md";
-  if (!open && !frozen)
-    throw new Error(
-      "Immutable contract lock calibration lifecycle is invalid.",
-    );
-  if (frozen)
-    await readContainedRegularFile(
-      repositoryRoot,
-      "evals/CALIBRATION_RECORD.md",
-      "Calibration record",
-    );
-
-  const expectedClasses = new Map<string, string>([
-    ["PROJECT_GOAL.md", "HUMAN_REVISION_ONLY"],
-    ["evals/ACCEPTANCE.md", "CAL1_PROVISIONAL_FIELDS_ONCE_OR_HUMAN_REVISION"],
-    [
-      "evals/acceptance-manifest.json",
-      "CAL1_PROVISIONAL_FIELDS_ONCE_OR_HUMAN_REVISION",
-    ],
-    ["evals/HIDDEN_VALIDATION_PROTOCOL.md", "HUMAN_REVISION_ONLY"],
-  ]);
-  const seen = new Set<string>();
-  for (const entry of value["files"]) {
-    if (
-      !isRecord(entry) ||
-      !exactKeys(entry, [
-        "path",
-        "changeClass",
-        "baselineSha256",
-        "activeSha256",
-      ]) ||
-      typeof entry["path"] !== "string" ||
-      seen.has(entry["path"]) ||
-      entry["changeClass"] !== expectedClasses.get(entry["path"]) ||
-      typeof entry["baselineSha256"] !== "string" ||
-      typeof entry["activeSha256"] !== "string" ||
-      !/^[a-f0-9]{64}$/u.test(entry["baselineSha256"]) ||
-      !/^[a-f0-9]{64}$/u.test(entry["activeSha256"]) ||
-      (open && entry["baselineSha256"] !== entry["activeSha256"]) ||
-      (entry["changeClass"] === "HUMAN_REVISION_ONLY" &&
-        entry["baselineSha256"] !== entry["activeSha256"])
-    )
-      throw new Error(
-        "Immutable contract lock contains an invalid authority entry.",
-      );
-    const authorityBytes = await readContainedRegularFile(
-      repositoryRoot,
-      entry["path"],
-      `Immutable authority ${entry["path"]}`,
-    );
-    if (sha256(authorityBytes) !== entry["activeSha256"])
-      throw new Error(`Immutable authority hash mismatch: ${entry["path"]}.`);
-    seen.add(entry["path"]);
-  }
-  if (
-    seen.size !== IMMUTABLE_AUTHORITY_PATHS.length ||
-    IMMUTABLE_AUTHORITY_PATHS.some((path) => !seen.has(path))
-  )
-    throw new Error(
-      "Immutable contract lock authority path set is incomplete.",
-    );
-
-  const verifierBytes = await readContainedRegularFile(
-    repositoryRoot,
-    VERIFY_SCRIPT_PATH,
-    "Authoritative verifier",
-  );
-  const matches = [
-    ...verifierBytes
-      .toString("utf8")
-      .matchAll(
-        /ESTABLISHED_IMMUTABLE_LOCK_SHA256\s*=\s*["']([a-f0-9]{64})["']/gu,
-      ),
-  ];
-  if (matches.length !== 1 || matches[0]?.[1] !== lockSha256)
-    throw new Error(
-      "Immutable contract lock does not match the verifier-anchored established hash.",
-    );
-  return lockSha256;
+    baseCommit,
+    ...(expectedSha256 === undefined
+      ? {}
+      : { expectedImmutableContractLockSha256: expectedSha256 }),
+  });
+  return anchor.immutableContractLockSha256;
 }
 
 async function assertFocusedPackageCommands(
@@ -825,6 +711,7 @@ async function inspectPreCommissioning(
   );
   const immutableContractLockSha256 = await validateImmutableContractLock(
     repositoryRoot,
+    loadedInput.value.commissioning.baseCommit,
     loadedInput.value.sources.immutableContractLockSha256,
   );
   const manifest = manifestFromInput(
@@ -958,8 +845,10 @@ export async function inspectCommissionedRepository(
     manifest.value.commissioning.baseCommit,
     manifest.value.commissioning.profile,
   );
-  const immutableContractLockSha256 =
-    await validateImmutableContractLock(repositoryRoot);
+  const immutableContractLockSha256 = await validateImmutableContractLock(
+    repositoryRoot,
+    manifest.value.commissioning.baseCommit,
+  );
   const canonicalProtectedPaths = buildCanonicalProtectedSet(config);
   assertCanonicalProtectedFloor(manifest.value, canonicalProtectedPaths);
   await assertFocusedPackageCommands(repositoryRoot, manifest.value);

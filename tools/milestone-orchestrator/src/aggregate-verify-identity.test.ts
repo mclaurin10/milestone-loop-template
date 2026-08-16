@@ -50,6 +50,7 @@ async function verifierFixture(mutator: string): Promise<string> {
   git(root, "config", "user.email", "verify-identity@example.invalid");
   for (const path of [
     "scripts/verify.mjs",
+    "tools/milestone-orchestrator/src/authority-anchor.ts",
     "tools/milestone-orchestrator/src/process-supervisor.ts",
     "tools/milestone-orchestrator/src/execution-provider-identity.ts",
   ]) {

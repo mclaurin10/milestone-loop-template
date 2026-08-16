@@ -1,0 +1,104 @@
+{
+  "schemaVersion": "1.0.0",
+  "title": "Alpine Loop Lab acceptance manifest",
+  "validationLayers": [
+    { "id": "AUTO-01", "required": true, "name": "Automated verification" },
+    { "id": "PLAY-01", "required": true, "name": "Bot playtesting" },
+    { "id": "VIS-01", "required": true, "name": "Rendered evidence" },
+    { "id": "PERF-GATE-01", "required": true, "name": "Performance budgets" },
+    { "id": "REPLAY-01", "required": true, "name": "Determinism and replay" },
+    { "id": "SAVE-01", "required": true, "name": "Persistence integrity" },
+    { "id": "FAULT-01", "required": true, "name": "Operational fault chains" }
+  ],
+  "completionMetrics": [
+    {
+      "id": "METRIC-01",
+      "name": "Core outcome completion",
+      "thresholds": [{ "freeze": "IMMUTABLE", "value": 1 }]
+    },
+    {
+      "id": "METRIC-02",
+      "name": "Content breadth floor",
+      "thresholds": [{ "freeze": "CAL-1_PROVISIONAL", "value": 4 }]
+    },
+    {
+      "id": "METRIC-03",
+      "name": "Reliability floor",
+      "thresholds": [{ "freeze": "CAL-1_PROVISIONAL", "value": 0.99 }]
+    },
+    {
+      "id": "METRIC-04",
+      "name": "Performance budget",
+      "thresholds": [{ "freeze": "CAL-1_PROVISIONAL", "value": 16.6 }]
+    }
+  ],
+  "botRequirements": [
+    {
+      "id": "BOT-01",
+      "name": "Bot reaches the core outcome",
+      "threshold": { "freeze": "IMMUTABLE", "minimum": 1 }
+    },
+    {
+      "id": "BOT-02",
+      "name": "Bot sustains operation",
+      "threshold": { "freeze": "CAL-1_PROVISIONAL", "minimum": 1 }
+    },
+    {
+      "id": "BOT-03",
+      "name": "Bot recovers from faults",
+      "threshold": { "freeze": "CAL-1_PROVISIONAL", "minimum": 1 }
+    }
+  ],
+  "operationalChains": ["CHAIN-01", "CHAIN-02"],
+  "seedSets": {
+    "benchmark": {
+      "gateId": "SEED-BENCH-01",
+      "minimumSuccesses": 1,
+      "requiredSuccessRate": 1,
+      "requireZeroCatastrophicIntegrityFailures": true,
+      "freeze": "IMMUTABLE"
+    },
+    "visibleDevelopment": {
+      "gateId": "SEED-VISIBLE-01",
+      "requiredRuns": 16,
+      "minimumSuccesses": 13,
+      "requireZeroCatastrophicIntegrityFailures": true,
+      "freeze": "CAL-1_PROVISIONAL"
+    },
+    "hidden": {
+      "successGateId": "SEED-HIDDEN-01",
+      "integrityGateId": "SEED-HIDDEN-INTEGRITY-01",
+      "requiredRuns": 20,
+      "minimumSuccesses": 16,
+      "valuesInRepository": false,
+      "requireZeroCatastrophicIntegrityFailures": true,
+      "freeze": "CAL-1_PROVISIONAL"
+    }
+  },
+  "plannedCommandSurface": {
+    "commands": [{ "id": "verify_full", "plannedCommand": "pnpm verify" }],
+    "profileContract": {
+      "additiveRequirementId": "HARNESS-PROFILE-01",
+      "bootstrapIsAutonomousReadinessEvidence": false,
+      "requiredDefaultProfileForAutonomousReadiness": "readiness",
+      "profileOwner": "package.json#milestoneLoop.verification.defaultProfile"
+    }
+  },
+  "readinessGate": {
+    "id": "AUTONOMOUS-READINESS-01",
+    "aggregation": "all",
+    "compensationBetweenRequirementsAllowed": false,
+    "requirements": [
+      "all_validation_layers_pass",
+      "all_completion_metrics_pass",
+      "all_bot_requirements_pass",
+      "all_seed_gates_pass",
+      "all_operational_chains_pass"
+    ]
+  },
+  "humanAcceptanceGate": {
+    "id": "HUMAN-ACCEPT-01",
+    "aggregation": "all",
+    "requirements": ["scripted_human_review_pass"]
+  }
+}

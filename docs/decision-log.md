@@ -3,6 +3,54 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-15 — Git-anchored fresh-adopter bootstrap package (WP4d)
+
+**Decision.** Distribute the loop through a strict
+`milestone-loop-adopter-package.v1` definition and the no-clobber
+`pnpm loop:template:create -- --definition <file> --output <absent-directory>`
+command. The creator copies only an allowlisted runtime plus a minimal real
+bootstrap scaffold, generates adopter-owned authority lock/config/registries/
+package metadata, initializes the requested attached branch with fixed local
+Git identity and timestamps, commits the authority base, then commits a
+commissioning input bound to that exact strict ancestor. It never copies or
+deletes the source readiness lifecycle, active commissioning, history, or
+historical example.
+
+The verifier and commissioning now share one Git-base authority anchor. The
+active v2 manifest's base must be a strict ancestor containing byte-identical
+immutable-lock and four-authority-file content; the candidate lock must pass
+its own schema, lifecycle, and hash checks. Adopter-specific acceptance shape
+is derived from the frozen base while universal exact-command, bootstrap/
+readiness, no-compensation, hidden-custody, and one-way lifecycle rules remain
+in verifier code. No adopter edits a verifier hash constant or hard-coded
+acceptance counts.
+
+The generated bootstrap owns one deterministic kernel used by Node, replay,
+the production Worker, persistence, and rendered UI. Real static checks,
+Vitest, clean-clone production build, save/load continuation, Worker parity,
+desktop Chromium interaction, diagnostics, screenshot, and command receipts
+are required. The separate `loop:template:prove` command performs an offline
+frozen copy-mode install, explicit commissioning and manifest commit, exactly
+one literal no-argument verifier run, and an independent hash/receipt/identity
+audit. Its PASS is fixed to `bootstrap_complete`, remains provider-ineligible,
+and is never autonomous-readiness-equivalent.
+
+**Why.** Copying the source tree leaked commissioned readiness history and
+required manual removal and source edits. Pinning an adopter hash in verifier
+source made a generic distributable impossible, while a mutable unanchored lock
+would weaken authority. The already-required strict ancestor is a durable,
+reviewable trust root that preserves fail-closed calibration behavior without a
+new protected file. Alternatives rejected: whole-repository copying, deleting
+the readiness marker in copied history, regenerating the lock without a Git
+anchor, embedding fixture hashes or project ids in verifier source, automatic
+commissioning, no-op bootstrap scripts, DOM-only browser evidence, and treating
+bootstrap as readiness.
+
+**Affected files.** Shared authority anchor and commissioning/verifier tests;
+adopter package/proof commands and tests; fresh-adopter definition/authority;
+bootstrap scaffold and evidence tools; package/lockfile/static coverage;
+adoption, contract, config, plan, and autonomy documentation.
+
 ## 2026-08-15 — Self-validating legacy worked-example package (WP4c)
 
 **Decision.** Keep the Ski Tycoon files at their existing
