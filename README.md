@@ -221,7 +221,7 @@ report and produces no PASS receipt.
    containers and exporter containers are never reused and cleanup uncertainty
    is non-passing.
 
-   `pnpm test:oci-container -- --output artifacts/<fresh-id>` runs the serial
+   `pnpm test:oci-container --output artifacts/<fresh-id>` runs the serial
    normal/adversarial Docker matrix on a Linux controller with exact Node/pnpm
    pins and a populated read-only pnpm v11 store. It hashes the image inputs,
    builds at most once for an unchanged hash, reuses only the immutable image,

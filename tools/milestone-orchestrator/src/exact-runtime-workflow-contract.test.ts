@@ -33,8 +33,12 @@ describe("exact-runtime CI workflow contract", () => {
         "controller-${{ matrix.platform }}/lint",
       ),
       workflow.replace(
-        "run: pnpm test:oci-container -- --output artifacts/ci/trusted-container/matrix",
+        "run: pnpm test:oci-container --output artifacts/ci/trusted-container/matrix",
         "run: echo mock-container-pass",
+      ),
+      workflow.replace(
+        "run: pnpm test:oci-container --output artifacts/ci/trusted-container/matrix",
+        "run: pnpm test:oci-container -- --output artifacts/ci/trusted-container/matrix",
       ),
       `${workflow}\n# pnpm verify\n`,
     ];

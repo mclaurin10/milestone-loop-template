@@ -3,6 +3,146 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-17 — WP5g hosted CI audit and OCI argv correction
+
+**Objective.** Reconcile the pushed WP5f candidate against actual hosted
+execution, inspect every job/log/annotation/artifact rather than the aggregate
+badge, reproduce the first causal failure under exact pinned tooling, and fix
+that one defect without hiding the other independently exposed WP5 failures.
+Preserve all authority, commissioning, readiness, invariant, provider/matrix,
+package, and completed-evidence meanings; create one local commit and do not
+push.
+
+**Hosted audit and first cause.** Exact push run
+`https://github.com/mclaurin10/milestone-loop-template/actions/runs/32029510422`
+(run 2, attempt 1) executed commit
+`8ffdbcd83b3d07c1f49b91a057ffe5f8e1ec7d30` from
+`2026-08-17T12:22:11Z` through `12:28:41Z` and concluded `failure`. Public
+run/job metadata, authenticated GitHub connector logs and artifact downloads,
+the public annotation API, and the visible run summary agreed on five
+independently scheduled jobs, four exit-code errors, and five action-runtime
+Node 20 deprecation warnings. Every job used `fetch-depth: 0`, exact Node
+`24.18.0`, and pnpm `11.15.1`; the warnings occurred outside the causal
+commands and are not mislabeled as their cause.
+
+Controller Linux and Windows both reached the commissioned base and passed all
+four invariant commands, including contract integrity 13/13. Linux then
+failed the orchestrator aggregate at 574/584 passed, 9 failed, 1 skipped: one
+candidate-identity case, one Doctor ENOTDIR case, two POSIX supervisor cases,
+and five worked-example byte-identity cases. Windows failed at 508/584 passed,
+74 failed, 2 skipped across 19 files; the dominant shared cluster was strict
+realpath comparison of GitHub's `RUNNER~1` spelling against the long
+`runneradmin` identity, with additional worked-example byte drift and
+retention/schema cascades. Both retained ERROR manifests with no PASS receipt;
+later controller commands were correctly skipped.
+
+Fresh-adopter Linux ran independently and passed its generated repository,
+two receipt-owning checks, and 4/4 tests. Fresh-adopter Windows also ran
+independently but its generated frozen offline install failed with
+`ERR_PNPM_NO_OFFLINE_TARBALL` for `@eslint/js@10.0.1`, so it produced no smoke
+PASS result. Trusted-container independently reached Ubuntu 24.04's real
+Docker Engine and retained `docker version`/`docker info`, then became the
+earliest causal failure at `12:22:31Z`: pinned pnpm forwarded the workflow's
+extra separator, the package script launched as
+`container-executor.oci.ts -- --output ...`, and the unchanged strict parser
+rejected `Unknown argument --.` before any normal/adversarial case ran.
+
+All five authenticated ZIP downloads matched GitHub metadata exactly:
+controller Linux 48,953 bytes / SHA-256
+`ec6a89c22e1299bf23d3278b9544eeab652aca18379d185ccdef49113bf1a6aa`;
+controller Windows 52,528 /
+`cad946551db47d05bb374ada84fe84f73faaffe21d9522e16a8229445e6ac467`;
+adopter Linux 15,137 /
+`73b4f34fa67367076a39c23334e8519e2ce121a88ee2edb2d66ba1a5b2b9c070`;
+adopter Windows 8,685 /
+`c730cc1866b570dc6b98ea2eb27459ffd3959775398a205b32e04a2502fedb90`;
+and trusted-container 1,889 /
+`a3bdaad59fda3d336dc1d1820367702e213503faec6643526f814f5bc7885eea`.
+They are extracted under ignored
+`artifacts/hosted/run-32029510422/`. Independent inspection matched 12 hosted
+PASS receipts to 12 artifacts totaling 80,446 bytes with zero mismatches, and
+confirmed both controller ERROR manifests declared zero artifacts and no
+receipt.
+
+**Correction.** A retained exact-toolchain argv fixture first ran the hosted
+shape and observed
+`['--','--output','artifacts/ci/trusted-container/matrix']`, exit 1. Its
+119-byte observation has SHA-256
+`8446064855500a29db5b697c8c3aad8d6228aa0e9054b8da55969b4d363505be`.
+A regression mutation was added before the fix and correctly produced one
+focused failure because the malformed separator remained accepted. The
+workflow, its executable contract/test, and current README guidance now use
+`pnpm test:oci-container --output artifacts/ci/trusted-container/matrix`.
+The corrected pinned probe passed exit 0 and observed exactly
+`['--output','artifacts/ci/trusted-container/matrix']`; its 109-byte record has
+SHA-256
+`df1809ca54bb241a1b12755f38290b539b69c8c9c92e9a759ff511e276561793`.
+The OCI parser, package script, matrix cases, real engine probes,
+provider/containment implementation, schedules, histories, and evidence roots
+did not change. The workflow contract now rejects restoration of the literal
+separator as well as its existing mock/platform/history/scheduling/evidence
+mutations.
+
+**Verification.** Under pinned Windows Node `24.18.0` and pnpm `11.15.1`, the
+receipt-owning focused workflow shard passed 3/3 tests with zero failures or
+skips across 2/2 suites at
+`artifacts/manual/wp5g-ci-focused-final/invariant-vitest-report.json` (1,768
+bytes, SHA-256
+`edea3fd5acbbe6bb32cddaa48d8f90854424f6c5848854798802e1071f21a5e1`).
+Direct invariants passed all four commands in 27,223 ms at
+`artifacts/manual/wp5g-invariants-final/invariant-suite-report.json` (7,232
+bytes, SHA-256
+`7a4c8a73503b77137bd39891cfc0d4eaccd2fe4bedc19db14d04b4923f318bc7`):
+contract 13/13, schema 7/7, policy 15/15, and fail-closed 61/61.
+
+The orchestrator aggregate passed 582/584 tests with zero failures and exactly
+the two declared Windows POSIX skips across 178/178 suites at
+`artifacts/manual/wp5g-orchestrator-final/orchestrator-report.json` (203,902
+bytes, SHA-256
+`cfbac35a2baa1662f04af5a0559480b89b8ccab5d7edab57874046a363da5186`).
+The complete unit aggregate passed 595/597 with zero failures and the same two
+skips across 180/180 suites at
+`artifacts/manual/wp5g-unit-final/test-report.json` (207,962 bytes, SHA-256
+`9ca5dc68aee9ab8d42d43b70319532d66305db1309953855f3c256a7b91c4eea`).
+Both long serial commands completed under their unchanged one-hour limits;
+their delayed output was observed, not normalized by increasing a limit or
+enabling parallelism.
+
+Receipt-owning typecheck, lint, and format passed at
+`artifacts/manual/wp5g-typecheck-final`, `wp5g-lint-final`, and
+`wp5g-format-final`; their report hashes are respectively
+`705e409f6a1032257dc65370aa35aa546b8b639c76253e54dfd2ad4a4b480f14`,
+`11b960b7f380f4eca66185de8b367b3b4d12713b37573279b5afa7acb675c99e`,
+and `73e68162c1874321c7e23051186edaf95330a68cd45e201477024390ac3e8b95`.
+Independent audit matched 11 PASS receipts to 11 declared artifacts totaling
+456,720 bytes and recomputed every receipt/artifact count, byte size, SHA-256,
+status, and stage/command identity with zero mismatches.
+
+Independent workflow audit found three full-history checkouts, zero dependency
+keys/references, nine full-SHA actions, one corrected OCI command, zero
+malformed commands, both real Docker probes, no `continue-on-error`, and no
+source no-argument verification. Immutable baseline/active/actual hashes,
+CAL-1 open/not-started state, commissioned readiness base/profile, permanent
+marker history, Doctor `2.0.0`, Status `1.0.0`, all four invariant IDs,
+package/lock/parser/matrix/example identities, retained WP4d evidence, private
+ref/path absence, and all protected-plan identities passed. No source
+no-argument verifier, local OCI substitute, completed WP4d proof, mutating loop
+command, dependency change, recommissioning, workflow rerun/dispatch, push, or
+remote/ref mutation occurred. Correcting malformed argv did not create a new
+durable decision, so the decision log is unchanged.
+
+**Commit.** Assigned by the single cohesive WP5g commit containing this entry;
+identify it as the newest commit touching the entry. It is not pushed.
+
+**Known gaps.** The corrected OCI invocation still requires a later pushed
+hosted run before any real matrix PASS can be credited. The Linux/Windows
+controller portability failures and Windows fresh-adopter offline-store
+failure remain first-class WP5 gaps and must be addressed from their retained
+reports, beginning with the next highest-impact shared cause. The five action
+runtime deprecation warnings also remain observable but were not causal here.
+WP6 and all product/readiness placeholders remain later; this increment is not
+an autonomous-readiness or source-completion claim.
+
 ## 2026-08-16 — WP5f hosted CI history and scheduling correction
 
 **Objective.** Correct the failed hosted Exact runtime CI candidate without

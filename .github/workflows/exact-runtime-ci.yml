@@ -154,7 +154,7 @@ jobs:
           docker version > artifacts/ci/trusted-container/docker-version.txt
           docker info > artifacts/ci/trusted-container/docker-info.txt
       - name: Run real trusted-container matrix
-        run: pnpm test:oci-container -- --output artifacts/ci/trusted-container/matrix
+        run: pnpm test:oci-container --output artifacts/ci/trusted-container/matrix
       - name: Retain trusted-container evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

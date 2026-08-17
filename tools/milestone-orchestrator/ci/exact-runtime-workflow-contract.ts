@@ -182,7 +182,7 @@ export async function validateExactRuntimeWorkflow(
   includes(trustedContainer, "docker info >", "real Docker daemon probe");
   includes(
     trustedContainer,
-    "run: pnpm test:oci-container -- --output artifacts/ci/trusted-container/matrix",
+    "run: pnpm test:oci-container --output artifacts/ci/trusted-container/matrix",
     "complete real trusted-container matrix",
   );
   includes(
