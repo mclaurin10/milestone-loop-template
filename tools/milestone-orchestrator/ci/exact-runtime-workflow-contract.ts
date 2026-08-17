@@ -3,6 +3,16 @@ import { format } from "prettier";
 export const EXACT_RUNTIME_WORKFLOW_PATH =
   ".github/workflows/exact-runtime-ci.yml" as const;
 
+const OCI_STORE_HYDRATION_SCRIPT = [
+  "run: |",
+  '          fixture_fetch_dir="$(mktemp -d)"',
+  "          trap 'rm -rf \"$fixture_fetch_dir\"' EXIT",
+  '          git archive HEAD:fixtures/oci-candidate | tar -x -C "$fixture_fetch_dir"',
+  '          pnpm --dir "$fixture_fetch_dir" --ignore-workspace fetch --frozen-lockfile',
+].join("\n");
+const OCI_MATRIX_COMMAND =
+  "pnpm test:oci-container --output artifacts/ci/trusted-container/matrix";
+
 function assertion(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
 }
@@ -180,10 +190,24 @@ export async function validateExactRuntimeWorkflow(
   );
   includes(trustedContainer, "docker version >", "real Docker version probe");
   includes(trustedContainer, "docker info >", "real Docker daemon probe");
+  exactCount(trustedContainer, OCI_STORE_HYDRATION_SCRIPT, 1);
   includes(
     trustedContainer,
-    "run: pnpm test:oci-container --output artifacts/ci/trusted-container/matrix",
+    `run: ${OCI_MATRIX_COMMAND}`,
     "complete real trusted-container matrix",
+  );
+  const sourceInstallIndex = trustedContainer.indexOf(
+    "run: pnpm install --frozen-lockfile --package-import-method=copy",
+  );
+  const storeHydrationIndex = trustedContainer.indexOf(
+    OCI_STORE_HYDRATION_SCRIPT,
+  );
+  const matrixIndex = trustedContainer.indexOf(`run: ${OCI_MATRIX_COMMAND}`);
+  assertion(
+    sourceInstallIndex >= 0 &&
+      sourceInstallIndex < storeHydrationIndex &&
+      storeHydrationIndex < matrixIndex,
+    "Trusted-container fixture-store hydration must run after source install and before the real matrix.",
   );
   includes(
     trustedContainer,

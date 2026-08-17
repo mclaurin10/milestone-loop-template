@@ -63,4 +63,40 @@ describe("exact-runtime CI workflow contract", () => {
     for (const mutation of mutations)
       await expect(validateExactRuntimeWorkflow(mutation)).rejects.toThrow();
   });
+
+  it("binds exact OCI fixture-store hydration before container execution", async () => {
+    const workflow = await readFile(workflowPath, "utf8");
+    const hydration = [
+      "run: |",
+      '          fixture_fetch_dir="$(mktemp -d)"',
+      "          trap 'rm -rf \"$fixture_fetch_dir\"' EXIT",
+      '          git archive HEAD:fixtures/oci-candidate | tar -x -C "$fixture_fetch_dir"',
+      '          pnpm --dir "$fixture_fetch_dir" --ignore-workspace fetch --frozen-lockfile',
+    ].join("\n");
+    const matrix =
+      "pnpm test:oci-container --output artifacts/ci/trusted-container/matrix";
+    const hydrationStep = `      - name: Hydrate exact OCI fixture store\n        ${hydration}\n`;
+    const matrixStep = `      - name: Run real trusted-container matrix\n        run: ${matrix}\n`;
+    const mutations = [
+      workflow.replace(hydrationStep, ""),
+      workflow.replace(
+        "git archive HEAD:fixtures/oci-candidate",
+        "git archive HEAD:fixtures/other",
+      ),
+      workflow.replace(
+        'pnpm --dir "$fixture_fetch_dir" --ignore-workspace',
+        "pnpm --dir . --ignore-workspace",
+      ),
+      workflow.replace(
+        'pnpm --dir "$fixture_fetch_dir" --ignore-workspace fetch',
+        'pnpm --dir "$fixture_fetch_dir" fetch',
+      ),
+      workflow.replace(" fetch --frozen-lockfile", " fetch"),
+      workflow
+        .replace(hydrationStep, "")
+        .replace(matrixStep, `${matrixStep}${hydrationStep}`),
+    ];
+    for (const mutation of mutations)
+      await expect(validateExactRuntimeWorkflow(mutation)).rejects.toThrow();
+  });
 });

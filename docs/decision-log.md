@@ -3,6 +3,42 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-17 — Git-archived scratch hydration for OCI fixture closure (WP5i)
+
+**Decision.** The trusted-container controller hydrates its existing pnpm store
+from an exact `git archive HEAD:fixtures/oci-candidate` extracted into a
+`mktemp` directory. The fetch runs there exactly once with
+`--ignore-workspace` and `--frozen-lockfile`, after the root frozen install and
+before the unchanged real Docker matrix, and the scratch directory is removed
+on exit. The executable workflow contract pins the complete archive/fetch/
+cleanup script and ordering, not merely the presence of a generic `pnpm fetch`.
+
+The controller remains the only networked party. The candidate still runs an
+offline/frozen/store-integrity install with denied networking and a read-only
+store mount. Fixture/package/lock bytes, the candidate command, provider,
+normal/adversarial cases, containment policy, and source-identity modes do not
+change.
+
+**Why.** A root frozen install populated Vite `8.2.0`, but the separately
+locked OCI fixture required `8.2.1`, so hosted normal-case startup failed with
+`ERR_PNPM_NO_OFFLINE_TARBALL`. Fetching from the fixture directory closes that
+graph, but pnpm `11.15.1` also byte-normalizes the fixture YAML despite
+`--frozen-lockfile`; doing so in the checkout would dirty the exact source that
+the next step must attest. The Git archive supplies committed fixture bytes,
+avoids parent-workspace discovery, confines normalization to disposable state,
+and populates the same controller default store already selected by the root
+install and OCI executor.
+
+Alternatives rejected: adding Vite `8.2.1` or the entire fixture graph to the
+root package/lock; changing the protected fixture lock to Vite `8.2.0`;
+allowing candidate network access; making the store mount writable; restoring
+the tracked lock after mutating it; accepting a dirty controller checkout;
+using the root workspace graph; relying on a warm runner cache; or weakening
+offline/frozen/store-integrity enforcement.
+
+**Affected files.** Exact-runtime workflow; executable workflow contract and
+mutation tests; execution plan, autonomy log, and this decision record.
+
 ## 2026-08-17 — Dual-mode OCI controller-source identity (WP5h)
 
 **Decision.** The real OCI matrix accepts exactly two explicit tracked-source

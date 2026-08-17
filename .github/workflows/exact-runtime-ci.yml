@@ -149,6 +149,12 @@ jobs:
           node tools/milestone-orchestrator/ci/assert-exact-toolchain.mjs --output artifacts/ci/trusted-container/toolchain.json
       - name: Install frozen dependencies
         run: pnpm install --frozen-lockfile --package-import-method=copy
+      - name: Hydrate exact OCI fixture store
+        run: |
+          fixture_fetch_dir="$(mktemp -d)"
+          trap 'rm -rf "$fixture_fetch_dir"' EXIT
+          git archive HEAD:fixtures/oci-candidate | tar -x -C "$fixture_fetch_dir"
+          pnpm --dir "$fixture_fetch_dir" --ignore-workspace fetch --frozen-lockfile
       - name: Confirm real Docker Engine
         run: |
           docker version > artifacts/ci/trusted-container/docker-version.txt

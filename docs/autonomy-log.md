@@ -3,6 +3,137 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-17 — WP5i exact OCI fixture-store closure
+
+**Objective.** Reconcile pushed WP5h commit
+`a868d9d92227cb95b17db93b14038ae2d24ec026` against its exact hosted run,
+inspect every job/log/annotation/artifact, reproduce the first causal failure
+after the corrected controller-source identity, and fix only that failure.
+Preserve the candidate's offline/network-denied/read-only-store policy, all six
+normal/adversarial cases, package and lock bytes, immutable authority,
+commissioning/readiness/verifier meanings, and unrelated WP5 failures. Create
+one local commit and do not push.
+
+**Hosted audit and first cause.** Exact push run
+`https://github.com/mclaurin10/milestone-loop-template/actions/runs/32047579881`
+(run 4, attempt 1) executed commit
+`a868d9d92227cb95b17db93b14038ae2d24ec026`, tree
+`24954859be765bd893b5a3cfd41e2634a22578af`, from
+`2026-08-17T16:51:24Z` through `16:57:56Z` and concluded `failure`. All five
+independently scheduled full-history jobs, every step, complete log, all nine
+annotations, and all five retained artifacts were inspected. The annotations
+were five action-runtime Node 20 deprecation warnings and four process-failure
+annotations; the warnings were not mislabeled as causes.
+
+Linux fresh-adopter passed both receipt-owning commands and 4/4 tests. Windows
+fresh-adopter failed its generated frozen offline install because the selected
+Windows store lacked `@eslint/js@10.0.1`; that remains separate. Both
+controllers passed contract 13/13, schema 7/7, policy 15/15, and verifier
+fail-closed 61/61 before their independently retained orchestrator failures.
+Linux reported 577/587 passed, 9 failed, 1 skipped across 180 suites. Windows
+reported 509/587 passed, 76 failed, 2 skipped; its dominant cluster remains
+GitHub's `RUNNER~1` versus `runneradmin` realpath spelling, with separate
+worked-example/retention/schema cascades.
+
+WP5h's intended Docker correction succeeded: real Docker client/server
+`28.0.4` recorded `committed-head`, exact HEAD/tree, zero staged paths, and the
+deterministic empty-path digest. The image built, the normal container started,
+and cleanup removed the candidate/exporter/volumes with empty managed-resource
+inventories before and after. The first new cause was then exact and narrow:
+the root lock/store contained Vite `8.2.0`, while the protected OCI fixture lock
+required Vite `8.2.1`; the unchanged offline candidate install failed with
+`ERR_PNPM_NO_OFFLINE_TARBALL` for that tarball. Its 2,004-byte result has
+SHA-256 `c36e504e25978aae4b8cc96a1f4d12c11228ad9d0bad4452bd23a8e669c042c4`.
+
+The five downloaded ZIPs under ignored `artifacts/hosted/run-32047579881/`
+match their retained bytes/SHA-256: controller Windows 52,900 /
+`30700153ff0b4a7fce6dfb598d28defdc42113dc8dedcfb6e1dd962fd4b107af`;
+controller Linux 49,138 /
+`329883c4a35953718d0af13345c8a8aa6151bd1d236b2949fd3b97f501d1f126`;
+adopter Windows 8,733 /
+`5917c3c7768d423bb2d1c2dd907865bec1eee56864b63f7852bd562b2aaf80f9`;
+adopter Linux 15,189 /
+`fdcd3ff4d78fdc4fe5d3aa1c4af48501850540c8f53358c645cb731ed7764f96`;
+and trusted container 5,481 /
+`3b66cd202d706dbb0c00f99683083beada5bcab6d2d21a9f9793bbb828d5c32d`.
+Independent extraction audit matched 12/12 PASS receipts, 12/12 declared
+artifacts totaling 80,482 bytes, and 12/12 manifest bindings with zero
+mismatches while preserving every ERROR/no-receipt boundary.
+
+**Reproduction and correction.** A no-local/no-hardlinks clone of the exact
+commit under Linux Node `v24.18.0`, pnpm `11.15.1`, and Git `2.43.0` populated
+a new store only from the root frozen install. An exact fixture archive outside
+workspace discovery then reproduced the missing `vite@8.2.1` tarball. The
+2,836-byte structured record at
+`artifacts/hosted/run-32047579881/reproduction/oci-store-closure/result.json`
+has SHA-256
+`29ad277635fcf1e3f713ad71c0d4b856834afd929dc297da4452674d720ce94d`.
+The root lock remained 60,467 bytes / Vite `8.2.0` /
+`154f9b86ae26bf839a51c2de1eed204397f7c54cf9dcf870320c881c3aa5c181`;
+the fixture lock remained 24,385 bytes / Vite `8.2.1` /
+`8623b26cc48086c4149d3d9a564ae3879072bf5a11da3a2ba3945fe3f7f9beca`.
+
+A direct fixture-directory `pnpm fetch --frozen-lockfile` hydrated the missing
+graph but also normalized the checked-out fixture lock's YAML formatting. That
+is semantically harmless in a disposable copy but violates tracked-source byte
+identity. The workflow therefore archives exact
+`HEAD:fixtures/oci-candidate` bytes into a `mktemp` scratch directory, fetches
+there with explicit `--ignore-workspace` and `--frozen-lockfile`, and removes
+the scratch directory on exit. It runs after the root install and before Docker,
+so both controller operations populate the same default store while the
+candidate still receives only a read-only store mount and no network.
+
+The second fresh explicit-store control downloaded the fixture closure, kept
+the tracked fixture lock and package hashes exactly
+`8623b26cc48086c4149d3d9a564ae3879072bf5a11da3a2ba3945fe3f7f9beca`
+and `962c5d88ea243d7ca6b79982bf64a9928f8d27334f2aec084f87cc494e864cb5`,
+and made the unchanged isolated offline/frozen/store-integrity install pass
+with 47/47 packages reused. The executable workflow contract binds the exact
+archive/fetch/cleanup block once and enforces its position between source
+install and the real matrix; mutation coverage rejects removal, reordering,
+wrong archive root, root-directory substitution, missing workspace isolation,
+or missing frozen-lock enforcement. No package, lock, fixture, OCI provider,
+case, containment, or candidate command changed.
+
+**Implementation diagnostics.** Under pinned Windows Node `24.18.0` and pnpm
+`11.15.1`, the corrected receipt-owning workflow-contract shard passed 4/4
+tests across 2/2 reported suites at
+`artifacts/manual/wp5i-workflow-focused-diagnostic-2/` (2,104-byte report,
+SHA-256
+`bd94ba142ab100c81283bd72339761acb4313cd26767f1aa127396cb2afe8910`).
+Receipt-owning typecheck and lint diagnostics passed at
+`artifacts/manual/wp5i-typecheck-diagnostic-1/typecheck-report.json` (1,066
+bytes, SHA-256
+`d28d2480608f18f5fe0732702e4dbc11d4d9c56b70469b8c29c01642bdbbba16`)
+and `artifacts/manual/wp5i-lint-diagnostic-1/lint-report.json` (1,599 bytes,
+SHA-256
+`ab6d8e78791a0146d94bf724bce7396963735d0552de3f33059a3e82a96ca645`).
+These are iteration diagnostics, not substitutes for the final frozen-tree
+commands.
+
+**Stable-tree milestone protocol.** Workflow, contract/tests, decision record,
+this log, and the execution plan freeze before final evidence. The exact staged
+tree is compiled into ignored `artifacts/manual/wp5i-oci-final-build-1/`. A
+disposable Linux clone receives that exact staged diff, a new default store,
+the root frozen install, and the exact scratch-fixture fetch before the emitted
+entry runs all six real Docker cases into
+`artifacts/wp5i-oci-final-20260817/`. Receipt-owning focused, invariant,
+orchestrator, unit, typecheck, lint, and format commands write fresh evidence
+beneath `artifacts/manual/wp5i-*-final/`. Outcomes and independent artifact
+hash audits remain in command-owned ignored artifacts and the final handoff
+rather than being backfilled into tracked files and changing the tree they
+verify. Long suites run separately and serially.
+
+**Commit.** Assigned by the single cohesive WP5i commit containing this entry;
+identify it as the newest commit touching the entry. It is not pushed.
+
+**Known gaps.** A complete local fresh-store real-Docker matrix cannot
+substitute for a later hosted Ubuntu run of the committed revision. The
+Linux/Windows controller portability clusters and Windows fresh-adopter
+cross-drive offline-store failure remain separate WP5 work. Product
+placeholders, CAL-1, hidden validation, autonomous readiness, and human
+verification remain open; this increment makes no product-completion claim.
+
 ## 2026-08-17 — WP5h generic OCI controller-source identity
 
 **Objective.** Reconcile the pushed WP5g candidate against its exact hosted
