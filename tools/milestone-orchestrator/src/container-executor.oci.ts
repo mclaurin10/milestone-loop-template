@@ -27,6 +27,10 @@ import {
   type ContainerImageRuntime,
 } from "./container-image.js";
 import {
+  captureOciControllerSource,
+  type OciControllerSourceIdentity,
+} from "./container-executor-source.js";
+import {
   OCI_RESOURCE_LIMITS_V1,
   createContainerCommandExecutor,
   resolveControllerPnpmStorePath,
@@ -37,7 +41,8 @@ import { safeAgentEnvironment } from "./redaction.js";
 import { assertOrchestratorConfig } from "./schema.js";
 import { validateCommandReceiptDirectory } from "./verifier.js";
 
-const SCHEMA_VERSION = "1.0.0" as const;
+const MATRIX_SCHEMA_VERSION = "1.1.0" as const;
+const CONTAINMENT_SCHEMA_VERSION = "1.0.0" as const;
 const NODE_VERSION = "24.18.0";
 const PNPM_VERSION = "11.15.1";
 const BASE_IMAGE =
@@ -388,7 +393,7 @@ async function validateContainment(
     "Containment report",
   );
   assertion(
-    report["schemaVersion"] === SCHEMA_VERSION,
+    report["schemaVersion"] === CONTAINMENT_SCHEMA_VERSION,
     `${result.id} report schema drifted.`,
   );
   const runtime = objectValue(report["runtime"], "Containment runtime");
@@ -836,17 +841,7 @@ async function main(): Promise<void> {
   let pnpmVersion: string | null = null;
   let pnpmStore: { readonly pathSha256: string; readonly leaf: string } | null =
     null;
-  let controllerCandidate: {
-    readonly head: string;
-    readonly stagedTree: string;
-    readonly stagedPathCount: number;
-    readonly stagedPathsSha256: string;
-    readonly protectedHumanFile: {
-      readonly path: string;
-      readonly blob: string;
-      readonly untracked: true;
-    };
-  } | null = null;
+  let controllerSource: OciControllerSourceIdentity | null = null;
   let beforeContainers: readonly string[] = [];
   let afterContainers: readonly string[];
   let beforeVolumes: readonly string[] = [];
@@ -864,58 +859,9 @@ async function main(): Promise<void> {
       pnpmVersion === PNPM_VERSION,
       `Expected pnpm ${PNPM_VERSION}, observed ${pnpmVersion}.`,
     );
-    const unstagedPaths = await runRequired(
-      "git",
-      ["diff", "--no-ext-diff", "--name-only"],
-      repositoryRoot,
+    controllerSource = await captureOciControllerSource((args) =>
+      runRequired("git", args, repositoryRoot),
     );
-    assertion(
-      unstagedPaths === "",
-      "The OCI matrix requires every candidate change to be staged and frozen.",
-    );
-    const stagedPaths = await runRequired(
-      "git",
-      ["diff", "--cached", "--no-ext-diff", "--name-only"],
-      repositoryRoot,
-    );
-    assertion(stagedPaths.length > 0, "The WP3d candidate index is empty.");
-    const protectedHumanPath =
-      "Implementation-ready improvement plan 8-5-26.txt";
-    const protectedHumanStatus = await runRequired(
-      "git",
-      [
-        "status",
-        "--porcelain=v1",
-        "--untracked-files=all",
-        "--",
-        protectedHumanPath,
-      ],
-      repositoryRoot,
-    );
-    assertion(
-      protectedHumanStatus.startsWith("?? "),
-      "The protected human improvement plan is not exclusively untracked.",
-    );
-    const protectedHumanBlob = await runRequired(
-      "git",
-      ["hash-object", `--path=${protectedHumanPath}`, "--", protectedHumanPath],
-      repositoryRoot,
-    );
-    assertion(
-      protectedHumanBlob === "d0abdd24f404d9dc335818c355e39f7cfc531300",
-      "The protected human improvement plan changed bytes.",
-    );
-    controllerCandidate = {
-      head: await runRequired("git", ["rev-parse", "HEAD"], repositoryRoot),
-      stagedTree: await runRequired("git", ["write-tree"], repositoryRoot),
-      stagedPathCount: stagedPaths.split(/\r?\n/).filter(Boolean).length,
-      stagedPathsSha256: sha256(stagedPaths),
-      protectedHumanFile: {
-        path: protectedHumanPath,
-        blob: protectedHumanBlob,
-        untracked: true,
-      },
-    };
     beforeContainers = await managedContainers(repositoryRoot);
     beforeVolumes = await managedVolumes(repositoryRoot);
     assertion(
@@ -1049,7 +995,7 @@ async function main(): Promise<void> {
     .slice(0, 5)
     .map(({ id, durationMs }) => ({ id, durationMs }));
   const result = {
-    schemaVersion: SCHEMA_VERSION,
+    schemaVersion: MATRIX_SCHEMA_VERSION,
     status: failure ? "FAIL" : "PASS",
     startedAt: startedAt.toISOString(),
     finishedAt: finishedAt.toISOString(),
@@ -1062,7 +1008,7 @@ async function main(): Promise<void> {
       runtime: "docker",
       runtimeVersion,
     },
-    controllerCandidate,
+    controllerSource,
     image: image
       ? {
           baseImage: BASE_IMAGE,

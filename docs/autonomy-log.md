@@ -3,6 +3,136 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-17 — WP5h generic OCI controller-source identity
+
+**Objective.** Reconcile the pushed WP5g candidate against its exact hosted
+run, inspect every job/log/annotation/artifact, reproduce the next first causal
+trusted-container failure under exact pinned Linux tooling and real Docker, and
+fix only that failure. Preserve the six-case OCI policy and every immutable,
+commissioning, readiness, invariant, workflow, dependency, and unrelated WP5
+meaning; create one local commit and do not push.
+
+**Hosted audit and first cause.** Exact push run
+`https://github.com/mclaurin10/milestone-loop-template/actions/runs/32039150245`
+(run 3, attempt 1) executed commit
+`a0e9af205b7c6dff1155a087dfe56c7786da2b79`, tree
+`f998fb50c9ab249b7e07a6d70eebed8ea1513ae9`, from
+`2026-08-17T14:28:20Z` through `14:34:40Z` and concluded `failure`. The five
+independently scheduled full-history jobs all installed exact Node `24.18.0`
+and pnpm `11.15.1`. Their complete logs were inspected: Linux adopter 247
+lines / 21,094 characters; Windows controller 263 / 22,873; trusted container
+259 / 21,779; Windows adopter 237 / 21,722; Linux controller 282 / 23,749. The
+public annotation API contained five action-runtime warnings and four
+exit-code failures, nine annotations total.
+
+Both controllers passed the four-command invariant suite (contract 13/13,
+schema 7/7, policy 15/15, fail-closed 61/61) and then failed their independently
+retained orchestrator boundaries. Linux reported 574/584 passed, 9 failed, 1
+skipped across 178 suites; Windows reported 508/584 passed, 74 failed, 2
+skipped. Both retained ERROR manifests with no passing receipt, and later
+controller commands correctly skipped. Linux fresh-adopter passed both
+receipt-owning checks and 4/4 tests. Windows fresh-adopter again failed its
+generated frozen offline install because the Windows pnpm store lacked the
+`@eslint/js@10.0.1` tarball.
+
+The WP5g argv repair worked exactly. Trusted-container confirmed real hosted
+Docker client/server `28.0.4`, invoked
+`pnpm test:oci-container --output artifacts/ci/trusted-container/matrix`, and
+entered the strict current TypeScript with no extra separator. It then exposed
+the next earlier-than-cases defect: the WP3d milestone harness required a
+non-empty staged index and rejected GitHub's exact clean committed checkout as
+`The WP3d candidate index is empty.` The 1,061-byte FAIL result has SHA-256
+`c428400f08be282d144bb2e844f5970e31908911b3732671591ec3bd24871ea7`,
+zero cases, and empty before/after managed-resource inventories.
+
+All five authenticated artifacts are retained under ignored
+`artifacts/hosted/run-32039150245/` and match GitHub metadata: controller
+Windows 52,557 bytes / SHA-256
+`304aefbb270c78477bd2bff791b13aa216882a3dbf8c2c26b4fa6194726e1ed6`;
+controller Linux 49,000 /
+`c8d5935bf9492395ef22fdf6978785f148dd33c2e80fd92a3f6943c92dbc08f4`;
+adopter Windows 8,674 /
+`753fc7cf1918e59a208e3e03e7877a66af589fd4e143525311eeacd906c7c5f0`;
+adopter Linux 15,137 /
+`ed0cf0db4b98e2205f260bc41f8778d0876d8aeb8114c6bda62609801f841c65`;
+and trusted container 2,488 /
+`0b86f79331f255a4fbd4674daa60ec1bae49497d1a5d2d8a07c93cddb7b9c561`.
+Independent audit matched 12 hosted PASS receipts to 12 artifacts totaling
+80,484 bytes with zero mismatches and preserved every ERROR/no-receipt
+boundary.
+
+**Reproduction and correction.** The exact current TypeScript source (35,259
+bytes, SHA-256
+`c5d2bf4e472c158c67b085c4b6bb31a576fc44362cac18944d6bb25f119bd7ff`)
+was compiled into ignored diagnostic output, then run under Ubuntu WSL with
+Linux Node `v24.18.0`, pnpm `11.15.1`, and real Docker `29.1.3`. It reproduced
+the same empty-index failure at
+`artifacts/hosted/run-32039150245/reproduction/clean-index-current/result.json`
+(1,062 bytes, SHA-256
+`c86b21780d44da208835804824bfbc55845868eb9677e708c5ea5c618c459278`)
+before image or case execution and left no managed resource. A historical
+compiled runner reached a different policy diagnostic and is retained but
+explicitly rejected as current-source evidence.
+
+The OCI entry now delegates tracked-source capture to one small owner. A clean
+Git checkout is explicitly `committed-head` and binds candidate tree to
+`HEAD^{tree}`. A pre-commit frozen candidate is explicitly `frozen-index` and
+binds candidate tree to `git write-tree`, staged path count, and staged-path
+digest. Both modes retain exact HEAD and HEAD-tree identity and reject any
+unstaged tracked change. Result schema advances to `1.1.0` and records
+`controllerSource`; the distributed OCI harness no longer requires, names, or
+hashes the local protected human plan. No CI environment branch, fabricated
+change, parser relaxation, provider/case/policy change, or workflow change was
+introduced.
+
+**Implementation diagnostics.** Under pinned Windows Node `24.18.0` and pnpm
+`11.15.1`, the receipt-owning real-Git/workflow shard passed 6/6 tests with zero
+failures or skips across 4/4 suites at
+`artifacts/manual/wp5h-source-identity-focused-1/invariant-vitest-report.json`
+(2,860 bytes, SHA-256
+`2b0778a2ac5ce95bdbec86a92709617c9cb9568e0ef0b900e34c9d716565e2c5`).
+Receipt-owning typecheck and lint diagnostics passed at
+`artifacts/manual/wp5h-typecheck-diagnostic-1/typecheck-report.json` (1,075
+bytes, SHA-256
+`3a3e7ad14c73a68dbc7095618a790d17384438c14e97680b00d4ef95b81cfe63`)
+and `artifacts/manual/wp5h-lint-diagnostic-1/lint-report.json` (1,608 bytes,
+SHA-256
+`73085a2ff0df3c500c68ea2b7c1234692ab773fdb7ec604babba767ac6bbe9e6`).
+These are iteration diagnostics, not substitutes for the final frozen-tree
+commands.
+
+The first staged-tree matrix attempt correctly captured `frozen-index` source
+identity and reached the real normal container, then exposed a narrow
+implementation regression: the initial global schema-version bump also made
+the validator expect containment report `1.1.0`, although the unchanged
+containment report remains `1.0.0`. The rejected result is retained at
+`artifacts/wp5h-oci-final-20260817/result.json` (1,957 bytes, SHA-256
+`29bcbcf150055641b51a4be0bcc9eb78592fdc5dd82286abec15d05ca1105752`)
+with zero accepted cases and empty before/after managed-resource inventories.
+The matrix and containment schema constants are now separate; no containment
+validation, case expectation, or cleanup rule was weakened.
+
+**Stable-tree milestone protocol.** Source, tests, decision record, this log,
+and the execution plan freeze before the final commands. The exact staged tree
+is compiled to ignored `artifacts/manual/wp5h-oci-final-build-r2/` and the
+complete real six-case matrix writes
+`artifacts/wp5h-oci-final-20260817-r2/result.json`. Receipt-owning focused,
+invariant, orchestrator, unit, typecheck, lint, and format commands write fresh
+evidence beneath `artifacts/manual/wp5h-*-final/`. Their outcomes, hashes, and
+receipt audit remain in those command-owned ignored artifacts and the final
+handoff rather than being backfilled into tracked files and changing the tree
+they verify. Long suites run separately and serially.
+
+**Commit.** Assigned by the single cohesive WP5h commit containing this entry;
+identify it as the newest commit touching the entry. It is not pushed.
+
+**Known gaps.** A complete local real-Docker matrix cannot substitute for a
+later hosted Ubuntu run of the new committed revision. Controller Linux/Windows
+portability and Windows fresh-adopter offline-store failures remain separate
+WP5 gaps. Product placeholders, calibration, hidden validation, autonomous
+readiness, and human verification remain open; this increment makes no product
+completion claim.
+
 ## 2026-08-17 — WP5g hosted CI audit and OCI argv correction
 
 **Objective.** Reconcile the pushed WP5f candidate against actual hosted

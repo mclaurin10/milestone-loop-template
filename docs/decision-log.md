@@ -3,6 +3,38 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-17 — Dual-mode OCI controller-source identity (WP5h)
+
+**Decision.** The real OCI matrix accepts exactly two explicit tracked-source
+states. A clean checkout is `committed-head` and binds its candidate tree to
+`HEAD^{tree}`. A locally frozen implementation candidate is `frozen-index` and
+binds its candidate tree to `git write-tree`, together with exact HEAD/tree,
+staged path count, and a deterministic staged-path digest. Both modes reject
+any unstaged tracked change before image creation. OCI result schema `1.1.0`
+records this generic `controllerSource` identity instead of WP3d's
+milestone-only `controllerCandidate` shape.
+
+The OCI product harness no longer names, requires, or hashes the user-owned
+`Implementation-ready improvement plan 8-5-26.txt`. That file remains guarded
+by the outer autonomous-work protocol. Unrelated untracked content likewise
+does not manufacture a candidate tree; the matrix identity is the exact Git
+tracked source plus the installed lockfile-bound toolchain.
+
+**Why.** GitHub Actions checks out the exact committed tree with an empty
+index. Treating that valid state as `The WP3d candidate index is empty` stopped
+the hosted job before every normal/adversarial case, while fabricating a staged
+change would make the evidence dishonest. Retaining the staged mode is still
+necessary for pre-commit real-container verification of an exact frozen
+candidate. Making the modes explicit preserves both workflows without a CI
+environment branch or a dirty-tree bypass. Alternatives rejected: staging a
+sentinel in CI, weakening the parser, special-casing `GITHUB_ACTIONS`, requiring
+the local human file in distributed/adopter repositories, silently placing a
+committed tree in fields named as staged evidence, accepting unstaged tracked
+content, or removing pre-commit OCI verification.
+
+**Affected files.** OCI controller-source identity owner and real-Git tests;
+real OCI matrix entry/report schema; execution plan and autonomy log.
+
 ## 2026-08-16 — Exact-runtime cross-platform CI boundaries (WP5e)
 
 **Decision.** The source repository has one least-privilege GitHub Actions
