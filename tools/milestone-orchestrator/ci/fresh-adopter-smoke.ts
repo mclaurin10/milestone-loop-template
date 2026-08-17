@@ -283,6 +283,61 @@ interface PnpmInvocation {
   readonly prefixArguments: readonly string[];
 }
 
+export interface SourcePnpmStoreInvocation {
+  readonly id: "pnpm-store-path";
+  readonly args: readonly ["store", "path"];
+  readonly cwd: string;
+}
+
+export type SourcePnpmStoreRunner = (
+  invocation: SourcePnpmStoreInvocation,
+) => Promise<Pick<CommandCapture, "stdout">>;
+
+function absolutePnpmStorePath(value: string): string {
+  assertion(
+    value.length > 0 && isAbsolute(value),
+    "pnpm store path must be one absolute path.",
+  );
+  return resolve(value);
+}
+
+export function parsePnpmStorePath(stdout: string): string {
+  const paths = stdout
+    .split(/\r?\n/u)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+  assertion(
+    paths.length === 1,
+    "pnpm store path must emit exactly one non-empty path.",
+  );
+  return absolutePnpmStorePath(paths[0]!);
+}
+
+export async function resolveSourcePnpmStorePath(
+  sourceRoot: string,
+  run: SourcePnpmStoreRunner,
+): Promise<string> {
+  const capture = await run({
+    id: "pnpm-store-path",
+    args: ["store", "path"],
+    cwd: sourceRoot,
+  });
+  return parsePnpmStorePath(capture.stdout);
+}
+
+export function generatedOfflineInstallArguments(
+  sourceStorePath: string,
+): readonly string[] {
+  return [
+    "install",
+    "--offline",
+    "--frozen-lockfile",
+    "--package-import-method=copy",
+    "--store-dir",
+    absolutePnpmStorePath(sourceStorePath),
+  ];
+}
+
 function pnpmInvocation(): PnpmInvocation {
   const value = process.env["npm_execpath"];
   if (value !== undefined && isAbsolute(value) && existsSync(value))
@@ -547,6 +602,23 @@ export async function runFreshAdopterCiSmoke(
     EXPECTED_PNPM_VERSION,
     "fresh-adopter smoke pnpm version",
   );
+  const sourceStorePath = await resolveSourcePnpmStorePath(
+    sourceRoot,
+    async (invocation) =>
+      runPnpm(
+        outputRoot,
+        invocation.id,
+        pnpm,
+        invocation.args,
+        invocation.cwd,
+        process.env,
+      ),
+  );
+  const sourceStoreMetadata = await lstat(sourceStorePath);
+  assertion(
+    sourceStoreMetadata.isDirectory(),
+    "Resolved pnpm store path must be an existing directory.",
+  );
 
   const temporaryRoot = await mkdtemp(join(tmpdir(), "fresh-adopter-ci-"));
   const repositoryRoot = resolve(temporaryRoot, "repository");
@@ -579,12 +651,7 @@ export async function runFreshAdopterCiSmoke(
       outputRoot,
       "install",
       pnpm,
-      [
-        "install",
-        "--offline",
-        "--frozen-lockfile",
-        "--package-import-method=copy",
-      ],
+      generatedOfflineInstallArguments(sourceStorePath),
       repositoryRoot,
       childEnvironment,
       900_000,
@@ -744,6 +811,10 @@ export async function runFreshAdopterCiSmoke(
         {
           id: "install",
           status: "PASS",
+          storeBinding: {
+            mode: "explicit-source-store",
+            pathSha256: sha256(Buffer.from(sourceStorePath, "utf8")),
+          },
         },
         {
           id: "typecheck",

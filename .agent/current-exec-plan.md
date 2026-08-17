@@ -1,293 +1,268 @@
 # Current Execution Plan
 
-**Status:** WP5i exact OCI fixture-store hydration implemented; final frozen-tree verification in progress
+**Status:** WP5j Windows fresh-adopter shared-store closure planned; isolated-store reproduction in progress
 **Updated:** 2026-08-17
 **Owner:** autonomous loop
 
 ## Objective
 
-Complete one cohesive WP5i increment that reconciles pushed WP5h commit
-`a868d9d92227cb95b17db93b14038ae2d24ec026` against Exact runtime CI run
-`32047579881` and fixes the first causal trusted-container failure after the
-new committed-source identity succeeded. Make the Linux Docker job populate
-the controller's pnpm store from the exact protected OCI fixture lock before
-launching the unchanged offline/network-denied six-case matrix. Bind that
-preparation order and command shape in the executable workflow contract,
-reproduce the empty-store failure and hydrated-store success with exact pinned
-Linux tooling, run the complete matrix from the frozen candidate against the
-fresh hydrated store, run applicable exact-toolchain local suites with
-command-owned evidence, independently audit all evidence, and create one
+Complete one cohesive WP5j increment after auditing Exact runtime CI run
+`32060615125` for pushed WP5i commit
+`87bd41e072a9e49baf212dc803ead83acbdabb92`. Preserve the now-passing real
+trusted-container boundary and fix only the Windows fresh-adopter failure in
+which the generated repository selects a different drive-local pnpm store from
+the already hydrated source checkout. Make the smoke coordinator resolve the
+exact store used by its pinned source-side pnpm invocation and supply that
+store explicitly to the generated repository's unchanged offline/frozen/copy
+install. Reproduce the failure and corrected outcome across Windows volumes,
+add regression coverage, run applicable exact-toolchain suites with
+command-owned evidence, independently audit the evidence, and create one
 narrow local commit without pushing.
 
-This increment does not fix or relabel the Linux/Windows controller portability
-failures or the Windows fresh-adopter cross-drive offline-store failure. It does
-not change the protected OCI fixture package or lockfile, root package or
-lockfile, Docker image/provider, candidate command, container network/mount/
-resource/artifact/cleanup policy, six matrix cases, source-identity schema,
-workflow scheduling, commissioning/readiness/verifier semantics, immutable
-authority, or product-domain scope. It does not claim hosted OCI PASS until a
-later pushed revision actually completes the hosted matrix, and it does not
-begin WP6.
+This increment does not fix or relabel the Linux or Windows controller test
+clusters. It does not change package or lock files, generated-adopter package
+content, the OCI fixture/provider/matrix, workflow job scheduling, exact
+toolchain pins, completion eligibility, commissioning/readiness/verifier
+semantics, immutable authority, calibration, hidden validation, or product
+scope. It does not claim hosted Windows PASS until a later pushed revision
+runs on GitHub's native `windows-2022` environment, and it does not begin WP6.
 
 ## Goal Constraints
 
-- Preserve `PROJECT_GOAL.md`, the original acceptance meanings and immutable
-  lock identities, hidden-validation custody, active and historical
-  commissioning, the permanent readiness marker/history, exact verifier
-  semantics, Doctor schema `2.0.0`, Status schema `1.0.0`, invariant IDs and
-  meanings, configuration/schema parity, examples, package/lock files, and all
-  completed evidence.
-- Preserve exact Node `24.18.0` and pnpm `11.15.1`. Windows commands use
-  `.tools\node-v24.18.0-win-x64\corepack.cmd` with that Node directory first on
-  `PATH`; Linux reproduction and real OCI use
-  `/home/duncan/.local/node-v24.18.0-linux-x64/bin` first on Ubuntu WSL `PATH`.
-- The candidate container remains offline, network-denied, and bound to the
-  read-only pnpm v11 store. Store hydration is a controller preparation step
-  over an exact `HEAD:fixtures/oci-candidate` archive in a disposable scratch
-  directory, not candidate network access or a writable store mount.
-- The hydration command must ignore the parent workspace, use the archived
-  fixture as its lockfile root, keep the lock frozen, populate the same store
-  later resolved and mounted by the OCI entry, and run after the source install
-  but before the Docker matrix. It may not update a tracked lockfile, resolve an
-  unpinned dependency graph, or substitute the root lockfile for the fixture
-  lock.
-- Do not fabricate cached content, add a fallback or retry that permits network
-  in the candidate, remove a matrix case, loosen an expected disposition,
-  disable frozen/offline/store-integrity flags, change image/provider policy,
-  add `continue-on-error`, or treat structural workflow inspection as hosted
-  execution evidence.
+- Preserve `PROJECT_GOAL.md`, all immutable-lock baseline/active meanings,
+  CAL-1 `open_not_started`, the readiness default profile and permanent marker,
+  original acceptance contract, commissioned identities, exact verifier
+  semantics, invariant IDs, Doctor/Status schemas, examples, and completed
+  evidence.
+- Preserve exact Node `24.18.0` and pnpm `11.15.1`. Windows commands put
+  `.tools\node-v24.18.0-win-x64` first on `PATH` and invoke its
+  `corepack.cmd`. No package-manager fallback, floating version, or dependency
+  update is permitted.
+- The generated repository install remains `--offline --frozen-lockfile
+  --package-import-method=copy`. Store sharing may only point it at the exact
+  controller store already hydrated by the frozen source install; it may not
+  enable network, mutate source lock/package bytes, rely on an unrelated warm
+  cache, or silently retry against another store.
+- Resolve the store through the same pinned pnpm invocation and exact source
+  working directory used by the coordinator. Reject empty, relative,
+  multi-line, malformed, or failed output rather than guessing.
+- Preserve the generated repository's clean two-commit bootstrap history,
+  absent readiness marker/tree/history, current config/model-policy schemas,
+  command-owned typecheck/unit receipts, independent artifact/manifest audit,
+  completion-ineligible smoke label, and exact source identity fence.
 - Never edit, stage, move, delete, re-encode, clean, or otherwise mutate the
   protected user-owned untracked
   `Implementation-ready improvement plan 8-5-26.txt`.
 
 ## Baseline Evidence
 
-- After authenticated fetch, local `master`, `HEAD`, and `origin/master` are
-  exactly `a868d9d92227cb95b17db93b14038ae2d24ec026`, tree
-  `24954859be765bd893b5a3cfd41e2634a22578af`, parent
-  `a0e9af205b7c6dff1155a087dfe56c7786da2b79`, at `0 ahead / 0 behind`.
-  The tracked tree and index are clean; the protected human plan is the sole
+- Local `master`, `HEAD`, and fetched `origin/master` are exactly
+  `87bd41e072a9e49baf212dc803ead83acbdabb92`, tree
+  `015964e7aca00251e2248942e9b695582bca1023`, parent
+  `a868d9d92227cb95b17db93b14038ae2d24ec026`, at `0 ahead / 0 behind`.
+  The tracked tree/index are clean and the protected human plan is the sole
   untracked path.
-- All four immutable files match baseline, active, and actual SHA-256. CAL-1 is
-  `open_not_started`. The repository remains on readiness profile with its
-  permanent transition history intact.
+- All four immutable actual hashes match their lock baselines and active
+  values. The default profile is `readiness`, the permanent activation marker
+  is present, and CAL-1 is `open_not_started`.
 - The protected plan remains exactly 78,574 bytes with SHA-256
   `53ea98fb1cb880163a02d3b1d9365963e3fe891025ae3630f00bd4c9232293b1`,
-  no-filter blob `9890a3cdd5288708a04102d27ff6fce9f0ebb90b`, and
-  path-filtered blob `d0abdd24f404d9dc335818c355e39f7cfc531300`.
+  no-filter blob `9890a3cdd5288708a04102d27ff6fce9f0ebb90b`, and path-filtered blob
+  `d0abdd24f404d9dc335818c355e39f7cfc531300`.
 - Exact push run
-  `https://github.com/mclaurin10/milestone-loop-template/actions/runs/32047579881`
-  (run 4, attempt 1) executed the exact HEAD from
-  `2026-08-17T16:51:24Z` through `16:57:56Z` and concluded `failure`. Every
-  job, step, complete log, all nine annotations, and all five artifacts were
-  inspected. Five action-runtime warnings and four exit-code failure
-  annotations were present.
-- Linux fresh-adopter passed independently: two receipt-owning commands, 4/4
-  tests, exact two-commit bootstrap history, and completion-ineligible smoke
-  status. Windows fresh-adopter failed independently because its generated
-  repository selected a different default drive store and could not find
-  `@eslint/js@10.0.1`; that remains outside WP5i.
-- Both controllers passed the four-command invariant suite: contract 13/13,
-  schema 7/7, policy 15/15, and fail-closed 61/61. Linux then reported 577/587
-  passed, 9 failed, 1 skipped across 180 suites. Windows reported 509/587
-  passed, 76 failed, 2 skipped. Later commands correctly skipped and both
-  retained ERROR manifests with no PASS receipt. These portability failures
-  remain outside WP5i.
-- Trusted-container confirmed real Docker client/server `28.0.4`, exact Node
-  and pnpm, and exact argv. Result schema `1.1.0` accepted the clean checkout as
-  `committed-head`; its HEAD, HEAD tree, and candidate tree all equal the exact
-  pushed identity, with zero staged paths and the deterministic empty digest.
-  The normal container then exited 1 because its offline install could not find
-  `vite@8.2.1`. The 2,004-byte result SHA-256 is
-  `c36e504e25978aae4b8cc96a1f4d12c11228ad9d0bad4452bd23a8e669c042c4`.
-  The candidate, exporter, and both volumes were removed, and before/after
-  managed-resource inventories are empty.
-- All five artifact ZIPs are retained under ignored
-  `artifacts/hosted/run-32047579881/` and match GitHub metadata: controller
-  Windows 52,900 bytes / SHA-256
-  `30700153ff0b4a7fce6dfb598d28defdc42113dc8dedcfb6e1dd962fd4b107af`;
-  controller Linux 49,138 /
-  `329883c4a35953718d0af13345c8a8aa6151bd1d236b2949fd3b97f501d1f126`;
-  adopter Windows 8,733 /
-  `5917c3c7768d423bb2d1c2dd907865bec1eee56864b63f7852bd562b2aaf80f9`;
-  adopter Linux 15,189 /
-  `fdcd3ff4d78fdc4fe5d3aa1c4af48501850540c8f53358c645cb731ed7764f96`;
-  trusted container 5,481 /
-  `3b66cd202d706dbb0c00f99683083beada5bcab6d2d21a9f9793bbb828d5c32d`.
-  Independent audit matched 12 PASS receipts, 12 declared artifacts totaling
-  80,482 bytes, and 12 manifest bindings with zero mismatches.
-- A no-local/no-hardlinks clone of the exact commit and a new empty pnpm store
-  reproduced the cause under Linux Node `v24.18.0` and pnpm `11.15.1`. Root
-  frozen install succeeded, but the exact fixture archived outside workspace
-  discovery failed offline with `ERR_PNPM_NO_OFFLINE_TARBALL` for
-  `vite@8.2.1`. The root lock resolves `vite@8.2.0`; the protected fixture lock
-  resolves `vite@8.2.1`. The 2,836-byte reproduction record is
-  `artifacts/hosted/run-32047579881/reproduction/oci-store-closure/result.json`,
-  SHA-256
-  `29ad277635fcf1e3f713ad71c0d4b856834afd929dc297da4452674d720ce94d`.
+  `https://github.com/mclaurin10/milestone-loop-template/actions/runs/32060615125`
+  (run 5, attempt 1) executed the exact candidate from
+  `2026-08-17T19:29:21Z` through `19:35:24Z` and concluded `failure`. All five
+  jobs, every step, complete logs, eight annotations, and all five ZIPs were
+  retrieved and inspected.
+- Job identities/results: fresh-adopter Windows `95480834015` failure;
+  controller Windows `95480834038` failure; fresh-adopter Linux `95480834051`
+  success; controller Linux `95480834113` failure; trusted-container Linux
+  `95480834183` success. The annotations are five action-runtime Node 20
+  deprecation warnings and three exit-code failures.
+- Artifact IDs / ZIP bytes / SHA-256: controller Windows `9298180337` / 52,794
+  / `7c58a84f11475d46a15e15f5cee430f938b866f6b17d20a7b18e1203f14f2c38`;
+  controller Linux `9298111032` / 49,146 /
+  `42e3c9d8325b818188c65ee2c9a1bbf8caa8d5d1c0bae2cb3125c81a3179f131`;
+  trusted container `9298026972` / 21,902 /
+  `9ca49490907fec39b280dc1d715478ee5798085719e55a2e8a11baaf43deca1c`;
+  adopter Windows `9298008310` / 8,736 /
+  `f210504bdb7850c7c046f5fcfdcfc6ee29c3ebc92ace7ed55d89c766c09ba22e`;
+  adopter Linux `9298000229` / 15,191 /
+  `cbcfcffbec09c4bd39b1a28ab289440edb8de64c8cab8383aee0cabef1b0bdd5`.
+- Retained evidence is under ignored
+  `artifacts/hosted/run-32060615125/`. The independent 23,471-byte
+  `audit-result.json` has SHA-256
+  `54b50a40334ca8efab5aa291aa341b9516e4504783557d44d524feebb93060bf`
+  and status PASS: 13 PASS receipts, 13 rehashed artifacts totaling 81,253
+  bytes, 12 exact manifest bindings plus one OCI containment binding, two
+  honest ERROR/no-receipt manifests, and zero mismatches.
+- WP5i succeeded in hosted Docker `28.0.4`: committed source identity matched,
+  exact fixture hydration completed, and all six cases had their expected
+  dispositions (normal/boundary PASS; artifact-link/artifact-quota/
+  output-flood ERROR; hang TIMEOUT). Every containment artifact matches its
+  bytes/hash, all cases retained denied-network/read-only policy, and managed
+  container/volume inventories are empty before and after.
+- Linux fresh-adopter passed 4/4 tests and both audited receipts. Both
+  controllers passed contract 13/13, schema 7/7, policy 15/15, and fail-closed
+  61/61 invariants. Linux then reported 578/588 passed, 9 failed, 1 skipped;
+  Windows reported 512/588 passed, 74 failed, 2 skipped. Those clusters remain
+  outside WP5j.
+- Windows fresh-adopter failed before typecheck/unit evidence. The source
+  install downloaded all 138 packages including `@eslint/js@10.0.1`; the
+  generated repository reported `reused 0` and
+  `ERR_PNPM_NO_OFFLINE_TARBALL` for exactly
+  `@eslint/js/-/js-10.0.1.tgz`. GitHub's source is on `D:` while
+  `mkdtemp(tmpdir())` places the generated repository on `C:`, causing pnpm's
+  drive-local default stores to diverge. Linux uses one filesystem and passes.
 
 ## Steps
 
-1. [x] Complete the resume protocol, authority/plan/log review, fetch, Git and
-       protected-file identity audit, immutable hash audit, and retained WP5h
-       evidence inspection.
-2. [x] Discover exact run `32047579881`; inspect every job, step, complete log,
-       annotation, and artifact; download/hash/extract all five ZIPs and
-       independently audit hosted receipts, artifacts, manifests, totals, and
-       failure boundaries.
-3. [x] Prove the WP5h committed-source identity succeeded in hosted Docker and
-       identify the next first causal failure from its containment artifact.
-4. [x] Reproduce the missing fixture dependency with an exact clean clone,
-       empty store, root-only hydration, pinned Linux tooling, and isolated
-       fixture install; retain a structured reproduction record.
-5. [x] Replace the stale completed WP5h plan with this bounded WP5i plan before
-       implementation.
-6. [x] Inspect the workflow contract owner/tests and implement the smallest
-       exact Git-archived scratch fixture-store hydration command plus mutation
-       coverage for source path, workspace isolation, frozen lock, scratch
-       cleanup, and ordering.
-7. [x] Run focused regression/type diagnostics; exercise an empty-store
-       failure control and hydrated-store offline success without changing
-       either tracked lockfile; inspect and correct only defects within this
-       boundary.
-8. [ ] **In progress:** freeze and stage the exact candidate, hydrate a fresh
-       Linux store from the exact fixture lock, compile the staged TypeScript,
-       and run the full six-case real Docker matrix against that store with
-       independent cleanup/containment/artifact audit.
-9. [ ] Run direct invariants, orchestrator, unit, typecheck, lint, and format
+1. [x] Complete authority/plan/log, Git/origin, immutable, readiness/CAL-1,
+       retained-evidence, and protected-file resume audits.
+2. [x] Discover run `32060615125`; inspect all jobs, steps, logs, annotations,
+       and ZIPs; retain raw metadata/evidence and independently audit receipts,
+       bindings, totals, OCI policy/dispositions, and cleanup.
+3. [x] Reproduce the hosted causal store split under exact
+       Node/pnpm using a disposable exact-commit clone, a source-scoped
+       hydrated store, and an isolated empty child default store. Retain both
+       resolved store paths and the unchanged offline failure. The attempted
+       `subst` drive-alias control is retained but rejected because both aliases
+       share one physical volume and pnpm correctly selected one store.
+4. [x] Add a narrow store-resolution owner to the coordinator, validate one
+       absolute path from pinned pnpm, and pass it explicitly to the generated
+       offline install with non-sensitive diagnostic disposition.
+5. [x] Add regression coverage for exact command/cwd, failed/empty/relative/
+       multi-line resolution, explicit install binding, and unchanged
+       offline/frozen/copy flags. Change the workflow contract only if the
+       public job command itself must change.
+6. [x] Run focused receipt-owning tests and diagnostics; correct only defects
+       within the shared-store boundary.
+7. [ ] **In progress:** repeat the frozen-candidate cross-volume smoke and require install,
+       typecheck, 4/4 unit tests, two receipts/artifacts/manifests, clean
+       two-commit history, source identity preservation, and cleanup.
+8. [ ] Run invariants, orchestrator, unit, typecheck, lint, and format
        separately and serially into fresh command-owned evidence roots.
-10. [ ] Independently audit every final receipt, artifact byte count/SHA-256,
-        test/failure/skip total, OCI case and containment record, diff,
-        immutable and commissioning identities, package/lock scope, retained
-        evidence, private state/lease absence, and protected-plan identity.
-11. [ ] Update the plan and `docs/autonomy-log.md`; update the decision log only
-        if implementation requires a durable decision; stage only explicit
-        WP5i paths, audit cached scope, create one cohesive verified local
-        commit, and do not push.
+9. [ ] Audit final receipts/artifacts/bindings/totals, diff, immutable/profile/
+       commissioning/package/lock/workflow identities, private refs, retained
+       evidence, and protected-plan identity.
+10. [ ] Update this plan and `docs/autonomy-log.md`; update the decision log
+        only for a durable decision; stage only WP5j paths, audit cached scope,
+        create one cohesive local commit, and do not push.
 
 ## Acceptance Criteria
 
-- The Exact runtime workflow explicitly hydrates the same controller pnpm
-  store from an exact `HEAD:fixtures/oci-candidate` archive after source install
-  and before Docker matrix execution. The command uses exact pinned pnpm, a
-  disposable fixture working directory, `--ignore-workspace`, and
-  `--frozen-lockfile`; it does not modify either tracked lockfile.
-- The executable workflow contract rejects removal, reordering, root-workspace
-  substitution, missing workspace isolation, missing frozen-lock enforcement,
-  a different fixture path, or a fallback/network change at the candidate
-  boundary.
-- From a new store, root-only hydration reproduces the missing
-  `vite@8.2.1`; exact fixture hydration then permits the unchanged isolated
-  offline/frozen/store-integrity install. Both outcomes are retained and the
-  fixture/root package and lock hashes remain unchanged.
-- The frozen staged candidate completes all six real OCI cases with expected
-  dispositions, non-empty normal/boundary/hang evidence, a valid descendant
-  marker, unique container identities, valid containment artifacts, and zero
-  managed containers or volumes before and after. Candidate policy still says
-  `networkDisposition: denied`, and the mounted store remains read-only.
-- Exact pinned focused and applicable broad suites pass with zero failures and
+- The pre-fix Windows cross-volume reproduction resolves different source and
+  generated default stores and fails the unchanged offline install for the
+  hosted missing package without mutating source, package, or lock bytes.
+- The coordinator resolves the source store through exact pinned pnpm in the
+  source checkout, rejects ambiguous output/failure, and supplies it explicitly
+  while retaining `--offline --frozen-lockfile --package-import-method=copy`.
+- Regression tests fail if store resolution is removed, uses the generated cwd,
+  accepts an unsafe value, omits/substitutes the store, or weakens install flags.
+- The frozen-candidate cross-volume run passes generated install, typecheck,
+  and 4/4 tests; validates two receipts/artifacts/manifests; retains
+  completion-ineligible bootstrap semantics and clean two-commit history;
+  preserves source HEAD/tree/status; and removes its temporary root.
+- Already-green OCI workflow semantics and Linux-compatible adopter behavior
+  remain unchanged. Exact focused and broad suites pass with zero failures and
   only the two declared Windows POSIX skips in broad Vitest aggregates.
-- No package/lock/dependency, fixture payload, OCI case/command/provider/
-  containment, authority, commissioning/readiness/verifier, Doctor/Status,
-  invariant, example, or unrelated workflow scheduling semantic change occurs.
-- One cohesive commit contains only the workflow hydration, executable
-  contract/tests, plan, autonomy record, and any narrowly necessary guidance.
-  It is not pushed. A later human push and hosted execution remain required
-  before hosted OCI PASS can be claimed.
+- No dependency, package/lock, generated payload, readiness/profile,
+  commissioning/verifier, invariant, authority, example, controller, or
+  unrelated workflow change occurs.
+- One cohesive commit contains only the coordinator correction, tests, plan,
+  autonomy record, and narrowly necessary guidance. It is not pushed; later
+  human push/hosted execution remains required for native hosted Windows PASS.
 
 ## Verification
 
-All Windows commands use the repository-pinned Node directory first on `PATH`
-and `.tools\node-v24.18.0-win-x64\corepack.cmd`. Long commands run separately
-and serially. Linux commands put the pinned Linux Node directory first on
-`PATH` and assert pnpm `11.15.1`.
+All project commands use exact Windows Node `24.18.0` and pnpm `11.15.1` with
+the pinned Node directory first on `PATH`; long commands run serially.
 
-1. Receipt-owning focused Vitest for the workflow contract and any directly
-   affected store-preparation unit owner through
-   `tools/run-tool-evidence.mjs invariant-vitest` into a fresh WP5i root.
-2. Disposable exact-commit Linux reproduction with a fresh explicit store:
-   root frozen install, isolated fixture offline failure control, exact fixture
-   frozen fetch into that store, and isolated offline/frozen/store-integrity
-   install success. Hash both lockfiles before and after.
-3. After tracked source/tests/docs freeze and staging, compile the exact
-   TypeScript with pinned Windows TypeScript into ignored output. Run the
-   complete emitted OCI entry under Ubuntu WSL and real Docker with the fresh
-   hydrated store selected explicitly, all cases selected, and a fresh output
-   directory.
-4. Independently validate OCI result/source identity, every case disposition
-   and containment-report hash/size, normal/boundary/hang evidence, unique
-   identities, image/provider/store facts, denied network, read-only store
-   mount, and before/after cleanup. This local run validates the candidate but
-   does not substitute for a later hosted Ubuntu run.
-5. Run `pnpm test:invariants`, `pnpm test:orchestrator`, `pnpm test:unit`,
-   `pnpm typecheck`, `pnpm lint`, and `pnpm format:check`, each serially into a
-   separate fresh command-owned evidence directory.
-6. Independently audit all final command receipts/artifacts/hashes/counts;
-   inspect `git diff --check` and staged scope; verify immutable/protected/
-   retained/private-state identities; create one no-push commit and audit its
-   commit/tree/parent identities.
+1. Pre-fix ignored exact-commit store-split reproduction: configure an
+   external source store through a source-only `.npmrc`, hydrate it, give the
+   temporary generated repository a fresh isolated Windows `LOCALAPPDATA` and
+   temp root, prove the resolved stores differ, run the unchanged coordinator,
+   and retain the missing-tarball failure/logs. Keep the earlier logical-drive
+   same-volume PASS only as a rejected control.
+2. Receipt-owning focused Vitest for `fresh-adopter-ci-smoke.test.ts` and any
+   affected workflow contract through `tools/run-tool-evidence.mjs
+   invariant-vitest` into a fresh WP5j root.
+3. Frozen-candidate repetition of the real cross-volume smoke with independent
+   result/history/status/receipt/artifact/manifest/source/cleanup audit.
+4. Run `pnpm test:invariants`, `pnpm test:orchestrator`, `pnpm test:unit`,
+   `pnpm typecheck`, `pnpm lint`, and `pnpm format:check`, each with its own
+   fresh command-owned evidence directory.
+5. Independently audit final evidence and identities; inspect
+   `git diff --check` and staged scope; create one no-push commit and audit its
+   commit/tree/parent.
 
-Evidence invalidation:
-
-- Any workflow, workflow-contract owner/test, fixture, package/lock, OCI entry,
-  provider, containment, or store-selection semantic change invalidates the
-  fresh-store and real OCI evidence.
-- Any test/runtime source change invalidates the relevant focused and aggregate
-  evidence. Long receipt-owning suites run only after the semantic tree is
-  frozen.
-- Final record-only plan/log text freezes before the staged-tree Docker run.
-  Outcomes remain in command-owned ignored artifacts and the final handoff
-  rather than mutating the verified candidate afterward.
+Evidence invalidation: any source install, generated package/lock, pnpm
+invocation, smoke command, workflow fresh-adopter command, test owner, receipt
+audit, or generated-history semantic change invalidates the corresponding
+cross-volume evidence. Final plan/log text freezes before the last smoke and
+broad commands; outcomes stay in ignored evidence and the final handoff.
 
 ## Risks and Recovery
 
-- `pnpm --dir` inside this repository discovers the parent workspace unless
-  `--ignore-workspace` is explicit; the reproduction demonstrated that a
-  superficially plausible command can hydrate the wrong root graph. Mutation
-  coverage and the fresh-store proof bind the intended fixture semantics.
-- Hydrating the controller store must not weaken the candidate's network
-  denial or read-only mount. The workflow command runs before the matrix on the
-  controller; containment inspection must continue to prove the candidate has
-  no network and cannot mutate the store.
-- Hosted Docker uses Engine `28.0.4`; local WSL uses `29.1.3`. A complete local
-  fresh-store matrix proves the implementation under real containment, but
-  only a later pushed run can close native hosted Ubuntu.
-- Controller portability and Windows fresh-adopter failures remain separate
-  known WP5 gaps and are not allowed to broaden this increment.
-- Retained hosted/reproduction/build output is ignored diagnostic evidence.
-  Recovery is an ordinary revert of the one WP5i commit; no push, workflow
-  rerun, recommissioning, state mutation, history rewrite, dependency change,
-  or destructive cleanup is required.
+- Same-volume local runs hide the GitHub Windows defect. A `subst` alias did
+  not create a second volume and the unchanged smoke correctly passed; that
+  result is retained as a rejected control. The accepted reproduction must
+  instead prove two distinct resolved store paths, with only the source store
+  hydrated and the child still offline.
+- `npm_execpath` and Corepack use different platform wrappers. Store discovery
+  must reuse the existing invocation abstraction and preserve Windows quoting.
+- Do not copy a host-specific absolute path into tracked durable results;
+  record only disposition or a path hash/leaf where needed.
+- A temporary drive mapping is host-global. Verify the drive is absent, map
+  only a validated ignored root, always remove exactly that mapping in
+  `finally`, and never delete or move a computed drive root.
+- A local `subst` reproduction exercises pnpm drive selection but does not
+  replace later hosted `windows-2022` execution.
+- Recovery is an ordinary revert of one WP5j commit. No push, recommissioning,
+  state mutation, history rewrite, dependency update, or destructive cleanup
+  is required.
 
 ## Progress and Evidence
 
-- 2026-08-17: Read all repository authorities and latest durable records;
-  fetched remote state and discovered WP5h had been pushed after the handoff.
-- 2026-08-17: Audited Exact runtime CI run `32047579881` job by job, including
-  every step, full log, nine annotations, and five artifact ZIPs. Independent
-  receipt audit found 12/12 valid PASS receipts and artifacts, 80,482 artifact
-  bytes, 12 manifest bindings, and zero mismatches.
-- 2026-08-17: Confirmed WP5h fixed its intended source-identity boundary in
-  real hosted Docker. The next failure occurs inside normal-case dependency
-  installation, not source capture or cleanup.
-- 2026-08-17: Reproduced the exact root-store/fixture-lock closure mismatch
-  from a disposable exact clone under pinned Linux tooling and retained the
-  structured result. No tracked or protected file changed.
-- 2026-08-17: A direct fixture-directory `pnpm fetch --frozen-lockfile`
-  hydrated the missing graph but byte-normalized the tracked fixture lock.
-  Replaced it with an exact `git archive HEAD:fixtures/oci-candidate` scratch
-  fetch. A second empty-store control kept both tracked fixture hashes exact
-  and made the isolated offline/frozen/store-integrity install pass with 47/47
-  packages reused.
-- 2026-08-17: The updated receipt-owning workflow-contract shard passed 4/4;
-  exact pinned typecheck and lint diagnostics also passed. The remaining final
-  matrix and broad commands will run only after plan/log/decision freeze and
-  exact staging.
+- 2026-08-17: Verified repository authorities, exact WP5i Git/origin identity,
+  immutable hashes, readiness/CAL-1 state, and protected file.
+- 2026-08-17: Audited run `32060615125` job by job and retained raw API
+  metadata, complete logs, ZIPs, and extracted artifacts.
+- 2026-08-17: Independently validated 13 receipts/artifacts, 81,253 bytes, 12
+  manifest bindings plus one containment binding, test totals, all OCI cases,
+  denied-network/read-only policy, and zero remaining managed resources.
+- 2026-08-17: Confirmed WP5i fixed its hosted Docker boundary and selected the
+  independent Windows fresh-adopter store split as the next bounded WP5 gap.
+- 2026-08-17: A safe temporary `Z:` alias of the exact clone remained on the
+  same physical volume, so pnpm reused all 138 packages and the unchanged smoke
+  passed 4/4. The mapping was removed and the PASS artifacts were retained as
+  a rejected reproduction control. The plan now uses explicit isolated stores
+  to reproduce the causal visibility split locally.
+- 2026-08-17: The accepted pinned invocation-shim reproduction exposed a
+  hydrated source store and a different empty child default store to the
+  unchanged coordinator. The generated offline/frozen/copy install reused and
+  downloaded zero packages, then failed exactly on `@eslint/js@10.0.1`; source
+  Git status and both tracked lock hashes remained unchanged, and no generated
+  temporary root remained. The 3,696-byte structured record is
+  `artifacts/hosted/run-32060615125/reproduction/windows-store-split-wrapper-pre-fix/result.json`,
+  SHA-256
+  `a63005aee099fc03640d16b44f38b57dd97194b978d0edd7053c51888ab0aae2`.
+- 2026-08-17: Added the exact source-cwd store resolver, absolute single-path
+  validation, existing-directory fence, explicit generated install binding,
+  and hashed non-sensitive result disposition. The public workflow command,
+  generated payload, and package/lock files remain unchanged.
+- 2026-08-17: Focused regression was red at 2 passed / 2 failed before the
+  owner existed, then green at 4/4. Receipt-owning focused, typecheck, lint, and
+  corrected format diagnostics passed. The corrected isolated-store smoke
+  passed install/typecheck/4 tests and independently matched 2 receipts, 2
+  artifacts (3,256 bytes), and 2 manifest bindings with no mismatches. Its
+  3,606-byte result SHA-256 is
+  `9a3b76ba44b1255dcd644c1141ae4795fc6ba7e0082bb321bfbdd086bf1e791b`.
 
 ## Next Action
 
-Freeze the durable records, stage only the bounded WP5i tracked paths, compile
-that exact candidate, and run the complete real Docker matrix from an isolated
-Linux repository whose new default pnpm store receives the root install and
-exact scratch-fixture fetch. Then run and independently audit the serial final
-receipt-owning suites before the one no-push commit.
+Freeze this plan and durable logs, stage only the bounded WP5j files, audit the
+exact staged tree and protected identities, then run a fresh final isolated-
+store smoke and every serial receipt-owning focused/broad command from that
+unchanged candidate before the single no-push commit.

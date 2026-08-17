@@ -3,6 +3,111 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-17 — WP5j Windows fresh-adopter shared-store closure
+
+**Objective.** Reconcile pushed WP5i commit
+`87bd41e072a9e49baf212dc803ead83acbdabb92` against its exact hosted run,
+prove the trusted-container correction under real GitHub Docker, and fix only
+the independent Windows fresh-adopter store-visibility failure. Preserve exact
+tooling, offline/frozen/copy install policy, generated bootstrap history and
+completion ineligibility, package/lock bytes, OCI behavior, controller
+failures, immutable authority, commissioning/readiness/verifier meanings, and
+the protected human plan. Create one local commit and do not push.
+
+**Hosted audit.** Exact push run
+`https://github.com/mclaurin10/milestone-loop-template/actions/runs/32060615125`
+(run 5, attempt 1) executed the exact commit/tree from
+`2026-08-17T19:29:21Z` through `19:35:24Z` and concluded `failure`. All five
+jobs, every step, complete logs, eight annotations, and all five artifact ZIPs
+were retrieved and inspected. Jobs were: fresh-adopter Windows
+`95480834015` failure; controller Windows `95480834038` failure;
+fresh-adopter Linux `95480834051` success; controller Linux `95480834113`
+failure; trusted-container Linux `95480834183` success. The annotations were
+five action-runtime Node 20 deprecation warnings and three exit-code failures,
+not causal substitutes.
+
+Artifact IDs / ZIP bytes / SHA-256 are: controller Windows `9298180337` /
+52,794 / `7c58a84f11475d46a15e15f5cee430f938b866f6b17d20a7b18e1203f14f2c38`;
+controller Linux `9298111032` / 49,146 /
+`42e3c9d8325b818188c65ee2c9a1bbf8caa8d5d1c0bae2cb3125c81a3179f131`;
+trusted container `9298026972` / 21,902 /
+`9ca49490907fec39b280dc1d715478ee5798085719e55a2e8a11baaf43deca1c`;
+adopter Windows `9298008310` / 8,736 /
+`f210504bdb7850c7c046f5fcfdcfc6ee29c3ebc92ace7ed55d89c766c09ba22e`;
+and adopter Linux `9298000229` / 15,191 /
+`cbcfcffbec09c4bd39b1a28ab289440edb8de64c8cab8383aee0cabef1b0bdd5`.
+Raw API responses, full logs, ZIPs, and extracted artifacts are retained under
+ignored `artifacts/hosted/run-32060615125/`.
+
+The independent 23,471-byte hosted audit has SHA-256
+`54b50a40334ca8efab5aa291aa341b9516e4504783557d44d524feebb93060bf`
+and zero mismatches: 13 PASS receipts, 13 rehashed artifacts totaling 81,253
+bytes, 12 manifest bindings plus the OCI containment binding, and two honest
+ERROR/no-receipt controller manifests. Both controllers passed invariant
+totals 13/13, 7/7, 15/15, and 61/61. Linux then reported 578/588 tests passed,
+9 failed, 1 skipped; Windows 512/588 passed, 74 failed, 2 skipped. Linux
+fresh-adopter passed 4/4 with two audited receipts.
+
+WP5i's hosted boundary is now proved: Docker `28.0.4` accepted exact
+`committed-head` source identity, fixture hydration completed, and normal /
+boundary / artifact-link / artifact-quota / output-flood / hang produced
+PASS / PASS / ERROR / ERROR / ERROR / TIMEOUT as required. Every containment
+report matched bytes/hash, network remained denied, root/store host mounts were
+non-writable, every container/exporter/bounded volume was removed, and managed
+resource inventories were empty before and after.
+
+**Cause and correction.** Windows source install downloaded all 138 packages,
+including `@eslint/js@10.0.1`, on GitHub's `D:` checkout drive. The generated
+repository under `C:` then selected a different empty default store, reused and
+downloaded zero packages, and failed offline for that exact tarball. Linux's
+single-filesystem job passed. A logical `subst` control correctly reused one
+physical store and was rejected as a reproduction; two project-config controls
+also passed because pnpm propagated or copied the configured store. The
+accepted invocation-shim control exposed a hydrated source store and distinct
+empty child store without changing production commands. The unchanged smoke
+then reproduced the exact failure while preserving source status and both lock
+hashes. Its 3,696-byte structured record at
+`artifacts/hosted/run-32060615125/reproduction/windows-store-split-wrapper-pre-fix/result.json`
+has SHA-256
+`a63005aee099fc03640d16b44f38b57dd97194b978d0edd7053c51888ab0aae2`.
+
+The coordinator now resolves exactly one absolute existing `pnpm store path`
+through the pinned invocation from the source cwd and passes it explicitly to
+the generated install while retaining `--offline --frozen-lockfile
+--package-import-method=copy`. Unsafe/failed store identity is fail-closed. The
+smoke result records an `explicit-source-store` disposition and path hash, not
+the host path. The workflow command, generated package, dependencies, locks,
+and OCI boundary do not change.
+
+The focused regression first failed 2/4 because the new owner did not exist,
+then passed 4/4. Receipt-owning focused, typecheck, lint, and corrected format
+diagnostics passed under Node `24.18.0` / pnpm `11.15.1`. A real isolated-store
+corrected smoke passed install, typecheck, and 4/4 tests; independently matched
+two receipts, two artifacts totaling 3,256 bytes, and two manifest bindings;
+retained clean two-commit bootstrap history with no readiness marker/tree
+history; removed its generated temporary root; and preserved source identity.
+Its 3,606-byte result at
+`artifacts/manual/wp5j-fresh-adopter-smoke-diagnostic-1/smoke-result.json` has
+SHA-256
+`9a3b76ba44b1255dcd644c1141ae4795fc6ba7e0082bb321bfbdd086bf1e791b`.
+
+**Stable-tree milestone protocol.** Coordinator, regression, decision record,
+this log, and the execution plan freeze before final commands. The exact staged
+tree runs a fresh isolated-store smoke and receipt-owning focused, invariant,
+orchestrator, unit, typecheck, lint, and format commands in separate fresh
+roots beneath `artifacts/manual/wp5j-*-final/`. Outcomes and independent hashes
+remain in ignored command evidence and the final handoff rather than being
+backfilled into tracked files and changing the candidate they verify.
+
+**Commit.** Assigned by the single cohesive WP5j commit containing this entry;
+identify it as the newest commit touching the entry. It is not pushed.
+
+**Known gaps.** Only a later pushed native `windows-2022` run can close hosted
+Windows fresh-adopter status. Linux/Windows controller portability clusters,
+product placeholders, CAL-1, hidden validation, autonomous readiness, and
+human verification remain open. This increment makes no readiness or product
+completion claim.
+
 ## 2026-08-17 — WP5i exact OCI fixture-store closure
 
 **Objective.** Reconcile pushed WP5h commit

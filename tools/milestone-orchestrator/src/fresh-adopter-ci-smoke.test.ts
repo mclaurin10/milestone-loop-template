@@ -7,7 +7,10 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import {
   auditCommandEvidence,
+  generatedOfflineInstallArguments,
   parseFreshAdopterSmokeArguments,
+  parsePnpmStorePath,
+  resolveSourcePnpmStorePath,
 } from "../ci/fresh-adopter-smoke.js";
 
 const temporaryRoots: string[] = [];
@@ -151,5 +154,51 @@ describe("fresh-adopter CI smoke", () => {
         expectVitest: true,
       }),
     ).rejects.toThrow(/bytes|sha256/u);
+  });
+
+  it("resolves the pinned source-cwd store and binds it to the offline child install", async () => {
+    const sourceRoot = join(tmpdir(), "source-repository");
+    const storePath = join(tmpdir(), "source-pnpm-store", "v11");
+    const invocations: unknown[] = [];
+    const resolved = await resolveSourcePnpmStorePath(
+      sourceRoot,
+      async (invocation) => {
+        invocations.push(invocation);
+        return { stdout: `${storePath}\n` };
+      },
+    );
+    expect(resolved).toBe(storePath);
+    expect(invocations).toEqual([
+      {
+        id: "pnpm-store-path",
+        args: ["store", "path"],
+        cwd: sourceRoot,
+      },
+    ]);
+    expect(generatedOfflineInstallArguments(resolved)).toEqual([
+      "install",
+      "--offline",
+      "--frozen-lockfile",
+      "--package-import-method=copy",
+      "--store-dir",
+      storePath,
+    ]);
+  });
+
+  it("fails closed for unavailable or ambiguous source-store identity", async () => {
+    const sourceRoot = join(tmpdir(), "source-repository");
+    const first = join(tmpdir(), "first-store", "v11");
+    const second = join(tmpdir(), "second-store", "v11");
+    expect(parsePnpmStorePath(`${first}\n`)).toBe(first);
+    for (const output of ["", "relative/store\n", `${first}\n${second}\n`])
+      expect(() => parsePnpmStorePath(output)).toThrow(/pnpm store path/u);
+    expect(() => generatedOfflineInstallArguments("relative/store")).toThrow(
+      /pnpm store path/u,
+    );
+    await expect(
+      resolveSourcePnpmStorePath(sourceRoot, async () => {
+        throw new Error("store command failed");
+      }),
+    ).rejects.toThrow(/store command failed/u);
   });
 });

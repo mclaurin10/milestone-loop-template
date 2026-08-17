@@ -3,6 +3,38 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-17 — Source-bound pnpm store for fresh-adopter smoke (WP5j)
+
+**Decision.** The fresh-adopter coordinator resolves `pnpm store path` once
+through its already pinned pnpm invocation with the source repository as the
+working directory. It accepts exactly one non-empty absolute path, requires
+that path to be an existing directory, and supplies it explicitly as
+`--store-dir` to the generated repository's install. The child remains
+`--offline --frozen-lockfile --package-import-method=copy`; no fallback or
+network retry exists. The smoke result records only an
+`explicit-source-store` disposition and SHA-256 of the host path, while the
+command-owned ignored log retains the diagnostic path itself.
+
+**Why.** On hosted Windows the source checkout is on `D:` and the generated
+repository is created under the `C:` user temporary directory. pnpm selects a
+drive-local store, so the source frozen install hydrated all 138 packages on
+`D:` while the generated offline install selected an empty `C:` store and
+failed on `@eslint/js@10.0.1`. Linux used one filesystem and passed. Resolving
+from the exact source cwd binds the child to the dependency closure that the
+preceding source install actually hydrated, independent of the generated
+repository's volume, without weakening its offline boundary.
+
+Alternatives rejected: enabling child network access or retry; duplicating
+dependency hydration; adding/changing package or lock inputs; relying on a warm
+runner cache; moving the generated repository merely to inherit a drive;
+setting a second workflow-owned store path that could drift from coordinator
+behavior; copying or linking the store; or retaining the host path in cleartext
+inside the durable smoke result.
+
+**Affected files.** Fresh-adopter CI smoke coordinator and focused regression
+tests; execution plan, autonomy log, and this decision record. The workflow
+command itself is unchanged.
+
 ## 2026-08-17 — Git-archived scratch hydration for OCI fixture closure (WP5i)
 
 **Decision.** The trusted-container controller hydrates its existing pnpm store
