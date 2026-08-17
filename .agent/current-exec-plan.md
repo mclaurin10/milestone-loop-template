@@ -1,61 +1,58 @@
 # Current Execution Plan
 
-**Status:** WP5e complete and independently audited; cohesive commit pending
+**Status:** WP5f locally complete and independently audited; hosted validation pending after user push
 **Updated:** 2026-08-16
 **Owner:** autonomous loop
 
 ## Objective
 
-Complete one cohesive WP5 increment that adds an exact Node `24.18.0` and pnpm
-`11.15.1` GitHub Actions path for the controller on Linux and Windows, a
-separate fresh-adopter smoke path, and a Linux-only real Docker execution of the
-existing trusted-container matrix. The workflow must retain command-owned
-receipts and artifacts and must make platform scope visible.
+Complete one cohesive WP5f increment that corrects the failed hosted Exact
+runtime CI run for commit `a4c024ff97d459d170a2b2dae2d5cd92a4701899`.
+Make every workflow checkout include the commissioned Git authority base, and
+make the fresh-adopter and trusted-container jobs independently schedulable so
+a controller failure cannot suppress their diagnostic evidence. Add executable
+workflow regression coverage, run the applicable local suites under the exact
+pinned Windows toolchain, record the hosted evidence and correction, create one
+cohesive commit, and do not push.
 
-This increment adds CI orchestration and CI-specific validation only. It does
-not change controller, configuration, invariant, provider, state, recovery,
-commissioning, readiness, verifier-completion, product-domain, or performance
-semantics. It does not rerun or reinterpret the completed WP4d proof and does
-not claim hosted jobs passed before GitHub executes them.
+This increment changes only CI checkout/scheduling structure, its executable
+contract, tests, and records. It does not change contract-integrity meanings,
+authority or commissioning data, controller/product/provider/runtime behavior,
+OCI semantics, verification profiles, completion eligibility, dependencies, or
+package commands. It does not perform WP6 performance work, product-domain
+implementation, a source no-argument verification, the completed WP4d proof,
+or another hosted run.
 
 ## Goal Constraints
 
-- Preserve `PROJECT_GOAL.md`, the immutable acceptance suite and lock, the
-  hidden-validation protocol, active and historical commissioning, the
-  permanent readiness marker, exact verifier stage/profile/completion rules,
-  Doctor schema `2.0.0`, Status schema `1.0.0`, invariant IDs and meanings,
-  runtime/schema parity, all supported configuration migrations, examples,
-  and completed evidence.
-- Preserve `package.json`, the workspace package manifest, `pnpm-lock.yaml`,
-  and all package-script identities. CI-only tools must run through existing
-  pinned dependencies and public package commands.
-- The cross-platform job must execute the real receipt-owning invariant,
-  orchestrator, unit, typecheck, lint, and format commands serially on both a
-  supported Linux runner and a supported Windows runner. Evidence directories
-  must be unique and uploaded per platform.
-- CI must explicitly install and assert Node `24.18.0` and pnpm `11.15.1`; a
-  floating major runtime or package-manager version is not sufficient.
-- The fresh-adopter smoke must use the real public package-creation boundary,
-  install the generated repository from the frozen lock, run meaningful
-  generated receipt-owning checks, independently validate their receipts and
-  artifacts, and retain a structured summary. It remains a smoke, not the
-  completed WP4d bootstrap proof: no source no-argument `pnpm verify`, browser
-  proof, commissioning transition, or completion claim.
-- A trusted-container CI job is applicable only on a Linux runner with a real
-  reachable Docker Engine. It must invoke the existing
-  `pnpm test:oci-container` normal/adversarial matrix and retain its result; no
-  mock, Dockerfile-only check, or structural assertion may stand in for that
-  job.
-- Local checks may validate workflow YAML, exact commands, the Windows smoke,
-  and any locally available real boundary. They cannot establish that hosted
-  Linux, Windows, artifact-upload, or Docker jobs passed.
-- Use the repository-pinned Windows toolchain through
-  `.tools/node-v24.18.0-win-x64/corepack.cmd`, with that Node directory first on
-  `PATH`. Run long suites separately and serially.
-- Do not run a source no-argument `pnpm verify` or the completed
-  `loop:template:prove` WP4d proof. Run the OCI matrix only if the owning Linux
-  Docker boundary is genuinely available; otherwise record the limitation and
-  leave local OCI execution unverified.
+- Preserve `PROJECT_GOAL.md`, all original acceptance meanings and immutable
+  lock identities, the hidden-validation protocol, active and historical
+  commissioning, the permanent readiness marker/history, exact verifier
+  stage/profile/completion semantics, Doctor schema `2.0.0`, Status schema
+  `1.0.0`, invariant IDs and meanings, runtime/schema parity and migrations,
+  examples, package/lock files, and all completed evidence.
+- Preserve exact Node `24.18.0`, pnpm `11.15.1`, Linux/Windows runner labels,
+  full-SHA action pins, least-privilege permissions, serial receipt-owning
+  commands, unique platform evidence roots, and artifact uploads.
+- The commissioned authority base is Git-owned. Every job that executes the
+  repository must check out enough history for that exact commit and other
+  repository history contracts to be observable; weakening authority checks
+  to accommodate a shallow checkout is prohibited.
+- Fresh-adopter smoke and trusted-container execution are separate diagnostic
+  boundaries under the committed WP5e decision. No higher authority requires
+  them to depend on the controller job, so neither may carry `needs:
+controller` or an equivalent controller-success gate.
+- The trusted-container job must remain Linux-only and must still probe a real
+  Docker Engine and invoke the unchanged complete normal/adversarial OCI
+  matrix. Scheduling independence is not local OCI execution evidence.
+- Do not use `continue-on-error`, weakened conditions, removed commands,
+  reduced test scope, mocks, structural-only OCI assertions, or skip logic to
+  obtain a passing result.
+- Use `.tools\node-v24.18.0-win-x64\corepack.cmd` with that Node directory
+  first on `PATH`; run long suites separately and serially.
+- Do not run source no-argument `pnpm verify`, rerun
+  `loop:template:prove`, manually rerun the known-failing workflow, dispatch
+  another run for the unchanged commit, or push this increment.
 - Never edit, stage, move, delete, re-encode, clean, or otherwise mutate the
   protected user-owned untracked
   `Implementation-ready improvement plan 8-5-26.txt`.
@@ -63,235 +60,241 @@ not claim hosted jobs passed before GitHub executes them.
 ## Baseline Evidence
 
 - Entry branch is `master`, HEAD
-  `dc475ea807f477c8c8ad818def6ee98318844708`, tree
-  `dbea9c3f77aa65e20ca4c5e081edf72d51aa275c`, and parent
-  `5290dd96796a79014961a9aa65859f6ba547d3cd`. Tracked and staged trees are
-  clean; the protected plan is the sole untracked path. Contrary to the
-  historical handoff expectation, local `origin/master` already equals HEAD,
-  so repository-authoritative divergence is `0 behind / 0 ahead` without a
-  fetch, push, or ref mutation.
-- The protected plan is 78,574 bytes with raw SHA-256
+  `a4c024ff97d459d170a2b2dae2d5cd92a4701899`, tree
+  `e933cd96220f24b7c8072dd10a2675349f0d5531`, and parent
+  `dc475ea807f477c8c8ad818def6ee98318844708`. Tracked tree and index are
+  clean, divergence from locally observed `origin/master` is `0 behind / 0
+ahead`, and the protected human plan is the sole untracked path.
+- The protected plan remains 78,574 bytes with raw SHA-256
   `53ea98fb1cb880163a02d3b1d9365963e3fe891025ae3630f00bd4c9232293b1`,
   no-filter blob `9890a3cdd5288708a04102d27ff6fce9f0ebb90b`, and
   path-filtered blob `d0abdd24f404d9dc335818c355e39f7cfc531300`.
 - Retained WP4d proof
-  `artifacts/wp4d-fresh-adopter-proof-final-3/proof-result.json` is 2,424 bytes
-  with SHA-256
+  `artifacts/wp4d-fresh-adopter-proof-final-3/proof-result.json` remains 2,424
+  bytes / SHA-256
   `1561bbf47a910a3a2d54f35b1114ff51b79395d007e35fea8b093af8e27c37ff`.
   Retained source result
-  `artifacts/verify-2026-08-16T082128-760Z-17384/result.json` is 44,372 bytes
-  with SHA-256
+  `artifacts/verify-2026-08-16T082128-760Z-17384/result.json` remains 44,372
+  bytes / SHA-256
   `1ca139e2a995c117b87e07de04707cde1de5bf7a2e4ea6ffce38ba605d8564d0`.
-- A repository and tracked-tree search found no `.github/workflows` directory
-  and therefore no hosted Linux/Windows, fresh-adopter, or OCI job. The newest
-  WP5d autonomy record names this exact-runtime CI slice as the next remaining
-  dependency-ordered WP5 work.
-- Current Windows aggregates intentionally skip the two POSIX process-group
-  supervisor cases whose comments name first execution in WP5 Linux CI.
-  Earlier state/lease/workspace/integration records likewise identify native
-  Linux race coverage as outstanding.
-- The existing real boundaries are available without semantic changes:
-  `loop:template:create` creates a Git-anchored adopter through the public CLI;
-  generated bootstrap typecheck/unit commands write receipts; and
-  `pnpm test:oci-container -- --output artifacts/<fresh-id>` runs the real
-  Linux Docker normal/adversarial matrix with exact toolchain/image policy and
-  managed-resource cleanup assertions.
+- WP5e local verification and its cohesive commit are complete. The committed
+  plan's old `commit pending` next action was stale and is superseded by this
+  repository-authoritative WP5f plan; WP5e history will not be amended.
+- Hosted run
+  `https://github.com/mclaurin10/milestone-loop-template/actions/runs/31988139046`
+  executed the exact candidate on Ubuntu 24.04 and Windows 2022. Both
+  controller jobs passed checkout, exact Node/pnpm assertion, and frozen
+  install, then first failed at `Run invariant suite`; all later controller
+  commands were skipped. Fresh-adopter and trusted-container jobs were skipped
+  before useful execution because both depended on `controller`.
+- Authenticated GitHub job logs show `actions/checkout` used its default
+  `fetch-depth: 1` in both jobs. The uploaded toolchain reports prove Node
+  `v24.18.0` and pnpm `11.15.1`; the separate action-runtime Node 20-to-24
+  warning occurred outside the failing command and is not diagnosed as the
+  cause.
+- Authenticated downloads independently matched GitHub's artifact metadata:
+  Linux ZIP 5,357 bytes / SHA-256
+  `3261585491f05b279615372cc7917c12e026b222f4dc910fda9eebafcc51e677`;
+  Windows ZIP 5,380 bytes / SHA-256
+  `77c8412c4550bf36d133ce839117e14a721e6a0b72200915cf4166848bb050c1`.
+  Each contained seven files. Both outer invariant reports stopped after the
+  first `protected-integrity` command with exit 1 and no receipt. Both inner
+  contract reports ran 11 checks: 9 PASS, 2 FAIL, 0 NOT_READY, with invalid
+  expected identity. The first failure was `immutable-contract-lock-hash`
+  because the commissioned authority base was missing/not an exact commit;
+  `acceptance-prose-bot-aggregation` then failed because base prose could not
+  be loaded.
+- `.agent/verification-manifest.json` commissions base
+  `0f4ab3e5ef39bda07d6e77356ad53fca9136cdd5`, eight commits behind the
+  candidate. A disposable `--depth 1 --no-local` clone at the candidate, with
+  `CI=true`, exact toolchain and GitHub variables, frozen offline copy-mode
+  install, and the workflow's Windows evidence root, reproduced exit 1 and the
+  exact 11/9/2 check shape. The reproduction's reachable commit count was one.
+- The current workflow has three default shallow checkouts and has explicit
+  `needs: controller` edges on both `fresh-adopter-smoke` and
+  `trusted-container`. Its executable contract does not currently reject
+  either defect.
 
 ## Steps
 
 1. [x] Complete the resume protocol, authority/plan/log review, entry and
-       protected identity audit, and reproduce the CI gap by proving the
-       tracked tree contains no workflow.
-2. [x] Replace the mechanically stale completed WP5d plan with this bounded
-       WP5e executable plan before substantial implementation.
-3. [x] Add one least-privilege GitHub Actions workflow plus a deterministic
-       regression contract that parses its YAML and pins triggers, action
-       boundaries, exact toolchains, Linux/Windows matrix entries, serial
-       receipt-owning commands, unique evidence roots, and artifact retention.
-4. [x] Add and test a CI-specific fresh-adopter smoke coordinator that invokes
-       the public creator in a disposable directory, performs a frozen offline
-       copy-mode install, runs generated typecheck and unit checks, validates
-       every child receipt/artifact identity, writes a structured result, and
-       proves source tracked identity is unchanged.
-5. [x] Add the fresh-adopter Linux/Windows matrix and a separate Linux Docker
-       job that executes the existing real trusted-container matrix. Ensure
-       neither path can be mistaken for source verification completion or the
-       retained WP4d proof.
-6. [x] Document the workflow's scope, evidence, exact pins, and local-versus-
-       hosted evidence boundary. Record the durable CI decision without
-       changing canonical product/readiness meanings.
-7. [x] Freeze the implementation and run focused
-       receipt-owning workflow/smoke tests, the new Windows smoke,
-       `test:invariants`, `test:orchestrator`,
-       `test:unit`, typecheck, lint, and format serially. Run real OCI locally
-       only if a Linux Docker controller is genuinely available.
-8. [x] Independently audit receipts, artifact bytes/hashes, tests/failures/
-       skips, diffs, workflow commands, protected/retained identities,
-       immutable authority, commissioning/readiness/verifier/Doctor/Status/
-       invariant/example/package/lock identities, and private state/lease
-       absence. Update this plan and the autonomy log, stage only explicit
-       paths, create exactly one cohesive commit, and do not push.
+       protected identity audit, and inspect the failed hosted run through the
+       authenticated GitHub boundary.
+2. [x] Download and independently inspect both hosted artifacts, establish the
+       exact first failed invariant/shared cause, and reproduce it locally in
+       a depth-one exact-runtime CI clone.
+3. [x] Replace the stale completed-WP5e plan with this bounded WP5f executable
+       plan before implementation.
+4. [x] Add focused workflow-contract regressions that reject a shallow or
+       omitted full-history checkout in any job and reject controller-gated
+       fresh-adopter or trusted-container scheduling.
+5. [x] Apply the smallest workflow correction: request full history for all
+       three checkouts and remove only the two controller dependency edges.
+6. [x] Prove causality by making the reproduced clone's commissioned base
+       reachable and rerunning the same exact-runtime invariant command to a
+       fresh evidence root; require all four invariant commands and receipts
+       to pass.
+7. [x] Freeze the semantic tree and run focused receipt-owning workflow/
+       invariant regressions, `test:invariants`, `test:orchestrator`,
+       `test:unit`, typecheck, lint, and format separately and serially.
+8. [x] Independently audit every final receipt, artifact byte count/SHA-256,
+       test total/failure/skip count, workflow command and schedule, diffs,
+       immutable/commissioning/readiness/verifier/Doctor/Status/invariant/
+       example/package/lock identities, retained WP4d evidence, private
+       state/lease absence, and all protected-plan identities.
+9. [x] Update this plan and `docs/autonomy-log.md`; update the decision log only
+       if implementation creates a durable decision beyond enforcing WP5e's
+       already committed independent-boundary decision. Stage only explicit
+       WP5f paths, run cached diff/scope checks, create exactly one cohesive
+       commit, and do not push.
 
 ## Acceptance Criteria
 
-- One syntactically parseable workflow has `contents: read` permissions and
-  pull-request, branch-push, and manual triggers. Regression coverage rejects
-  missing/floating toolchain pins, missing platforms, command substitution,
-  evidence-root reuse, no-argument source verification, WP4d proof invocation,
-  or a non-Linux/mock OCI path.
-- Linux and Windows controller jobs install and assert exact Node `24.18.0`
-  and pnpm `11.15.1`, install with the frozen lock, and separately execute the
-  real receipt-owning invariant, orchestrator, unit, typecheck, lint, and
-  format commands with uploaded evidence. Hosted execution status is not
-  inferred from local tests.
-- The Linux job reaches the POSIX supervisor tests instead of carrying the two
-  Windows skips. Existing real Git/filesystem/race/config/schema tests run
-  through the unchanged aggregates on both platforms.
-- The CI fresh-adopter smoke is distinct from WP4d and proves public creation,
-  generated frozen installation, generated strict typecheck, generated unit
-  behavior, command-owned receipts, independent artifact hashes, clean Git
-  state, bootstrap profile, and absence of readiness activation. Its result is
-  explicitly completion-ineligible and autonomous-readiness-ineligible.
-- The trusted-container job runs only on Linux, verifies a real Docker Engine,
-  and invokes the complete existing normal/adversarial matrix. It uploads the
-  real OCI result and cannot pass by checking only YAML, Dockerfiles, mocks, or
-  unit tests.
-- No package dependency, lockfile, package script, runtime/config/schema,
-  controller/provider, state/recovery, verifier/profile/completion, Doctor,
-  Status, invariant registry, example, commissioning, or readiness identity
-  changes.
-- Focused receipt-owning checks, the applicable broad suites, and static checks
-  pass locally with only the two declared Windows POSIX skips. Every cited
-  local receipt and artifact identity is independently verified.
+- The workflow remains formatted, parseable, least-privilege YAML with its
+  existing triggers, exact toolchains, runner matrix, full-SHA actions, serial
+  commands, unique evidence roots, uploads, and real Linux-only OCI command.
+- All three checkout steps explicitly request complete history. A contract
+  mutation to default/depth-one checkout fails, and the commissioned base is
+  demonstrably reachable in the corrected history model.
+- Fresh-adopter and trusted-container jobs have no dependency or condition on
+  controller success. Contract mutations that restore either dependency fail.
+  A controller failure can no longer suppress their matrix expansion or job
+  execution.
+- With full history available, the exact local shallow-clone reproduction
+  advances from the hosted 11-check/2-failure shape to four passing invariant
+  commands with valid command-owned receipts and independently verified
+  artifacts. No invariant meaning or authority data changes.
+- Focused regression checks, invariant suite, applicable broad suites, and
+  receipt-owning static checks pass on the frozen local tree with no failures
+  and only the two declared Windows POSIX skips in broad Vitest aggregates.
+- Package/lock/script, product/controller/provider/OCI, config/schema/migration,
+  commissioning/readiness/verifier, Doctor/Status, invariant, example,
+  retained-evidence, and protected-plan identities remain unchanged.
+- One cohesive commit contains only intended WP5f workflow, contract/test, plan,
+  and log paths. It is not pushed. Hosted validation remains explicitly pending
+  until the user pushes the new commit.
 
 ## Verification
 
-All local commands run separately and serially under the pinned Windows Node
-directory and its `corepack.cmd` pnpm `11.15.1` entrypoint.
+All local commands use the repository-pinned Windows Node directory first on
+`PATH` and `.tools\node-v24.18.0-win-x64\corepack.cmd` for pnpm. Long commands
+run separately and serially.
 
 Implementation diagnostics:
 
-1. Focused Vitest for workflow contract, smoke option/result/receipt logic, and
-   affected adopter-package paths.
+1. Focused Vitest for `exact-runtime-workflow-contract.test.ts`, including
+   deliberate shallow-checkout and dependency-edge mutations.
 2. Prettier YAML parse/format validation and exact workflow contract probes.
-3. One real CI smoke execution on Windows using a fresh evidence directory.
-4. Focused typecheck/lint/format while the coordinator stabilizes.
+3. In the retained disposable depth-one reproduction, fetch/unshallow the
+   candidate history and rerun `pnpm test:invariants` with the exact CI
+   variables into a fresh evidence root; independently validate all child
+   receipts/artifacts and the 13-check contract report.
 
 Final frozen-tree commands:
 
-1. Receipt-owning affected Vitest shard through
-   `tools/run-tool-evidence.mjs invariant-vitest` with a fresh explicit final
-   evidence directory.
-2. The CI fresh-adopter smoke through its real CLI with a fresh explicit final
-   output directory; independently validate its summary and nested receipts.
-3. `pnpm test:invariants`, `pnpm test:orchestrator`, and `pnpm test:unit`, each
-   serially with a fresh explicit command-owned evidence directory.
-4. Receipt-owning `pnpm typecheck`, `pnpm lint`, and `pnpm format:check`, each
-   with a separate fresh explicit evidence directory.
-5. If and only if a real Linux Docker controller is locally available, run the
-   exact workflow OCI command into a fresh output and audit it. A Windows host,
-   Dockerfile validation, or unit test is not credited as OCI execution.
-6. Independent receipt/artifact byte/SHA-256 and test-count audit; workflow
-   exact-command audit; `git diff --check`; `git diff --cached --check`; staged
-   path review; and all protected/immutable/retained/private-state identity
-   checks.
-7. One commit without push, then HEAD/tree/parent/divergence/status and
+1. Receipt-owning focused workflow/invariant shard through
+   `tools/run-tool-evidence.mjs invariant-vitest` into a fresh WP5f evidence
+   directory.
+2. `pnpm test:invariants`, `pnpm test:orchestrator`, and `pnpm test:unit`, each
+   into a separate fresh command-owned evidence directory.
+3. Receipt-owning `pnpm typecheck`, `pnpm lint`, and `pnpm format:check`, each
+   into a separate fresh command-owned evidence directory.
+4. No local OCI run: this correction changes job scheduling and checkout
+   history, not the OCI execution provider or matrix. Real OCI execution
+   remains a hosted boundary and may not be replaced with a mock.
+5. Independent receipt/artifact/hash/count audit; exact workflow checkout,
+   command, schedule, and action-pin audit; `git diff --check`; staged
+   `git diff --cached --check`; explicit path review; protected/immutable/
+   retained/private-state identity audit.
+6. One commit without push, followed by HEAD/tree/parent/divergence/status and
    protected-plan identity re-audit.
 
 Evidence invalidation:
 
-- Any workflow, CI helper, fresh-adopter runtime inventory, or related test
-  change invalidates focused workflow/smoke evidence.
-- Any controller/config/invariant source change invalidates the corresponding
-  aggregate and is out of scope unless the plan is first revised.
-- Any provider/container implementation change invalidates the existing OCI
-  boundary and expands beyond this CI-only increment; stop and revise rather
-  than silently broadening.
-- Record-only plan/log/doc changes after semantic tests require static and diff
-  reinspection. Freeze all tracked files before final receipts.
+- Any workflow or workflow-contract/test semantic change invalidates focused
+  evidence and requires the focused shard again.
+- Any invariant, authority-anchor, commissioning, verifier, controller,
+  provider, or config/schema source change broadens this correction and
+  invalidates the relevant aggregate; revise the plan before proceeding.
+- Record-only plan/log changes after the semantic freeze require static,
+  format, diff, and scope reinspection but do not justify rerunning unaffected
+  long semantic suites.
 
 ## Risks and Recovery
 
-- A workflow can be locally parseable yet fail from hosted-runner or action
-  behavior. Contract tests establish intended structure only; hosted jobs stay
-  explicitly unverified until their actual run URLs/results exist.
-- GitHub runner labels are hosted environment selectors, not OS-image digests.
-  Exact Node/pnpm assertions close the required runtime boundary; the workflow
-  records runner OS/image metadata with the uploaded evidence for diagnosis.
-- The source pnpm store must be populated before the generated adopter's
-  offline install. The smoke installs the source first, uses copy mode, and
-  fails rather than falling back to an unpinned or mutable dependency graph.
-- Docker availability on GitHub's Linux runner is an external premise. The OCI
-  job probes the real engine and fails if unavailable; it never converts
-  unavailability into a skip or mock success.
-- Recovery is an ordinary revert of this one CI-only commit. No push,
-  recommissioning, state mutation, readiness transition, external credentials,
-  history rewrite, or destructive repository cleanup is required.
+- Full history increases checkout transfer size, but the commissioned base and
+  other Git-anchored contracts require actual commit reachability. The current
+  repository is small; weakening authority validation or fetching an unbound
+  guessed depth is unacceptable.
+- Removing `needs` permits three diagnostic boundaries to consume runner time
+  concurrently and can expose more than one failure in a run. That is the
+  intended independent-observability property already recorded in WP5e; job
+  conclusions still aggregate normally at workflow level.
+- Static workflow tests prove configuration, not hosted runner behavior. Linux,
+  Windows, fresh-adopter, artifact-upload, POSIX, and real Docker validation
+  stay pending until the next pushed commit executes on GitHub.
+- The downloaded hosted artifacts are ignored diagnostic evidence and remain
+  outside the commit. The protected human plan is never used as a cleanup
+  target.
+- Recovery is an ordinary revert of the one WP5f commit. No push, workflow
+  rerun, recommissioning, state mutation, history rewrite, or destructive
+  repository cleanup is required.
 
 ## Progress and Evidence
 
-- 2026-08-16: Required authority, plan standard, completed WP5d plan, newest
-  autonomy/decision entries, audit roadmap, README container contract, current
-  package commands, adopter creator/proof boundary, receipt owner, and OCI
-  matrix entrypoint were inspected before editing.
-- 2026-08-16: Entry HEAD/tree/parent and all three protected-plan identities
-  matched the handoff. The remote-tracking ref has advanced locally to HEAD, so
-  actual divergence is `0/0`, not the handoff's historical `0/1`.
-- 2026-08-16: `Test-Path .github/workflows` was false and a tracked search
-  found no workflow. This reproduces the exact-runtime CI gap without rerunning
-  completed WP4d or any source no-argument verifier.
-- 2026-08-16: Added the least-privilege three-job workflow with full-SHA action
-  pins, exact runtime installation/assertion, Linux/Windows controller and
-  fresh-adopter matrices, unique uploaded evidence roots, and a separate
-  Linux-only real Docker matrix. The focused workflow/smoke tests passed 4/4;
-  deliberate runtime, platform, command, evidence-root, OCI, and no-argument-
-  verify mutations all failed the contract validator. Focused TypeScript and
-  ESLint checks passed.
-- 2026-08-16: The first test invocation exposed that root `tools/**/*.test.ts`
-  is outside the configured inventory, so the two tests moved under the
-  orchestrator-owned test tree before acceptance. The first two real smoke
-  attempts then exposed an unavailable `npm_execpath` under `pnpm exec` and a
-  pnpm-11 literal `--` forwarding difference. The coordinator now resolves
-  bundled Corepack cross-platform and invokes the public creator without that
-  extra argument. The accepted Windows diagnostic smoke passed two receipts,
-  two artifacts totaling 2,982 bytes, and 4/4 generated tests with zero
-  failures/skips; its 3,443-byte summary has SHA-256
-  `fe3c7cbc77bcffa437e3b1b5b77d7110be978c96978f961989b2898f3365f3ce`.
-  The standalone toolchain probe also confirmed Node `v24.18.0` and pnpm
-  `11.15.1`. These are local Windows results only.
-- 2026-08-16: The first final orchestrator aggregate was correctly non-passing:
-  565/583 passed, 16 failed, and the two Windows skips remained. All 16
-  failures shared one cause: placing helpers at `tools/ci` matched the existing
-  `tools/*` workspace pattern, so the package graph required a nonexistent
-  `tools/ci/package.json`. The failed 217,558-byte report is retained at
-  `artifacts/manual/wp5e-orchestrator-final/orchestrator-report.json` with
-  SHA-256
-  `352a6e226586c5cfee9b99fa67542951bd853f904985589d60dfea2fa1deff4d`;
-  it is not passing evidence. Helpers moved inside the existing
-  `tools/milestone-orchestrator/ci` package, preserving package/lock/script
-  identities. Package-graph, affected-scope, tier, benchmark, workflow, and
-  smoke regression tests then passed 41/41 across 6/6 files. All earlier
-  focused/smoke evidence that names the old helper paths is invalidated and
-  will be replaced before the broad retry.
-- 2026-08-16: Accepted final evidence on the relocated frozen tree passed:
-  focused 45/45 with zero skips, fresh-adopter smoke 4/4 with two independently
-  checked receipts, four invariant commands, orchestrator 581/583 with exactly
-  two Windows POSIX skips, unit 594/596 with the same skips, and receipt-owning
-  typecheck/lint/format. The independent audit matched 13 PASS receipts to 13
-  declared artifacts totaling 474,113 bytes and confirmed every recorded
-  report hash/count. Hosted Linux, Windows, artifact upload, and real Docker
-  jobs were not executed locally and remain explicitly unverified.
-- 2026-08-16: Final scope/identity audit matched 63/63 critical tracked files
-  to entry HEAD, including frozen authority, immutable lock, commissioning,
-  readiness, verifier, Doctor `2.0.0`, Status `1.0.0`, invariant/config/schema,
-  example, fresh-adopter, and package/lock surfaces. Both retained WP4d
-  artifacts and all three protected-plan identities matched; private state and
-  lease refs/paths remained absent; divergence remained `0/0`;
-  `git diff --check` passed. The only changed/untracked paths other than the
-  protected plan are the 11 explicit WP5e plan/workflow/helper/test/doc/log
-  paths.
+- 2026-08-16: Read the frozen authority, autonomous contract, plan standard,
+  stale WP5e plan, newest autonomy/decision entries, CI specialist guidance,
+  and browser/authenticated-boundary guidance before implementation.
+- 2026-08-16: Entry HEAD/tree/parent/divergence, retained WP4d artifacts, and
+  protected-plan bytes/hash/blob identities matched the handoff exactly.
+- 2026-08-16: Authenticated GitHub job logs and both artifact ZIPs established
+  the first failing command, artifact inventory, exact report semantics, and
+  shared shallow-checkout cause on Linux and Windows. ZIP byte counts and
+  SHA-256 digests independently matched GitHub metadata. The action Node
+  deprecation warning is retained as a separate warning, not conflated with
+  the failure.
+- 2026-08-16: A disposable exact-runtime depth-one clone reproduced the hosted
+  failure with one reachable commit and the identical 11 total / 9 PASS / 2
+  FAIL contract-integrity shape. The source-commissioned base is a valid local
+  commit eight commits behind HEAD, establishing missing history rather than
+  changed authority as the cause.
+- 2026-08-16: Added executable workflow-contract requirements for one explicit
+  full-history checkout per job and no controller dependency on the adopter or
+  OCI boundaries. Before the workflow change, the focused suite failed its
+  positive contract case because controller observed zero `fetch-depth: 0`
+  declarations; after adding all three declarations and removing the two
+  `needs: controller` edges, the focused suite passed 3/3, including deliberate
+  shallow/omitted-history and restored-dependency mutations.
+- 2026-08-16: Unshallowing the same disposable reproduction made 54 commits and
+  the commissioned base reachable. The unchanged exact-runtime invariant
+  command then passed all four serial commands in 31,058 ms. Independent audit
+  matched 5 PASS receipts to 5 artifacts totaling 39,420 bytes, with zero
+  mismatches; contract integrity passed 13/13 with valid check identity.
+- 2026-08-16: The first receipt-owning lint gate rejected the new literal-space
+  regex under `no-regex-spaces`. It retained no PASS receipt. The exactly
+  equivalent `{4}` form passed focused ESLint, Prettier, and 3/3 workflow tests.
+  Because that source byte changed, all accepted gates were rerun into fresh
+  `final-2` roots; earlier green broad reports are diagnostic only.
+- 2026-08-16: Accepted exact-tree evidence passed: focused 14/14 with zero
+  skips; all four invariants (contract 13/13, schema 7/7, policy 15/15,
+  fail-closed 61/61); orchestrator 582/584 across 178/178 suites with zero
+  failures and the two declared Windows POSIX skips; unit 595/597 across
+  180/180 suites with zero failures and the same two skips; and receipt-owning
+  typecheck, lint, and format. Independent audit matched 11 PASS receipts to 11
+  artifacts totaling 460,616 bytes with zero byte/hash/count mismatches.
+- 2026-08-16: Independent workflow audit found three full-history checkouts,
+  zero dependency keys/references, nine full-SHA actions, exact runtime pins,
+  all six controller commands once, one unchanged real OCI matrix invocation,
+  and no completion shortcut. Forty-six critical tracked files matched entry
+  HEAD; immutable baseline/active/actual hashes, commissioning, permanent
+  readiness history, verifier/profile, Doctor `2.0.0`, Status `1.0.0`, all four
+  invariant IDs and 13 check IDs, config/schema/example/package/lock surfaces,
+  retained evidence, private ref/path absence, and all protected-plan
+  identities passed. The correction enforces WP5e's existing independent-job
+  decision, so `docs/decision-log.md` did not require a new entry.
 
 ## Next Action
 
-Stage only the 11 explicit WP5e paths, run cached diff/scope checks, and create
-the single cohesive commit without pushing.
+The revision containing this plan is the one cohesive WP5f commit. Do not push
+it in this session. After the user pushes it, inspect the new hosted run, logs,
+and artifacts; only then reconcile the remaining WP5 hosted evidence gap.

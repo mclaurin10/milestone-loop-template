@@ -41,4 +41,22 @@ describe("exact-runtime CI workflow contract", () => {
     for (const mutation of mutations)
       await expect(validateExactRuntimeWorkflow(mutation)).rejects.toThrow();
   });
+
+  it("requires complete Git history and independently scheduled diagnostic jobs", async () => {
+    const workflow = await readFile(workflowPath, "utf8");
+    const mutations = [
+      workflow.replace("          fetch-depth: 0", "          fetch-depth: 1"),
+      workflow.replace("          fetch-depth: 0\n", ""),
+      workflow.replace(
+        "  fresh-adopter-smoke:\n",
+        "  fresh-adopter-smoke:\n    needs: controller\n",
+      ),
+      workflow.replace(
+        "  trusted-container:\n",
+        "  trusted-container:\n    needs: controller\n",
+      ),
+    ];
+    for (const mutation of mutations)
+      await expect(validateExactRuntimeWorkflow(mutation)).rejects.toThrow();
+  });
 });

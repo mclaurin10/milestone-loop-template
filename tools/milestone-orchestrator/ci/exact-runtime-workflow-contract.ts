@@ -33,6 +33,21 @@ function includes(source: string, needle: string, label: string): void {
   assertion(source.includes(needle), `Workflow is missing ${label}.`);
 }
 
+function assertCompleteHistoryCheckout(source: string, jobId: string): void {
+  exactCount(source, "          fetch-depth: 0", 1);
+  assertion(
+    !source.includes("          fetch-depth: 1"),
+    `${jobId} must not use a depth-one checkout because commissioned authority is Git-anchored.`,
+  );
+}
+
+function assertIndependentJob(source: string, jobId: string): void {
+  assertion(
+    !/^ {4}needs:/mu.test(source) && !/\bneeds(?:\.|\[)/u.test(source),
+    `${jobId} must remain independently schedulable from other diagnostic jobs.`,
+  );
+}
+
 export async function validateExactRuntimeWorkflow(
   source: string,
 ): Promise<void> {
@@ -96,6 +111,7 @@ export async function validateExactRuntimeWorkflow(
   );
 
   const controller = jobBlock(source, "controller");
+  assertCompleteHistoryCheckout(controller, "controller");
   includes(controller, "runner: ubuntu-24.04", "Linux controller runner");
   includes(controller, "runner: windows-2022", "Windows controller runner");
   for (const command of [
@@ -128,6 +144,8 @@ export async function validateExactRuntimeWorkflow(
   );
 
   const freshAdopter = jobBlock(source, "fresh-adopter-smoke");
+  assertCompleteHistoryCheckout(freshAdopter, "fresh-adopter-smoke");
+  assertIndependentJob(freshAdopter, "fresh-adopter-smoke");
   includes(freshAdopter, "runner: ubuntu-24.04", "Linux adopter runner");
   includes(freshAdopter, "runner: windows-2022", "Windows adopter runner");
   includes(
@@ -147,6 +165,8 @@ export async function validateExactRuntimeWorkflow(
   );
 
   const trustedContainer = jobBlock(source, "trusted-container");
+  assertCompleteHistoryCheckout(trustedContainer, "trusted-container");
+  assertIndependentJob(trustedContainer, "trusted-container");
   includes(
     trustedContainer,
     "runs-on: ubuntu-24.04",

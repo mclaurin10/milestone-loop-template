@@ -3,6 +3,135 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-16 — WP5f hosted CI history and scheduling correction
+
+**Objective.** Correct the failed hosted Exact runtime CI candidate without
+rewriting WP5e: establish the exact first failing invariant from authenticated
+job logs and artifacts, reproduce it under the exact runtime and checkout
+model, restore the commissioned Git authority base to every job, and make the
+fresh-adopter and real-OCI boundaries independently schedulable. Preserve all
+WP4d/WP5a-e meanings, pins, commands, evidence ownership, and completed
+evidence; create one local commit and do not push.
+
+**Hosted diagnosis and outcome before commit.** Authenticated GitHub inspection
+of run `31988139046` showed both controller jobs passing checkout, exact Node
+`24.18.0`/pnpm `11.15.1` assertion, and frozen install before first failing at
+`Run invariant suite`. Both checkouts used the action default `fetch-depth: 1`.
+The commissioned base
+`0f4ab3e5ef39bda07d6e77356ad53fca9136cdd5` is eight commits behind the
+candidate, so neither runner could resolve the Git-owned authority anchor.
+
+Both authenticated artifact downloads matched GitHub metadata exactly: Linux
+5,357-byte ZIP / SHA-256
+`3261585491f05b279615372cc7917c12e026b222f4dc910fda9eebafcc51e677`;
+Windows 5,380-byte ZIP / SHA-256
+`77c8412c4550bf36d133ce839117e14a721e6a0b72200915cf4166848bb050c1`.
+Each archive contained seven files. The Linux/Windows contract reports were
+respectively 2,982 bytes / SHA-256
+`22ad84643f817b7376ee30451873a8907361e08ba7a875df62bbaa9f321e441d`
+and 2,983 bytes / SHA-256
+`981ffbdd653730bdd067022bd34020bf5a7c5ed6c248ca31cec0d820a5694d1a`.
+Both stopped at the first `protected-integrity` command, ran 11 expected-identity
+checks, and recorded 9 PASS / 2 FAIL: first
+`immutable-contract-lock-hash` because the commissioned base was missing, then
+`acceptance-prose-bot-aggregation` because base prose was unavailable. Both
+outer reports retained exit 1 and no receipt. The runner warning that pinned
+actions target Node 20 but are forced onto Node 24 is separate from this
+evidence-backed step failure.
+
+A disposable exact-candidate `--depth 1 --no-local` clone with `CI=true`, the
+hosted GitHub variables, the workflow evidence root, frozen offline copy-mode
+install, and pinned Windows Node/pnpm reproduced one reachable commit, exit 1,
+and the identical 11/9/2 report. After `git fetch --unshallow`, the same clone
+had 54 reachable commits plus the exact base; the unchanged invariant suite
+passed all four commands in 31,058 ms. Independent control audit matched five
+PASS receipts to five artifacts totaling 39,420 bytes and contract integrity
+passed 13/13 with valid check identity. This establishes missing checkout
+history—not changed authority or action-runtime warnings—as the shared cause.
+
+The workflow now supplies `fetch-depth: 0` to all three pinned checkout actions.
+The two `needs: controller` edges were removed, so the Linux/Windows
+fresh-adopter matrix and Linux Docker job expand and run independently of a
+controller conclusion. No replacement condition or `continue-on-error` was
+added. The existing workflow contract now binds one full-history checkout to
+each job and rejects any `needs` key/reference on the adopter or container
+boundary. Focused mutations cover depth-one/omitted history and restored
+controller dependencies, in addition to the existing runtime, platform,
+command, evidence, and real-OCI mutations. This enforces the already committed
+WP5e decision that controller, distributor smoke, and privileged Docker are
+separate diagnostic boundaries; no new durable decision was required.
+
+**Verification.** Under pinned Windows Node `24.18.0` and pnpm `11.15.1`, the
+accepted receipt-owning focused shard passed 14/14 tests with zero failures or
+skips across 9/9 suites at
+`artifacts/manual/wp5f-ci-focused-final-2/invariant-vitest-report.json` (5,754
+bytes, SHA-256
+`bd7854ec353527ca66a067cf5d7f93c5277e3c91153882bc70ea008e6c95c4d3`).
+It covers the exact-runtime workflow contract plus invariant/contract receipt
+behavior. Direct `pnpm test:invariants` passed all four commands at
+`artifacts/manual/wp5f-invariants-final-2/invariant-suite-report.json` (7,264
+bytes, SHA-256
+`622c48f57302cd8249558ae17c2250433d97d06e4dc52827b6287d1b69ac5902`):
+contract integrity 13/13, schema 7/7, policy 15/15, and fail-closed evidence
+61/61.
+
+The exact-tree orchestrator aggregate passed 582/584 tests with zero failures
+and exactly the two declared Windows POSIX process-group skips across 178/178
+suites at
+`artifacts/manual/wp5f-orchestrator-final-2/orchestrator-report.json` (203,947
+bytes, SHA-256
+`4d0a1a238b3351a1feae880fc5591ab07845a50cacc02aef4a4a468a3075db52`).
+The exact-tree unit aggregate passed 595/597 with zero failures and the same two
+skips across 180/180 suites at
+`artifacts/manual/wp5f-unit-final-2/test-report.json` (207,877 bytes, SHA-256
+`51c493547a05a699648f88af735a83f873b9c100991ac99a5df2ad93e237bedc`).
+Receipt-owning typecheck, lint, and format passed at
+`artifacts/manual/wp5f-typecheck-final-2`, `wp5f-lint-final-2`, and
+`wp5f-format-final-2`; their report hashes are respectively
+`cfaf581b00707ddaddda60898154724c65a2fdada04a8eb9c7bb2895a3c2fc81`,
+`c4c0d2c804877c04844ffbaabc9dff16534d8e70bd97ab390e568a1665ee971a`,
+and `c7c61b29b84c6ffa610400b6b7f8c903f73814d162bf3ce702187c38bf145204`.
+An independent audit matched 11 PASS receipts to 11 declared artifacts totaling
+460,616 bytes and recomputed every receipt/artifact byte count and SHA-256 with
+zero mismatches.
+
+The first lint gate correctly rejected a literal-four-space scheduling regex
+under `no-regex-spaces` and produced no passing receipt. Replacing it with the
+exactly equivalent `{4}` form changed one source byte sequence; all focused,
+invariant, orchestrator, unit, typecheck, lint, and format gates were therefore
+rerun into the cited `final-2` roots on the frozen accepted tree. Earlier green
+broad reports are diagnostic only and are not credited.
+
+The independent scope/identity audit matched 46 critical tracked authority,
+commissioning, readiness, verifier, Doctor `2.0.0`, Status `1.0.0`, invariant,
+config/schema, example, fresh-adopter, and package/lock files to entry HEAD.
+All four immutable-lock baseline/active/actual hashes matched with CAL-1 still
+open/not started; the commissioned base remained a strict ancestor; the
+readiness marker remained permanent in history with no deletion; the four
+invariant IDs and 13 contract-check IDs remained exact. Both private state and
+lease refs/paths were absent. Both retained WP4d artifacts and all three
+protected-plan identities matched. Independent workflow inspection found three
+full-history checkouts, zero dependency keys/references, nine full-SHA actions,
+all six controller commands exactly once, one real OCI matrix command, and no
+completion shortcut.
+
+No source no-argument verifier, completed WP4d proof, local OCI substitution,
+mutating loop command, dependency change, recommissioning, workflow rerun,
+dispatch, push, or remote/ref mutation occurred. Local OCI was not applicable:
+this correction changes scheduling/history, not the OCI executor, and only a
+real hosted Docker run can close that boundary.
+
+**Commit.** Assigned by the single cohesive WP5f commit containing this entry;
+identify it as the newest commit touching the entry. It is not pushed.
+
+**Known gaps.** Hosted validation of the correction remains pending until the
+user pushes the WP5f commit. Consequently Linux/Windows controller completion,
+POSIX supervisor execution, hosted fresh-adopter smoke, artifact upload, and
+real Docker matrix PASS remain unverified for the corrected candidate. After a
+push, inspect the new run/logs/artifacts and reconcile canonical documentation
+only from actual evidence. WP6 performance work and all product/readiness gaps
+remain later and unchanged; WP5f makes no autonomous-readiness claim.
+
 ## 2026-08-16 — WP5e exact-runtime cross-platform CI
 
 **Objective.** Complete one bounded WP5 CI increment by adding exact Node
