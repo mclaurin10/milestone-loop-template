@@ -231,6 +231,27 @@ report and produces no PASS receipt.
    Linux-native dependency/controller build) and retain that distinction in
    the evidence.
 
+   The source repository's `.github/workflows/exact-runtime-ci.yml` pins Node
+   `24.18.0` and pnpm `11.15.1`, asserts those installed versions, and keeps
+   three CI boundaries separate. The controller matrix runs the receipt-owning
+   invariant, orchestrator, unit, typecheck, lint, and format commands on
+   `ubuntu-24.04` and `windows-2022`. A second matrix invokes the public
+   package creator, performs an offline frozen copy-mode install in the
+   generated repository, runs its typecheck and four-test bootstrap unit
+   surface, then independently hashes both receipts and artifacts. That smoke
+   is deliberately smaller than `loop:template:prove`: it does not commission,
+   launch a browser, run no-argument verification, or claim bootstrap
+   completion. A third Linux-only job probes the real Docker Engine and runs
+   the complete trusted-container normal/adversarial matrix. Every job uploads
+   its platform-specific evidence.
+
+   Local workflow-contract tests prove parseability, pins, commands, evidence
+   separation, and the absence of mock OCI or completion shortcuts. They do
+   not prove a hosted runner passed. Likewise, a green matrix job is
+   cross-platform diagnostic evidence, not autonomous-readiness evidence;
+   only a fresh clean no-argument verifier result can enter that completion
+   path.
+
 7. **Run the loop**: `pnpm loop:plan` for one planning pass, `pnpm loop:run`
    for the autonomous loop, `pnpm loop:status` / `loop:resume` /
    `loop:reconcile` for lifecycle operations.

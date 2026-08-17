@@ -3,6 +3,110 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-16 — WP5e exact-runtime cross-platform CI
+
+**Objective.** Complete one bounded WP5 CI increment by adding exact Node
+`24.18.0` and pnpm `11.15.1` Linux/Windows controller coverage, a distinct
+fresh-adopter smoke, and an applicable Linux-only real trusted-container job.
+Preserve every WP4d/WP5a-d contract and evidence boundary, and distinguish
+locally verified workflow structure from hosted execution that did not occur.
+
+**Outcome before commit.** The reproduced baseline had no `.github/workflows`
+directory. The new least-privilege workflow has pull-request, `master` push,
+and manual triggers; full-SHA checkout/setup/upload actions; and three separate
+boundaries. The Linux/Windows controller matrix installs and asserts the exact
+toolchain, performs a frozen copy-mode install, then runs the existing
+receipt-owning invariant, orchestrator, unit, typecheck, lint, and format
+commands serially into unique uploaded evidence roots. The separate
+Linux/Windows adopter matrix invokes a new CI smoke coordinator, and the
+Linux-only Docker job probes a real engine before invoking the unchanged
+complete `test:oci-container` normal/adversarial matrix.
+
+The fresh-adopter coordinator uses bundled Corepack and the public
+`loop:template:create` command in a disposable directory. It performs a frozen
+offline copy-mode install, runs generated typecheck and unit commands, checks
+both command-owned receipts and every declared artifact byte/hash, and proves
+a clean two-commit bootstrap history, both copied configuration schemas, and
+no readiness marker in tree or history. Its versioned result is explicitly
+completion-ineligible and autonomous-readiness-ineligible. It does not
+commission, launch a browser, run source or generated no-argument verification,
+or replace the retained WP4d proof. A dependency-free workflow contract parses
+the YAML and rejects mutated runtime pins, platforms, command routing, evidence
+root reuse, mock/non-Linux OCI, source no-argument verification, and WP4d proof
+invocation.
+
+**Verification.** Under pinned Windows Node `24.18.0` and pnpm `11.15.1`, the
+final receipt-owning focused shard passed 45/45 tests with zero failures/skips
+across 18/18 suites at
+`artifacts/manual/wp5e-ci-focused-final-2/invariant-vitest-report.json` (16,253
+bytes, SHA-256
+`b19807a8132225bb8fefdb2014fa47a4ea97b5b5310454805dd8119296865bf4`).
+It covers the workflow/smoke mutation tests, real adopter generation, and the
+package-graph, affected-scope, verification-tier, and benchmark regressions.
+
+The final Windows fresh-adopter smoke passed two receipt-owning generated
+commands and 4/4 unit tests with zero failures/skips. Its two declared artifacts
+total 2,981 bytes, and
+`artifacts/manual/wp5e-fresh-adopter-smoke-final-2/smoke-result.json` is 3,443
+bytes with SHA-256
+`6dfdcf08814f9a4bd6cb9235b8354bded4196b1702c1aa69b08a2407da04b5cd`.
+The generated repository remained clean at its deterministic two-commit
+bootstrap identity and the source status/HEAD/tree remained unchanged.
+
+Direct `pnpm test:invariants` passed all four commands in 37,587 ms at
+`artifacts/manual/wp5e-invariants-final-2/invariant-suite-report.json` (7,264
+bytes, SHA-256
+`f3c865fb8bd79667a93d6f8ce432a454cbd88637be5aa34c2710e9187430cf9d`).
+The outer result remained completion-ineligible; its children passed contract
+integrity 13/13, schema 7/7, policy 15/15, and fail-closed evidence 61/61.
+
+The orchestrator aggregate passed 581/583 tests with zero failures and exactly
+the two declared Windows POSIX process-group skips across 178/178 suites at
+`artifacts/manual/wp5e-orchestrator-final-2/orchestrator-report.json` (203,606
+bytes, SHA-256
+`d4e49a4a0b05e418bc7719f4e26a078d4e80f9905bcca097f2a41ce2b4d31449`).
+The complete unit aggregate passed 594/596 with the same two skips and zero
+failures across 180/180 suites at
+`artifacts/manual/wp5e-unit-final-2/test-report.json` (207,491 bytes, SHA-256
+`0256c15a321c2f2d9e267e6e1afbd337707e6d82cd2a5a703a6a074d6e95ca66`).
+Receipt-owning typecheck, lint, and format passed at
+`artifacts/manual/wp5e-typecheck-final-2`, `wp5e-lint-final-2`, and
+`wp5e-format-final-2`; their report hashes are respectively
+`e29ffb9c49f6d01f4298c7cad28412b770587056affa5f4a5e708753a50d9776`,
+`2f4d96280a0514d12897ddae7f68f17dd40803c491baaa546d7e20339dca36f0`,
+and `f3d86c5ce55b473847d0de351867009393a89d6bef77c7d1b502e0627a0c820a`.
+An independent audit matched 13 PASS receipts to 13 declared artifacts totaling
+474,113 bytes and independently confirmed all test, failure, and skip counts.
+
+The first broad attempt is retained but not credited: 565/583 passed, 16
+failed, and two skipped because a new top-level `tools/ci` directory matched
+the existing `tools/*` workspace pattern and therefore correctly lacked the
+required package manifest. Its 217,558-byte report (SHA-256
+`352a6e226586c5cfee9b99fa67542951bd853f904985589d60dfea2fa1deff4d`)
+identified one shared package-graph cause. Moving helpers inside the existing
+orchestrator package preserved package/lock/script identities; the six affected
+files then passed 41/41 before the accepted broad retry.
+
+The frozen authority, immutable lock, active/historical commissioning,
+readiness marker, exact verifier, Doctor `2.0.0`, Status `1.0.0`, invariant
+registry, current config/schema/migrations, examples, package/lock files,
+private state/lease absence, retained WP4d evidence, and all three protected-
+plan identities are audited separately before commit. No source no-argument
+verifier, completed WP4d proof, safety demonstration, mutating loop command,
+dependency change, recommissioning, push, or ref mutation occurred.
+
+**Commit.** Assigned by the single cohesive WP5e commit containing this entry;
+identify it as the newest commit touching the entry. No push is authorized.
+
+**Known gaps.** Local Windows execution proves workflow structure and the
+generated-adopter smoke, not hosted behavior. GitHub has not yet run the Linux
+or Windows matrices, artifact upload, POSIX supervisor cases, or the real
+Linux Docker job; no hosted or local OCI PASS is claimed. Those actual hosted
+runs and any evidence-driven final WP5 documentation reconciliation remain
+outstanding. WP6 performance work remains later. The source is still honestly
+blocked from autonomous readiness by its adopting-product placeholders and
+other existing Doctor blockers; WP5e is not autonomous readiness or a push.
+
 ## 2026-08-16 — WP5d strict configuration schema parity
 
 **Objective.** Complete one bounded WP5 strict-config increment by publishing

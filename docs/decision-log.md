@@ -3,6 +3,48 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-16 — Exact-runtime cross-platform CI boundaries (WP5e)
+
+**Decision.** The source repository has one least-privilege GitHub Actions
+workflow with three deliberately separate diagnostic boundaries. The controller
+matrix runs the unchanged receipt-owning invariant, orchestrator, unit,
+typecheck, lint, and format commands serially on `ubuntu-24.04` and
+`windows-2022`. Every job installs and asserts exact Node `24.18.0` and pnpm
+`11.15.1`; all external actions are pinned to full release commit SHAs, and
+platform-specific evidence roots are uploaded.
+
+The fresh-adopter matrix is a CI smoke, not another bootstrap proof. It invokes
+the public creator, performs a frozen offline copy-mode install, runs the
+generated typecheck and four-test unit boundary, independently validates both
+command receipts plus every declared artifact size/hash, verifies clean
+two-commit bootstrap history and absent readiness activation, and labels its
+result completion-ineligible. It does not commission, launch a browser, run
+source or generated no-argument verification, or supersede retained WP4d
+evidence. The trusted-container job is Linux-only and must reach a real Docker
+Engine before invoking the existing complete normal/adversarial OCI matrix; no
+mock or structural assertion substitutes for execution.
+
+The checked-in workflow contract parses the YAML and mutation-tests runtime,
+platform, command, evidence-root, OCI, and completion boundaries. It proves
+local structure only. Hosted Linux, Windows, artifact-upload, and Docker status
+remain unverified until GitHub actually executes them, and even a green hosted
+run is diagnostic rather than autonomous-readiness evidence.
+
+**Why.** Prior Windows evidence left the two POSIX supervisor cases and the
+Linux Git/filesystem/race paths unexecuted, while the repository contained no
+workflow at all. Separate jobs make ordinary cross-platform regression,
+distributor smoke, and privileged Docker prerequisites independently visible
+and prevent an unavailable engine from being mislabeled as controller
+coverage. Alternatives rejected: one opaque aggregate job, floating Node/pnpm
+or action tags, changing package scripts/dependencies for CI, rerunning the
+costly WP4d no-argument/browser proof on every change, treating YAML tests as
+hosted evidence, mocking Docker, running the OCI owner from a Windows
+controller, or allowing CI status to authorize integration.
+
+**Affected files.** Exact-runtime workflow; CI toolchain assertion,
+fresh-adopter coordinator, workflow/receipt regression tests; README,
+repository contract, execution plan, and autonomy log.
+
 ## 2026-08-16 — Current-config schema and differential parity boundary (WP5d)
 
 **Decision.** Publish the current `OrchestratorConfig` contract as strict JSON

@@ -1,61 +1,61 @@
 # Current Execution Plan
 
-**Status:** WP5d complete and independently verified; cohesive commit pending
+**Status:** WP5e complete and independently audited; cohesive commit pending
 **Updated:** 2026-08-16
 **Owner:** autonomous loop
 
 ## Objective
 
-Complete one bounded WP5 strict-configuration increment by publishing a strict
-JSON Schema for the current `OrchestratorConfig` and adding one differential
-acceptance/rejection corpus that exercises both the real runtime parser and the
-schema contract. Preserve the already-implemented runtime rejection of unknown
-top-level fields, extend explicit regression coverage across meaningful nested
-boundaries, and make any runtime/schema disagreement fail the focused suite.
+Complete one cohesive WP5 increment that adds an exact Node `24.18.0` and pnpm
+`11.15.1` GitHub Actions path for the controller on Linux and Windows, a
+separate fresh-adopter smoke path, and a Linux-only real Docker execution of the
+existing trusted-container matrix. The workflow must retain command-owned
+receipts and artifacts and must make platform scope visible.
 
-This increment closes the remaining strict-config evidence gap without
-reopening WP4d, WP5a, WP5b, or WP5c. It does not broaden into cross-platform
-CI, change configuration meaning or migration behavior, or create another
-runtime validator.
-
-Explicit non-goals are Doctor schema `2.0.0`, Status schema `1.0.0`, invariant
-IDs/routing, verifier stages/profiles/completion, commissioning, readiness,
-execution providers, state/recovery/mutation boundaries, package dependencies,
-product-domain work, fresh-adopter reproving, OCI execution, safety
-demonstration, or autonomous-readiness claims.
+This increment adds CI orchestration and CI-specific validation only. It does
+not change controller, configuration, invariant, provider, state, recovery,
+commissioning, readiness, verifier-completion, product-domain, or performance
+semantics. It does not rerun or reinterpret the completed WP4d proof and does
+not claim hosted jobs passed before GitHub executes them.
 
 ## Goal Constraints
 
-- Preserve `PROJECT_GOAL.md`, the immutable acceptance suite and lock,
-  `evals/HIDDEN_VALIDATION_PROTOCOL.md`, the permanent readiness marker,
-  active and historical commissioning, exact verifier semantics, all worked
-  examples, and the retained WP4d evidence byte-for-byte.
-- Preserve every currently valid schema `1.6.0` source/example/generated
-  config and all supported `1.0.0` through `1.5.0` runtime migrations. The raw
-  `default.template.json` remains an intentionally placeholder-invalid authoring
-  skeleton until generation/substitution. The new JSON Schema describes the
-  current post-migration/runtime input contract; it does not delete legacy
-  runtime compatibility or silently broaden acceptance.
-- Unknown top-level fields and unknown fields at closed nested object
-  boundaries must be rejected by both current runtime parsing and the JSON
-  Schema. Open collections whose keys are intentionally identifiers or roles
-  remain open only where the runtime contract is open.
-- The differential corpus must use one data set and compare the expected
-  disposition independently against the real `loadConfigForInspection` path
-  and a standards-based JSON Schema evaluation of the shipped schema, including
-  referenced schema files. A mismatch is a test failure with the case ID.
-- Do not add or update a dependency. `package.json`, the workspace package
-  manifest, `pnpm-lock.yaml`, and all existing package-script identities remain
-  unchanged.
-- Preserve the exact source/default/template/example configuration bytes unless
-  inspection finds a schema defect that cannot be represented without changing
-  behavior; any such conflict stops implementation for plan revision.
-- Use pinned Node `24.18.0` and pnpm `11.15.1` through
+- Preserve `PROJECT_GOAL.md`, the immutable acceptance suite and lock, the
+  hidden-validation protocol, active and historical commissioning, the
+  permanent readiness marker, exact verifier stage/profile/completion rules,
+  Doctor schema `2.0.0`, Status schema `1.0.0`, invariant IDs and meanings,
+  runtime/schema parity, all supported configuration migrations, examples,
+  and completed evidence.
+- Preserve `package.json`, the workspace package manifest, `pnpm-lock.yaml`,
+  and all package-script identities. CI-only tools must run through existing
+  pinned dependencies and public package commands.
+- The cross-platform job must execute the real receipt-owning invariant,
+  orchestrator, unit, typecheck, lint, and format commands serially on both a
+  supported Linux runner and a supported Windows runner. Evidence directories
+  must be unique and uploaded per platform.
+- CI must explicitly install and assert Node `24.18.0` and pnpm `11.15.1`; a
+  floating major runtime or package-manager version is not sufficient.
+- The fresh-adopter smoke must use the real public package-creation boundary,
+  install the generated repository from the frozen lock, run meaningful
+  generated receipt-owning checks, independently validate their receipts and
+  artifacts, and retain a structured summary. It remains a smoke, not the
+  completed WP4d bootstrap proof: no source no-argument `pnpm verify`, browser
+  proof, commissioning transition, or completion claim.
+- A trusted-container CI job is applicable only on a Linux runner with a real
+  reachable Docker Engine. It must invoke the existing
+  `pnpm test:oci-container` normal/adversarial matrix and retain its result; no
+  mock, Dockerfile-only check, or structural assertion may stand in for that
+  job.
+- Local checks may validate workflow YAML, exact commands, the Windows smoke,
+  and any locally available real boundary. They cannot establish that hosted
+  Linux, Windows, artifact-upload, or Docker jobs passed.
+- Use the repository-pinned Windows toolchain through
   `.tools/node-v24.18.0-win-x64/corepack.cmd`, with that Node directory first on
   `PATH`. Run long suites separately and serially.
-- Do not run a source no-argument `pnpm verify` or rerun the completed
-  fresh-adopter proof. OCI and safety demonstrations are not applicable because
-  provider execution and controller mutation/recovery boundaries do not change.
+- Do not run a source no-argument `pnpm verify` or the completed
+  `loop:template:prove` WP4d proof. Run the OCI matrix only if the owning Linux
+  Docker boundary is genuinely available; otherwise record the limitation and
+  leave local OCI execution unverified.
 - Never edit, stage, move, delete, re-encode, clean, or otherwise mutate the
   protected user-owned untracked
   `Implementation-ready improvement plan 8-5-26.txt`.
@@ -63,13 +63,13 @@ demonstration, or autonomous-readiness claims.
 ## Baseline Evidence
 
 - Entry branch is `master`, HEAD
-  `5290dd96796a79014961a9aa65859f6ba547d3cd`, tree
-  `5e865f5c6530fcfaf09db082dbe8060979525a25`, and parent
-  `5089a460390dad60f2bb234cee81f91f7e27a5ea`. Tracked and staged trees are
-  clean; the protected plan is the sole untracked path. Unlike the expected
-  handoff, the locally observed `origin/master` and `origin/HEAD` now point at
-  HEAD, so repository-authoritative divergence is `0 behind / 0 ahead`. No
-  fetch, push, or ref mutation occurred.
+  `dc475ea807f477c8c8ad818def6ee98318844708`, tree
+  `dbea9c3f77aa65e20ca4c5e081edf72d51aa275c`, and parent
+  `5290dd96796a79014961a9aa65859f6ba547d3cd`. Tracked and staged trees are
+  clean; the protected plan is the sole untracked path. Contrary to the
+  historical handoff expectation, local `origin/master` already equals HEAD,
+  so repository-authoritative divergence is `0 behind / 0 ahead` without a
+  fetch, push, or ref mutation.
 - The protected plan is 78,574 bytes with raw SHA-256
   `53ea98fb1cb880163a02d3b1d9365963e3fe891025ae3630f00bd4c9232293b1`,
   no-filter blob `9890a3cdd5288708a04102d27ff6fce9f0ebb90b`, and
@@ -82,227 +82,216 @@ demonstration, or autonomous-readiness claims.
   `artifacts/verify-2026-08-16T082128-760Z-17384/result.json` is 44,372 bytes
   with SHA-256
   `1ca139e2a995c117b87e07de04707cde1de5bf7a2e4ea6ffce38ba605d8564d0`.
-- Pinned focused baseline
-  `pnpm exec vitest run tools/milestone-orchestrator/src/config.test.ts tools/milestone-orchestrator/src/schema.test.ts --fileParallelism=false`
-  passed 17/17 tests across 2/2 files. Existing runtime coverage already rejects
-  an unknown current-config root field, and source blame ties that behavior to
-  the earlier provider-control increment rather than this WP5d increment.
-- A read-only pinned runtime/schema probe showed the valid fixture is accepted,
-  unknown root and nested candidate-execution fields are rejected, but
-  `tools/milestone-orchestrator/schemas/orchestrator-config.schema.json` does
-  not exist and zero differential corpus matches are executed. The probe exited
-  1 on that missing contract. Existing schema tests only parse selected JSON
-  Schema files and do not evaluate shared valid/invalid examples against both
-  runtime and schema implementations.
-- Current runtime loading calls `migrateConfig`, then
-  `assertOrchestratorConfig`; inspection mode subsequently canonicalizes
-  protected paths, while ordinary loading additionally checks the installed SDK.
-  These behaviors and returned config semantics are out of scope for change.
+- A repository and tracked-tree search found no `.github/workflows` directory
+  and therefore no hosted Linux/Windows, fresh-adopter, or OCI job. The newest
+  WP5d autonomy record names this exact-runtime CI slice as the next remaining
+  dependency-ordered WP5 work.
+- Current Windows aggregates intentionally skip the two POSIX process-group
+  supervisor cases whose comments name first execution in WP5 Linux CI.
+  Earlier state/lease/workspace/integration records likewise identify native
+  Linux race coverage as outstanding.
+- The existing real boundaries are available without semantic changes:
+  `loop:template:create` creates a Git-anchored adopter through the public CLI;
+  generated bootstrap typecheck/unit commands write receipts; and
+  `pnpm test:oci-container -- --output artifacts/<fresh-id>` runs the real
+  Linux Docker normal/adversarial matrix with exact toolchain/image policy and
+  managed-resource cleanup assertions.
 
 ## Steps
 
-1. [x] Complete the resume protocol, authority/plan/log review, entry/protected/
-       retained identity audit, WP5 roadmap/source/test/schema inspection, and
-       pinned reproduction of the actual strict-config evidence gap.
-2. [x] Replace the completed WP5c plan with this bounded WP5d executable plan
-       before substantial implementation.
-3. [x] Inventory the exact current runtime config and nested model-policy
-       constraints, compare them with existing schema artifacts, and choose a
-       dependency-free, fail-closed test evaluator for the exact JSON Schema
-       2020-12 keyword subset used here. Record intentional runtime-only
-       repository/cross-field semantic constraints.
-4. [x] Add a strict versioned `orchestrator-config` JSON Schema, reuse/reference
-       the existing model-policy schema where semantics agree, and add only the
-       minimum schema/test support needed to evaluate it independently.
-5. [x] Add one named differential corpus covering maintained valid configs,
-       valid boundary variants, top-level typo/unknown keys, closed nested
-       unknown keys, missing required keys, and representative value/path/list
-       failures. Assert expected runtime and schema dispositions plus exact
-       runtime/schema parity for every case.
-6. [x] Update configuration documentation to identify the schema, current-only
-       versus migrated-input boundary, and differential drift gate. Add focused
-       regression assertions for all shipped current config files without
-       changing their bytes.
-7. [x] Freeze source/tests/docs/plan/logs, run serial receipt-owning focused,
-       invariant, orchestrator, unit, typecheck, lint, and format checks; then
-       independently audit receipts, artifact bytes/hashes, test totals/skips,
-       diffs, protected identities, immutable/commissioning/readiness/example/
-       package/lock identities, and private state/lease absence.
-8. [x] Update this plan, `docs/autonomy-log.md`, and the durable decision record;
-       freeze the explicit WP5d path set and evidence for one audited commit
-       without pushing. The commit itself is the next mechanical storage action.
+1. [x] Complete the resume protocol, authority/plan/log review, entry and
+       protected identity audit, and reproduce the CI gap by proving the
+       tracked tree contains no workflow.
+2. [x] Replace the mechanically stale completed WP5d plan with this bounded
+       WP5e executable plan before substantial implementation.
+3. [x] Add one least-privilege GitHub Actions workflow plus a deterministic
+       regression contract that parses its YAML and pins triggers, action
+       boundaries, exact toolchains, Linux/Windows matrix entries, serial
+       receipt-owning commands, unique evidence roots, and artifact retention.
+4. [x] Add and test a CI-specific fresh-adopter smoke coordinator that invokes
+       the public creator in a disposable directory, performs a frozen offline
+       copy-mode install, runs generated typecheck and unit checks, validates
+       every child receipt/artifact identity, writes a structured result, and
+       proves source tracked identity is unchanged.
+5. [x] Add the fresh-adopter Linux/Windows matrix and a separate Linux Docker
+       job that executes the existing real trusted-container matrix. Ensure
+       neither path can be mistaken for source verification completion or the
+       retained WP4d proof.
+6. [x] Document the workflow's scope, evidence, exact pins, and local-versus-
+       hosted evidence boundary. Record the durable CI decision without
+       changing canonical product/readiness meanings.
+7. [x] Freeze the implementation and run focused
+       receipt-owning workflow/smoke tests, the new Windows smoke,
+       `test:invariants`, `test:orchestrator`,
+       `test:unit`, typecheck, lint, and format serially. Run real OCI locally
+       only if a Linux Docker controller is genuinely available.
+8. [x] Independently audit receipts, artifact bytes/hashes, tests/failures/
+       skips, diffs, workflow commands, protected/retained identities,
+       immutable authority, commissioning/readiness/verifier/Doctor/Status/
+       invariant/example/package/lock identities, and private state/lease
+       absence. Update this plan and the autonomy log, stage only explicit
+       paths, create exactly one cohesive commit, and do not push.
 
 ## Acceptance Criteria
 
-- The current `OrchestratorConfig` has a parseable, versioned JSON Schema using
-  closed root and nested object boundaries consistent with runtime validation.
-  Its identity and schema version agree with runtime `CONFIG_SCHEMA_VERSION`.
-- The existing valid source default, generated adopter config, and maintained
-  worked-example config remain accepted by runtime parsing and the JSON Schema
-  without byte changes. The raw placeholder template remains rejected by both.
-  Runtime migrations from `1.0.0` through `1.5.0` retain their existing
-  acceptance/output behavior.
-- One shared, named corpus covers accepted current configurations, an unknown or
-  misspelled root key, unknown nested keys at each applicable closed boundary,
-  missing required fields, and representative invalid scalar/path/list values.
-  Every case matches its expected disposition in both independent evaluators.
-- The test fails when either runtime or JSON Schema acceptance is perturbed for
-  a corpus case, and diagnostics name the case and disagreeing evaluator. No
-  test merely compares two booleans without also checking the expected result.
-- Schema references resolve locally and deterministically under the pinned
-  toolchain. No network, package install, generated cache, new dependency,
-  package script, or lockfile mutation is required.
-- Doctor `2.0.0`, Status `1.0.0`, invariant registry identities, exact verifier
-  command/stages/profiles/completion, active commissioning, readiness marker,
-  provider/state/recovery contracts, examples, and retained WP4d/WP5a-c
-  evidence remain unchanged.
-- Focused receipt-owning tests and the applicable invariant/orchestrator/unit
-  aggregates, typecheck, lint, and format all pass. Only the two declared
-  Windows POSIX process-group skips may remain in broad suites.
+- One syntactically parseable workflow has `contents: read` permissions and
+  pull-request, branch-push, and manual triggers. Regression coverage rejects
+  missing/floating toolchain pins, missing platforms, command substitution,
+  evidence-root reuse, no-argument source verification, WP4d proof invocation,
+  or a non-Linux/mock OCI path.
+- Linux and Windows controller jobs install and assert exact Node `24.18.0`
+  and pnpm `11.15.1`, install with the frozen lock, and separately execute the
+  real receipt-owning invariant, orchestrator, unit, typecheck, lint, and
+  format commands with uploaded evidence. Hosted execution status is not
+  inferred from local tests.
+- The Linux job reaches the POSIX supervisor tests instead of carrying the two
+  Windows skips. Existing real Git/filesystem/race/config/schema tests run
+  through the unchanged aggregates on both platforms.
+- The CI fresh-adopter smoke is distinct from WP4d and proves public creation,
+  generated frozen installation, generated strict typecheck, generated unit
+  behavior, command-owned receipts, independent artifact hashes, clean Git
+  state, bootstrap profile, and absence of readiness activation. Its result is
+  explicitly completion-ineligible and autonomous-readiness-ineligible.
+- The trusted-container job runs only on Linux, verifies a real Docker Engine,
+  and invokes the complete existing normal/adversarial matrix. It uploads the
+  real OCI result and cannot pass by checking only YAML, Dockerfiles, mocks, or
+  unit tests.
+- No package dependency, lockfile, package script, runtime/config/schema,
+  controller/provider, state/recovery, verifier/profile/completion, Doctor,
+  Status, invariant registry, example, commissioning, or readiness identity
+  changes.
+- Focused receipt-owning checks, the applicable broad suites, and static checks
+  pass locally with only the two declared Windows POSIX skips. Every cited
+  local receipt and artifact identity is independently verified.
 
 ## Verification
 
-Every command runs separately and serially. Each invocation resolves
-`.tools/node-v24.18.0-win-x64`, prepends it to `PATH`, and invokes pnpm through
-that directory's `corepack.cmd`.
+All local commands run separately and serially under the pinned Windows Node
+directory and its `corepack.cmd` pnpm `11.15.1` entrypoint.
 
-Implementation diagnostics (not final evidence):
+Implementation diagnostics:
 
-1. Focused Vitest for the new differential corpus plus `config.test.ts`,
-   `schema.test.ts`, model-policy tests, and adopter-package tests if schema
-   packaging/inventory ownership requires them.
-2. Direct probes that deliberately mutate only in-memory corpus values and
-   confirm expected runtime/schema failure diagnostics.
-3. Focused typecheck/lint/format while interfaces and schema fixtures stabilize.
+1. Focused Vitest for workflow contract, smoke option/result/receipt logic, and
+   affected adopter-package paths.
+2. Prettier YAML parse/format validation and exact workflow contract probes.
+3. One real CI smoke execution on Windows using a fresh evidence directory.
+4. Focused typecheck/lint/format while the coordinator stabilizes.
 
-Final frozen-tree commands, in order:
+Final frozen-tree commands:
 
 1. Receipt-owning affected Vitest shard through
-   `tools/run-tool-evidence.mjs invariant-vitest`, with final path chosen once
-   and recorded before the run.
-2. `pnpm test:invariants` with an explicit fresh final evidence directory.
-3. `pnpm test:orchestrator` with an explicit fresh final evidence directory.
-4. `pnpm test:unit` with its command-owned final evidence directory captured.
-5. Receipt-owning `pnpm typecheck`, `pnpm lint`, and `pnpm format:check`, each
-   using a separate explicit final evidence directory.
-6. Independent receipt-to-artifact byte/SHA-256 validation; focused and broad
-   suite/test/failure/skip count audit; schema/corpus case-count audit; then
-   `git diff --check`, staged-path review, and all immutable, commissioning,
-   readiness, package/lock, example, retained-evidence, private ref/path, and
-   protected-plan identity checks.
-7. One commit without push, followed by HEAD/tree/divergence/status and protected
-   identity re-audit.
+   `tools/run-tool-evidence.mjs invariant-vitest` with a fresh explicit final
+   evidence directory.
+2. The CI fresh-adopter smoke through its real CLI with a fresh explicit final
+   output directory; independently validate its summary and nested receipts.
+3. `pnpm test:invariants`, `pnpm test:orchestrator`, and `pnpm test:unit`, each
+   serially with a fresh explicit command-owned evidence directory.
+4. Receipt-owning `pnpm typecheck`, `pnpm lint`, and `pnpm format:check`, each
+   with a separate fresh explicit evidence directory.
+5. If and only if a real Linux Docker controller is locally available, run the
+   exact workflow OCI command into a fresh output and audit it. A Windows host,
+   Dockerfile validation, or unit test is not credited as OCI execution.
+6. Independent receipt/artifact byte/SHA-256 and test-count audit; workflow
+   exact-command audit; `git diff --check`; `git diff --cached --check`; staged
+   path review; and all protected/immutable/retained/private-state identity
+   checks.
+7. One commit without push, then HEAD/tree/parent/divergence/status and
+   protected-plan identity re-audit.
 
 Evidence invalidation:
 
-- Any runtime validator, JSON Schema, corpus, config loader, or maintained
-  config change invalidates the focused schema-parity evidence.
-- Any invariant registry/adapter change invalidates the direct invariant suite;
-  none is planned.
-- Any verifier/profile/completion, provider, state, or mutation/recovery change
-  is out of scope and requires stopping to revise the plan.
+- Any workflow, CI helper, fresh-adopter runtime inventory, or related test
+  change invalidates focused workflow/smoke evidence.
+- Any controller/config/invariant source change invalidates the corresponding
+  aggregate and is out of scope unless the plan is first revised.
+- Any provider/container implementation change invalidates the existing OCI
+  boundary and expands beyond this CI-only increment; stop and revise rather
+  than silently broadening.
 - Record-only plan/log/doc changes after semantic tests require static and diff
-  reinspection; freeze all tracked files before final receipts.
+  reinspection. Freeze all tracked files before final receipts.
 
 ## Risks and Recovery
 
-- The runtime validator contains both shape constraints and semantic checks
-  (mandatory protected-root membership, safe relative paths, installed SDK
-  compatibility after inspection). A JSON Schema can express most shape/value
-  rules but must not pretend to own repository- or installation-dependent
-  semantics. The corpus will classify and document any intentional runtime-only
-  check rather than weaken it or encode false equivalence.
-- Legacy configs are migrated before runtime validation. Applying a current-only
-  JSON Schema directly to legacy bytes would create false drift. Keep migrated
-  compatibility tests separate and run differential parity only on current
-  schema inputs.
-- Referencing `model-policy.schema.json` could expose pre-existing schema/runtime
-  drift. Fix only contract-preserving schema drift needed by the current config;
-  if correction would change accepted runtime behavior or package contracts,
-  revise the plan before proceeding.
-- A partial test validator could accidentally make the parity test
-  self-confirming. The frozen install exposes no declared JSON Schema evaluator
-  and only an inaccessible Ajv 6 transitive dependency, while package/lock
-  changes are prohibited for this increment. Use a narrow test-only 2020-12
-  evaluator with independent reference/contains/closed-boundary tests; it must
-  enumerate every supported keyword and throw on any unsupported keyword rather
-  than silently accepting it.
-- Recovery is ordinary reversal of the single cohesive WP5d commit. No push,
-  network, credentials, history rewrite, recommissioning, protected-file
-  handling, controller mutation, or destructive cleanup is needed.
+- A workflow can be locally parseable yet fail from hosted-runner or action
+  behavior. Contract tests establish intended structure only; hosted jobs stay
+  explicitly unverified until their actual run URLs/results exist.
+- GitHub runner labels are hosted environment selectors, not OS-image digests.
+  Exact Node/pnpm assertions close the required runtime boundary; the workflow
+  records runner OS/image metadata with the uploaded evidence for diagnosis.
+- The source pnpm store must be populated before the generated adopter's
+  offline install. The smoke installs the source first, uses copy mode, and
+  fails rather than falling back to an unpinned or mutable dependency graph.
+- Docker availability on GitHub's Linux runner is an external premise. The OCI
+  job probes the real engine and fails if unavailable; it never converts
+  unavailability into a skip or mock success.
+- Recovery is an ordinary revert of this one CI-only commit. No push,
+  recommissioning, state mutation, readiness transition, external credentials,
+  history rewrite, or destructive repository cleanup is required.
 
 ## Progress and Evidence
 
-- 2026-08-16: Entry/protected/retained identities matched the handoff except the
-  local remote-tracking divergence: `origin/master` already equals HEAD, making
-  actual divergence `0/0`. Required authority, contract, plan standard,
-  completed WP5c plan, newest WP5 logs/decisions, protected WP5 roadmap, audit,
-  and strict-config source/tests were read before editing.
-- 2026-08-16: Pinned baseline tests passed 17/17. The runtime already accepts
-  the valid fixture and rejects unknown root/nested fields. A separate probe
-  exited 1 because the corresponding orchestrator-config JSON Schema is absent
-  and no differential corpus exists. This plan therefore preserves the prior
-  runtime hardening and closes schema publication/drift evidence rather than
-  claiming to rediscover or reimplement it.
-- 2026-08-16: Exact constraint inventory found that the raw config template is
-  deliberately invalid before substitution and that `model-policy.schema.json`
-  trails runtime only for whitespace-only override reasons and duplicate roles.
-  No declared 2020-12 validator is installed, and the only Ajv copy is an
-  undeclared ESLint transitive dependency. WP5d will use a fail-closed test-only
-  evaluator, correct those two schema-only drifts, reference the policy schema
-  from the new config schema, and copy both schemas into generated adopters.
-- 2026-08-16: Implemented the current `1.6.0` schema, corrected model-policy
-  whitespace/duplicate-role schema drift, and added a fail-closed evaluator
-  that resolves local/external references, closed objects, applicators,
-  contains bounds, formats, scalar/array constraints, and rejects unsupported
-  keywords. The 40-case shared corpus plus two structural/evaluator tests passed
-  42/42. The affected config/schema/model-policy/adopter shard passed 69/69,
-  including generated-adopter schema copying and validation; focused TypeScript
-  and ESLint diagnostics passed. A diagnostic Ajv 6 compile was not credited:
-  that undeclared transitive version predates 2020-12 `minContains` and wrongly
-  requires one override for each role, confirming it is unsuitable as the
-  committed oracle.
-- 2026-08-16: Final receipt-owning affected evidence passed 69/69 with zero
-  skips across 11/11 suites at
-  `artifacts/manual/wp5d-config-schema-focused-final` (23,154-byte report,
+- 2026-08-16: Required authority, plan standard, completed WP5d plan, newest
+  autonomy/decision entries, audit roadmap, README container contract, current
+  package commands, adopter creator/proof boundary, receipt owner, and OCI
+  matrix entrypoint were inspected before editing.
+- 2026-08-16: Entry HEAD/tree/parent and all three protected-plan identities
+  matched the handoff. The remote-tracking ref has advanced locally to HEAD, so
+  actual divergence is `0/0`, not the handoff's historical `0/1`.
+- 2026-08-16: `Test-Path .github/workflows` was false and a tracked search
+  found no workflow. This reproduces the exact-runtime CI gap without rerunning
+  completed WP4d or any source no-argument verifier.
+- 2026-08-16: Added the least-privilege three-job workflow with full-SHA action
+  pins, exact runtime installation/assertion, Linux/Windows controller and
+  fresh-adopter matrices, unique uploaded evidence roots, and a separate
+  Linux-only real Docker matrix. The focused workflow/smoke tests passed 4/4;
+  deliberate runtime, platform, command, evidence-root, OCI, and no-argument-
+  verify mutations all failed the contract validator. Focused TypeScript and
+  ESLint checks passed.
+- 2026-08-16: The first test invocation exposed that root `tools/**/*.test.ts`
+  is outside the configured inventory, so the two tests moved under the
+  orchestrator-owned test tree before acceptance. The first two real smoke
+  attempts then exposed an unavailable `npm_execpath` under `pnpm exec` and a
+  pnpm-11 literal `--` forwarding difference. The coordinator now resolves
+  bundled Corepack cross-platform and invokes the public creator without that
+  extra argument. The accepted Windows diagnostic smoke passed two receipts,
+  two artifacts totaling 2,982 bytes, and 4/4 generated tests with zero
+  failures/skips; its 3,443-byte summary has SHA-256
+  `fe3c7cbc77bcffa437e3b1b5b77d7110be978c96978f961989b2898f3365f3ce`.
+  The standalone toolchain probe also confirmed Node `v24.18.0` and pnpm
+  `11.15.1`. These are local Windows results only.
+- 2026-08-16: The first final orchestrator aggregate was correctly non-passing:
+  565/583 passed, 16 failed, and the two Windows skips remained. All 16
+  failures shared one cause: placing helpers at `tools/ci` matched the existing
+  `tools/*` workspace pattern, so the package graph required a nonexistent
+  `tools/ci/package.json`. The failed 217,558-byte report is retained at
+  `artifacts/manual/wp5e-orchestrator-final/orchestrator-report.json` with
   SHA-256
-  `77b344f481a412b94810943b7cf4985d861e481a0133fcadeffab3f7b55b64f5`).
-  The 42 parity tests comprise 40 named corpus cases plus closed-boundary and
-  fail-closed evaluator/reference checks. Generated-adopter creation validated
-  its emitted config against both copied schemas. The optional plain-Node
-  direct-telemetry begin hook could not load the TypeScript-only
-  `path-safety.js` import, so telemetry is null; the report and receipt are
-  complete.
-- 2026-08-16: Direct invariants passed all four commands in 29,059 ms at
-  `artifacts/manual/wp5d-invariants-final`: outer completion-ineligible report
-  7,232 bytes / SHA-256
-  `7cd9a4cce21063a09430d0c3226d2eca9caa5756820f2823af331e6a4d833693`,
-  direct completion-ineligible contract 13/13, schema 7/7, policy 15/15, and
-  fail-closed evidence 61/61. The contract report is 3,531 bytes / SHA-256
-  `18a7c2029615685dbb349a65db07486e939d96474497910282847cbb8850d6d7`.
-- 2026-08-16: The orchestrator aggregate passed 577/579 with zero failures and
-  only the two declared Windows POSIX process-group skips across 174/174 suites
-  (201,850 bytes / SHA-256
-  `6ea09b0d6431166ea88030159e77b3e9a33de019bfe6cfd5056d3e7afd217c20`).
-  The unit aggregate passed 590/592 with the same skips across 176/176 suites
-  (206,052 bytes / SHA-256
-  `a23980c4376548dc247cd8e3d5eab35ccf1d5fe2cba135f8132704b29891de23`).
-  Receipt-owning typecheck, lint, and format passed; their report hashes are
-  `2540e3c6155ab20c1971bb940ebbb4eb6cd784e787e0de4ad4b6e15fb1c6fe53`,
-  `012193e1acb18740e236708f9f394cf589285030adb1d06ec4a0c613724d10ec`,
-  and `53633d763f14ac37272fd7801634c524fa7658e42a348edd7bfa7009314f08ca`.
-- 2026-08-16: Independent evidence inspection matched 11 PASS receipts to 11
-  declared artifacts totaling 474,994 bytes and confirmed all suite/test/
-  failure/skip counts. Immutable authority, commissioning, readiness, exact
-  verifier, invariant registry, Doctor/Status, package/lock, configs/examples,
-  retained WP4d evidence, and private-state absence all matched entry. The
-  protected plan retained its three identities. No no-argument source verifier,
-  OCI/safety run, fresh-adopter proof rerun, mutation, dependency install, ref
-  change, or push occurred; provider and mutation/recovery boundaries were
-  unchanged, so OCI/safety were not applicable.
+  `352a6e226586c5cfee9b99fa67542951bd853f904985589d60dfea2fa1deff4d`;
+  it is not passing evidence. Helpers moved inside the existing
+  `tools/milestone-orchestrator/ci` package, preserving package/lock/script
+  identities. Package-graph, affected-scope, tier, benchmark, workflow, and
+  smoke regression tests then passed 41/41 across 6/6 files. All earlier
+  focused/smoke evidence that names the old helper paths is invalidated and
+  will be replaced before the broad retry.
+- 2026-08-16: Accepted final evidence on the relocated frozen tree passed:
+  focused 45/45 with zero skips, fresh-adopter smoke 4/4 with two independently
+  checked receipts, four invariant commands, orchestrator 581/583 with exactly
+  two Windows POSIX skips, unit 594/596 with the same skips, and receipt-owning
+  typecheck/lint/format. The independent audit matched 13 PASS receipts to 13
+  declared artifacts totaling 474,113 bytes and confirmed every recorded
+  report hash/count. Hosted Linux, Windows, artifact upload, and real Docker
+  jobs were not executed locally and remain explicitly unverified.
+- 2026-08-16: Final scope/identity audit matched 63/63 critical tracked files
+  to entry HEAD, including frozen authority, immutable lock, commissioning,
+  readiness, verifier, Doctor `2.0.0`, Status `1.0.0`, invariant/config/schema,
+  example, fresh-adopter, and package/lock surfaces. Both retained WP4d
+  artifacts and all three protected-plan identities matched; private state and
+  lease refs/paths remained absent; divergence remained `0/0`;
+  `git diff --check` passed. The only changed/untracked paths other than the
+  protected plan are the 11 explicit WP5e plan/workflow/helper/test/doc/log
+  paths.
 
 ## Next Action
 
-Format and inspect the final record-only plan/log changes, stage only the
-explicit WP5d path set, run cached diff/scope/protected audits, and create the
-single cohesive commit without pushing.
+Stage only the 11 explicit WP5e paths, run cached diff/scope checks, and create
+the single cohesive commit without pushing.
