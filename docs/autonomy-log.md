@@ -3,6 +3,111 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-18 — WP5l POSIX process-group supervision portability
+
+**Objective.** Select the earliest unresolved hosted Linux controller failure
+after WP5k's Doctor correction, reproduce it from clean exact source under Node
+`24.18.0` and pnpm `11.15.1`, correct only its causal process-group
+portability facts, verify both supported controller platforms with
+command-owned evidence, and create one narrow local commit without pushing.
+Preserve the documented `setsid` escape residual, shared supervision policy,
+all later controller clusters, immutable authority, lifecycle/CAL-1 state,
+packages/locks/workflow, retained evidence, and the protected human plan.
+
+**Cause and ordering.** The retained Linux orchestrator report from exact
+runtime run `32060615125` is 214,181 bytes with SHA-256
+`a6e7cc9d098dc52327b10ffdf33067c06dbf8eb18a73cae8033b0d902339e188`.
+Failed-suite starts are Doctor `1786995000003`, process supervisor
+`1786995022223`, worked example `1786995133398`, and candidate identity
+`1786995183453`; process supervision is therefore the first unresolved suite
+after WP5k. Its owner and test are byte-unchanged from hosted commit `87bd41e`
+through current WP5k `HEAD`.
+
+The suite had two POSIX failures. The intact-tree output-limit fixture spawned
+its grandchild with `detached: true` on every platform. That topology is needed
+on Windows to escape libuv's job object and prove force-first `taskkill /T`,
+but on POSIX it creates a new session outside the supervised root's process
+group—exactly the explicitly recorded WP3a `setsid` escape residual—so the
+group strike correctly could not reap it. Separately, after a root exited and
+left no process group, the drain sweep's `kill(-pgid, SIGKILL)` returned
+`ESRCH`; the owner mislabeled that already-absent target as
+`posix-group-sigkill-failed:ESRCH`.
+
+**Red evidence.** A clean no-hardlink Ubuntu WSL2 clone of exact WP5k commit
+`6bfe4a84a8d616725e5c41eaa9c29ad12a1f747a` / tree
+`7f93ea058e627b1840a88c400e08a4f45bc2bd7b` reproduced exactly 18/20
+passed and those two failures, with an ERROR manifest, no receipt, clean source
+identity, exact Linux toolchain, and confirmed clone cleanup. The 2,781-byte
+record at
+`artifacts/manual/wp5l-linux-process-supervisor-pre-fix/reproduction.json` has
+SHA-256
+`19d72bd76613df98bccba6d3928523cabeee4be955e49fb2dcbc1282c75effc2`;
+its 7,948-byte report has SHA-256
+`b5bfeb2b45233d2bb13bbbe8dc18e1dec8dd44a3b3e69ff1c9a40258a2dbe497`.
+
+A direct owner-level regression then used the existing impossible fake PID to
+produce real Linux `ESRCH` and injected `EACCES` to require every other signal
+failure to remain explicit. A second clean exact-HEAD clone applied only the
+2,294-byte test patch (SHA-256
+`97aac7f482eaa39bdc067855067b30a66061d9c736ec88fcde74657d049c04cf`)
+and proved the regression red at 18/21 passed, three failed, zero skipped, with
+ERROR/no receipt and staged-only source scope. Its 3,719-byte record has
+SHA-256
+`97247b00acd78a3913ce43e0ce1d27881234f1ad2f1826bd10b2597a8250769d`;
+the 8,732-byte report has SHA-256
+`1e96e4e43e2218296082dd11d80c3e15b485f228f036b6534b3a785651d27266`.
+
+**Correction.** The intact-tree fixture now detaches its grandchild only on
+Windows; POSIX keeps it in the supervisor-created process group and therefore
+tests the contract the owner actually provides. Production drain-sweep
+classification retains `posix-group-sigkill` when the signal reports only
+`ESRCH`, because there is no remaining group to kill; every other error keeps
+`posix-group-sigkill-failed:<code>`. Spawn topology, group SIGTERM/SIGKILL
+escalation, timeout/output cap, redaction, drain bounds, exactly-once settle,
+and shared controller/verifier/evidence ownership do not change. The recorded
+`setsid`-detached daemon residual remains open and is not relabeled as solved.
+
+**Focused diagnostics.** A clean exact-Linux clone with only the owner/test
+correction passed 21/21 with zero skips and a valid receipt; its patch tree is
+`ab13cdb58d7d3c378822d94466960ad1ee553155`. The 7,605-byte report at
+`artifacts/manual/wp5l-linux-focused-diagnostic-1/evidence/invariant-vitest-report.json`
+has SHA-256
+`160772885fcf18fac26d03bf3780bed16a9a2b6faf2d22675a49791b33a5ed33`,
+and the independently matched 603-byte receipt has SHA-256
+`4f7bad05cb7de782bf9ea1fba1e744cd7584a863000a838dd958e91cb512efe5`.
+Exact Windows focused verification passed 19/21 with zero failures and only
+the two existing POSIX-only skips; its 7,504-byte report has SHA-256
+`3250f8104f6874b135b7acc65bc0bb28f1a0e402f75c0a8f47754ea78bc5c11b`
+and its independently matched 603-byte receipt has SHA-256
+`7796162fec6aa510063c790c2c14404fd1a78d9f6a83aae1277177465c3ac2ae`.
+
+The pre-freeze receipt-owning format diagnostic then correctly rejected style
+in both changed TypeScript files. Its 8,953-byte ERROR manifest has SHA-256
+`c57322e39f00f063dc2ad2f7ac2ba808439ab7196c50c0d23e36d92d094a51c4`
+and no receipt. Pinned Prettier changed only those two bounded paths; no
+diagnostic PASS is reused after formatting, and every frozen-tree final command
+runs again.
+
+**Stable-tree milestone protocol.** Source, regression, this log, and the
+execution plan freeze before final commands. The exact staged tree runs a fresh
+Linux focused shard and receipt-owning Windows focused, invariant,
+orchestrator, unit, typecheck, lint, and format commands separately and
+serially in fresh roots beneath `artifacts/manual/wp5l-*-final/`. Outcomes and
+independent hashes remain in ignored command evidence and the final handoff
+rather than being backfilled into tracked files and changing the candidate.
+
+**Commit.** Assigned by the single cohesive WP5l commit containing this entry;
+identify it as the newest commit touching the entry. It is not pushed. A later
+external publication had already advanced `origin/master` to WP5k before this
+increment began; no remote mutation occurs here.
+
+**Known gaps.** Worked-example payload identity and candidate identity are the
+next retained Linux controller clusters. The larger Windows controller
+path-spelling/identity cascades, documented POSIX `setsid` process escape,
+CAL-1, hidden validation, product breadth, autonomous readiness, and human
+verification remain open. This increment makes no readiness or product-
+completion claim.
+
 ## 2026-08-18 — WP5k POSIX Doctor ENOTDIR portability closure
 
 **Objective.** Select one causal Linux controller failure from retained Exact

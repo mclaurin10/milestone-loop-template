@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   superviseCommand,
@@ -251,15 +251,17 @@ describe("bounded process supervision", () => {
     const directory = await scratchDirectory("milestone-loop-supervisor-tree-");
     const pidFile = join(directory, "grandchild.pid");
     spawnedPidFiles.push(pidFile);
-    // detached: a non-detached grandchild would die with its Node parent via
-    // libuv's kill-on-close job object on Windows, which would make this test
-    // pass without taskkill /T proving anything. A detached grandchild
-    // escapes the job object, so only the intact-tree taskkill can reap it.
+    // A non-detached grandchild would die with its Node parent via libuv's
+    // kill-on-close job object on Windows, which would make this test pass
+    // without taskkill /T proving anything. Detach it there so only the intact
+    // tree taskkill can reap it. On POSIX, detaching would create a new session
+    // outside the supervisor's documented process-group boundary, so keep the
+    // grandchild in the root's group and prove the group kill instead.
     const script = [
       "const { spawn } = require('node:child_process');",
       "const fs = require('node:fs');",
       "const pidFile = process.env.LOOP_TEST_PIDFILE;",
-      "const g = spawn(process.execPath, ['-e', \"require('fs').writeFileSync(process.env.LOOP_TEST_PIDFILE, String(process.pid)); setInterval(() => {}, 1000);\"], { stdio: 'ignore', env: process.env, detached: true });",
+      "const g = spawn(process.execPath, ['-e', \"require('fs').writeFileSync(process.env.LOOP_TEST_PIDFILE, String(process.pid)); setInterval(() => {}, 1000);\"], { stdio: 'ignore', env: process.env, detached: process.platform === 'win32' });",
       "g.unref();",
       "const flood = () => { const line = 'x'.repeat(8191) + '\\n'; setInterval(() => { for (let i = 0; i < 64; i += 1) process.stdout.write(line); }, 5); };",
       "const wait = () => { if (fs.existsSync(pidFile) && fs.readFileSync(pidFile, 'utf8').length > 0) flood(); else setTimeout(wait, 25); };",
@@ -507,6 +509,47 @@ describe("deterministic supervision state machine (scripted child)", () => {
     expect(child.stdout.destroyed).toBe(true);
     expect(child.stderr.destroyed).toBe(true);
     expect(result.supervision.duplicateSettleSignals).toEqual([]);
+  }, 15_000);
+
+  it("treats only an absent POSIX process group as a completed drain sweep", async () => {
+    const absentGroupChild = new FakeChild();
+    const absentGroupResultPromise = superviseFake(absentGroupChild, {
+      killGraceMs: 100,
+    });
+    absentGroupChild.emit("exit", 0, null);
+    const absentGroupResult = await absentGroupResultPromise;
+
+    if (process.platform === "win32") {
+      expect(absentGroupResult.supervision.drainSweep).toBe(
+        "unavailable-win32",
+      );
+      return;
+    }
+
+    // FakeChild's impossible pid makes the real group signal return ESRCH.
+    expect(absentGroupResult.supervision.drainSweep).toBe(
+      "posix-group-sigkill",
+    );
+
+    const denied = Object.assign(new Error("group signal denied"), {
+      code: "EACCES",
+    });
+    const processKill = vi.spyOn(process, "kill").mockImplementation(() => {
+      throw denied;
+    });
+    try {
+      const deniedChild = new FakeChild();
+      const deniedResultPromise = superviseFake(deniedChild, {
+        killGraceMs: 100,
+      });
+      deniedChild.emit("exit", 0, null);
+      const deniedResult = await deniedResultPromise;
+      expect(deniedResult.supervision.drainSweep).toBe(
+        "posix-group-sigkill-failed:EACCES",
+      );
+    } finally {
+      processKill.mockRestore();
+    }
   }, 15_000);
 
   it("abandons a child whose exit is never observed within the hard bound", async () => {

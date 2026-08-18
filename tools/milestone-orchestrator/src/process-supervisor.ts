@@ -436,7 +436,9 @@ export function superviseCommand(
           error instanceof Error && "code" in error
             ? String((error as NodeJS.ErrnoException).code)
             : String(error);
-        drainSweep = `posix-group-sigkill-failed:${code}`;
+        // ESRCH means the root's process group is already empty. The sweep has
+        // no remaining target; every other signal failure stays explicit.
+        if (code !== "ESRCH") drainSweep = `posix-group-sigkill-failed:${code}`;
       }
     };
 
