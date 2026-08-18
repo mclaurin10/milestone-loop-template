@@ -1,268 +1,334 @@
 # Current Execution Plan
 
-**Status:** WP5j Windows fresh-adopter shared-store closure planned; isolated-store reproduction in progress
-**Updated:** 2026-08-17
+**Status:** WP5k timeout-only harness correction focused-green; third frozen-tree verification in progress
+**Updated:** 2026-08-18
 **Owner:** autonomous loop
 
 ## Objective
 
-Complete one cohesive WP5j increment after auditing Exact runtime CI run
-`32060615125` for pushed WP5i commit
-`87bd41e072a9e49baf212dc803ead83acbdabb92`. Preserve the now-passing real
-trusted-container boundary and fix only the Windows fresh-adopter failure in
-which the generated repository selects a different drive-local pnpm store from
-the already hydrated source checkout. Make the smoke coordinator resolve the
-exact store used by its pinned source-side pnpm invocation and supply that
-store explicitly to the generated repository's unchanged offline/frozen/copy
-install. Reproduce the failure and corrected outcome across Windows volumes,
-add regression coverage, run applicable exact-toolchain suites with
-command-owned evidence, independently audit the evidence, and create one
-narrow local commit without pushing.
+Complete one causal, cohesive WP5k increment for the earliest Linux controller
+failure retained from Exact runtime CI run `32060615125`. On POSIX, inspecting
+the retired file-lease guard below a configured ancestor that is a regular file
+raises `ENOTDIR`; Windows reports the same unreachable leaf as absent. Make the
+two read-only path observers involved in that Doctor case classify only
+`ENOENT` and `ENOTDIR` as an unreachable leaf: the configured-path walker must
+continue upward to report the exact nearest file, and the legacy-guard reader
+must report no leaf. Mutation remains fenced by contained-directory validation
+and the exact guard check. Add direct owner-level regression coverage, prove
+the original Linux failure red then green under the exact toolchain, run
+applicable serial verification with command-owned evidence, independently
+audit all bindings, and create one narrow local commit without pushing.
 
-This increment does not fix or relabel the Linux or Windows controller test
-clusters. It does not change package or lock files, generated-adopter package
-content, the OCI fixture/provider/matrix, workflow job scheduling, exact
-toolchain pins, completion eligibility, commissioning/readiness/verifier
-semantics, immutable authority, calibration, hidden validation, or product
-scope. It does not claim hosted Windows PASS until a later pushed revision
-runs on GitHub's native `windows-2022` environment, and it does not begin WP6.
+This increment does not address the later process-supervision, worked-example
+payload-identity, candidate-identity, or Windows controller path-spelling
+clusters. It does not change lease ownership/ref semantics, create a legacy
+guard during inspection, weaken unsafe-path diagnosis, alter packages or
+lockfiles, modify CI workflow scheduling, change commissioning/readiness/
+verifier meanings, begin CAL-1 or product work, or claim autonomous readiness.
+Final verification exposed a pre-existing recurring test-only timeout in the
+workspace-diagnostics cleanup case. Under the regression rule, feature work
+remains stopped while this same increment removes only that flaky harness
+budget; production cleanup behavior and every semantic assertion remain out of
+scope and unchanged.
 
 ## Goal Constraints
 
 - Preserve `PROJECT_GOAL.md`, all immutable-lock baseline/active meanings,
-  CAL-1 `open_not_started`, the readiness default profile and permanent marker,
-  original acceptance contract, commissioned identities, exact verifier
-  semantics, invariant IDs, Doctor/Status schemas, examples, and completed
+  CAL-1 `open_not_started`, readiness default profile and permanent marker,
+  original acceptance contract, exact verifier semantics, and completed
   evidence.
 - Preserve exact Node `24.18.0` and pnpm `11.15.1`. Windows commands put
-  `.tools\node-v24.18.0-win-x64` first on `PATH` and invoke its
-  `corepack.cmd`. No package-manager fallback, floating version, or dependency
-  update is permitted.
-- The generated repository install remains `--offline --frozen-lockfile
-  --package-import-method=copy`. Store sharing may only point it at the exact
-  controller store already hydrated by the frozen source install; it may not
-  enable network, mutate source lock/package bytes, rely on an unrelated warm
-  cache, or silently retry against another store.
-- Resolve the store through the same pinned pnpm invocation and exact source
-  working directory used by the coordinator. Reject empty, relative,
-  multi-line, malformed, or failed output rather than guessing.
-- Preserve the generated repository's clean two-commit bootstrap history,
-  absent readiness marker/tree/history, current config/model-policy schemas,
-  command-owned typecheck/unit receipts, independent artifact/manifest audit,
-  completion-ineligible smoke label, and exact source identity fence.
+  `.tools\node-v24.18.0-win-x64` first on `PATH`; Linux reproduction/focused
+  verification uses `/home/duncan/.local/node-v24.18.0-linux-x64` in Ubuntu
+  WSL2 and the pinned pnpm invocation.
+- Read-only inspection may treat `ENOTDIR` as absence only while walking an
+  unreachable configured descendant or reading the unreachable legacy guard
+  leaf. The configured-path Doctor check must remain `block /
+  configured-path-unsafe` and retain the exact nearest-file facts;
+  non-missing filesystem errors must still propagate or produce the existing
+  fail-closed unsafe diagnostic, as owned by each observer.
+- Mutation must continue to validate/create the guard parent through
+  `ensureContainedDirectory`, require the exact serialized guard before ref
+  publication, and leave both the obstructing ancestor and private lease ref
+  untouched on failure.
+- Preserve `refs/milestone-loop/controller-lease` ownership, CAS, release,
+  stale-owner, schema, status/Doctor output, and legacy conflict semantics.
+- The cleanup test's timeout is not an acceptance performance threshold. Any
+  adjustment must retain the exact real filesystem/Git path and all archive,
+  deletion, diff, state, and preservation assertions; it may only provide
+  stable Windows scheduling/filesystem headroom below the one-hour wrapper.
 - Never edit, stage, move, delete, re-encode, clean, or otherwise mutate the
   protected user-owned untracked
   `Implementation-ready improvement plan 8-5-26.txt`.
 
 ## Baseline Evidence
 
-- Local `master`, `HEAD`, and fetched `origin/master` are exactly
-  `87bd41e072a9e49baf212dc803ead83acbdabb92`, tree
-  `015964e7aca00251e2248942e9b695582bca1023`, parent
-  `a868d9d92227cb95b17db93b14038ae2d24ec026`, at `0 ahead / 0 behind`.
-  The tracked tree/index are clean and the protected human plan is the sole
-  untracked path.
-- All four immutable actual hashes match their lock baselines and active
-  values. The default profile is `readiness`, the permanent activation marker
-  is present, and CAL-1 is `open_not_started`.
-- The protected plan remains exactly 78,574 bytes with SHA-256
+- Resume audit fetched live `origin/master`: local `master`, `HEAD`, and origin
+  are `b04d33a6869645ea4d847af7991831b249e2f882`, tree
+  `25f0c9d16c4160758161aa3aea96af0bd2e7b5a6`, parent
+  `87bd41e072a9e49baf212dc803ead83acbdabb92`, at 0 ahead / 0 behind. The
+  protected human plan is the sole untracked path before this plan update.
+- WP5j's stale pre-verification checklist was corrected from its committed
+  evidence: isolated smoke 4/4, focused 4/4, invariants 13/13 + 7/7 + 15/15 +
+  61/61, orchestrator 588/590, unit 601/603, typecheck/lint/format PASS, and an
+  independent 13-receipt / 13-artifact / 464,155-byte / 13-binding audit with
+  zero mismatches.
+- A human-side publication occurred after the prior handoff; this agent did
+  not push it. Exact run `32073770072` exists for `b04d33a`: both fresh-adopter
+  jobs and trusted-container Linux passed, while both controller jobs failed.
+  Current controller-Linux artifact metadata is ID `9302741125`, 49,143 ZIP
+  bytes, SHA-256
+  `d68d14263122ee7afc45b405d5eb5c87482fce9b75c65d4eecc14b2528686e75`.
+- The retained controller-Linux JSON from run `32060615125` has SHA-256
+  `6a412b868209902e54a014f8e5c3ea57a9abec1f7f7570a315bb48b4b6e75e8e`
+  for its complete job log and reports 578/588 passed, 9 failed, 1 skipped.
+  Failed-suite start times prove causal order: Doctor `1786995000003`, process
+  supervisor `1786995022223`, worked example `1786995133398`, candidate
+  identity `1786995183453`. Doctor is therefore the first recorded failure.
+- The exact hosted Doctor stack is `lstat -> readLegacyPath ->
+  ControllerLease.inspect -> controllerLeaseCheck -> runDoctorDiagnostic`; its
+  `lstat(.../state/controller.lease)` throws POSIX `ENOTDIR`. The existing
+  Doctor test expects the separate configured-path check to block rather than
+  crash.
+- The local clean-commit WSL reproduction used Node `v24.18.0`, pnpm `11.15.1`,
+  Linux x64, and the receipt-owning Doctor shard. It reproduced exactly 18/19
+  passed and one ENOTDIR failure with ERROR manifest/no receipt, preserved
+  clean source identity, and removed its disposable clone. Structured evidence
+  is `artifacts/manual/wp5k-linux-enotdir-pre-fix/reproduction.json` (2,532
+  bytes, SHA-256
+  `b3c37c446d154b63562f3df140e26486a612269c02b0fd756a29aaf7a0913017`);
+  its report is 7,967 bytes / SHA-256
+  `ecc091c2265ef2366f6c3576d3de50c1f30b44dc58e577a23eb6631182ee76f6`.
+- All four immutable actual hashes equal baseline and active values. The
+  default profile is `readiness`, `.agent/readiness-profile-activated.json` is
+  present, and CAL-1 remains `open_not_started`.
+- The protected plan remains 78,574 bytes with SHA-256
   `53ea98fb1cb880163a02d3b1d9365963e3fe891025ae3630f00bd4c9232293b1`,
   no-filter blob `9890a3cdd5288708a04102d27ff6fce9f0ebb90b`, and path-filtered blob
   `d0abdd24f404d9dc335818c355e39f7cfc531300`.
-- Exact push run
-  `https://github.com/mclaurin10/milestone-loop-template/actions/runs/32060615125`
-  (run 5, attempt 1) executed the exact candidate from
-  `2026-08-17T19:29:21Z` through `19:35:24Z` and concluded `failure`. All five
-  jobs, every step, complete logs, eight annotations, and all five ZIPs were
-  retrieved and inspected.
-- Job identities/results: fresh-adopter Windows `95480834015` failure;
-  controller Windows `95480834038` failure; fresh-adopter Linux `95480834051`
-  success; controller Linux `95480834113` failure; trusted-container Linux
-  `95480834183` success. The annotations are five action-runtime Node 20
-  deprecation warnings and three exit-code failures.
-- Artifact IDs / ZIP bytes / SHA-256: controller Windows `9298180337` / 52,794
-  / `7c58a84f11475d46a15e15f5cee430f938b866f6b17d20a7b18e1203f14f2c38`;
-  controller Linux `9298111032` / 49,146 /
-  `42e3c9d8325b818188c65ee2c9a1bbf8caa8d5d1c0bae2cb3125c81a3179f131`;
-  trusted container `9298026972` / 21,902 /
-  `9ca49490907fec39b280dc1d715478ee5798085719e55a2e8a11baaf43deca1c`;
-  adopter Windows `9298008310` / 8,736 /
-  `f210504bdb7850c7c046f5fcfdcfc6ee29c3ebc92ace7ed55d89c766c09ba22e`;
-  adopter Linux `9298000229` / 15,191 /
-  `cbcfcffbec09c4bd39b1a28ab289440edb8de64c8cab8383aee0cabef1b0bdd5`.
-- Retained evidence is under ignored
-  `artifacts/hosted/run-32060615125/`. The independent 23,471-byte
-  `audit-result.json` has SHA-256
-  `54b50a40334ca8efab5aa291aa341b9516e4504783557d44d524feebb93060bf`
-  and status PASS: 13 PASS receipts, 13 rehashed artifacts totaling 81,253
-  bytes, 12 exact manifest bindings plus one OCI containment binding, two
-  honest ERROR/no-receipt manifests, and zero mismatches.
-- WP5i succeeded in hosted Docker `28.0.4`: committed source identity matched,
-  exact fixture hydration completed, and all six cases had their expected
-  dispositions (normal/boundary PASS; artifact-link/artifact-quota/
-  output-flood ERROR; hang TIMEOUT). Every containment artifact matches its
-  bytes/hash, all cases retained denied-network/read-only policy, and managed
-  container/volume inventories are empty before and after.
-- Linux fresh-adopter passed 4/4 tests and both audited receipts. Both
-  controllers passed contract 13/13, schema 7/7, policy 15/15, and fail-closed
-  61/61 invariants. Linux then reported 578/588 passed, 9 failed, 1 skipped;
-  Windows reported 512/588 passed, 74 failed, 2 skipped. Those clusters remain
-  outside WP5j.
-- Windows fresh-adopter failed before typecheck/unit evidence. The source
-  install downloaded all 138 packages including `@eslint/js@10.0.1`; the
-  generated repository reported `reused 0` and
-  `ERR_PNPM_NO_OFFLINE_TARBALL` for exactly
-  `@eslint/js/-/js-10.0.1.tgz`. GitHub's source is on `D:` while
-  `mkdtemp(tmpdir())` places the generated repository on `C:`, causing pnpm's
-  drive-local default stores to diverge. Linux uses one filesystem and passes.
 
 ## Steps
 
-1. [x] Complete authority/plan/log, Git/origin, immutable, readiness/CAL-1,
-       retained-evidence, and protected-file resume audits.
-2. [x] Discover run `32060615125`; inspect all jobs, steps, logs, annotations,
-       and ZIPs; retain raw metadata/evidence and independently audit receipts,
-       bindings, totals, OCI policy/dispositions, and cleanup.
-3. [x] Reproduce the hosted causal store split under exact
-       Node/pnpm using a disposable exact-commit clone, a source-scoped
-       hydrated store, and an isolated empty child default store. Retain both
-       resolved store paths and the unchanged offline failure. The attempted
-       `subst` drive-alias control is retained but rejected because both aliases
-       share one physical volume and pnpm correctly selected one store.
-4. [x] Add a narrow store-resolution owner to the coordinator, validate one
-       absolute path from pinned pnpm, and pass it explicitly to the generated
-       offline install with non-sensitive diagnostic disposition.
-5. [x] Add regression coverage for exact command/cwd, failed/empty/relative/
-       multi-line resolution, explicit install binding, and unchanged
-       offline/frozen/copy flags. Change the workflow contract only if the
-       public job command itself must change.
-6. [x] Run focused receipt-owning tests and diagnostics; correct only defects
-       within the shared-store boundary.
-7. [ ] **In progress:** repeat the frozen-candidate cross-volume smoke and require install,
-       typecheck, 4/4 unit tests, two receipts/artifacts/manifests, clean
-       two-commit history, source identity preservation, and cleanup.
-8. [ ] Run invariants, orchestrator, unit, typecheck, lint, and format
-       separately and serially into fresh command-owned evidence roots.
-9. [ ] Audit final receipts/artifacts/bindings/totals, diff, immutable/profile/
-       commissioning/package/lock/workflow identities, private refs, retained
+1. [x] Audit authority/plan/logs, Git/origin, protected file, immutable hashes,
+       lifecycle/CAL-1 state, retained WP5j evidence, and the current hosted
+       run; correct the stale WP5j plan state.
+2. [x] Parse retained controller-Linux suite start times and failure stacks;
+       select Doctor ENOTDIR as the earliest causal failure without relabeling
+       later clusters.
+3. [x] Reproduce the exact failure in a clean disposable Linux clone under
+       pinned Node/pnpm; retain report, ERROR manifest/no-receipt disposition,
+       toolchain identity, source identity, hashes, and cleanup proof.
+4. [x] Add a direct `ControllerLease.inspect` regression for
+       an unreachable legacy guard below a regular-file ancestor. Require
+       read-only absent-guard classification, unchanged ancestor bytes, absent
+       private ref, and continued mutation refusal; demonstrate it red on
+       Linux before the production fix.
+5. [x] Change only the legacy-path reader and Doctor's
+       configured-path metadata walker to accept POSIX `ENOTDIR` alongside
+       `ENOENT`, with an explicit portability rationale; retain all other error
+       handling and every mutation fence.
+6. [x] Run receipt-owning affected Doctor/lease shards under exact Linux and
+       Windows toolchains; correct only defects inside this boundary.
+7. [x] Freeze and exercise two candidate trees. Reject the first on format;
+       apply only pinned formatting. Reject the second when the full
+       orchestrator rerun reproduces the recurring cleanup-test timeout;
+       retain every non-passing manifest without a receipt.
+8. [x] Raise only that test's non-semantic timeout from 30 to 60
+       seconds, document the 98-sample / four-timeout evidence, and require
+       three serial receipt-owning focused-file passes before another freeze.
+9. [ ] **In progress:** freeze the corrected plan/log/tests/source, stage only bounded paths,
+       and rerun fresh Linux/Windows focused, invariants, orchestrator, unit,
+       typecheck, lint, and format commands separately and serially.
+10. [ ] Independently audit every final receipt, manifest, artifact, byte/hash
+       binding, test total, skip, candidate identity, source diff, immutable/
+       lifecycle/package/lock/workflow identities, private refs, retained
        evidence, and protected-plan identity.
-10. [ ] Update this plan and `docs/autonomy-log.md`; update the decision log
-        only for a durable decision; stage only WP5j paths, audit cached scope,
-        create one cohesive local commit, and do not push.
+11. [ ] Update `docs/autonomy-log.md`; update `docs/decision-log.md` only if a
+       durable decision beyond the narrow POSIX portability interpretation was
+       made. Create one cohesive local commit and do not push.
 
 ## Acceptance Criteria
 
-- The pre-fix Windows cross-volume reproduction resolves different source and
-  generated default stores and fails the unchanged offline install for the
-  hosted missing package without mutating source, package, or lock bytes.
-- The coordinator resolves the source store through exact pinned pnpm in the
-  source checkout, rejects ambiguous output/failure, and supplies it explicitly
-  while retaining `--offline --frozen-lockfile --package-import-method=copy`.
-- Regression tests fail if store resolution is removed, uses the generated cwd,
-  accepts an unsafe value, omits/substitutes the store, or weakens install flags.
-- The frozen-candidate cross-volume run passes generated install, typecheck,
-  and 4/4 tests; validates two receipts/artifacts/manifests; retains
-  completion-ineligible bootstrap semantics and clean two-commit history;
-  preserves source HEAD/tree/status; and removes its temporary root.
-- Already-green OCI workflow semantics and Linux-compatible adopter behavior
-  remain unchanged. Exact focused and broad suites pass with zero failures and
-  only the two declared Windows POSIX skips in broad Vitest aggregates.
-- No dependency, package/lock, generated payload, readiness/profile,
-  commissioning/verifier, invariant, authority, example, controller, or
-  unrelated workflow change occurs.
-- One cohesive commit contains only the coordinator correction, tests, plan,
-  autonomy record, and narrowly necessary guidance. It is not pushed; later
-  human push/hosted execution remains required for native hosted Windows PASS.
+- Retained hosted evidence and the exact local Linux reproduction identify the
+  same earliest ENOTDIR stack and keep all later controller clusters open.
+- A new owner-level regression is red before the fix on Linux and green after
+  it. Inspection reports absent legacy guard/no owner without writing any path
+  or private ref; acquisition still rejects the unsafe parent and preserves
+  both filesystem and ref state.
+- The existing Doctor case completes with `configuredPaths.status = block`,
+  `code = configured-path-unsafe`, the same nearest ancestor/kind facts, and no
+  state mutation on Linux and Windows.
+- Only `ENOENT` and `ENOTDIR` are classified as an unreachable leaf by the two
+  affected read-only observers. Invalid legacy leaf types/content remain
+  conflicts, and unrelated filesystem failures retain their existing
+  fail-closed handling.
+- Exact Linux and Windows focused shards pass with command-owned receipts and
+  independently verified artifacts. Windows broad aggregates pass with zero
+  failures and only the two declared POSIX process-group skips; invariants,
+  typecheck, lint, and format pass.
+- The real cleanup test passes three consecutive focused-file runs under the
+  exact Windows toolchain with its semantic assertions unchanged. Its timeout
+  remains bounded at 60 seconds; no retry, skip, conditional, mock, or product
+  behavior change is introduced.
+- No package, lock, workflow, authority, acceptance, readiness/profile,
+  commissioning, verifier, schema, generated-adopter, OCI, product, or
+  unrelated controller change occurs.
+- One narrow verified commit contains only the lease reader, regression,
+  active plan, autonomy record, and any strictly necessary documentation. It
+  is not pushed and the protected untracked file remains byte-identical.
 
 ## Verification
 
-All project commands use exact Windows Node `24.18.0` and pnpm `11.15.1` with
-the pinned Node directory first on `PATH`; long commands run serially.
+All commands use exact Node `24.18.0` and pnpm `11.15.1`. Long commands run
+separately and serially into fresh command-owned evidence roots.
 
-1. Pre-fix ignored exact-commit store-split reproduction: configure an
-   external source store through a source-only `.npmrc`, hydrate it, give the
-   temporary generated repository a fresh isolated Windows `LOCALAPPDATA` and
-   temp root, prove the resolved stores differ, run the unchanged coordinator,
-   and retain the missing-tarball failure/logs. Keep the earlier logical-drive
-   same-volume PASS only as a rejected control.
-2. Receipt-owning focused Vitest for `fresh-adopter-ci-smoke.test.ts` and any
-   affected workflow contract through `tools/run-tool-evidence.mjs
-   invariant-vitest` into a fresh WP5j root.
-3. Frozen-candidate repetition of the real cross-volume smoke with independent
-   result/history/status/receipt/artifact/manifest/source/cleanup audit.
-4. Run `pnpm test:invariants`, `pnpm test:orchestrator`, `pnpm test:unit`,
-   `pnpm typecheck`, `pnpm lint`, and `pnpm format:check`, each with its own
-   fresh command-owned evidence directory.
-5. Independently audit final evidence and identities; inspect
-   `git diff --check` and staged scope; create one no-push commit and audit its
-   commit/tree/parent.
+1. Retained pre-fix Linux reproduction:
+   `artifacts/manual/wp5k-linux-enotdir-pre-fix/run.sh` against exact clean
+   `b04d33a`; independently validate its structured report/manifest/toolchain,
+   absent receipt, source identity, and cleanup.
+2. Red owner regression: materialize a disposable Linux clone of exact HEAD
+   plus only the new test, run receipt-owning `invariant-vitest` for
+   `controller-lease.test.ts` and `doctor.test.ts`, and require the original
+   and owner-level ENOTDIR failures with ERROR manifest and no receipt.
+3. Diagnostic focused commands after the fix on Linux and Windows through
+   `tools/run-tool-evidence.mjs invariant-vitest`, targeting both affected test
+   files with `--fileParallelism=false`.
+4. Run three serial receipt-owning focused executions of
+   `orchestrator-cleanup.test.ts` after the timeout-only correction; audit each
+   report/receipt/manifest and exact target-test duration.
+5. From the frozen staged candidate, repeat exact Linux focused verification,
+   then run Windows focused verification, `pnpm test:invariants`,
+   `pnpm test:orchestrator`, `pnpm test:unit`, `pnpm typecheck`, `pnpm lint`,
+   and `pnpm format:check`, each with a distinct fresh
+   `LOOP_VERIFY_COMMAND_ARTIFACT_DIR`.
+6. Independently parse final Vitest totals and manifests, recompute every
+   declared artifact/receipt byte count and SHA-256, verify manifest bindings,
+   and audit Git/protected/immutable/lifecycle/package/lock/workflow identities
+   before and after the no-push commit.
 
-Evidence invalidation: any source install, generated package/lock, pnpm
-invocation, smoke command, workflow fresh-adopter command, test owner, receipt
-audit, or generated-history semantic change invalidates the corresponding
-cross-volume evidence. Final plan/log text freezes before the last smoke and
-broad commands; outcomes stay in ignored evidence and the final handoff.
+Evidence invalidation: any lease-reader/test semantic change invalidates Linux
+and Windows focused evidence; any later tracked change invalidates the frozen
+candidate broad evidence. Final plan/log text freezes before final commands;
+outcomes remain in ignored evidence and the handoff rather than altering the
+tree they verify.
 
 ## Risks and Recovery
 
-- Same-volume local runs hide the GitHub Windows defect. A `subst` alias did
-  not create a second volume and the unchanged smoke correctly passed; that
-  result is retained as a rejected control. The accepted reproduction must
-  instead prove two distinct resolved store paths, with only the source store
-  hydrated and the child still offline.
-- `npm_execpath` and Corepack use different platform wrappers. Store discovery
-  must reuse the existing invocation abstraction and preserve Windows quoting.
-- Do not copy a host-specific absolute path into tracked durable results;
-  record only disposition or a path hash/leaf where needed.
-- A temporary drive mapping is host-global. Verify the drive is absent, map
-  only a validated ignored root, always remove exactly that mapping in
-  `finally`, and never delete or move a computed drive root.
-- A local `subst` reproduction exercises pnpm drive selection but does not
-  replace later hosted `windows-2022` execution.
-- Recovery is an ordinary revert of one WP5j commit. No push, recommissioning,
-  state mutation, history rewrite, dependency update, or destructive cleanup
-  is required.
+- Treating `ENOTDIR` as generic success could hide an unsafe configured parent.
+  Keep the change inside `readLegacyPath` and the configured-path ancestor
+  walker: the latter must walk to and classify the parent file, while mutation
+  independently runs `ensureContainedDirectory` before guard publication.
+- A raced parent substitution during acquisition can make the guard leaf
+  unreachable. Returning absence remains fail-closed because the subsequent
+  exact-guard comparison refuses acquisition; the regression must preserve
+  absent ref and ancestor bytes.
+- Windows alone cannot prove this bug because its filesystem API returns
+  `ENOENT` for the same shape. Linux red/green evidence is mandatory; Windows
+  focused and broad runs guard against cross-platform regression.
+- WSL dependency materialization must stay in a disposable ext4 clone; never
+  replace the source checkout's Windows `node_modules` with Linux symlinks or
+  binaries.
+- The cleanup test performs real clone/archive/delete work and has four
+  retained timeouts among 98 samples at the old 30-second boundary. A 60-second
+  budget gives observed Windows filesystem variance headroom without changing
+  the semantic pass condition; any 60-second breach remains a real failure,
+  not a retry trigger.
+- Recovery is an ordinary revert of one WP5k commit. No push, ref rewrite,
+  recommissioning, schema migration, dependency update, or destructive source
+  cleanup is required.
 
 ## Progress and Evidence
 
-- 2026-08-17: Verified repository authorities, exact WP5i Git/origin identity,
-  immutable hashes, readiness/CAL-1 state, and protected file.
-- 2026-08-17: Audited run `32060615125` job by job and retained raw API
-  metadata, complete logs, ZIPs, and extracted artifacts.
-- 2026-08-17: Independently validated 13 receipts/artifacts, 81,253 bytes, 12
-  manifest bindings plus one containment binding, test totals, all OCI cases,
-  denied-network/read-only policy, and zero remaining managed resources.
-- 2026-08-17: Confirmed WP5i fixed its hosted Docker boundary and selected the
-  independent Windows fresh-adopter store split as the next bounded WP5 gap.
-- 2026-08-17: A safe temporary `Z:` alias of the exact clone remained on the
-  same physical volume, so pnpm reused all 138 packages and the unchanged smoke
-  passed 4/4. The mapping was removed and the PASS artifacts were retained as
-  a rejected reproduction control. The plan now uses explicit isolated stores
-  to reproduce the causal visibility split locally.
-- 2026-08-17: The accepted pinned invocation-shim reproduction exposed a
-  hydrated source store and a different empty child default store to the
-  unchanged coordinator. The generated offline/frozen/copy install reused and
-  downloaded zero packages, then failed exactly on `@eslint/js@10.0.1`; source
-  Git status and both tracked lock hashes remained unchanged, and no generated
-  temporary root remained. The 3,696-byte structured record is
-  `artifacts/hosted/run-32060615125/reproduction/windows-store-split-wrapper-pre-fix/result.json`,
+- 2026-08-18: Verified the handoff against live repository state. All expected
+  commit/tree/parent, immutable, lifecycle, CAL-1, retained evidence, and
+  protected-file identities matched except the anticipated remote divergence:
+  `origin/master` had since advanced to `b04d33a`, yielding 0/0 divergence.
+- 2026-08-18: Located exact hosted run `32073770072` for the externally pushed
+  WP5j commit. Both fresh-adopter jobs now pass natively; both controller jobs
+  remain failed. No push was performed in this session.
+- 2026-08-18: Corrected WP5j's stale checklist from its committed final
+  evidence before selecting the next increment.
+- 2026-08-18: Parsed all retained Linux failures and their recorded start
+  times. The Doctor ENOTDIR suite predates the process, worked-example, and
+  candidate-identity suites and is the bounded WP5k cause.
+- 2026-08-18: Reproduced the exact one-test failure under clean-commit Linux
+  Node/pnpm, retained structured ERROR/no-receipt evidence, independently
+  rehashed it, and confirmed disposable-clone cleanup.
+- 2026-08-18: Added the direct lease-owner regression and materialized exact
+  `b04d33a` plus only that 1,868-byte test patch in a disposable Linux clone.
+  The receipt-owning two-file shard was red at 34/36 passed with exactly two
+  ENOTDIR failures (owner and Doctor), an ERROR manifest, no receipt, unchanged
+  base identity, and confirmed cleanup. The 3,571-byte structured record at
+  `artifacts/manual/wp5k-linux-owner-regression-red/reproduction.json` has
   SHA-256
-  `a63005aee099fc03640d16b44f38b57dd97194b978d0edd7053c51888ab0aae2`.
-- 2026-08-17: Added the exact source-cwd store resolver, absolute single-path
-  validation, existing-directory fence, explicit generated install binding,
-  and hashed non-sensitive result disposition. The public workflow command,
-  generated payload, and package/lock files remain unchanged.
-- 2026-08-17: Focused regression was red at 2 passed / 2 failed before the
-  owner existed, then green at 4/4. Receipt-owning focused, typecheck, lint, and
-  corrected format diagnostics passed. The corrected isolated-store smoke
-  passed install/typecheck/4 tests and independently matched 2 receipts, 2
-  artifacts (3,256 bytes), and 2 manifest bindings with no mismatches. Its
-  3,606-byte result SHA-256 is
-  `9a3b76ba44b1255dcd644c1141ae4795fc6ba7e0082bb321bfbdd086bf1e791b`.
+  `40d928bf18be9cd7caaf8c74a5633c29005e97945ffa6fdbaab9aa4bced68a99`;
+  its 14,249-byte report has SHA-256
+  `5f6b7532e6503481113e10af7383c2bd830705cca820462056e40f44f463cd1c`.
+- 2026-08-18: The first corrected Linux diagnostic proved the lease-owner test
+  green and advanced the Doctor case past its original crash, but finished
+  35/36 because `existingMetadata` also treats POSIX `ENOTDIR` as opaque. Its
+  outer fail-closed catch consequently returned no nearest path instead of
+  walking to `artifacts/orchestrator` and classifying that regular file. The
+  ERROR manifest retained no receipt. The 13,463-byte report at
+  `artifacts/manual/wp5k-linux-focused-diagnostic-1/failure-evidence/invariant-vitest-report.json`
+  has SHA-256
+  `a28f8e7e359b496b93aeff2398dbcf39fddb5705d2c15db33ef68f6e8b28a5f1`.
+  The active scope now includes that second read-only observer; no mutation or
+  unrelated Doctor logic is added.
+- 2026-08-18: `existingMetadata` now gives POSIX `ENOTDIR` the same
+  ancestor-walk meaning as Windows `ENOENT`; `readLegacyPath` gives both codes
+  absent-leaf meaning. Every other error path and mutation fence is unchanged.
+  The exact Linux diagnostic then passed 36/36 across four reported suites and
+  independently matched one receipt, one artifact, and one manifest binding
+  with zero mismatches. Its 1,525-byte summary at
+  `artifacts/manual/wp5k-linux-focused-diagnostic-1/result-summary.json` has
+  SHA-256
+  `49030803e8868a26f859b4585890b29fcda89b1b1c1b33941286a44f8a22df7d`;
+  the 12,523-byte report has SHA-256
+  `3ad67c4082e65ce5ca3200f4bc6617bec9dc246bf49fb51e5c6b47d3f03cf46c`.
+- 2026-08-18: The post-change exact Windows diagnostic also passed 36/36
+  across four reported suites. Independent audit matched its 651-byte receipt
+  and 12,498-byte artifact to the manifest with zero mismatches; report
+  SHA-256 is
+  `35a2326793e320608282c1692c8c659ab7956f4cea8c63a8f61a41d5b03338f3`.
+- 2026-08-18: The first frozen staged tree
+  `f1d4eea454acfe614ef5001503940df40f4328ba` passed exact Linux focused
+  36/36, Windows focused 36/36, all four invariant commands, orchestrator
+  589/591 with only two declared skips, unit 602/604 with the same skips,
+  typecheck, and lint. Final format correctly rejected one style issue in
+  `controller-lease.test.ts`; its ERROR manifest retained no receipt and has
+  SHA-256
+  `9f99fc2c7eef6e0fac56428349e3a9bc72131c4141fef649f28f87f4ea25022f`.
+  Formatting that tracked test invalidates every first-tree PASS for final
+  citation, so none will be reused after the next freeze.
+- 2026-08-18: The formatted second tree
+  `f8219ed79d5327ebe528d2015839eb83e16db012` passed format, exact Linux and
+  Windows focused 36/36, invariants, typecheck, and lint. Its full orchestrator
+  rerun then rejected the tree at 588/591 passed, one failed, two declared
+  skips: the unchanged real cleanup assertion exceeded its explicit 30-second
+  budget at 30,173.705 ms. The 207,946-byte report at
+  `artifacts/manual/wp5k-orchestrator-final-r2/orchestrator-report.json` has
+  SHA-256
+  `ca753467c212df610fca2f061a19eac0394060d6e22ea21ca28035fb22f035b3`;
+  the ERROR manifest retained no receipt.
+- 2026-08-18: An audit of 98 retained reports for the exact assertion found
+  four timeout failures at 30,173.705, 30,263.47, 30,516.37, and 31,512.311 ms;
+  successful identical runs reach 27,170.63 ms, including 22,352.244 ms on the
+  first WP5k tree and 23,009.979 ms in WP5j. This is a recurring harness budget,
+  not an ENOTDIR or cleanup semantic regression. Finalization remains stopped
+  until a bounded timeout-only correction passes repeated focused and full
+  verification.
+- 2026-08-18: Changed only that test's timeout from 30,000 to 60,000 ms; no
+  production cleanup code or semantic assertion changed. Three serial
+  receipt-owning focused-file runs each passed 9/9 with zero skips and target
+  durations 24,159.078, 25,845.774, and 25,979.5 ms. Independent audit matched
+  every receipt and artifact binding with zero mismatches. Report hashes are
+  `acb46cc8680cbe123c741642001c8e71bebb6f0c07347dfe7eb7ee02e0856343`,
+  `495d2da11ed8e89898b79dfdabd2f6745eebb6c6516059ebeda10c6b159c6b8a`,
+  and `c5a30820806734925b1f1a102f53103ec867cd754b37dd468df0edbcf830c6df`.
 
 ## Next Action
 
-Freeze this plan and durable logs, stage only the bounded WP5j files, audit the
-exact staged tree and protected identities, then run a fresh final isolated-
-store smoke and every serial receipt-owning focused/broad command from that
-unchanged candidate before the single no-push commit.
+Freeze the source/tests/plan/autonomy record, stage exactly the six bounded
+paths, audit the third candidate tree and protected identities, then repeat
+every final command before the single no-push commit.

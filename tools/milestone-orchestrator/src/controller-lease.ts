@@ -187,7 +187,10 @@ async function readLegacyPath(path: string): Promise<string | null> {
     if (!metadata.isFile() || metadata.isSymbolicLink()) return "invalid";
     return await readFile(path, "utf8");
   } catch (error) {
-    if (errorCode(error) === "ENOENT") return null;
+    const code = errorCode(error);
+    // POSIX reports ENOTDIR when an ancestor makes this leaf unreachable,
+    // while Windows reports the same absent leaf as ENOENT.
+    if (code === "ENOENT" || code === "ENOTDIR") return null;
     throw error;
   }
 }

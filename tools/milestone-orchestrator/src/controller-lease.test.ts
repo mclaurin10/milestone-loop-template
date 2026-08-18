@@ -542,6 +542,40 @@ describe("controller mutation lease", () => {
     );
   });
 
+  it("inspects an unreachable legacy guard as absent without weakening acquisition", async () => {
+    const fixture = await leaseFixture();
+    const obstructingAncestor = join(fixture.root, "artifacts", "orchestrator");
+    const ancestorContents = Buffer.from("wrong-kind\n", "utf8");
+    await mkdir(dirname(obstructingAncestor), { recursive: true });
+    await writeFile(obstructingAncestor, ancestorContents);
+    const refsBefore = git(
+      fixture.root,
+      "for-each-ref",
+      "--format=%(refname)",
+      LEASE_REF,
+    );
+
+    expect(await ControllerLease.inspect(fixture.root, STATE_PATH)).toEqual({
+      path: fixture.leasePath,
+      reference: LEASE_REF,
+      legacyGuard: "absent",
+      present: false,
+      malformed: false,
+      owner: null,
+    });
+    await expect(
+      ControllerLease.acquire({
+        repositoryRoot: fixture.root,
+        statePath: STATE_PATH,
+        operation: "run",
+      }),
+    ).rejects.toMatchObject({ code: "ENOTDIR" });
+    expect(await readFile(obstructingAncestor)).toEqual(ancestorContents);
+    expect(
+      git(fixture.root, "for-each-ref", "--format=%(refname)", LEASE_REF),
+    ).toBe(refsBefore);
+  });
+
   it("inspects present, absent, malformed, and guard states read-only", async () => {
     const fixture = await leaseFixture();
     expect(await ControllerLease.inspect(fixture.root, STATE_PATH)).toEqual({

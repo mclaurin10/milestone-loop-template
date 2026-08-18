@@ -3,6 +3,134 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-18 — WP5k POSIX Doctor ENOTDIR portability closure
+
+**Objective.** Select one causal Linux controller failure from retained Exact
+runtime CI run `32060615125`, reproduce it locally under the exact Linux
+toolchain, correct its root cause without weakening configured-path or lease
+mutation fences, verify both supported controller platforms with command-owned
+evidence, and create one narrow local commit without pushing. Preserve all
+later controller clusters, immutable authority, lifecycle/CAL-1 state,
+packages/locks/workflow, completed evidence, and the protected human plan.
+
+**Cause and reproduction.** The retained controller report recorded failed
+suite starts in this order: Doctor `1786995000003`, process supervisor
+`1786995022223`, worked example `1786995133398`, and candidate identity
+`1786995183453`. The Doctor suite was therefore the first causal boundary. On
+POSIX, `lstat` of `state/controller.lease` beneath a regular-file
+`artifacts/orchestrator` ancestor raises `ENOTDIR`; Windows reports the same
+unreachable leaf as `ENOENT`. `readLegacyPath` propagated the POSIX error and
+crashed read-only Doctor before its configured-path block could be returned.
+
+An exact clean-`b04d33a` Ubuntu WSL2 clone under Node `v24.18.0` and pnpm
+`11.15.1` reproduced 18/19 Doctor tests with the exact hosted ENOTDIR stack,
+an ERROR manifest, no receipt, clean source identity, and confirmed clone
+cleanup. Its 2,532-byte structured record at
+`artifacts/manual/wp5k-linux-enotdir-pre-fix/reproduction.json` has SHA-256
+`b3c37c446d154b63562f3df140e26486a612269c02b0fd756a29aaf7a0913017`.
+The new direct lease-owner regression was then applied alone to another exact
+clone and proved red: 34/36 passed, with exactly the owner and Doctor cases
+failing at the same ENOTDIR stack, and no passing receipt. Its 3,571-byte
+record at
+`artifacts/manual/wp5k-linux-owner-regression-red/reproduction.json` has
+SHA-256
+`40d928bf18be9cd7caaf8c74a5633c29005e97945ffa6fdbaab9aa4bced68a99`.
+
+**Correction.** The two read-only observers involved in the same case now
+classify only `ENOENT` and `ENOTDIR` as an unreachable leaf. Doctor's
+configured-path walker continues upward to the actual regular-file ancestor
+and retains its `configured-path-unsafe` block with exact nearest-path/kind
+facts; the retired legacy-guard reader reports no leaf. All other errors retain
+their prior fail-closed behavior. `ControllerLease.acquire` still runs
+`ensureContainedDirectory`, rejects the obstructing ancestor with ENOTDIR,
+preserves its bytes, and publishes no private lease ref. The new regression
+asserts that complete inspection/mutation boundary.
+
+The first Linux diagnostic after only the lease-reader correction intentionally
+remained non-passing at 35/36: it exposed the same POSIX code in Doctor's own
+ancestor walker rather than concealing the incomplete fix. Its 13,463-byte
+ERROR report is retained at
+`artifacts/manual/wp5k-linux-focused-diagnostic-1/failure-evidence/invariant-vitest-report.json`
+with SHA-256
+`a28f8e7e359b496b93aeff2398dbcf39fddb5705d2c15db33ef68f6e8b28a5f1`.
+
+**Implementation diagnostics.** After correcting both read-only observers,
+the exact Linux affected shard passed 36/36 across four reported suites and an
+independent audit matched one receipt, one artifact, and one manifest binding
+with zero mismatches. Its 1,525-byte summary at
+`artifacts/manual/wp5k-linux-focused-diagnostic-1/result-summary.json` has
+SHA-256
+`49030803e8868a26f859b4585890b29fcda89b1b1c1b33941286a44f8a22df7d`;
+the 12,523-byte report has SHA-256
+`3ad67c4082e65ce5ca3200f4bc6617bec9dc246bf49fb51e5c6b47d3f03cf46c`.
+The post-change Windows affected shard independently passed 36/36; its
+12,498-byte report has SHA-256
+`35a2326793e320608282c1692c8c659ab7956f4cea8c63a8f61a41d5b03338f3`,
+and its receipt/artifact/manifest bindings all matched.
+
+**Rejected first freeze.** The first staged candidate tree
+`f1d4eea454acfe614ef5001503940df40f4328ba` passed exact Linux focused 36/36,
+Windows focused 36/36, all four invariant commands, orchestrator 589/591 with
+only the two declared skips, unit 602/604 with the same skips, typecheck, and
+lint. Final format then correctly rejected one style issue in the new lease
+regression. Its ERROR manifest retained no receipt and has SHA-256
+`9f99fc2c7eef6e0fac56428349e3a9bc72131c4141fef649f28f87f4ea25022f`.
+Pinned Prettier is applied only to that test before the second freeze; because
+the tracked tree changes, none of the first-tree PASS receipts are reused as
+final evidence.
+
+**Recurring harness timeout.** The formatted second tree
+`f8219ed79d5327ebe528d2015839eb83e16db012` passed format, exact Linux and
+Windows focused 36/36, invariants, typecheck, and lint. Its full orchestrator
+rerun then rejected the tree at 588/591 passed, one failed, and the same two
+declared skips. The unchanged real workspace-diagnostics cleanup assertion hit
+its explicit 30-second test timeout at 30,173.705 ms. The 207,946-byte ERROR
+report at
+`artifacts/manual/wp5k-orchestrator-final-r2/orchestrator-report.json` has
+SHA-256
+`ca753467c212df610fca2f061a19eac0394060d6e22ea21ca28035fb22f035b3`;
+its manifest retained no receipt.
+
+An audit of 98 retained reports for that exact assertion found four timeout
+failures at 30,173.705, 30,263.47, 30,516.37, and 31,512.311 ms. Identical
+semantic runs pass as high as 27,170.63 ms; the first WP5k tree passed in
+22,352.244 ms and WP5j passed in 23,009.979 ms. The test performs real
+clone/archive/delete work, and the 30-second harness budget is therefore a
+known recurring Windows filesystem/scheduling flake rather than a cleanup or
+ENOTDIR semantic regression. Under the regression rule, finalization stops and
+only that test timeout advances to a still-bounded 60 seconds. No production
+code, assertion, retry, skip, conditional, mock, or acceptance performance
+threshold changes. Three serial receipt-owning focused-file runs and every
+frozen-tree final command run again afterward; no second-tree PASS is reused.
+
+The timeout-only correction then passed three serial receipt-owning focused
+executions of the complete real cleanup file: 9/9 each with zero skips, while
+the target assertion completed in 24,159.078, 25,845.774, and 25,979.5 ms.
+Every receipt, artifact, and manifest binding independently matched with zero
+mismatches. The three report SHA-256 values are
+`acb46cc8680cbe123c741642001c8e71bebb6f0c07347dfe7eb7ee02e0856343`,
+`495d2da11ed8e89898b79dfdabd2f6745eebb6c6516059ebeda10c6b159c6b8a`,
+and `c5a30820806734925b1f1a102f53103ec867cd754b37dd468df0edbcf830c6df`.
+These focused results are diagnostic; a new frozen tree still runs every final
+gate serially.
+
+**Stable-tree milestone protocol.** Source, regression, this log, and the
+execution plan freeze before final commands. The exact staged tree runs a fresh
+Linux focused shard and receipt-owning Windows focused, invariant,
+orchestrator, unit, typecheck, lint, and format commands in distinct ignored
+roots beneath `artifacts/manual/wp5k-*-final/`. Outcomes and independent hashes
+remain in those command-owned artifacts and the final handoff rather than being
+backfilled into tracked files and changing the candidate they verify.
+
+**Commit.** Assigned by the single cohesive WP5k commit containing this entry;
+identify it as the newest commit touching the entry. It is not pushed.
+
+**Known gaps.** Process-supervision, worked-example payload identity,
+candidate identity, and the larger Windows controller portability clusters
+remain open, as do CAL-1, hidden validation, product breadth, autonomous
+readiness, and human verification. This increment makes no readiness or
+product-completion claim.
+
 ## 2026-08-17 — WP5j Windows fresh-adopter shared-store closure
 
 **Objective.** Reconcile pushed WP5i commit
@@ -99,8 +227,12 @@ roots beneath `artifacts/manual/wp5j-*-final/`. Outcomes and independent hashes
 remain in ignored command evidence and the final handoff rather than being
 backfilled into tracked files and changing the candidate they verify.
 
-**Commit.** Assigned by the single cohesive WP5j commit containing this entry;
-identify it as the newest commit touching the entry. It is not pushed.
+**Commit.** `b04d33a6869645ea4d847af7991831b249e2f882` (tree
+`25f0c9d16c4160758161aa3aea96af0bd2e7b5a6`, parent
+`87bd41e072a9e49baf212dc803ead83acbdabb92`). It was created locally without a
+push during WP5j. A later human-side publication advanced `origin/master` to
+that commit; exact hosted run `32073770072` then passed both fresh-adopter jobs
+and trusted-container Linux while both controller jobs remained failed.
 
 **Known gaps.** Only a later pushed native `windows-2022` run can close hosted
 Windows fresh-adopter status. Linux/Windows controller portability clusters,

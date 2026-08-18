@@ -393,7 +393,7 @@ describe("post-persistence workspace lifecycle", () => {
 
   it(
     "archives and deletes a terminal failed workspace when preservation is disabled",
-    { timeout: 30_000 },
+    { timeout: 60_000 },
     async () => {
       const fixture = await repositoryFixture(
         validConfig({ preserveFailedWorkspaces: false }),

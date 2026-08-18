@@ -558,7 +558,10 @@ async function existingMetadata(path: string) {
   try {
     return await lstat(path);
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+    const code = (error as NodeJS.ErrnoException).code;
+    // POSIX uses ENOTDIR for descendants of a non-directory; keep walking to
+    // that ancestor just as Windows does after reporting ENOENT.
+    if (code === "ENOENT" || code === "ENOTDIR") return null;
     throw error;
   }
 }
