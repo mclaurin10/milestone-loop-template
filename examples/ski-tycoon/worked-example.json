@@ -56,22 +56,22 @@
       "path": "invariant-suite.json",
       "role": "invariant-suite",
       "provenance": "maintained-compatibility-adapter",
-      "bytes": 4476,
-      "sha256": "ef40b3a7c2aadd22c17c5b739c4c9720decb6ab1ce8922e1334669e4ccc404e7"
+      "bytes": 4333,
+      "sha256": "43fc292ba60340908e26a201eaa34b1f3dbb970b6650d289b15ef21a05acdf0c"
     },
     {
       "path": "loop-recommissioning-verification.json",
       "role": "legacy-verification-manifest",
       "provenance": "maintained-compatibility-adapter",
-      "bytes": 7013,
-      "sha256": "8768b979632ed47df34de8683cb0003067e8558ed2bd34753066616f482fca40"
+      "bytes": 6821,
+      "sha256": "fb7fd2dbb5f30706e0a4a1fb2ba36e1d6044e6d6d53b9bc9730f7f27b3f49164"
     },
     {
       "path": "slow-suite-registry.json",
       "role": "slow-suite-registry",
       "provenance": "source-snapshot",
-      "bytes": 463,
-      "sha256": "625400e4797c141a2954c4a82727909e9df25c29d6c3890a33675ec52f34876b"
+      "bytes": 452,
+      "sha256": "0663dcae19e47db3abddfdbe3c802d9ed7663e1faf53104ed904441350785933"
     },
     {
       "path": "verification-scope-policy.json",

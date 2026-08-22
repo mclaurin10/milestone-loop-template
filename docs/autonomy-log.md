@@ -3,6 +3,136 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-21 — WP5m canonical worked-example payload identities
+
+**Objective.** Select the earliest unresolved hosted Linux controller failure
+after WP5k and WP5l, reproduce it from clean exact source under Node `24.18.0`
+and pnpm `11.15.1`, repair only its causal historical-package identity facts,
+verify both controller platforms with command-owned evidence, and create one
+narrow local commit without pushing. Preserve every historical payload blob,
+strict validation and cross-links, later candidate-identity and path-portability
+clusters, immutable authority, lifecycle/CAL-1 state, packages/locks/workflow,
+retained evidence, and the protected human plan.
+
+**Cause and ordering.** Retained hosted Linux run `32060615125` starts its
+failed suites at Doctor `1786995000003`, process supervisor `1786995022223`,
+worked example `1786995133398`, and candidate identity `1786995183453`. WP5k
+and WP5l close the first two, making `worked-example.test.ts` the next causal
+cluster. Its owner/test bytes are unchanged from hosted commit `87bd41e`
+through WP5l.
+
+WP4c generated three descriptor identities from stale Windows worktree copies:
+`invariant-suite.json` recorded 4,476 CRLF bytes instead of its 4,333-byte LF
+Git blob; `loop-recommissioning-verification.json` recorded 7,013 instead of
+6,821; and `slow-suite-registry.json` recorded 463 instead of 452. The global
+`* text=auto eol=lf` attribute predates WP4c, but those local copies survived
+from earlier checkout/edit history while Git committed canonical LF. All three
+staged blobs are unchanged from the WP4c base, parse to the same JSON as the
+stale copies, and retain every schema and cross-link. The other four descriptor
+entries already match Git exactly. Linux correctly materialized LF and rejected
+the first impossible descriptor identity; four negative cases then cascaded at
+that earlier boundary instead of reaching their intended assertions.
+
+**Red evidence.** A single clean no-hardlink Ubuntu WSL2 clone of exact WP5l
+commit `31a9e53ab2491ead0a3c88fac0860fdab9641f3a` / tree
+`1136baa31cbafbce2fbad27846395eebd6f903f9` reproduced 4/9 passed and the
+exact five hosted worked-example failures with an ERROR manifest, no receipt,
+clean source, exact toolchain, and confirmed clone cleanup. The first post-run
+parser rejected its own overly broad expectation because Vitest elides the
+causal error inside four downstream matcher messages; the shard was not rerun.
+A separate fail-closed finalizer accepted only the exact direct identity error
+and those four exact elided cascades. The 8,014-byte record at
+`artifacts/manual/wp5m-linux-worked-example-pre-fix/reproduction.json` has
+SHA-256
+`7093b891545acacdfc9e1828bff3c9b4d2224c4decd758f42d367783044fc023`;
+its 8,281-byte report and 9,022-byte ERROR manifest have SHA-256
+`3ba2d7f230d807b0ff1180c44206218074a50afbfe3daf87e96028401601ba08`
+and `45a106ffbb776a4ccbe32a7ebc2343b18749e64043452b14e831f26ffed1bd22`.
+
+The direct regression hashes every exact staged payload blob and compares the
+complete ordered inventory with the descriptor. A second clean exact-WP5l
+Linux clone applied and staged only its 1,812-byte patch (SHA-256
+`fef63f0953481edaa20f047444d441dd1a1bea89c38fb1e97c2a709e9630bb63`)
+at tree `e92e6e455388aaa919d0ed6633ff2bb7876e656b` and proved it red: 4/10
+passed, six failed, ERROR/no receipt, staged-only test scope, and confirmed
+cleanup. Vitest elided the array contents from the owner failure, so the first
+post-run predicate again rejected only its own message assumption; the shard
+was not rerun, and a separate finalizer bound the exact test patch and manifest
+candidate tree to the failed owner assertion plus the direct mismatch and four
+cascades. Its 8,906-byte record has SHA-256
+`fd98168fa70a2c894569456f214e1a56edee9e48ac247633c47bea6895e42ded`;
+the 8,883-byte report and 9,016-byte ERROR manifest have SHA-256
+`ed0a300277880e6c5f2d576622fe47dfee216425fc1efff88f89e7f9d4c2c69c`
+and `7fbb24e87ce3cc4ebe18ac8dfa012e8cb760831bdbcb6144405d6a2b06a108ef`.
+
+**Executable semantic audit and correction.** Before source implementation, a
+third clean Linux clone proposed only the owner test and three descriptor
+metadata pairs. The first audit predicate overreached by requiring the WP4c
+README change to predate WP4c, and the next invocation forwarded a literal
+separator rejected by the strict CLI; neither reached or altered source
+implementation. The corrected audit proved all seven candidate payload blobs
+equal HEAD, all three mismatched blobs equal the WP4c base, zero payload paths
+changed, and exactly three descriptor byte/hash pairs differed. The real
+explicit validator then passed the complete regular/tracked file inventory,
+strict schemas, legacy identities, registry/check catalogue, protected paths,
+and historical/inactive/non-executable semantics. The complete focused suite
+passed 10/10 with a valid receipt at candidate tree
+`f5f18bd8ba06c2b19c5c7874410905a4f23f55b5`.
+
+The 10,752-byte audit at
+`artifacts/manual/wp5m-semantic-audit-pre-implementation/audit-result.json`
+has SHA-256
+`5f5562f6c5228de6b59228fd4a6c5aa56289bae925b1f03105d8c0f57d616baf`.
+Its 4,025-byte report, 9,271-byte manifest, and 599-byte receipt have SHA-256
+`54607d5d380460e1394a42d1eb233c3bd5e549bab6ffb19308e5fcd8e551e745`,
+`005cd1ba3c9d46b96c5ae6e7cdad6d4dbf2b716cf6ced35ebaf6a88cca217633`,
+and `f0aa9e7e4e402047d8838e0069057ff1b854b1bb30494cbb9385e656be22f0de`.
+
+Source now changes only those audited descriptor pairs and the staged-blob
+regression. Runtime validation remains byte-exact and fail closed; it does not
+normalize newlines or accept alternate identities. No payload, role,
+provenance, schema, link, registry, check, protection, or legacy semantic
+changes. Pinned Prettier materialized the three stale local Windows copies as
+LF; it also reformatted one unrelated legacy-manifest array, which was
+immediately restored with `apply_patch`. Independent raw-byte comparison shows
+all three working copies exactly equal their pre-existing index blobs, and no
+payload path is changed or staged. This restores the already-recorded WP4c
+exact-tracked-byte decision, so no new decision record is required.
+
+**Focused diagnostics.** Exact Windows focused verification passed 10/10 with
+no skips against the same two-file tree already proved on Linux. The 3,999-byte
+report at
+`artifacts/manual/wp5m-windows-focused-diagnostic-1/evidence/invariant-vitest-report.json`
+has SHA-256
+`0607acdb81ee1a047ae36f820909dfd992763382ab741d19ea6a8be20140e5ee`;
+its 9,307-byte PASS manifest and 599-byte receipt have SHA-256
+`dd3ca6972c9183850f6e79f59d4a6652b1b3919b39d1c5e3bd8baae975cb715e`
+and `e4282c26575d0ab12238f92d9d6cd11250366fd71bc63c484d51cedd613bfdf3`.
+Independent inspection matched the receipt and artifact bindings with zero
+mismatches. The exact Windows explicit validator also returned PASS for the
+2,948-byte corrected descriptor at SHA-256
+`be37c29dbe123d2da4eba93b525794f17b76143f88ec34bda9fcf830fb9a8354`
+and all seven audited file identities.
+
+**Stable-tree milestone protocol.** Descriptor, owner regression, this log,
+and the execution plan freeze before final commands. The exact staged tree runs
+a fresh Linux focused shard and receipt-owning Windows focused, invariant,
+orchestrator, unit, typecheck, lint, and format commands separately and
+serially in fresh roots beneath `artifacts/manual/wp5m-*-final/`. Outcomes and
+independent hashes remain in ignored command evidence and the final handoff
+rather than being backfilled into tracked files and changing the candidate.
+
+**Commit.** Assigned by the single cohesive WP5m commit containing this entry;
+identify it as the newest commit touching the entry. It is not pushed. A later
+external publication had already advanced `origin/master` to WP5l before this
+increment began; no remote mutation occurs here.
+
+**Known gaps.** Candidate identity is the next retained Linux controller
+cluster. The larger Windows path-spelling/identity cascades, documented POSIX
+`setsid` escape, CAL-1, hidden validation, product breadth, autonomous
+readiness, and human verification remain open. This increment makes no
+readiness or product-completion claim.
+
 ## 2026-08-18 — WP5l POSIX process-group supervision portability
 
 **Objective.** Select the earliest unresolved hosted Linux controller failure

@@ -46,6 +46,17 @@ function git(root: string, ...args: string[]): string {
   return result.stdout.trim();
 }
 
+function gitBytes(root: string, ...args: string[]): Buffer {
+  const result = spawnSync("git", ["-C", root, ...args], {
+    windowsHide: true,
+  });
+  if (result.error || result.status !== 0)
+    throw new Error(
+      `Git ${args.join(" ")} failed: ${result.error?.message ?? result.stderr.toString("utf8").trim()}`,
+    );
+  return result.stdout;
+}
+
 async function writeJson(path: string, value: unknown): Promise<void> {
   await writeFile(path, `${JSON.stringify(value, null, 2)}\n`, "utf8");
 }
@@ -138,6 +149,26 @@ describe("worked-example descriptor", () => {
         },
       }),
     ).toThrow(/links are invalid|escape/i);
+  });
+
+  it("binds every payload identity to its exact staged Git blob", async () => {
+    const value = await descriptor(repositoryRoot);
+    const stagedIdentities = value.files.map((file) => {
+      const contents = gitBytes(
+        repositoryRoot,
+        "show",
+        `:examples/ski-tycoon/${file.path}`,
+      );
+      return {
+        path: file.path,
+        bytes: contents.byteLength,
+        sha256: createHash("sha256").update(contents).digest("hex"),
+      };
+    });
+
+    expect(
+      value.files.map(({ path, bytes, sha256 }) => ({ path, bytes, sha256 })),
+    ).toEqual(stagedIdentities);
   });
 
   it("requires exactly one explicit descriptor CLI option", () => {
