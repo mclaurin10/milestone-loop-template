@@ -3,6 +3,73 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-22 — WP5v canonical Windows workspace-create recovery fixture root
+
+**Objective.** Reproduce the next retained hosted-Windows controller file from
+the exact clean WP5u commit under pinned tools and genuine NTFS 8.3 TEMP, prove
+its fixture-owned root precondition, canonicalize only that fresh root, verify
+the complete file on Windows and Linux ext4, and commit one narrow owner
+without pushing. Preserve strict Git/workspace-create recovery consumers,
+fault points/timeouts, state and reducer semantics, later clusters, immutable
+authority, lifecycle/CAL-1, and the protected human file.
+
+**Cause and red proof.** The historical report places
+`workspace-create-recovery.test.ts` at `1786995226842`: 0/5. Its `fixture()`
+retained raw `milestone-loop-recover-create-*` beneath short TEMP and passed it
+to `MilestoneOrchestrator.open()`; strict `inspectTarget()` correctly rejected
+the expanded Git-root identity. Exact clean no-local/no-hardlink WP5u clone
+`C:/wp5v1b/repo` at commit
+`5653a345d1c3cbb35e2962c0de7c171e97ba794f` / tree
+`8fba32c639c8f8c79869a760a09e5d07e04fd948`, pinned tools, no alternates or
+status drift, and genuine `C:/wp5v1b/WP5VLO~1` TEMP reproduced 0/5. Its
+6,566-byte report and 9,051-byte ERROR manifest under
+`artifacts/manual/wp5v-workspace-create-recovery-red/evidence/` have SHA-256
+`e1f0e160b786fc7bdf7a084ae96393feafb6f34630ae3fd95fdb3531464601aa`
+and `9c57edc736bb583dd61b205e0b9a8178588d35ed0a153cb01eabeafd811c7e84`;
+no receipt exists.
+
+Assertion-only tree `74daa61698513eb017dbc0aeae2b9e1559785a9b`
+added promise `realpath` and
+`expect(await realpath(root)).toBe(root)` immediately beside the creator. It
+remained 0/5, with every case stopping directly at that assertion before Git
+or orchestrator setup. Its 4,796-byte report and 9,045-byte ERROR manifest
+under `artifacts/manual/wp5v-workspace-create-recovery-owner-red/evidence/`
+have SHA-256
+`25f9b2efe74945c0accb8e3212f77169732eceaeeab934d81460f29e0c04ec78`
+and `95c90b465ce3d944fe03bf15a75855b2f938c18689312fa793e998ce35a2e710`;
+again no receipt exists.
+
+**Correction and verification.** `fixture()` now resolves only its just-created
+root through `realpath(await mkdtemp(...))`; the assertion remains before the
+root is registered or used. Production Git, workspace-create/recovery,
+orchestrator/reducer, state/schema, fault hooks/timeouts, and caller-controlled
+paths remain byte-identical. Test-only tree
+`e9f3789866865ed0ef7f54332d08f3f6655b8ba7` passed 5/5 with zero skips on
+genuine-short Windows and clean WSL2 ext4. Windows's 2,387-byte report,
+610-byte receipt, and 9,292-byte manifest have SHA-256
+`59538333a1be9b10c73e519d0327842b7fb1e464337f962e9da9194fc7e6f866`,
+`58d0eaf0dc94a07436c38b1edcc3f9cd1b6795913a764c168f1f5934a3b95784`,
+and `3a29b9c90359ee3f7010adc1759f9b01558f6ca16ef9b18bd4c84377f1599606`.
+Linux's 2,394-byte report, 610-byte receipt, and 9,232-byte manifest have
+SHA-256 `5f1400d7a8343572720c84acf2e96adc356a94f6c1db04fdfa2d7a9d3f4fd328`,
+`ad28ad8087b310e44dee225d71de0db91eb9a2d130d0036e31385294303280d3`,
+and `d9e9b4964114256301334ce621f1a7809e74cc296ad2faf5c071ec7fd344002b`.
+All receipt and artifact bindings matched independently. This is a test
+fixture correction and requires no decision-log entry.
+
+The next retained failure is `target-integration.test.ts` at
+`1786995254903`: 0/4. Its separate `fixture()` retains raw
+`milestone-loop-target-action-*` and passes it through workspace creation and
+strict Git inspection. It remains open rather than being bundled.
+
+**Commit.** Assigned by the single cohesive WP5v commit containing this entry;
+identify it as the newest commit touching the entry. It is not pushed.
+
+**Known gaps.** Target-integration and later workspace/Git/retention/artifact/
+verification-clone fixture clusters, the documented POSIX `setsid` escape,
+CAL-1, hidden validation, product breadth, autonomous readiness, and human
+verification remain open. No readiness or product-completion claim is made.
+
 ## 2026-08-22 — WP5u canonical Windows workspace-cleanup crash-worker root
 
 **Objective.** Select the earliest unresolved hosted-Windows controller file

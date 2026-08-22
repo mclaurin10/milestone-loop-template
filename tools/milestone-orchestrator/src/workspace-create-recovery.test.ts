@@ -6,6 +6,7 @@ import {
   mkdtemp,
   readFile,
   readdir,
+  realpath,
   rm,
   writeFile,
 } from "node:fs/promises";
@@ -76,7 +77,10 @@ async function treeDigest(root: string): Promise<string> {
 }
 
 async function fixture() {
-  const root = await mkdtemp(join(tmpdir(), "milestone-loop-recover-create-"));
+  const root = await realpath(
+    await mkdtemp(join(tmpdir(), "milestone-loop-recover-create-")),
+  );
+  expect(await realpath(root)).toBe(root);
   temporaryDirectories.push(root);
   const config = validConfig();
   git(root, "init", "-b", "main");
