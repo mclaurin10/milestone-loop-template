@@ -3,6 +3,113 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-22 — WP5t canonical Windows target-integration crash-worker root
+
+**Objective.** Select the earliest unresolved hosted-Windows controller file
+after WP5s, reproduce it from the exact clean WP5s commit under pinned tools
+and a genuine NTFS 8.3 TEMP spelling, prove its controlled subprocess root
+precondition, canonicalize only that fresh worker-owned root, verify Windows
+and Linux ext4, and create one narrow local commit without pushing. Preserve
+strict Git/workspace/target-integration inspection, recovery fault points and
+timeouts, target/state/outcome semantics, later fixture clusters, immutable
+authority, lifecycle/CAL-1 state, and the protected human file.
+
+**Cause and ordering.** The historical hosted report places
+`target-integration-recovery.test.ts` immediately after WP5s at
+`1786995207495`: all three cases failed before their intended crash/recovery
+boundaries. `test/target-integration-crash-worker.ts::main()` retained the raw
+`milestone-loop-target-crash-*` spelling returned beneath short TEMP and
+passed it to `createIsolatedWorkspaceFixture()`. Strict `inspectTarget()`
+correctly observed the expanded realpath and rejected the mismatched Git root.
+
+**Red evidence.** Exact clean no-local/no-hardlink WP5s clone
+`C:/wp5t1b/repo` at commit
+`e8aa6d5c379c59b88ee10b4ea12add6d16ae040c` / tree
+`d4039f16b6464ec743b0de761a0ea974bfaff85a`, with no alternates or status
+drift, pinned tools, isolated writable roots, and a genuine
+`C:/wp5t1b/WP5TTA~1` TEMP whose promise realpath expands, reproduced 0/3. The
+5,421-byte report and 9,034-byte ERROR manifest at
+`artifacts/manual/wp5t-target-integration-recovery-red/evidence/` have SHA-256
+`542760aa5199480b39b2feaf30415f6d032fdbbaf2a8fceac1b995ebb386000b`
+and `a81d65ddd8727930cbb87a150452d5bdda2e54c7206c4473cae6c6bcab11e104`;
+no receipt exists.
+
+Assertion-only tree `545d44141ed2e0dc88412d71d07b40066a57b579`
+imported promise `realpath` and Node `strictEqual`, then required the freshly
+created worker root to equal its realpath before Git/workspace setup. It
+remained 0/3, but all three subprocesses stopped directly at that assertion.
+Its 5,438-byte report and 9,027-byte ERROR manifest at
+`artifacts/manual/wp5t-target-integration-recovery-owner-red/evidence/` have
+SHA-256 `ae178950d13df56bc380cfce1fb260b01f658cf318570237e6a5c7b5b41b8615`
+and `e80730c8313504e612293dfb3faea2878610c73dfe122effb39706b00bdc655a`;
+again no receipt exists.
+
+**Correction.** The crash worker now resolves only its freshly created root
+through `realpath(await mkdtemp(...))` before deriving Git, workspace,
+configuration, state, verification, or outcome paths. The direct assertion
+remains beside the creator. Production `git-isolation.ts`,
+`workspace-create.ts`, `target-integration.ts`, the orchestrator/reducer,
+state/schema, crash fault points/timeouts, and every caller-controlled or
+pre-existing path remain byte-identical. This is a test subprocess fixture
+correction and requires no decision-log entry.
+
+**Path-budget diagnostic.** The first corrected-tree probe used an
+unnecessarily long expanded TEMP and reached a different 0/3 failure. The
+published workspace and ref files existed; its symbolic `HEAD` named a valid
+41-byte ref containing the same commit as `refs/heads/main`. The nested target
+branch ref's absolute path was 266 characters, however, and Git reported
+`Filename too long` with `core.longpaths` unset. The 5,402-byte report and
+1,331-byte ERROR manifest are retained under
+`artifacts/manual/wp5t-target-integration-recovery-path-budget-red/`. An
+identical tree passed with a shorter expanded TEMP that still had a distinct
+8.3 alias, so this is retained as nonqualifying environment evidence rather
+than misattributed to workspace publication. No production change followed.
+
+**Focused diagnostics.** Corrected test-only tree
+`2b4ce32834cfb51d280897d4d17c9bed21bb65c9` passed 3/3 with zero skips on
+genuine-short-path Windows and a clean WSL2 ext4 clone. Windows's 1,708-byte
+report, 612-byte receipt, and 1,564-byte manifest have SHA-256
+`4471430537a25f5b052d8cbc9f3601d01d75df1857eaede6fb50e163061c41fa`,
+`fd70dd741ef23ce5d1e145a6fe0ef777da8c06f8d89c08b472b79e7148df2c95`,
+and `8ec5d682b19dee0e2cdb06570cde0467841ebc0928680baf2839d6431126aa06`.
+Linux's 1,721-byte report, 612-byte receipt, and 1,528-byte manifest have
+SHA-256 `0b82b9be79aab2e3180d4f47cba85364e25b3d021f19cb402e5f9b67611271c3`,
+`08fd44b8c767372bb51119c5783e3cccfeadb74e6338af61cdb4aadded66deb5`,
+and `5508412d0756949d192051c785c58598b0dcf0cd035e14e54bd5784d37e20069`.
+Every receipt and artifact declaration matched independently.
+
+Two setup attempts created no qualifying evidence. A Windows wrapper invoked
+pnpm with a fresh store identity and stopped before evidence creation when it
+refused a noninteractive module reconciliation; a later direct-Node attempt
+was interrupted after live inspection showed Vitest's worker resolving the
+system Node instead of pinned 24.18.0. The successful fresh clone prefixed the
+pinned runtime and live inspection confirmed every Node process used it. A
+WSL install command omitted `cd`, rebuilt only the source checkout's ignored
+`node_modules`, and ran no test; a pinned Windows reinstall immediately
+restored that ignored dependency tree without tracked or protected-file drift.
+
+The next retained failed file is
+`workspace-cleanup-recovery.test.ts` at `1786995222359`: 0/3. Its failures
+originate in the separately owned subprocess fixture
+`test/workspace-cleanup-crash-worker.ts`, whose raw
+`milestone-loop-cleanup-crash-*` root crosses strict workspace Git inspection.
+It remains open rather than being bundled.
+
+**Stable-tree protocol.** The corrected worker, this log, and the next active
+plan freeze before final commands. Independent exact candidate clones rerun
+the complete Windows-short and Linux-ext4 file with fresh evidence. Exact final
+outcomes remain in ignored artifacts and the handoff so tracked bytes do not
+change afterward.
+
+**Commit.** Assigned by the single cohesive WP5t commit containing this entry;
+identify it as the newest commit touching the entry. It is not pushed.
+
+**Known gaps.** The workspace-cleanup crash-worker and later Windows
+workspace/Git/retention/artifact/verification-clone clusters, the documented
+POSIX `setsid` escape, CAL-1, hidden validation, product breadth, autonomous
+readiness, and human verification remain open. No readiness or product-
+completion claim is made.
+
 ## 2026-08-22 — WP5s canonical Windows orchestrator-identity fixture root
 
 **Objective.** Select the earliest unresolved hosted-Windows controller file

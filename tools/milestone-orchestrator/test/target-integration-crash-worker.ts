@@ -1,7 +1,14 @@
+import { strictEqual } from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { writeFileSync } from "node:fs";
-import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  realpath,
+  writeFile,
+} from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -61,7 +68,10 @@ async function main(): Promise<void> {
   )
     throw new Error(`Unknown target integration fault point ${faultPoint}.`);
 
-  const root = await mkdtemp(join(tmpdir(), "milestone-loop-target-crash-"));
+  const root = await realpath(
+    await mkdtemp(join(tmpdir(), "milestone-loop-target-crash-")),
+  );
+  strictEqual(await realpath(root), root);
   git(root, "init", "-b", "main");
   git(root, "config", "user.name", "Target Integration Crash Test");
   git(root, "config", "user.email", "target-integration@example.invalid");
