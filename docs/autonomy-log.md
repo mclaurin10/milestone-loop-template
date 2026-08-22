@@ -3,6 +3,105 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-22 — WP5o canonical Windows Doctor fixture root
+
+**Objective.** Select the earliest unresolved retained controller failure after
+WP5n, reproduce it from a clean exact source under Node `24.18.0` and pnpm
+`11.15.1`, correct only its causal real-filesystem fixture precondition,
+verify both controller platforms with command-owned evidence, and create one
+narrow local commit without pushing. Preserve production Doctor, schema,
+retention, path-safety, and Git identity policy; later Windows path clusters;
+immutable authority; lifecycle/CAL-1 state; packages/lock/workflow; retained
+evidence; and the protected human plan.
+
+**Cause and ordering.** WP5n closes the last retained Linux failure cluster.
+The retained hosted Windows report starts its remaining failed suites with the
+Doctor retention-apply case at `1786995045207`, followed by evidence retention
+at `1786995083268`, container execution at `1786995151895`, and later
+workspace, Git, artifact, and clone cascades. The first Doctor test and its
+strict schema/retention/path inputs remain unchanged from hosted commit
+`87bd41e` through current HEAD except for WP5k's unrelated Doctor production
+portability correction.
+
+On the hosted Windows runner, Node's temp root uses the valid NTFS 8.3 spelling
+`C:\Users\RUNNER~1\...`. The controlled fixture preserves that spelling
+through `mkdtemp()`, but `realpath()` returns the long
+`C:\Users\runneradmin\...` spelling. The fixture therefore persisted a
+short-form `repositoryRoot` with long-form artifact-root realpaths. Strict
+containment correctly rejected that mixed identity, so Doctor observed invalid
+state before it could classify the pending retention operation. This is a
+fixture precondition defect, not permission to relax production identity or
+containment.
+
+**Red evidence.** A clean no-hardlink Windows clone of exact WP5n commit
+`b86083b97f82128061d0aa40bc1b539e5cffb323` / tree
+`31ff3c8144d4e8f1991d075a78fc0857f1595289`, with `%TEMP%` and `%TMP%`
+set to a genuine local 8.3 alias whose realpath has a different long spelling,
+reproduced 18/19 passed, one failed, zero skipped at the exact retained Doctor
+assertion. The command exited 1 with an ERROR manifest, no receipt, clean clone,
+and exact toolchain. The 8,215-byte report and 9,111-byte manifest under
+`artifacts/manual/wp5o-windows-doctor-pre-fix/evidence/` have SHA-256
+`15ac9e70503a71228ab2c0540262efbf4b900f45cf8983fb3acc96b5824c978c`
+and `493532d0bff5c955293fc500b2829ccbc0eafccfe22dc8d11cbced6c074b3fec`.
+
+An assertion-only patch then required
+`realpath(fixture.root) === fixture.root` before state construction. Applied
+and staged alone in the disposable clone, it produced tree
+`fa3395b684f18a264b33ab58d68327db044534a7` and failed directly at that new
+owner precondition: 18/19 passed, one failed, zero skipped, ERROR/no receipt,
+and exact one-path staged scope. Its 7,563-byte report and 9,110-byte manifest
+under `artifacts/manual/wp5o-windows-doctor-owner-red/evidence/` have SHA-256
+`15d413e7a4ddcc7a33dc20c1069bf28f55e78664176653df5ba3e22941836cfc`
+and `5423dc27530648f7d4d4a74b908c66941a3483468e7070f2654fbbe55c43b605`.
+
+**Correction.** `repositoryFixture()` now resolves the newly created temp
+directory once through `realpath(await mkdtemp(...))` and retains the direct
+root-identity assertion in the affected retention test. Every derived
+repository/artifact/apply/deletion path therefore uses one spelling. Production
+`doctor.ts`, `schema.ts`, `retention-apply-operation.ts`,
+`path-safety.ts`, `git-isolation.ts`, strict containment, alias rejection,
+and controller policy remain byte-identical. This is a controlled fixture
+correction, not a durable production-contract decision, so no decision-log
+entry is required.
+
+**Focused diagnostics.** Windows with the same genuine short temp alias and a
+clean Linux ext4 clone both staged only the corrected Doctor test at tree
+`c57589de1ed26e90700c6e1b1142a17b1fb986bc` and passed 19/19 with zero
+skips. Every manifest/receipt/artifact binding independently matched.
+Windows's 6,999-byte report, 591-byte receipt, and 9,299-byte manifest have
+SHA-256
+`5c8bdd3ab9d0d649221e5acaa78f278c986cab7dd9019a4e7177b734af299b63`,
+`4125c2944a8062d587775f864e56cb140e4e9b96d8605889503f0fa50713b8bd`,
+and `e9523d080ab5351eed1197583e28ee3a6158b0c6c264ae8e9c310c056246d401`.
+Linux's 6,989-byte report, 591-byte receipt, and 9,250-byte manifest have
+SHA-256
+`3001f8bcdfcf3cf34826f2da391f6ab00509a8a7ee4b032fa55e0c0abdbd0180`,
+`d0150d3f360209b58fdf711523874ef87c5e3929a959c0480892a08d5a3698f8`,
+and `cb31f1a8a7950e955d53aa84756db2daaa514c0931375433fb79f0d321cb1f2a`.
+Two earlier disposable Linux setup attempts never reached Vitest or created an
+evidence root: one retained-script line-continuation defect and one incomplete
+offline store. Both clones cleaned successfully; the exact locked closure was
+then hydrated and the cited diagnostic passed.
+
+**Stable-tree milestone protocol.** The test, this log, and execution plan
+freeze before final commands. The exact staged tree runs a fresh Linux focused
+shard and receipt-owning Windows-short-temp focused, invariant, orchestrator,
+unit, typecheck, lint, and format commands separately and serially in fresh
+roots beneath `artifacts/manual/wp5o-*-final/`. Outcomes and independent
+hashes stay in ignored command evidence and the final handoff rather than being
+backfilled into tracked files and changing the candidate.
+
+**Commit.** Assigned by the single cohesive WP5o commit containing this entry;
+identify it as the newest commit touching the entry. It is not pushed.
+`origin/master` remained at WP5n's grandparent before this increment; no
+remote mutation occurs here.
+
+**Known gaps.** The next Windows evidence-retention fixture cluster, larger
+Windows Git/path-spelling and identity cascades, container path fixtures, the
+documented POSIX `setsid` escape, CAL-1, hidden validation, product breadth,
+autonomous readiness, and human verification remain open. This increment makes
+no readiness or product-completion claim.
+
 ## 2026-08-21 — WP5n POSIX candidate-identity fixture materialization
 
 **Objective.** Select the earliest unresolved retained Linux controller

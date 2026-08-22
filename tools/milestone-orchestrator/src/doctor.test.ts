@@ -164,7 +164,9 @@ async function writeCompletionEligibleExactState(
 async function repositoryFixture(
   state: "valid" | "missing" | "invalid" = "valid",
 ): Promise<{ readonly root: string; readonly statePath: string }> {
-  const root = await mkdtemp(join(tmpdir(), "milestone-loop-doctor-"));
+  const root = await realpath(
+    await mkdtemp(join(tmpdir(), "milestone-loop-doctor-")),
+  );
   temporaryDirectories.push(root);
   const initialized = spawnSync(
     "git",
@@ -1044,6 +1046,7 @@ describe("read-only orchestrator doctor", () => {
 
   it("classifies retention apply without changing state, journal, or targets", async () => {
     const fixture = await repositoryFixture();
+    expect(await realpath(fixture.root)).toBe(fixture.root);
     const baseState = await validDoctorState(fixture.root);
     const verificationRoot = join(fixture.root, "artifacts");
     const controllerRoot = join(
