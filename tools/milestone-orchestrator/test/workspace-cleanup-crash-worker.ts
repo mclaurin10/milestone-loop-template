@@ -1,6 +1,7 @@
+import { strictEqual } from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
-import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, realpath, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
@@ -58,7 +59,10 @@ async function main(): Promise<void> {
   )
     throw new Error(`Unknown workspace cleanup fault point ${faultPoint}.`);
 
-  const root = await mkdtemp(join(tmpdir(), "milestone-loop-cleanup-crash-"));
+  const root = await realpath(
+    await mkdtemp(join(tmpdir(), "milestone-loop-cleanup-crash-")),
+  );
+  strictEqual(await realpath(root), root);
   git(root, "init", "-b", "main");
   git(root, "config", "user.name", "Workspace Cleanup Crash Test");
   git(root, "config", "user.email", "cleanup-crash@example.invalid");

@@ -3,6 +3,83 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-22 — WP5u canonical Windows workspace-cleanup crash-worker root
+
+**Objective.** Select the earliest unresolved hosted-Windows controller file
+after WP5t, reproduce it from the exact clean WP5t commit under pinned tools
+and genuine NTFS 8.3 TEMP, prove its controlled subprocess root precondition,
+canonicalize only that fresh worker root, verify the complete recovery file on
+Windows and Linux ext4, and create one narrow local commit without pushing.
+Preserve strict Git/workspace/cleanup inspection, all 15 recovery fault points
+and timeouts, cleanup/archive/state semantics, later fixture clusters,
+immutable authority, lifecycle/CAL-1 state, and the protected human file.
+
+**Cause and ordering.** The historical hosted report places
+`workspace-cleanup-recovery.test.ts` immediately after WP5t at
+`1786995222359`: all three cases failed before their intended cleanup crash
+boundaries. `test/workspace-cleanup-crash-worker.ts::main()` retained the raw
+`milestone-loop-cleanup-crash-*` spelling returned beneath short TEMP and
+passed it to `createIsolatedWorkspaceFixture()`. Strict `inspectTarget()`
+correctly observed the expanded realpath and rejected the mismatched Git root.
+
+**Red evidence.** Exact clean no-local/no-hardlink WP5t clone
+`C:/wp5u1b/repo` at commit
+`69c10b3b6e00e0e7bf044115d3bb9e040541e484` / tree
+`f8191c7947e41573cf2cb612e6df089b61a84513`, with no alternates or status
+drift, pinned tools, isolated writable roots, and a genuine
+`C:/wp5u1b/WP5ULO~1` TEMP whose promise realpath expands, reproduced 0/3. The
+5,229-byte report and 9,035-byte ERROR manifest at
+`artifacts/manual/wp5u-workspace-cleanup-recovery-red/evidence/` have SHA-256
+`3469873e155d80a455d047ed517eb1e0218ad33da1ecf0bc686c32feb393c795`
+and `e46948956ce23a27303042a8d29e1c5cdb3c8f6acd910dfe2c011276f8d189ed`;
+no receipt exists.
+
+Assertion-only tree `5c1c95faed99490fb88b109e8f30af419ab6e9ed`
+imported promise `realpath` and Node `strictEqual`, then required the freshly
+created worker root to equal its realpath before Git/workspace setup. It
+remained 0/3, with every case stopping directly at that assertion. Its
+5,183-byte report and 9,028-byte ERROR manifest at
+`artifacts/manual/wp5u-workspace-cleanup-recovery-owner-red/evidence/` have
+SHA-256 `995284003f38d642f5d3a7d0d0bac46dbe77858642297a0f631160d985b50114`
+and `c1728c30ec0f0b49a6fdd2af363238ae2e1d2f3dcadb1229b8a456b46dce55d4`;
+again no receipt exists.
+
+**Correction.** The cleanup crash worker now resolves only its freshly created
+root through `realpath(await mkdtemp(...))` before deriving Git, workspace,
+configuration, state, archive, or evidence paths. The direct assertion remains
+beside the creator. Production `git-isolation.ts`, workspace create/cleanup,
+orchestrator/reducer, state/schema, archive policy, fault points/timeouts, and
+all caller-controlled or pre-existing paths remain byte-identical. This is a
+test subprocess fixture correction and requires no decision-log entry.
+
+**Focused verification.** Corrected test-only tree
+`d588906184f78bc5eccfcdd0edda64891ef2670d` passed 3/3 with zero skips on
+genuine-short-path Windows and a clean WSL2 ext4 clone. Windows's 1,646-byte
+report, 611-byte receipt, and 9,275-byte manifest have SHA-256
+`c77e82aeb9a54cd91b5e95fb4507b88016b27a11d03e5db2e5ffebfaca5f7ba4`,
+`96c86a0d5b246de4c9c04ed74c17cde98079e226a8fae6076853c5f21f2b11b0`,
+and `569b6dd76a95675f973944b2525ce74a4389b7249b5f0e147db4cfb158ad6a30`.
+Linux's 1,655-byte report, 611-byte receipt, and 9,239-byte manifest have
+SHA-256 `c238ad89d5d37a75a4e9df88c9304365aba2c201dc98afd7603966908aaf0aff`,
+`7b7251eadfa3400151bba8fbc55848904fedd428ca0dcc58c835f5ceac86f30b`,
+and `7502a06a4be3f77fc5de2ca6aed99e316f11d77df941ca017c5748172ed976ac`.
+Every receipt and artifact declaration matched independently.
+
+The next retained failed file is `workspace-create-recovery.test.ts` at
+`1786995226842`: 0/5. Its directly owned `fixture()` retains the raw
+`milestone-loop-recover-create-*` root and passes it to
+`MilestoneOrchestrator.open()`, where strict `inspectTarget()` expands and
+rejects it. It remains open rather than being bundled.
+
+**Commit.** Assigned by the single cohesive WP5u commit containing this entry;
+identify it as the newest commit touching the entry. It is not pushed.
+
+**Known gaps.** The workspace-create recovery fixture and later Windows
+workspace/Git/retention/artifact/verification-clone clusters, the documented
+POSIX `setsid` escape, CAL-1, hidden validation, product breadth, autonomous
+readiness, and human verification remain open. No readiness or product-
+completion claim is made.
+
 ## 2026-08-22 — WP5t canonical Windows target-integration crash-worker root
 
 **Objective.** Select the earliest unresolved hosted-Windows controller file
