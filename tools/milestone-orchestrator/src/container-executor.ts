@@ -1291,8 +1291,8 @@ export function createContainerCommandExecutor(
         clone.workspacePath,
         "Disposable verification clone",
       );
-      stagingRoot = await mkdtemp(
-        join(tmpdir(), "milestone-loop-container-export-"),
+      stagingRoot = await realpath(
+        await mkdtemp(join(tmpdir(), "milestone-loop-container-export-")),
       );
       containerName = `milestone-loop-${cleanId(command.id)}-${cleanId(createId()).slice(0, 24)}`;
       exporterName = `${containerName}-exporter`;

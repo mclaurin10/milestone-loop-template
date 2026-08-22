@@ -3,6 +3,43 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-22 — Producer-owned canonical OCI export staging root (WP5q)
+
+**Decision.** The trusted-container executor canonicalizes its own freshly
+created artifact-export staging root exactly once with
+`realpath(await mkdtemp(...))`, before deriving evidence/workspace staging
+children or passing them to strict artifact inventory and publication. The
+container-executor test fixture applies the same rule to its controlled fresh
+root before deriving its mocked pnpm store and clone paths. Retained assertions
+require both the fixture root and the executor-provided evidence staging path to
+already have stable realpath identity.
+
+Caller-provided pnpm stores, disposable clone paths, artifact destinations,
+mount inputs, and pre-existing filesystem objects are not normalized. Existing
+ordinary-directory, no-link, exact-realpath, containment, artifact-limit,
+cleanup, OCI-policy, and process-supervision guards remain unchanged.
+
+**Why.** Hosted Windows supplies a valid NTFS 8.3 spelling beneath TEMP while
+`fs.promises.realpath()` expands it. The raw test fixture therefore stopped all
+eight lifecycle cases at the strict pnpm-store mount guard. After that controlled
+fixture was canonicalized, six cases reached their intended outcomes, while the
+normal and timeout cases exposed the executor's independently created raw export
+root at the strict artifact-inventory boundary. A direct observation recorded
+that staging path as noncanonical. Canonicalizing each producer-owned fresh root
+at creation preserves fail-closed consumer semantics and makes every derived
+path use one identity on Windows and POSIX.
+
+Alternatives rejected: normalizing arbitrary inputs inside the mount or artifact
+guards; accepting equivalent NTFS aliases; comparing case-insensitively;
+globally overriding or canonicalizing TEMP; changing container/artifact cleanup
+or publication; special-casing Windows; and leaving the production staging root
+dependent on the caller's temp spelling.
+
+**Affected files.** `container-executor.ts`, its focused test, execution plan,
+autonomy log, and this decision record. `container-artifacts.ts`, verification
+clone, Git isolation, schema/state, process supervision, OCI policy, package,
+lock, and workflow owners are unchanged.
+
 ## 2026-08-17 — Source-bound pnpm store for fresh-adopter smoke (WP5j)
 
 **Decision.** The fresh-adopter coordinator resolves `pnpm store path` once

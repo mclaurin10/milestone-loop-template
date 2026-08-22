@@ -3,6 +3,127 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-22 — WP5q canonical Windows container-executor roots
+
+**Objective.** Select the earliest unresolved retained controller failure after
+WP5p, reproduce it from a clean exact source under Node `24.18.0` and pnpm
+`11.15.1`, repair only causally proved producer-owned path identities, verify
+both supported controller platforms with command-owned evidence, and create one
+narrow local commit without pushing. Preserve strict mount/artifact identity,
+OCI containment, cleanup, process supervision, Git isolation, later retained
+clusters, immutable authority, readiness/CAL-1, package/lock/workflow, the
+protected human file, and ignored setup residue.
+
+**Cause and ordering.** The retained hosted Windows report begins its failed
+suites with Doctor at `1786995045207`, evidence retention at `1786995083268`,
+then container executor at `1786995151895`. WP5o and WP5p close the first two;
+worked-example was independently closed by WP5m. Container executor passed 2/10
+and failed eight lifecycle cases. Six retained assertions received
+`Controller pnpm store must be an ordinary directory with stable realpath
+identity.`; the normal and timeout cases also returned ERROR before their
+expected PASS/TIMEOUT boundaries. The policy-only and pre-store image-
+attestation cases passed.
+
+The controlled `fixture()` retained the valid 8.3 spelling returned by
+`mkdtemp(tmpdir())`, then derived the mocked pnpm store and clone paths. The
+strict production mount guard correctly observed a different expanded realpath
+and stopped before clone/container lifecycle. Once that fixture root was
+canonical, six cases passed and the only two paths reaching artifact export
+exposed an independent production producer: the executor also retained raw
+`mkdtemp(tmpdir())` for its export staging root. A direct observation proved the
+evidence staging child noncanonical before strict artifact inventory rejected
+it. Neither failure authorizes normalizing caller-controlled paths or relaxing
+consumers.
+
+**Red evidence.** A fresh no-local/no-hardlink exact-HEAD Windows clone at
+commit `51d6eb8d039f31e0c9d4018508048bb74e11a3f9` / tree
+`3a6d6b385c4d8beedca38d01cd36bfa44aa06bb4`, with no alternates, clean status,
+pinned tools, and a genuine distinct 8.3 TEMP spelling, reproduced 2/10. The
+7,082-byte report and 8,993-byte ERROR manifest under
+`artifacts/manual/wp5q-windows-container-red/evidence/` have SHA-256
+`c2250155c93ad27737ded2dbd9f9ca19544f269eaca523b99e0523ac219dd5d1`
+and `36f47cce9fcacd926d78b0f4fdc57ca563b1bc6dfdaeffc6701b86fbbd025ccb`;
+no receipt exists. Its 5,090-byte reproduction record has SHA-256
+`c0ee7d7e803a763aa83630ea72c4a6103b0441e02e7973e492a432afe7636357`.
+
+An assertion-only test tree `d18f965b05a73aeb83e895e0933d70942d074b10`
+remained 2/10 but moved the first failure directly to
+`realpath(data.root) === data.root`. Its 6,668-byte report and 9,004-byte ERROR
+manifest under `artifacts/manual/wp5q-windows-container-owner-red/evidence/`
+have SHA-256
+`31c73bd18431036cb118e84b1ced75c26f0cec480bd656e2382278f1365d9ac7`
+and `af7172ae067aca7253fb7125b55a2ace9fd62b85589b6a98b8e0d7adf19e725f`;
+no receipt exists. Its 3,489-byte record has SHA-256
+`acf8cf332560ac06a5e5e52aa1a92c3d5f4fd1a68bb09cd9fab4b37e223da0f4`.
+
+With only the fixture canonicalized and production byte-identical, tree
+`a8f7934b8ae92fb86b1caee20f14d051f005422f` passed 8/10. The normal case
+failed a direct `evidenceStagingRootIsCanonical` assertion; the timeout case
+remained ERROR at the same downstream inventory boundary. Its 4,634-byte report
+and 9,007-byte ERROR manifest under
+`artifacts/manual/wp5q-windows-container-staging-red/evidence/` have SHA-256
+`b6a4903efcf94be945a1d12b9e76ba0a86f297939ea4d3ce2dc7850b6837e1ea`
+and `1ec1fca2c809b8382cf89852efc9002466fe8d89946794870cb1b97e3900ff76`;
+no receipt exists. Its 4,227-byte record has SHA-256
+`dafff84a11c494d885deabf76ea2cb9958cb2d524d290fb3dde77b5c5c454baf`.
+
+**Correction.** `fixture()` now resolves only its just-created root before any
+derived mocked path. Production `createContainerCommandExecutor()` likewise
+resolves only its own just-created export staging root before deriving artifact
+paths. The direct fixture and staging observations remain in the focused test.
+`assertOrdinaryMountSource`, `container-artifacts.ts`, caller-provided paths,
+verification clone, artifact limits/publication, OCI policy/attestation,
+container/volume cleanup, Git isolation, state/schema, and process supervision
+remain unchanged. The production producer rule is recorded in the decision
+log.
+
+**Focused diagnostics.** The exact two-path implementation tree
+`36fd561a80ed6436cab8d56a130cae53ab02591c` passed 10/10 with zero skips and
+valid command-owned receipts on Windows under another genuine short TEMP and
+Linux from an ext4 clone. Windows's 4,064-byte report, 603-byte receipt, and
+9,243-byte manifest have SHA-256
+`d20e446992916259bbaf9da86e6cd23f7dc374575f5e2fcb17584aec158faa8f`,
+`68906740233e7ccc282f10403c7581809a21b3b78af7c972c13ccadce06b09a5`,
+and `388e62f3002ee161a004fb1d15eb7d25522a958c0a698d4be12fb9800eefdab7`.
+Linux's 4,086-byte report, 603-byte receipt, and 9,218-byte manifest have SHA-256
+`96e4fd0aeb971ec7c96e9060013e15ffa0c30ea6acae09df090470267b4e4cff`,
+`b41475bb9aff3a795d074553a23ec147ff79f5af151337da0e2a2e2cc863d7f7`,
+and `5de11d6fb46fc6d65e5dafc66b96c22da907a6e921127506dff397d78790c26c`.
+
+The next retained failed file, `orchestrator-cleanup.test.ts` at
+`1786995191701`, passes 1/9 and has eight failures from its own raw
+`milestone-loop-recovery-cleanup-*` Git fixture crossing strict
+`inspectTarget()`. It imports neither changed owner, so it remains explicitly
+open rather than being bundled.
+
+**Stable-tree protocol.** The source, test, plan, autonomy log, and decision log
+freeze before final commands. Independent no-local/no-hardlink clones
+materialize the exact staged tree and run fresh Linux focused, Windows-short
+focused, invariant, orchestrator, unit, typecheck, lint, and format commands in
+distinct roots beneath `artifacts/manual/wp5q-*-final/`. Final outcomes and
+independent hashes remain in ignored evidence and the final handoff rather than
+changing the candidate.
+
+**Setup incidents.** One Windows red setup wrapper called `.Trim()` on empty
+clean-status output after clone/install and exited 1; no test or evidence root
+existed yet. An initial WSL toolchain probe allowed host PATH expansion, and a
+later WSL setup wrapper allowed host expansion of shell substitutions; neither
+ran a test or created command evidence. Exact read-only checks recovered the
+intended clone and the cited Linux command ran only after identity/toolchain
+validation. External diagnostic roots `C:/w5qr`, `C:/w5qo`, `C:/w5qs`,
+`C:/w5qg`, `/home/duncan/wp5q-linux-diagnostic`, and isolated Corepack probe
+`/home/duncan/wp5q-linux-store-probe` remain retained for audit. The unrelated
+repository residue `.tools/corepack-home-readonly-probe` remains untouched.
+
+**Commit.** Assigned by the single cohesive WP5q commit containing this entry;
+identify it as the newest commit touching the entry. It is not pushed.
+
+**Known gaps.** The separately owned orchestrator-cleanup fixture cluster,
+later Windows workspace/Git/artifact/verification-clone cascades, the documented
+POSIX `setsid` escape, CAL-1, hidden validation, product breadth, autonomous
+readiness, and human verification remain open. This increment makes no
+readiness or product-completion claim.
+
 ## 2026-08-22 — WP5p canonical Windows retention-apply fixture root
 
 **Objective.** Select the earliest unresolved retained controller failure after

@@ -1,5 +1,12 @@
 import { existsSync } from "node:fs";
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  mkdtemp,
+  mkdir,
+  readFile,
+  realpath,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -244,7 +251,9 @@ function volumeInspection(
 }
 
 async function fixture() {
-  const root = await mkdtemp(join(tmpdir(), "milestone-loop-container-test-"));
+  const root = await realpath(
+    await mkdtemp(join(tmpdir(), "milestone-loop-container-test-")),
+  );
   roots.push(root);
   const working = join(root, "candidate");
   const cloneRoot = join(root, "clone-root");
@@ -547,11 +556,15 @@ describe("OCI container executor", () => {
 
   it("uses a fresh clone/container, exports only declared artifacts, records containment, and proves cleanup", async () => {
     const data = await fixture();
+    expect(await realpath(data.root)).toBe(data.root);
     const evidenceDestination = join(data.root, "controller-evidence");
+    let evidenceStagingRootIsCanonical: boolean | null = null;
     const runtime = scriptedRuntime({
       clonePath: data.cloneWorkspace,
       storePath: data.store,
       onCopyEvidence: async (destination) => {
+        evidenceStagingRootIsCanonical =
+          resolve(await realpath(destination)) === resolve(destination);
         await mkdir(join(destination, "command"), { recursive: true });
         await writeFile(join(destination, "command", "result.json"), "{}\n");
       },
@@ -584,6 +597,7 @@ describe("OCI container executor", () => {
         },
       },
     );
+    expect(evidenceStagingRootIsCanonical).toBe(true);
     expect(result).toMatchObject({
       status: "PASS",
       exitCode: 0,
