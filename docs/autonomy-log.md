@@ -3,6 +3,101 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-22 — WP5p canonical Windows retention-apply fixture root
+
+**Objective.** Select the earliest unresolved retained controller failure after
+WP5o, reproduce it from a clean exact source under Node `24.18.0` and pnpm
+`11.15.1`, correct only its causal real-filesystem fixture precondition, verify
+both supported controller platforms with command-owned evidence, and create one
+narrow local commit without pushing. Preserve production retention apply,
+state/schema, containment, path and Git identity, later Windows fixture/path
+clusters, immutable authority, lifecycle/CAL-1 state, package/lock/workflow,
+retained evidence, and the protected human plan.
+
+**Cause and ordering.** The retained hosted Windows report starts its unresolved
+post-WP5o suites with evidence retention at `1786995083268`, then container
+executor at `1786995151895` and later workspace, Git, artifact, and clone
+cascades. Evidence retention passed 15/19; its four failures were exactly the
+state-first cases for normal apply, forged-journal conflict, result conflict,
+and torn-journal recovery. The first failed at `StateStore.save` with
+`Invalid orchestrator state: State pending operation is invalid.`; the other
+three received that same earlier error instead of their intended boundary.
+
+The controlled `applyFixture()` retained `mkdtemp()`'s valid NTFS 8.3 spelling.
+`validState(root)` only resolved it, while evidence planning correctly recorded
+long artifact-root realpaths. Retention intent construction therefore combined
+a short `repositoryRoot` with long realpath fields. Strict state containment
+correctly rejected that mixed identity before publication. The other apply
+tests stop at preflight and masked the helper defect; the four retained failures
+are the only cases that cross publication. Production owners and the test are
+byte-identical from hosted commit `87bd41e` through WP5o.
+
+**Red evidence.** A fresh no-local/no-hardlink exact-WP5o Windows clone at
+commit `70fb23538d6664d4fd3c7e59397398cde702dd4b` / tree
+`1610ca8714a43850b7ec423c7e0119e7bf0d9930`, under a genuine 8.3 temp spelling,
+reproduced 15/19 with the exact four failures, an `ERROR` manifest, no receipt,
+clean clone, and exact toolchain. The 11,865-byte report and 9,137-byte manifest
+under `artifacts/manual/wp5p-windows-evidence-retention-red/evidence/` have
+SHA-256 `d8f5f27f39f5cbad8114742addfc6d19948de35eb0400d75f6f56c08cf33dd5c`
+and `43ea06ac5aea4109a50de97eae3c346c3c483edde83bfac0d6540f218e06d216`.
+The 2,939-byte reproduction record has SHA-256
+`90e011417c9f6e50111dc6d430aceb8bea9e302d7f9a239a53e1190df3955f4d`.
+A first dependency setup selected host Node 25 and was rejected before any test
+or evidence command; it is not cited.
+
+An assertion-only patch required `realpath(fixture.root) === fixture.root` in
+the first state-first case. Staged alone in a second exact clone, it produced
+tree `e4e17f3d4a0348a3b2d3eca2bc39d6c49e9cc4a4` and remained 15/19, but the
+first failure moved directly to that assertion. Its 10,809-byte report and
+9,114-byte `ERROR` manifest under
+`artifacts/manual/wp5p-windows-owner-red/evidence/` have SHA-256
+`1568e376fab1a73044df2c34ca9439bb58e27a5609148d6463f1cced2a66dd52`
+and `40edd8e396916c1df641ab979fe364d94159f0f1eb8d65eb5f0f8a364658f6df`;
+no receipt exists. Its 2,110-byte record has SHA-256
+`cbba27231112e59ba4bbd5e27dba711909e7fd5dd8b916577e060409128fd803`.
+
+**Correction.** `applyFixture()` now resolves only its freshly created root
+through `realpath(await mkdtemp(...))`; the direct root-identity assertion
+remains. Every repository, plan, artifact, apply, journal, result, and deletion
+path is consequently derived from one controlled spelling. Production
+`evidence-retention.ts`, `retention-apply-operation.ts`, `schema.ts`,
+`state-store.ts`, `path-safety.ts`, `git-isolation.ts`, strict containment,
+authorization, recovery, and controller policy remain byte-identical. This is
+a controlled fixture correction, not a durable production decision, so no
+decision-log entry is required.
+
+**Focused diagnostics.** Windows under another genuine short temp alias and a
+fresh Linux ext4 clone staged only the corrected test at tree
+`35f950dba9f41675493817f3a442c9a32f35694f`; both passed 19/19 with zero skips
+and valid receipts. Windows's 6,769-byte report, 603-byte receipt, and
+9,373-byte manifest have SHA-256
+`d31a144ec0602813a1120a8092937349ddb20bdb1f65eef5b94b096535ad56f1`,
+`9b11469a60398720b5884781c2b4fade2ff724fef42cdd4dbe31e898487f52f6`,
+and `99fb91ea3122c8e7898867630e91b9149dc9b404a1631da0df23b78659905ebc`.
+Linux's 6,713-byte report, 603-byte receipt, and 9,278-byte manifest have
+SHA-256 `178a653ba74b520f89e708a3340a0e3f8fc10e15e4799cc6087d364b37c830b0`,
+`a934d99a1dfeb0d4628f839f495519a7090847441cca44814e7702e450e941cb`,
+and `40e4af3ce9a17135841806878d8f746d13da28a0ab5a9d17109d40a5ebe8bbc0`.
+The next retained container-executor suite has its own test fixture and imports
+no changed owner; this test-only correction cannot repair it, so it remains
+open rather than being bundled.
+
+**Stable-tree protocol.** The test, this log, and execution plan freeze before
+final commands. Independent no-local/no-hardlink clones materialize the exact
+staged tree and run fresh Linux focused, Windows-short focused, invariant,
+orchestrator, unit, typecheck, lint, and format commands in distinct roots under
+`artifacts/manual/wp5p-*-final/`. Outcomes and independent hashes stay in
+ignored evidence and the final handoff rather than changing the candidate.
+
+**Commit.** Assigned by the single cohesive WP5p commit containing this entry;
+identify it as the newest commit touching the entry. It is not pushed.
+
+**Known gaps.** The separately owned container-executor cluster, later Windows
+workspace/Git/artifact/verification-clone cascades, the documented POSIX
+`setsid` escape, CAL-1, hidden validation, product breadth, autonomous
+readiness, and human verification remain open. This increment makes no
+readiness or product-completion claim.
+
 ## 2026-08-22 — WP5o canonical Windows Doctor fixture root
 
 **Objective.** Select the earliest unresolved retained controller failure after

@@ -1,253 +1,236 @@
 # Current Execution Plan
 
-**Status:** WP5o records complete; formatting and frozen-tree verification next
+**Status:** WP5p tracked records complete; formatting and candidate freeze next
 **Updated:** 2026-08-22
 **Owner:** autonomous loop
 
 ## Objective
 
-Complete one bounded controller-portability increment for the earliest
-unresolved retained failure after WP5n. Retained Windows suite ordering and an
-exact-HEAD reproduction identify the retention-apply case in
-`doctor.test.ts` as the next causal cluster. Correct only that controlled
-real-filesystem fixture so its repository root and derived realpath fields use
-one canonical spelling before the strict state schema and read-only Doctor
-inspect the pending operation.
+Complete one bounded portability increment for the earliest unresolved retained
+failure after WP5o. Retained Windows ordering and a clean exact-HEAD
+reproduction identify the four state-first cases in
+`evidence-retention.test.ts` as one fixture-owned cluster. Correct only the
+controlled `applyFixture()` repository-root precondition so every lexical and
+realpath field is derived from one canonical spelling before the strict state
+schema validates a retention-apply intent.
 
-On hosted Windows, Node receives `%TEMP%` through the valid NTFS 8.3 spelling
-`C:\Users\RUNNER~1\...`. `mkdtemp()` preserves that spelling, while
-`realpath()` returns `C:\Users\runneradmin\...`. The fixture consequently
-persists a short-form `repositoryRoot` alongside long-form
-`verificationArtifactRootRealpath` and `controllerArtifactRootRealpath`.
-Strict containment correctly rejects that mixed identity, so Doctor reports
-invalid state instead of the expected resumable retention operation. The
-equivalent local exact-HEAD reproduction uses a real 8.3 alias and fails the
-same single retained assertion.
+On a genuine NTFS 8.3 temporary spelling, `mkdtemp()` preserves the short root
+while evidence planning deliberately records realpaths for artifact roots. The
+fixture supplies a short `repositoryRoot` with long artifact-root realpaths.
+Strict containment correctly rejects that mixed identity at `StateStore.save`
+before intent publication. The four retained failures are exactly the apply
+tests that cross that boundary; other apply tests reject earlier at their
+intended preflight checks.
 
-Keep an explicit owner-precondition assertion that the fixture root equals its
-realpath. Prove that assertion red when applied alone to a disposable clean
-HEAD clone, then canonicalize only the newly created fixture root through
-`realpath(await mkdtemp(...))`. Preserve production Doctor, state schema,
-retention recovery, containment, realpath, Git identity, and controller policy
-unchanged.
+Prove the helper defect with an assertion-only short-path run, then canonicalize
+only the new fixture root through `realpath(await mkdtemp(...))` and retain the
+assertion in the first successful apply case. Verify all 19 cases on Windows
+short-path and Linux ext4. Preserve production retention, schema, state,
+containment, canonical identity, Git isolation, and recovery behavior.
 
-This increment does not normalize or accept mixed production path identities,
-change Windows case/alias rules, add a global test-environment override,
-address the next evidence-retention or larger Git/path-spelling cascades,
-address the POSIX `setsid` escape, change packages/locks/workflows, begin
-CAL-1 or product work, invoke hidden validation, or claim autonomous
-readiness. It creates exactly one cohesive local commit and does not push.
+This increment does not normalize mixed production identities, change global
+temporary-directory behavior, repair the separately owned container-executor
+fixture or later cascades, address POSIX `setsid`, begin CAL-1/product work,
+invoke hidden validation, claim readiness, or push. It creates one narrow local
+commit and stops.
 
 ## Goal Constraints
 
-- Preserve `PROJECT_GOAL.md`, every immutable-lock baseline and active hash,
-  CAL-1 `open_not_started` with zero completions, readiness as the default
-  profile, the permanent activation marker, the original acceptance contract,
-  verifier meanings, and all retained evidence.
-- Use exact Node `24.18.0` and pnpm `11.15.1`. Windows commands prepend
-  `.tools/node-v24.18.0-win-x64`; Linux commands use
+- Preserve `PROJECT_GOAL.md`, all immutable baseline/active hashes, original
+  acceptance meanings, readiness as default, the permanent activation marker,
+  and CAL-1 `open_not_started` with zero completions.
+- Use exact Node `24.18.0` and pnpm `11.15.1`: Windows selects
+  `.tools/node-v24.18.0-win-x64`; Linux selects
   `/home/duncan/.local/node-v24.18.0-linux-x64/bin` in Ubuntu WSL2.
-- Keep `doctor.ts`, `schema.ts`, `retention-apply-operation.ts`,
-  `path-safety.ts`, `git-isolation.ts`, and every production path/identity
+- Keep `evidence-retention.ts`, `retention-apply-operation.ts`, `schema.ts`,
+  `state-store.ts`, `path-safety.ts`, `git-isolation.ts`, and every production
   owner byte-identical.
-- Preserve strict lexical and realpath containment. A real alias, junction,
-  symlink, escape, substituted root, or mixed persisted production identity
-  must remain rejected.
-- Add a direct assertion on the fixture owner result before constructing the
-  pending retention operation, so future fixture drift fails at its cause.
-- Never edit, stage, move, delete, re-encode, clean, or otherwise mutate the
-  user-owned untracked `Implementation-ready improvement plan 8-5-26.txt`.
+- Preserve state-first authorization, strict schemas, journal/result conflict
+  handling, torn-journal recovery, lexical/realpath containment, and alias or
+  substitution rejection.
+- Retain a direct assertion that the controlled apply root equals its realpath
+  before the first case crosses intent publication.
+- Never mutate `Implementation-ready improvement plan 8-5-26.txt` in any way.
+- Every command owns a fresh evidence directory and private temp/telemetry root.
+  No commands or agents share writable checkouts or roots; at most two heavy
+  Vitest aggregates run concurrently.
 
 ## Baseline Evidence
 
-- WP5n is complete at `HEAD`
-  `b86083b97f82128061d0aa40bc1b539e5cffb323`, tree
-  `31ff3c8144d4e8f1991d075a78fc0857f1595289`, parent
-  `69e92fc3e6d44ffa329ffd94c23c60f1bcfba0d3`. Its changed paths are exactly
-  the prior plan, autonomy log, and candidate-identity test.
-- Retained WP5n final audit
-  `artifacts/manual/wp5n-final-audit/audit-result.json` is 23,326 bytes with
-  SHA-256
-  `7c5dc79ea2a8ea35f034099c1aefc7eee89c93a93484b8c434c40c42b30fe190`.
-  It reports 12 manifests, 12 receipts, 12 artifacts, and zero mismatches;
-  focused Linux and Windows 3/3; invariants 13/13, 7/7, 15/15, and 61/61;
-  orchestrator 591/593 and unit 604/606 with the same two declared skips;
-  plus passing typecheck, lint, and format.
-- Live `origin/master` and the local tracking ref both remain at
+- Completed WP5o is HEAD `70fb23538d6664d4fd3c7e59397398cde702dd4b`,
+  tree `1610ca8714a43850b7ec423c7e0119e7bf0d9930`, parent
+  `b86083b97f82128061d0aa40bc1b539e5cffb323`. It changed only the prior plan,
+  autonomy log, and `doctor.test.ts`.
+- `artifacts/manual/wp5o-final-audit/audit-result.json` is 24,159 bytes,
+  SHA-256 `4d43bc6b0b5e444db0df07346f9fbfce5ea7e4c9825940bcd1c4d829318ae6f0`.
+  It records 12 manifests / 81,248 bytes, 12 receipts / 7,234 bytes, 12
+  artifacts / 474,917 bytes, zero mismatches, with manifest/receipt/artifact
+  digests `a602e28506409f2d68c998d75e3c00db45d0f4f6d5f1d79e0269abb68fd833d7`,
+  `4a367b01949d15b52b28b7b2dfed4e4ae805cbd490e7dbe5bcfdaca6d384da`,
+  and `239a53a17a5bbf0ea80962f0101266789cd01a65220a1fc2147d0347a0375530`.
+- Live and tracking `origin/master` equal
   `31a9e53ab2491ead0a3c88fac0860fdab9641f3a`; initial divergence is 0 behind /
-  2 ahead. No `refs/milestone-loop/*` exist. This session has not pushed and
-  will not push.
-- The initial worktree contained only the protected human plan. It remains
-  78,574 bytes, SHA-256
+  3 ahead. No `refs/milestone-loop/*` exist and no push is authorized.
+- The initial worktree contains only the protected file: 78,574 bytes, SHA-256
   `53ea98fb1cb880163a02d3b1d9365963e3fe891025ae3630f00bd4c9232293b1`,
-  no-filter blob `9890a3cdd5288708a04102d27ff6fce9f0ebb90b`, and path-filtered blob
+  no-filter blob `9890a3cdd5288708a04102d27ff6fce9f0ebb90b`, path-filtered blob
   `d0abdd24f404d9dc335818c355e39f7cfc531300`.
-- All immutable actual hashes match baseline and active values. `package.json`
-  selects `readiness`; the activation marker is present; the lock records
-  CAL-1 `open_not_started`, completed count zero. Windows and Linux exact
-  runtimes report Node `v24.18.0` and pnpm `11.15.1`.
-- The retained hosted Windows report at commit `87bd41e` orders failed suites
-  beginning with Doctor at `1786995045207`, evidence retention at
-  `1786995083268`, container executor at `1786995151895`, and later workspace,
-  Git, artifact, and clone cascades. WP5n closed the last retained Linux
-  cluster; the Windows Doctor failure is therefore next. Its test, schema,
-  retention owner, and path-safety inputs remain byte-identical from the hosted
-  commit through HEAD except for an unrelated WP5k Doctor production change.
-- A clean no-hardlink exact-HEAD Windows clone under the pinned runtimes, with
-  `%TEMP%` and `%TMP%` set to a genuine short alias whose `realpath` is the
-  retained long spelling, reproduced Doctor 18/19 passed, one failed, zero
-  skipped. The command exited 1 with an ERROR manifest bound to exact HEAD/tree,
-  no receipt, and a clean clone. The 8,215-byte report and 9,111-byte manifest
-  beneath `artifacts/manual/wp5o-windows-doctor-pre-fix/evidence/` have SHA-256
-  `15ac9e70503a71228ab2c0540262efbf4b900f45cf8983fb3acc96b5824c978c`
-  and `493532d0bff5c955293fc500b2829ccbc0eafccfe22dc8d11cbced6c074b3fec`.
-- An assertion-only patch staged at tree
-  `fa3395b684f18a264b33ab58d68327db044534a7` failed directly because
-  `realpath(fixture.root) !== fixture.root`: 18/19 passed, ERROR/no receipt,
-  exact one-path staged scope. Its 7,563-byte report and 9,110-byte manifest
-  beneath `artifacts/manual/wp5o-windows-doctor-owner-red/evidence/` have
-  SHA-256
-  `15d413e7a4ddcc7a33dc20c1069bf28f55e78664176653df5ba3e22941836cfc`
-  and `5423dc27530648f7d4d4a74b908c66941a3483468e7070f2654fbbe55c43b605`.
+- Immutable actual hashes equal baseline/active. `package.json` selects
+  readiness; the permanent marker exists; CAL-1 is `open_not_started`, count
+  zero. Package, lock, workflow, marker, and lock identities match WP5o audit.
+- Retained hosted Windows report
+  `artifacts/hosted/run-32060615125/controller-windows-87bd41e/orchestrator/orchestrator-report.json`
+  is 280,492 bytes, SHA-256
+  `3d51560a25552e28397f9143283a8afab39c365dd6b5ef1659fb7abcea3aa5c7`.
+  It orders closed Doctor at `1786995045207`, evidence retention at
+  `1786995083268` (15/19, four failures), then container executor at
+  `1786995151895`. Retained Linux evidence retention is 19/19.
+- A fresh no-local/no-hardlink exact-HEAD Windows clone under pinned runtimes
+  and genuine short `%TEMP%`/`%TMP%` reproduced 15/19. Its report and `ERROR`
+  manifest in `artifacts/manual/wp5p-windows-evidence-retention-red/evidence/`
+  are 11,865 bytes / SHA-256
+  `d8f5f27f39f5cbad8114742addfc6d19948de35eb0400d75f6f56c08cf33dd5c`
+  and 9,137 bytes / SHA-256
+  `43ea06ac5aea4109a50de97eae3c346c3c483edde83bfac0d6540f218e06d216`.
+  No receipt exists; clone identity and cleanliness match. `reproduction.json`
+  binds command, environment, failures, identities, and hashes. A first setup
+  selected host Node 25 and was rejected before any test/evidence command; it is
+  not cited.
+- The assertion-only candidate staged one test at tree
+  `e4e17f3d4a0348a3b2d3eca2bc39d6c49e9cc4a4` and remained 15/19, but the
+  first failure moved directly to the root-realpath assertion. Its 10,809-byte
+  report and 9,114-byte `ERROR` manifest have SHA-256
+  `1568e376fab1a73044df2c34ca9439bb58e27a5609148d6463f1cced2a66dd52`
+  and `40edd8e396916c1df641ab979fe364d94159f0f1eb8d65eb5f0f8a364658f6df`;
+  no receipt exists.
+- Direct trace: raw `applyFixture()` root plus realpath-derived artifact roots
+  first mix at retention intent construction. Strict schema rejects before
+  publication. All four failures share this helper. Container executor has a
+  separate fixture owner and remains open.
 
 ## Steps
 
-1. [x] Read frozen authority, agent contract, plan standard, completed WP5n
-       plan/log state, newest decision record, Git/live origin, retained
-       evidence, immutable/lifecycle state, exact toolchains, protected
-       identity, and private refs.
-2. [x] Verify exact WP5n commit/tree/parent, changed paths, final-audit
-       identity/totals, protected-only worktree, origin/divergence, and
-       critical lifecycle state.
-3. [x] Reparse retained cross-platform failure ordering and establish Windows
-       Doctor retention classification as the first unresolved causal suite.
-4. [x] Reproduce the complete Doctor file once from a clean no-hardlink exact-
-       HEAD Windows clone under a real short-form temp root; retain structured
-       ERROR/no-receipt evidence.
-5. [x] Add only the direct fixture-root assertion to the disposable clone,
-       stage it, and retain its expected direct red result.
-6. [x] Add the direct assertion and minimal fixture-root canonicalization to
-       the source Doctor test. Do not change production path, schema,
-       retention, or Doctor owners.
-7. [x] Run exact Windows short-temp and Linux focused Doctor diagnostics and
-       independently inspect totals, manifests, receipts, and artifacts.
-8. [x] Update this plan and `docs/autonomy-log.md`; no decision entry is
-       required because only a controlled test-fixture precondition changes.
-9. [ ] **In progress:** freeze test/plan/log, format only bounded paths, stage
-       only those paths, record the candidate tree, and run fresh Linux
-       focused, Windows short-temp focused, invariants, orchestrator, unit,
-       typecheck, lint, and format commands serially in distinct command-owned
-       evidence roots.
-10. [ ] Independently recompute all receipt/artifact/manifest bytes and hashes,
-        validate bindings/totals, and audit immutable hashes, lifecycle/CAL-1,
-        packages/lock/workflow, readiness marker, private refs, staged
-        paths/tree, live origin/divergence, protected identity, and red evidence.
-11. [ ] Create exactly one narrow local commit, verify commit/tree/parent,
-        changed paths, protected-only status, and live divergence, then stop
-        without pushing.
+1. [x] Read frozen authority, contract, plan standard, completed WP5o records,
+       newest decisions, retained evidence, Git/live origin, immutable/lifecycle
+       state, toolchains, protected identity, and private refs.
+2. [x] Verify supplied commit/tree/parent, audit totals, protected-only status,
+       origin/divergence, retained report, readiness, CAL-1, and critical files.
+3. [x] Use three isolated read-only agents for retained ordering/stacks,
+       fixture/production ownership, and verification-clone topology; primary
+       independently inspects the same authorities and owners.
+4. [x] Reproduce the complete file once from a clean no-hardlink exact-HEAD
+       Windows clone under genuine short temp; retain 15/19 `ERROR` evidence.
+5. [x] Add only the root-realpath assertion in a fresh
+       disposable exact-HEAD clone, stage that test alone, and retain its
+       expected direct red result under the genuine short spelling.
+6. [x] Add the assertion plus minimal `applyFixture()` root canonicalization to
+       authoritative source. Change no production owner.
+7. [x] Iterate only on the complete focused file until Windows short-path and
+       Linux ext4 pass 19/19 with valid receipts. Record container executor as
+       separately owned unless this exact change demonstrably repairs it.
+8. [x] Update plan and `docs/autonomy-log.md`; add no decision record unless a
+       durable production choice unexpectedly becomes necessary.
+9. [ ] **In progress:** format bounded paths, stage exactly test/plan/log, record `git write-tree`,
+       export/hash a binary cached patch, and freeze tracked bytes.
+10. [ ] Materialize four independent no-local/no-hardlink clones at exact HEAD,
+        apply/stage the patch, require matching `git write-tree`, no alternates,
+        no unstaged tracked differences, and exact toolchains.
+11. [ ] Run one frozen-tree Windows orchestrator aggregate agent, one Windows
+        unit aggregate agent, one WSL/ext4 focused agent, while primary runs
+        Windows genuine-short focused, invariants/components, typecheck, lint,
+        and format. Use eight final roots named `wp5p-*-final/evidence`.
+12. [ ] Reuse a read-only slot for evidence audit while primary independently
+        audits bindings/totals/skips, immutable/lifecycle/critical identities,
+        staged scope, protected file, private refs, and live origin/divergence.
+13. [ ] Create one narrow local commit; verify commit/tree/parent, paths,
+        protected-only status, private refs, live divergence, and no push; stop.
 
 ## Acceptance Criteria
 
-- Retained ordering and a clean exact-runtime Windows reproduction identify
-  Doctor retention classification as the first unresolved post-WP5n causal
-  cluster and retain its exact 18/19 ERROR result with no receipt.
-- An assertion-only direct regression is red before correction and green
-  afterward, proving the controlled fixture root is already canonical before
-  it supplies repository and realpath state fields.
-- The pending retention operation then classifies as `resume-delete` with the
-  exact current target, while state, journal, target, and protected authority
-  bytes remain unchanged by read-only Doctor inspection.
-- `doctor.ts`, `schema.ts`, `retention-apply-operation.ts`, `path-safety.ts`,
-  `git-isolation.ts`, production behavior, packages, lock, workflow, and every
-  immutable/lifecycle file remain byte-identical.
-- Exact Linux and Windows-short-path focused Doctor suites pass 19/19 with
-  valid command-owned receipts. Invariants, orchestrator, unit, typecheck,
-  lint, and format pass serially from one frozen candidate tree, with only the
-  two declared Windows skips in aggregates.
-- One narrow verified commit contains only the Doctor test, active plan, and
-  autonomy record. It is not pushed; the protected untracked file remains
-  byte-identical.
+- Exact retained and local red evidence records 15/19, the same four failures,
+  `ERROR`, no receipt, command/environment/candidate bindings, and hashes.
+- Assertion-only evidence fails directly before correction and passes after it,
+  proving the fixture root is canonical before intent planning/publication.
+- The four cases reach their intended success, forged-journal conflict,
+  result-conflict, and torn-journal recovery assertions; complete focused files
+  pass 19/19 on Windows short-path and Linux ext4 with valid receipts.
+- Production owners, strict contracts, retention guarantees, path identity,
+  packages, lock, workflow, and immutable/lifecycle files remain byte-identical.
+- Container executor remains explicitly open unless the same test-only owner
+  correction proves causal; no unrelated cluster is bundled.
+- Invariants/components, orchestrator, unit, typecheck, lint, and format pass
+  from one frozen candidate tree, with only the two declared aggregate skips
+  and valid independently audited receipts/artifacts.
+- One local commit contains only test, plan, and autonomy log. It is not pushed;
+  protected file bytes and all identities remain exact.
 
 ## Verification
 
-All commands explicitly select Node `24.18.0` and pnpm `11.15.1`. Long
-commands run separately and serially. Every successful command owns a fresh
-`LOOP_VERIFY_COMMAND_ARTIFACT_DIR`; every expected failure retains an ERROR
-manifest and no `result.json` receipt.
+Every command asserts exact Node/pnpm, clears inherited
+`MILESTONE_LOOP_TELEMETRY_RUN_ID` and `LOOP_TELEMETRY_PARENT_MANAGED`, and owns
+unique `LOOP_VERIFY_COMMAND_ARTIFACT_DIR`, temp, checkout, and telemetry paths.
+Red commands require `ERROR` manifest plus report and no `result.json`; exit
+zero without a valid receipt is failure.
 
-1. Red reproduction: from a clean no-hardlink exact-HEAD Windows clone, set
-   `%TEMP%`/`%TMP%` to a genuine 8.3 alias whose Node `realpath` is the long
-   spelling, then run `pnpm exec tsx tools/run-tool-evidence.mjs
-invariant-vitest tools/milestone-orchestrator/src/doctor.test.ts
---fileParallelism=false`. Require the retained downstream failure once and
-   the direct root-identity assertion failure when that assertion is staged
-   alone.
-2. Focused diagnostics: run the complete Doctor file through the same
-   receipt-owning wrapper under exact Windows short-temp and Linux toolchains.
-   Require 19/19, zero skips, exact candidate-tree binding, and independently
-   matching manifest/receipt/artifact hashes.
-3. Frozen candidate: format bounded tracked paths, stage only the Doctor test,
-   plan, and autonomy log, record `git write-tree`, then run fresh final
-   commands in order: Linux Doctor focused; Windows short-temp Doctor focused;
-   `pnpm test:invariants`; `pnpm test:orchestrator`; `pnpm test:unit`;
-   `pnpm typecheck`; `pnpm lint`; `pnpm format:check`. Each uses a distinct
-   fresh evidence root and no tracked bytes change between commands.
-4. Final audit: independently parse Vitest totals and every manifest/receipt,
-   recompute each declared artifact byte count and SHA-256, verify bindings and
-   aggregate digests, then audit source/protected/immutable/lifecycle/package/
-   lock/workflow identities before and after the no-push commit.
+1. Assertion red and focused green command:
+   `pnpm exec tsx tools/run-tool-evidence.mjs invariant-vitest
+tools/milestone-orchestrator/src/evidence-retention.test.ts
+--fileParallelism=false`. Windows uses a verified real 8.3 temp spelling;
+   Linux uses a private ext4 `TMPDIR`. Green requires 19/19 and zero skips.
+2. Frozen final roots are `wp5p-{linux-focused,windows-focused,invariants,
+orchestrator,unit,typecheck,lint,format}-final/evidence`. Commands are
+   `pnpm test:invariants`, `pnpm test:orchestrator`, `pnpm test:unit`,
+   `pnpm typecheck`, `pnpm lint`, and `pnpm format:check`, plus the two focused
+   commands. Do not alter prescribed serial semantics or shard aggregates.
+3. Clone procedure: authoritative unstaged tracked diff must be empty; capture
+   HEAD, staged paths, `git write-tree`, and a binary cached patch. Each clone
+   is `git clone --no-local --no-hardlinks --no-checkout`, detaches exact HEAD,
+   applies/stages its private patch, matches the frozen tree, has no alternates
+   or unstaged diff, installs offline/frozen/copy from the pinned source store,
+   and reasserts identity before and after its command.
+4. Final audit enumerates every manifest/receipt/artifact, recomputes byte counts
+   and SHA-256, checks declarations, bindings, toolchains, expected totals and
+   skips, derives ordered manifest/receipt/artifact digests, and writes one
+   ignored audit result. Primary separately audits repository/lifecycle/origin.
 
-Evidence invalidation: any test semantic change invalidates focused evidence;
-any later tracked change invalidates every frozen-candidate PASS. Final plan
-and log text freeze before final commands; final outcomes remain in ignored
-command evidence and the handoff so the candidate tree does not move.
+Any test semantic change invalidates focused evidence; any tracked change after
+freeze invalidates all final PASS receipts. Final tracked plan/log wording
+freezes before final commands; outcomes remain in ignored evidence and handoff.
 
 ## Risks and Recovery
 
-- Relaxing production path equality or containment would accept an alias or
-  escape without proving identity. Keep every production owner byte-identical
-  and canonicalize only the freshly created controlled fixture root.
-- Canonicalizing global `%TEMP%` in the test runner would conceal which fixture
-  owns the precondition and could mask later independent failures. Limit this
-  increment to `repositoryFixture()` in `doctor.test.ts`.
-- An assertion placed after state construction would preserve the misleading
-  invalid-state cascade. Assert root identity immediately after fixture
-  creation and before any persisted operation fields are derived.
-- Linux `realpath(await mkdtemp(...))` is an identity-preserving no-op; both
-  supported controller platforms must still run the complete focused file.
-- WSL dependencies stay inside disposable ext4 clones. Never replace the
-  source checkout's Windows `node_modules` with Linux links or binaries.
-- If the corrected focused test changes production files, accepts an explicit
-  alias/junction case, or reveals another failure in the same Doctor file,
-  retain evidence and revise the plan before expanding.
-- Recovery is an ordinary revert of one WP5o commit. No push, ref rewrite,
-  dependency migration, recommissioning, or destructive source cleanup is
-  required.
+- Production normalization would weaken fail-closed identity. Canonicalize only
+  the fresh controlled fixture root; keep production byte-identical.
+- A global temp override hides ownership. Limit change to `applyFixture()`.
+- Assertion inside the helper would create duplicate red failures. Put it in
+  the first state-first case for the direct red proof.
+- Container executor also uses `mkdtemp()` but has another owner/message; a
+  test-only file change cannot repair it. Leave it open.
+- WSL dependencies remain in disposable ext4 clones; never replace authoritative
+  Windows `node_modules`. Keep at most two heavy aggregates concurrent.
+- Recovery is ordinary revert of one commit. No push, ref rewrite, dependency
+  migration, state mutation, or destructive source cleanup is required.
 
 ## Progress and Evidence
 
-- 2026-08-22: Reconciled WP5n commit/audit/log state, live origin, immutable and
-  lifecycle state, exact runtimes, private refs, and protected-only worktree;
-  every supplied checkpoint identity matches.
-- 2026-08-22: Retained ordering places Windows Doctor retention classification
-  first after the closed Linux clusters. The hosted failure shape and unchanged
-  inputs identify mixed 8.3/long-form fixture fields rather than production
-  Doctor policy.
-- 2026-08-22: A clean exact-HEAD Windows clone reproduced 18/19 with ERROR/no
-  receipt under a genuine NTFS short temp spelling; an assertion-only staged
-  tree then failed directly at the fixture-root realpath precondition.
-- 2026-08-22: The source fixture now canonicalizes only its newly created root
-  and retains the direct assertion. Named production owners are byte-identical.
-  Windows under the same short alias and Linux on ext4 both passed 19/19 at
-  test-only tree `c57589de1ed26e90700c6e1b1142a17b1fb986bc`, with independently
-  matching command-owned receipts and artifact declarations.
-- 2026-08-22: Two Linux setup attempts stopped before Vitest and produced no
-  evidence root (a retained-script continuation defect, then an incomplete
-  offline store). Both disposable clones cleaned; the locked store was
-  hydrated and the cited exact-runtime diagnostic passed.
+- 2026-08-22: Reconciled completed WP5o and every supplied live checkpoint;
+  supplied identities match.
+- 2026-08-22: Parallel read-only audits and primary tracing place evidence
+  retention next and prove one shared apply-fixture precondition.
+- 2026-08-22: Clean exact-HEAD short-path Windows reproduction produced 15/19,
+  four exact failures, `ERROR`, no receipt, and retained hashes.
+- 2026-08-22: Assertion-only tree `e4e17f3d4a0348a3b2d3eca2bc39d6c49e9cc4a4`
+  failed directly at the fixture-root precondition with one staged path,
+  `ERROR`, no receipt, and the same 15/19 totals.
+- 2026-08-22: Canonicalizing only `applyFixture()` and retaining the assertion
+  produced test-only tree `35f950dba9f41675493817f3a442c9a32f35694f`.
+  Exact Windows under a genuine short temp and Linux from an ext4 clone both
+  passed 19/19 with valid command-owned receipts and matching declarations.
+  Container executor imports no changed owner and uses a separate fixture, so
+  its retained cluster remains explicitly open.
 
 ## Next Action
 
-Finish the tracked records, format only bounded paths, stage exactly the Doctor
-test, plan, and autonomy log, record the frozen candidate tree, and begin fresh
-serial final verification without changing tracked bytes afterward.
+Write the bounded WP5p autonomy record, finish plan status, format only the
+three intended tracked paths, stage them, and freeze one candidate tree before
+materializing independent verification clones.

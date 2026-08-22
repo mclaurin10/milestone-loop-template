@@ -5,6 +5,7 @@ import {
   mkdir,
   mkdtemp,
   readFile,
+  realpath,
   rm,
   stat,
   writeFile,
@@ -340,7 +341,9 @@ describe("approval-bound retention apply", { timeout: 60_000 }, () => {
   }
 
   async function applyFixture(): Promise<ApplyFixture> {
-    const root = await mkdtemp(join(tmpdir(), "milestone-loop-apply-"));
+    const root = await realpath(
+      await mkdtemp(join(tmpdir(), "milestone-loop-apply-")),
+    );
     temporaryDirectories.push(root);
     git(root, "init", "-b", "main");
     git(root, "config", "user.name", "Retention Apply Test");
@@ -420,6 +423,7 @@ describe("approval-bound retention apply", { timeout: 60_000 }, () => {
 
   it("deletes exactly the approved plan under a matching world", async () => {
     const fixture = await applyFixture();
+    expect(await realpath(fixture.root)).toBe(fixture.root);
     expect(fixture.plan.verificationRuns.plannedDeletions).toHaveLength(1);
     expect(fixture.plan.controllerRuns.plannedDeletions).toHaveLength(1);
 
