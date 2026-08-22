@@ -1,6 +1,13 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  realpath,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
@@ -100,7 +107,10 @@ interface ReviewingFixture {
 async function reviewingFixture(options?: {
   readonly legacyUnpinnedSummary?: boolean;
 }): Promise<ReviewingFixture> {
-  const root = await mkdtemp(join(tmpdir(), "milestone-loop-identity-orch-"));
+  const root = await realpath(
+    await mkdtemp(join(tmpdir(), "milestone-loop-identity-orch-")),
+  );
+  expect(await realpath(root)).toBe(root);
   temporaryDirectories.push(root);
   git(root, "init", "-b", "main");
   git(root, "config", "user.name", "Identity Fence Test");

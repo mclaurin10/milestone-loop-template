@@ -3,6 +3,92 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-22 — WP5s canonical Windows orchestrator-identity fixture root
+
+**Objective.** Select the earliest unresolved hosted-Windows controller file
+after WP5r, reproduce it from the exact clean WP5r commit under pinned tools
+and a genuine NTFS 8.3 TEMP spelling, prove its controlled root precondition,
+canonicalize only that fresh fixture root, verify Windows and Linux ext4, and
+create one narrow local commit without pushing. Preserve strict Git/workspace/
+orchestrator identity, state/schema, containment, later fixture clusters,
+immutable authority, lifecycle/CAL-1 state, and the protected human file.
+
+**Cause and ordering.** The historical hosted report places
+`orchestrator-identity.test.ts` immediately after the WP5r cleanup file at
+`1786995203341`: all eight cases failed before their intended candidate-
+identity/reviewer/integration outcomes. `reviewingFixture()` retained the raw
+`milestone-loop-identity-orch-*` spelling returned beneath short TEMP, then
+passed it to `createIsolatedWorkspaceFixture()`. Strict `inspectTarget()`
+correctly observed the expanded realpath and rejected the mismatched Git root.
+
+**Red evidence.** Exact clean no-local/no-hardlink WP5r clone
+`C:/wp5s1b/repo` at commit
+`1b51a8bc671a19fab2b82e27a46cca87a333bcba` / tree
+`1751b260806c3d10dd4784b133307a7058405fd7`, with no alternates or status
+drift, pinned tools, isolated dependency roots, and a genuine distinct short
+TEMP, reproduced 0/8. The 10,399-byte report and 9,013-byte ERROR manifest at
+`artifacts/manual/wp5s-orchestrator-identity-red/evidence/` have SHA-256
+`641348b18375f025f96b8cc0f978863d8673ab3c3acb42ad984338ddcd420dff`
+and `bd2f9ea2339fb72c91a8bc9c3b0dc60927bf39c31e79526e8740615130cc4bfe`;
+no receipt exists.
+
+Assertion-only tree `d615fb639f4d84356b2f1a2b059a8b4b13c43b5c`
+imported `realpath` and required the just-created root to equal it before Git
+or workspace setup. It remained 0/8, but every case stopped directly at that
+assertion. Its 7,424-byte report and 9,006-byte ERROR manifest at
+`artifacts/manual/wp5s-orchestrator-identity-owner-red/evidence/` have SHA-256
+`44c9169e1ddf51efbcc3a478657af96805efe50829e0696783b0cf48ca6e1756`
+and `e6ba491f6e15fe97b09f930e04342364d719aa4e3f95964c5c6479a943c00503`;
+no receipt exists.
+
+**Correction.** `reviewingFixture()` now resolves only its freshly created
+root through `realpath(await mkdtemp(...))` before deriving Git, workspace,
+configuration, state, or artifact paths. The direct assertion remains beside
+the creator. Production `git-isolation.ts`, `workspace-create.ts`,
+`orchestrator.ts`, candidate identity, review/integration, state/schema,
+containment, and all caller-controlled paths remain byte-identical. This is a
+test fixture correction and requires no decision-log entry.
+
+**Focused diagnostics.** Test-only tree
+`5108a323a78edf70cdd320a6f85f37c7c0d0d286` passed 8/8 with zero skips on
+genuine-short-path Windows and a clean Linux-ext4 clone. Windows's 3,549-byte
+report, 606-byte receipt, and 1,558-byte manifest have SHA-256
+`c6e537b133eee81388235b4840667c61a18df1e0f322d53b8330b5fbd9877376`,
+`797c88cafe5b085b5936bfafcdcaf5220a27f8d8ec43dae3e695793d30b9c3f1`,
+and `910e0ae17ffd80ffac73e5388d0830a04855e3ee1cdf689a64683280a8ecb98e`.
+Linux's 3,572-byte report, 606-byte receipt, and 9,212-byte manifest have
+SHA-256 `6405a8fe0782c285135b4ba8ae3394ec189929cff06685f5b6c64aaa675c0ca3`,
+`d57381e97c93017e4988763a84394a7b02e189f76993cedd09d7415904fe4615`,
+and `c7a499f8dc8ec9c209ab1e2f9c478829958dab751f523f0bdb4f27d1831ad553`.
+Every receipt and artifact declaration matched independently.
+
+Two reporting/setup mistakes created no false evidence: one audit wrapper
+parsed `$rp-Raw` after the owner-red command had already written valid ERROR
+evidence, and a preliminary-green wrapper attempted to assign PowerShell's
+reserved `$HOME` before creating an evidence root or running a test. The
+successful evidence was audited in separate read-only commands.
+
+The next retained failed file is `target-integration-recovery.test.ts` at
+`1786995207495`: 0/3. Its failures originate in the separately owned subprocess
+fixture `test/target-integration-crash-worker.ts`, whose raw
+`milestone-loop-target-crash-*` root crosses strict workspace Git inspection.
+It remains open rather than being bundled.
+
+**Stable-tree protocol.** The identity test, this log, and the next active
+plan freeze before final commands. Independent exact candidate clones rerun
+the complete Windows-short and Linux-ext4 file with fresh evidence. Exact final
+outcomes remain in ignored artifacts and the handoff so tracked bytes do not
+change afterward.
+
+**Commit.** Assigned by the single cohesive WP5s commit containing this entry;
+identify it as the newest commit touching the entry. It is not pushed.
+
+**Known gaps.** The target-integration crash-worker root and later Windows
+workspace/Git/retention/artifact/verification-clone clusters, the documented
+POSIX `setsid` escape, CAL-1, hidden validation, product breadth, autonomous
+readiness, and human verification remain open. No readiness or product-
+completion claim is made.
+
 ## 2026-08-22 — WP5r canonical Windows orchestrator-cleanup fixture root
 
 **Objective.** Reconcile published WP5q and exact runtime CI run
