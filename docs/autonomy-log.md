@@ -3,6 +3,109 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-21 — WP5n POSIX candidate-identity fixture materialization
+
+**Objective.** Select the earliest unresolved retained Linux controller
+failure after WP5m, reproduce it from a clean exact source under Node
+`24.18.0` and pnpm `11.15.1`, correct only its causal real-Git fixture
+precondition, verify both controller platforms with command-owned evidence,
+and create one narrow local commit without pushing. Preserve production
+candidate identity and Git inspection policy, later path-portability clusters,
+immutable authority, lifecycle/CAL-1 state, packages/locks/workflow, retained
+evidence, and the protected human plan.
+
+**Cause and ordering.** Retained hosted Linux run `32060615125` starts its
+failed suites at Doctor `1786995000003`, process supervisor `1786995022223`,
+worked example `1786995133398`, and candidate identity `1786995183453`. WP5k,
+WP5l, and WP5m close the first three, making `candidate-identity.test.ts` the
+next cluster. Its production owner, test, shared Git-inspection owner, and
+ignore file are byte-identical from hosted commit `87bd41e` through WP5m.
+
+The candidate fixture uses `git update-index --chmod=+x` and commits the
+mode-only tree change. On POSIX with `core.filemode=true`, Git records `100755`
+in the index/tree but does not mutate the existing worktree file from
+`100644`. The fixture therefore sampled its supposed clean `modeIdentity` while
+Git already reported `.M change.txt`; adding `dirty.txt` left both identities
+at `clean:false`, so the expected differing field disappeared. Windows uses
+`core.filemode=false`, which masked the incomplete fixture precondition. Exact
+cross-platform probes confirmed `dirty.txt` is not ignored and that
+materializing only mode `0755` removes the Linux `.M` while retaining the
+untracked-file status.
+
+**Red evidence.** A clean no-hardlink Ubuntu WSL2 clone of exact WP5m commit
+`69e92fc3e6d44ffa329ffd94c23c60f1bcfba0d3` / tree
+`8b8cde4728fbe0f186efed117a77a7cd8ead6324` reproduced 2/3 passed, one
+failed, zero skipped with the exact hosted `expected [] to deeply equal
+[ 'clean' ]` assertion, an ERROR manifest, no receipt, clean clone, exact
+toolchain, and confirmed cleanup. The shard ran once. Its post-run shell
+predicate had an unmatched-quote defect after evidence production; the
+existing evidence was finalized independently, and the attempted second
+invocation refused the existing root before running a shard. The 3,309-byte
+record at
+`artifacts/manual/wp5n-linux-candidate-identity-pre-fix/reproduction.json` has
+SHA-256
+`ee2a85dcbe34537e292f6d3291721a8ad4e8bf70aa758573af579168b0e6a8b2`;
+its 1,960-byte report, 8,871-byte manifest, and 340-byte toolchain record have
+SHA-256
+`669710c3fc0ea3cf65f84015e2e1c46ca5476e3c280044262414da9cdcd8188a`,
+`cf3e2d2ea2c018358c755c4733ab8c08dd34b8c1c62cc4849150d8f56a189906`,
+and `d521e219427b86398e6d610bd984c2ad9813d2b43e02c66f3d3a8b79aa46e548`.
+
+An assertion-only direct owner patch then required `modeIdentity.clean` before
+the later untracked write. Applied and staged alone in a second clean exact-
+HEAD Linux clone, it produced tree
+`4ad410fa0082ae02f238ad052f84167db0bd7bcd` and failed directly at that
+new assertion: 2/3 passed, one failed, zero skipped, ERROR/no receipt, exact
+one-path staged scope, and confirmed cleanup. Its 2,068-byte record at
+`artifacts/manual/wp5n-linux-owner-assertion-red/reproduction.json` has
+SHA-256
+`cdcf6795ab468f27686b4eb91049189fc0e8165e860e553ee888c4a3fa7b76c6`;
+the 1,967-byte report and 8,870-byte manifest have SHA-256
+`f39e292386628ad15686bbe66e3eb0a135c2c306462dda9794b50ec3a36d6509`
+and `7708772af4d6deb12dc011e2ff98577ed643952abbc23666c08511d617e48545`.
+
+**Correction.** The controlled test file is now set to mode `0755` after the
+mode-only commit and before shared-owner inspection. On POSIX this materializes
+the exact committed mode; on Windows `chmod` is harmless while
+`core.filemode=false`. The direct clean assertion remains, followed by the
+existing distinct tree/digest checks and later exact `clean`-only difference.
+Production `candidate-identity.ts`, `git-isolation.ts`, status argv, identity
+fields, digest framing, dirty-candidate rejection, and every controller policy
+boundary remain byte-identical. This is a fixture correction, not a durable
+production-contract decision, so no decision-log entry is required.
+
+**Focused diagnostics.** A clean exact-Linux clone and the Windows source
+checkout both staged only the corrected test at tree
+`28b8e7e61e02f1ae5e9771c66f4c9df0d9b821f3` and passed 3/3 with zero
+skips. Every manifest/receipt/artifact binding independently matched. Linux's
+1,609-byte report, 603-byte receipt, and 9,119-byte manifest have SHA-256
+`830fc046e5337a439ac1d3338aaeac806631e2fb2b2af9fabff56bc3bcecf951`,
+`5b5a5bdfa2d5083b6237f7a5bfc4e57b26a1c657e5058ddc61ec9adbf10e28d4`,
+and `0ef1269d76d176b7b892c882ab5425481fedaf6b30859ac22d5d5c9c7aa0faa9`.
+Windows's 1,612-byte report, 603-byte receipt, and 9,159-byte manifest have
+SHA-256
+`fb23027e2ebc2ba611ef567c7cceb0fa9fa8d65bb4655f6e30dd31e6cfce16aa`,
+`6341d2543ab31370d2698a1d54dc5e1d1d8e0a834827e745101cd1c566c13563`,
+and `7c8d3b33b06b8f601c0b5dbea70d933d27830fad08798a39327d523473e1137c`.
+
+**Stable-tree milestone protocol.** The test, this log, and execution plan
+freeze before final commands. The exact staged tree runs a fresh Linux focused
+shard and receipt-owning Windows focused, invariant, orchestrator, unit,
+typecheck, lint, and format commands separately and serially in fresh roots
+beneath `artifacts/manual/wp5n-*-final/`. Outcomes and independent hashes stay
+in ignored command evidence and the final handoff rather than being backfilled
+into tracked files and changing the candidate.
+
+**Commit.** Assigned by the single cohesive WP5n commit containing this entry;
+identify it as the newest commit touching the entry. It is not pushed.
+`origin/master` remained at WP5m's parent before this increment; no remote
+mutation occurs here.
+
+**Known gaps.** Larger Windows path-spelling/identity cascades, the documented
+POSIX `setsid` escape, CAL-1, hidden validation, product breadth, autonomous
+readiness, and human verification remain open. This increment makes no
+readiness or product-completion claim.
+
 ## 2026-08-21 — WP5m canonical worked-example payload identities
 
 **Objective.** Select the earliest unresolved hosted Linux controller failure

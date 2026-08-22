@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -122,10 +122,12 @@ describe("candidate identity", () => {
 
     git(repository, "update-index", "--chmod=+x", "change.txt");
     git(repository, "commit", "-m", "mode only");
+    await chmod(join(repository, "change.txt"), 0o755);
     const modeIdentity = candidateIdentityFrom(
       base,
       inspectAttempt(repository, base),
     );
+    expect(modeIdentity.clean).toBe(true);
     expect(modeIdentity.changedEntriesDigest).not.toBe(
       contentIdentity.changedEntriesDigest,
     );
