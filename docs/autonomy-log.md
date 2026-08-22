@@ -3,6 +3,104 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-22 — WP5r canonical Windows orchestrator-cleanup fixture root
+
+**Objective.** Reconcile published WP5q and exact runtime CI run
+`32598203192`, then select the earliest unresolved hosted-Windows controller
+failure, reproduce it from an exact clean source under Node `24.18.0` and pnpm
+`11.15.1`, correct only its controlled fixture root, retain a direct
+precondition assertion, verify Windows and Linux ext4, and create one narrow
+local commit without pushing. Preserve strict Git identity, containment,
+workspace cleanup, state/schema, later fixture clusters, immutable authority,
+readiness/CAL-1, the protected human file, and ignored residue.
+
+**Hosted reconciliation and ordering.** `HEAD` and `origin/master` both equal
+WP5q commit `3113c13182951814459628cebe252fe97fd93d9a` / tree
+`bb678f5a30e1a7f3bcd102ebb6d625b0b0ad350e`. Public GitHub metadata binds run
+`32598203192` to that commit and records Linux controller, both fresh-adopter
+jobs, and real Linux-Docker successful. Windows frozen installation and
+invariants passed; `test:orchestrator` failed; later unit/type/lint/format steps
+were skipped. The Windows artifact is 52,419 bytes with digest
+`sha256:9ae84a84150d7a58389c5e452d03263968c37d01b0b9e74fc0c9dce52466a9f2`.
+GitHub CLI has no authenticated session and the archive endpoint returns HTTP
+401, so exact run #9 file contents/counts are not claimed. Public metadata is
+retained at `artifacts/hosted/run-32598203192/public-metadata.json`.
+
+The historical hosted report retained at
+`artifacts/hosted/run-32060615125/controller-windows-87bd41e/orchestrator/orchestrator-report.json`
+places `orchestrator-cleanup.test.ts` next after the WP5o/p/q closures: 1/9
+passed and eight failed. Its controlled `repositoryFixture()` retained the
+8.3 spelling from `mkdtemp(tmpdir())`; strict `inspectTarget()` correctly
+expanded and rejected the mismatched Git-root identity before the intended
+open/workspace/retention boundaries.
+
+**Red evidence.** Exact clean no-local/no-hardlink clone `C:/wp5r1b/repo`,
+with no alternates or status drift, pinned tools, isolated dependency roots,
+and a genuine `C:/wp5r1b/WP5RWI~1` TEMP whose promise realpath expands, exactly
+reproduced 1/9 passed and eight failed. The 10,010-byte report and 9,011-byte
+ERROR manifest under
+`artifacts/manual/wp5r-orchestrator-cleanup-red/evidence/` have SHA-256
+`4ea9c7aa96e6c014efb215cbd98fd865f80f14fd6528d96f5b0acb64bfd248c0`
+and `d3985a35e5d3cd8d5a71a2a58ac6133b7a0075b85ac690ed5d3e286dd4af75b9`;
+no receipt exists.
+
+An assertion-only second clone/tree
+`fccbc84fcfe43d13b44ccd72b1cca08c83f98402` added only
+`expect(await realpath(fixture.root)).toBe(fixture.root)` after the first
+fixture return. It remained 1/9, but the first failure moved directly to that
+assertion. Its 9,602-byte report and 9,004-byte ERROR manifest under
+`artifacts/manual/wp5r-orchestrator-cleanup-owner-red/evidence/` have SHA-256
+`0848bc0419fe36a46cee411075f9eddd109950460abc33fea6880ff427f0dd19`
+and `4c9a3b20820a730fdbd4c9ac4331346f78b0c8db6cff9ccf5d52bcd4ac489772`;
+again no receipt exists.
+
+One rejected setup probe used `fs.realpathSync`, which on this Windows build
+preserved the short spelling even though the production-relevant
+`fs.promises.realpath` expands it. Clone/install had succeeded, but no test or
+evidence root existed. The promise API then proved the intended precondition
+before either cited red command ran.
+
+**Correction.** `repositoryFixture()` now resolves only its freshly created
+root through `realpath(await mkdtemp(...))` before deriving repository,
+configuration, state, artifact, or workspace paths. The direct assertion
+remains. Production `git-isolation.ts`, `orchestrator.ts`, workspace creation
+and cleanup, containment, state/schema, artifacts, and every caller-controlled
+or pre-existing path remain byte-identical. This is a test fixture correction,
+not a durable production decision, so no decision-log entry is required.
+
+**Focused diagnostics.** Test-only candidate tree
+`0bb0fa80fa2f3c0095460273d5f34f49c1276c0b` passed 9/9 with zero skips on
+genuine-short-path Windows and a clean Linux-ext4 clone. Windows's 3,984-byte
+report, 605-byte receipt, and 9,256-byte manifest have SHA-256
+`86047ac2f1455022b669e216de4fd347beaea9714cc3aae641dac9343e3fb949`,
+`cf8b4d5a4a4f14ba05b5a5cbf905c436cfd44b30876f09702f5cf3d988e2db98`,
+and `2d5c94f6325d88c6e41a99e98a8c2aa551ba3cc5e12660eef72368128d4bb4b5`.
+Linux's 4,016-byte report, 605-byte receipt, and 1,539-byte manifest have
+SHA-256 `f66d7c18e12cda18543592866f7fc728b78f47c9f9898318d9c205417f567832`,
+`7bc6f467d924ee996cf8e15e78c1350842eaf7d91fb1309e3cc1d7ef70f4b7d5`,
+and `3a239a1693935b9b9e56bd679536dd7c77d7fd6cf4266ed96ea9406e0981fc93`.
+Every declared artifact and receipt binding was independently recomputed.
+
+The next retained failed file is separately owned
+`orchestrator-identity.test.ts` at `1786995203341`: 0/8 passed, with its own
+raw `milestone-loop-identity-orch-*` reviewing fixture. It remains open rather
+than being bundled.
+
+**Stable-tree protocol.** The corrected test, this log, and the next active
+plan freeze before final commands. Independent exact candidate clones rerun
+the complete Windows-short and Linux-ext4 file with fresh command-owned
+evidence. Exact final outcomes remain in ignored evidence and the handoff so
+the candidate tree does not change afterward.
+
+**Commit.** Assigned by the single cohesive WP5r commit containing this entry;
+identify it as the newest commit touching the entry. It is not pushed.
+
+**Known gaps.** The separately owned orchestrator-identity fixture and later
+Windows workspace/Git/retention/artifact/verification-clone clusters, the
+documented POSIX `setsid` escape, CAL-1, hidden validation, product breadth,
+autonomous readiness, and human verification remain open. This increment
+makes no readiness or product-completion claim.
+
 ## 2026-08-22 — WP5q canonical Windows container-executor roots
 
 **Objective.** Select the earliest unresolved retained controller failure after
@@ -115,8 +213,24 @@ validation. External diagnostic roots `C:/w5qr`, `C:/w5qo`, `C:/w5qs`,
 `/home/duncan/wp5q-linux-store-probe` remain retained for audit. The unrelated
 repository residue `.tools/corepack-home-readonly-probe` remains untouched.
 
-**Commit.** Assigned by the single cohesive WP5q commit containing this entry;
-identify it as the newest commit touching the entry. It is not pushed.
+**Publication and hosted reconciliation.** The cohesive WP5q commit is
+`3113c13182951814459628cebe252fe97fd93d9a` (tree
+`bb678f5a30e1a7f3bcd102ebb6d625b0b0ad350e`) and is published at
+`origin/master`. Exact runtime CI run `32598203192` executed that commit.
+Public GitHub job metadata records Linux controller, Linux and Windows fresh
+adopter, and the real Linux-Docker matrix successful. Windows controller
+installation and invariants passed, `test:orchestrator` failed, and unit,
+typecheck, lint, and format were skipped. Its retained artifact metadata names
+`controller-windows-3113c13182951814459628cebe252fe97fd93d9a`, size 52,419
+bytes, digest
+`sha256:9ae84a84150d7a58389c5e452d03263968c37d01b0b9e74fc0c9dce52466a9f2`.
+GitHub CLI is unauthenticated and the unauthenticated archive endpoint returns
+HTTP 401, so the archive's file-level results and counts remain unaudited and
+are not claimed. Public metadata is retained at
+`artifacts/hosted/run-32598203192/public-metadata.json`.
+
+**Commit.** `3113c13182951814459628cebe252fe97fd93d9a`; published at
+`origin/master` by exact runtime CI run `32598203192` before WP5r began.
 
 **Known gaps.** The separately owned orchestrator-cleanup fixture cluster,
 later Windows workspace/Git/artifact/verification-clone cascades, the documented

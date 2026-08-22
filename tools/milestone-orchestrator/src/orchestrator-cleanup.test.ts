@@ -3,6 +3,7 @@ import {
   mkdir,
   mkdtemp,
   readFile,
+  realpath,
   rm,
   stat,
   writeFile,
@@ -71,8 +72,8 @@ async function repositoryFixture(config = validConfig()): Promise<{
   readonly config: ReturnType<typeof validConfig>;
   readonly baseCommit: string;
 }> {
-  const root = await mkdtemp(
-    join(tmpdir(), "milestone-loop-recovery-cleanup-"),
+  const root = await realpath(
+    await mkdtemp(join(tmpdir(), "milestone-loop-recovery-cleanup-")),
   );
   temporaryDirectories.push(root);
   git(root, "init", "-b", "main");
@@ -106,6 +107,7 @@ describe("canonical protected trust roots at controller startup", () => {
     { timeout: 30_000 },
     async () => {
       const fixture = await repositoryFixture();
+      expect(await realpath(fixture.root)).toBe(fixture.root);
       const legacyFive = [
         "PROJECT_GOAL.md",
         "evals/ACCEPTANCE.md",
