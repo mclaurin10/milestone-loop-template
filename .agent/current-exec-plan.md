@@ -1,119 +1,99 @@
 # Current Execution Plan
 
-**Status:** WP5v freeze and commit, then WP5w exact reproduction
+**Status:** WP5w freeze and commit, then WP5x exact reproduction
 **Updated:** 2026-08-22
 **Owner:** autonomous loop
 
 ## Objective
 
-Freeze and commit the proved WP5v fixture correction, then complete the next
-bounded hosted-Windows fixture increment:
-`tools/milestone-orchestrator/src/target-integration.test.ts`, whose failed
-root is created by that file's `fixture()` helper.
+Commit the proved WP5w fixture correction, then repair the next bounded owner:
+`tools/milestone-orchestrator/src/workspace-create.test.ts::fixture()`.
+Reproduce its complete 5-case file from exact clean WP5w under genuine NTFS
+8.3 TEMP; retain assertion-only red, canonicalize only its fresh parent root,
+verify Windows and Linux ext4, and create one separate local commit.
 
-From the exact clean WP5v commit, reproduce the complete file under genuine
-NTFS 8.3 TEMP, add an assertion-only root proof, canonicalize only that fresh
-fixture root, retain the assertion, verify Windows and Linux ext4, and create
-one separate narrow commit.
-
-Do not normalize caller-controlled/pre-existing paths, weaken strict Git or
-workspace consumers, alter target-integration semantics, bundle later files,
-run source no-argument `pnpm verify`, close CAL-1, or claim readiness.
+Do not weaken strict consumers, normalize caller/pre-existing paths, change
+workspace-create semantics, bundle later roots, run source no-argument
+`pnpm verify`, close CAL-1, push, or claim readiness.
 
 ## Goal Constraints
 
-- Preserve immutable hashes, readiness default/marker, CAL-1
-  `open_not_started`/zero, and the protected human file at SHA-256
+- Preserve all immutable hashes, readiness marker/default, CAL-1 open/zero,
+  ignored `.tools/corepack-home-readonly-probe`, and protected human file SHA
   `53ea98fb1cb880163a02d3b1d9365963e3fe891025ae3630f00bd4c9232293b1`.
-- Use Node `24.18.0`, pnpm `11.15.1`, no-local/no-hardlink clones, genuine
-  Windows short TEMP, WSL2 ext4 parity, serial Vitest, and isolated writable
-  checkout/TEMP/Corepack/store/telemetry/evidence roots.
-- Change only `target-integration.test.ts::fixture()`'s just-created root and
-  keep a direct assertion before Git/workspace setup. Production Git,
-  workspace, target integration, reducer, state/schema, and fault behavior
-  remain byte-identical unless separately proved.
-- One cohesive commit per causal owner; do not push. Run Session 1 broader
-  aggregates only once after all intended tracked bytes freeze.
+- Use Node `24.18.0`, pnpm `11.15.1`, clean no-local/no-hardlink clones,
+  genuine compact Windows short TEMP, Linux ext4, serial Vitest, and unique
+  writable checkout/TEMP/Corepack/store/telemetry/evidence roots.
+- Change only `workspace-create.test.ts::fixture()`'s just-created parent and
+  retain a direct assertion before derived source/Git paths. Production Git,
+  workspace-create/recovery, state/schema, fault hooks, and caller paths remain
+  byte-identical unless a separate downstream proof requires replanning.
+- One cohesive commit per owner; broader Session 1 checks run only once after
+  all intended tracked bytes freeze.
 
 ## Baseline Evidence
 
-- Current HEAD before WP5v commit is WP5u
-  `5653a345d1c3cbb35e2962c0de7c171e97ba794f` / tree
-  `8fba32c639c8f8c79869a760a09e5d07e04fd948`, four ahead of unchanged
-  `origin/master`.
-- WP5v exact baseline and assertion-only runs reproduce 0/5 with ERROR/no
-  receipt. Creator-only tree
-  `e9f3789866865ed0ef7f54332d08f3f6655b8ba7` passes 5/5 on Windows-short
-  TEMP and Linux ext4 with valid independently matched receipts.
-- The retained hosted report places `target-integration.test.ts` next at
-  `1786995254903`: 0/4. Its failures reach strict inspection through raw
-  `milestone-loop-target-action-*` created by that file's `fixture()`.
-- Current source confirms that fresh root becomes both repository authority
-  and the input to `createIsolatedWorkspaceFixture()`.
+- Current HEAD before WP5w commit is WP5v
+  `05afdba36b53d5e1e71237b26b6209c2136f22b4` / tree
+  `60d104aff7d56d5fa27f6e0ecbe4cf9a700ae863`, five ahead of origin.
+- WP5w exact baseline/assertion-only are 0/4 ERROR/no receipt; corrected tree
+  `a81692822dde9520ac3268aced3dce2af87796ff` passes 4/4 on Windows-short and
+  Linux ext4 with valid bindings.
+- Historical `workspace-create.test.ts` at `1786995272196` is 0/5. Strict
+  inspection rejects short `milestone-loop-workspace-*\source` versus its
+  expanded realpath. Current `fixture()` owns raw parent `mkdtemp` and derives
+  `source` from it.
 
 ## Steps
 
-1. [ ] **In progress:** Format/stage exactly the WP5v test/log/next plan,
-       audit scope and protected identities, and create its local commit.
-2. [ ] Reproduce the unchanged complete target-integration file from exact
-       clean WP5v under genuine short TEMP; retain ERROR/no-receipt evidence.
-3. [ ] In a second exact clone, add only promise `realpath` and a direct
-       equality assertion beside `fixture()`'s root creator; retain direct red.
-4. [ ] Canonicalize only that fresh fixture root, retain the assertion, and
-       run the complete Windows file until all four cases pass with receipt.
-5. [ ] Run the identical owner tree on Linux ext4 and audit bindings. Inspect
-       the next historical failure only enough to classify ownership.
-6. [ ] Update records, freeze/audit scope, commit WP5w narrowly, and hand the
-       plan to the next causal owner.
+1. [ ] **In progress:** Format/stage exactly WP5w test/log/plan, audit scope
+       and identities, then commit locally.
+2. [ ] Reproduce unchanged WP5x 0/5 from exact clean WP5w under short TEMP;
+       retain ERROR report/manifest and absence of receipt.
+3. [ ] Add only promise `realpath` plus a direct equality assertion beside the
+       parent creator in a second clone; retain direct assertion red.
+4. [ ] Canonicalize only the fresh parent, retain the assertion, and pass the
+       complete Windows file 5/5 with receipt.
+5. [ ] Pass the identical owner tree 5/5 on Linux ext4; audit bindings and
+       classify the next retained owner.
+6. [ ] Record, audit, and commit WP5x narrowly; hand off the active plan.
 
 ## Acceptance Criteria
 
-- WP5v has 5/5 zero-skip Windows and Linux evidence for its exact owner tree
-  and commits only its test, log, and next plan.
-- Exact clean WP5v reproduces retained WP5w 0/4, or records and replans around
-  the actual outcome before mutation; red has ERROR manifest and no receipt.
-- Assertion-only evidence fails at the root check before strict consumers.
-  After correction, Windows and Linux both pass 4/4 with zero skips and valid
-  independently matched receipts.
-- Production/caller paths remain untouched; protected/immutable/lifecycle
-  identities remain exact; one local commit is created and nothing is pushed.
+- WP5w commits only its test/log/plan after 4/4 Windows/Linux owner evidence.
+- WP5x baseline and assertion red retain ERROR/no receipt; assertion localizes
+  all cases before strict boundary. Corrected Windows/Linux pass 5/5, zero
+  skips, with valid independently matched receipts.
+- Production and caller paths stay unchanged; immutable/lifecycle/protected
+  identities remain exact; one local commit, no push.
 
 ## Verification
 
-WP5v boundary:
+`pnpm exec tsx tools/run-tool-evidence.mjs invariant-vitest tools/milestone-orchestrator/src/workspace-create.test.ts --fileParallelism=false`
 
-`pnpm exec tsx tools/run-tool-evidence.mjs invariant-vitest tools/milestone-orchestrator/src/workspace-create-recovery.test.ts --fileParallelism=false`
-
-WP5w focused command:
-
-`pnpm exec tsx tools/run-tool-evidence.mjs invariant-vitest tools/milestone-orchestrator/src/target-integration.test.ts --fileParallelism=false`
-
-Retained WP5w roots use
-`artifacts/manual/wp5w-target-integration-{red,owner-red,windows-green,linux-green}/`.
-Shared checks are added only if a production/contract owner changes. Once all
-intended Session 1 bytes freeze, run exactly once from isolated identical
-clones: `pnpm test:invariants`, `pnpm test:orchestrator`, `pnpm test:unit`,
-`pnpm typecheck`, `pnpm lint`, and `pnpm format:check`, with at most two heavy
-aggregates overlapping. Never run source no-argument `pnpm verify`.
+Retain under
+`artifacts/manual/wp5x-workspace-create-{red,owner-red,windows-green,linux-green}/`.
+After Session 1 bytes freeze, run once from isolated identical clones:
+`pnpm test:invariants`, `pnpm test:orchestrator`, `pnpm test:unit`,
+`pnpm typecheck`, `pnpm lint`, and `pnpm format:check`, at most two heavy
+aggregates concurrently. Never run source no-argument `pnpm verify`.
 
 ## Risks and Recovery
 
-- Use a compact expanded Windows TEMP with a distinct 8.3 alias to stay inside
-  Git-for-Windows' nested-ref path budget.
-- If the root repair exposes a separately owned production path, retain a
-  direct downstream red and replan before changing it.
-- Recovery is ordinary revert of one narrow commit; no push/ref rewrite,
-  lifecycle change, or broad cleanup.
+- Keep the expanded TEMP compact while proving a distinct genuine 8.3 alias,
+  so intentional nested refs stay within Git-for-Windows' path budget.
+- A downstream production red requires its own direct proof and replan.
+- Recovery is ordinary revert; no ref rewrite, push, lifecycle change, or
+  broad cleanup.
 
 ## Progress and Evidence
 
-- 2026-08-22: WP5v retained exact 0/5 baseline and assertion-only red, then
-  passed 5/5 on Windows-short and Linux ext4 at tree `e9f37898...`.
-- 2026-08-22: Historical stacks and current source identify
-  `target-integration.test.ts::fixture()` as the next separate root owner. No
-  WP5w code mutation has begun.
+- 2026-08-22: WP5w owner tree passed 4/4 Windows-short and Linux ext4 after
+  exact baseline and assertion-only 0/4 evidence.
+- 2026-08-22: Historical/current source identify
+  `workspace-create.test.ts::fixture()` as next owner; WP5x is unmodified.
 
 ## Next Action
 
-Format and stage only the WP5v test, log, and this plan; audit identities and
-create the local WP5v commit.
+Freeze the WP5w three-path scope, audit protected identities, and create its
+local commit.

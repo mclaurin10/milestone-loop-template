@@ -3,6 +3,63 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-22 — WP5w canonical Windows target-integration fixture root
+
+**Objective and cause.** From exact clean WP5v, reproduce the next retained
+Windows failure, prove and correct only its fresh fixture root, verify Windows
+and Linux ext4, and commit narrowly without pushing. The historical report
+places `target-integration.test.ts` at `1786995254903`: 0/4. Its `fixture()`
+retained raw `milestone-loop-target-action-*` beneath short TEMP and passed it
+through workspace creation; strict `inspectTarget()` correctly rejected the
+expanded Git-root identity before intended integration behavior.
+
+**Red evidence.** Clean no-local/no-hardlink clone `C:/wp5w1b/repo` at WP5v
+commit `05afdba36b53d5e1e71237b26b6209c2136f22b4` / tree
+`60d104aff7d56d5fa27f6e0ecbe4cf9a700ae863`, pinned tools, no alternates or
+status drift, and genuine `WP5WLO~1` TEMP reproduced 0/4. The 5,896-byte
+report and 9,031-byte ERROR manifest at
+`artifacts/manual/wp5w-target-integration-red/evidence/` have SHA-256
+`59797688b7eb78ae3d6e0799b6aa30ff8ab511ce6d36b415d8f32ac400ea37e8`
+and `2c9e22d1dbccbb61af1ce8c0e1678f30f3f967ceaf0eb00a2da8bff8ec5700b4`;
+no receipt exists.
+
+Assertion-only tree `cdb6312878cf7739af5e028995e2228236e0d365`
+added promise `realpath` and an equality check beside the creator. Three cases
+failed directly at that check; the first surfaced the same assertion through
+its expected-rejection matcher. Its 4,876-byte report and 9,024-byte ERROR
+manifest under `artifacts/manual/wp5w-target-integration-owner-red/evidence/`
+have SHA-256
+`9596a6ecb385d570c6c66377936237b5936a8e9d8ca2138cbe4dc7542bb1e213`
+and `1875af2bba50a8f4b7661aef98bc00271ff4fba0608843c8384fec9b87b4b342`;
+again no receipt exists.
+
+**Correction and verification.** `fixture()` now uses
+`realpath(await mkdtemp(...))` only for its just-created root and retains the
+direct assertion before registration or Git use. Production Git/workspace/
+target integration, state/schema, and caller paths remain byte-identical.
+Test-only tree `a81692822dde9520ac3268aced3dce2af87796ff` passed 4/4 with zero
+skips on Windows-short and WSL2 ext4. Windows report/receipt/manifest are
+2,202/603/9,246 bytes with SHA-256
+`a7ac36cfe2d755e06200700b917d0d3191b76aa7827ef486ae2ef4514b591819`,
+`74cb2f4fef352ed6669f5becd3a7c90ef36f292968928d84e1c1d3013fc75709`,
+and `37873d89f8a45079024249fd78bc24f9053d0475f7eae6a11f903aa85944c6f7`.
+Linux report/receipt/manifest are 2,224/603/9,211 bytes with SHA-256
+`b8512d709da3d04836aa00aa521da7e74c20a86ab5ad012fbd3f988c54597049`,
+`6e28ebcc29fe337cea28204e633cbb0337c4600b4125457ac876b4fd35637886`,
+and `785be6eed1ac0a5d3490af4edb1dca1612f579640bd8e4f12a95585be2a67a32`.
+Bindings match independently. This is test-only and needs no decision record.
+
+Next is `workspace-create.test.ts` at `1786995272196`: 0/5. Its separate
+`fixture()` retains a raw `milestone-loop-workspace-*` parent before deriving
+the `source` Git root. It remains open rather than bundled.
+
+**Commit.** Assigned by the cohesive WP5w commit containing this entry; it is
+local and unpushed.
+
+**Known gaps.** Later workspace/Git/retention/artifact/verification-clone
+clusters, POSIX `setsid`, CAL-1, hidden validation, product breadth, readiness,
+and human verification remain open. No completion claim is made.
+
 ## 2026-08-22 — WP5v canonical Windows workspace-create recovery fixture root
 
 **Objective.** Reproduce the next retained hosted-Windows controller file from

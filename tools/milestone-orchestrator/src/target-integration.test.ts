@@ -3,6 +3,7 @@ import {
   mkdir,
   mkdtemp,
   readFile,
+  realpath,
   rename,
   rm,
   unlink,
@@ -58,7 +59,10 @@ function git(repository: string, ...args: string[]): string {
 async function fixture(
   executionProvider: ExecutionProviderIdentity = trustedTestExecutionProviderIdentity(),
 ) {
-  const root = await mkdtemp(join(tmpdir(), "milestone-loop-target-action-"));
+  const root = await realpath(
+    await mkdtemp(join(tmpdir(), "milestone-loop-target-action-")),
+  );
+  expect(await realpath(root)).toBe(root);
   temporaryDirectories.push(root);
   git(root, "init", "-b", "main");
   git(root, "config", "user.name", "Target Integration Test");
