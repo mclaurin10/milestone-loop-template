@@ -3,6 +3,70 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-22 — WP5aa canonical retention-startup fixture root
+
+**Objective and cause.** From exact clean WP5z, reproduce the next historical
+Windows file, directly prove its test-owned fresh root, and preserve all
+retention/state/schema/orchestrator semantics while applying one narrow
+fixture correction. Historical and current
+`orchestrator-retention-recovery.test.ts` were 0/1: the pending retention
+operation became schema-invalid before the intended `after-run-deleted` fault
+could produce the expected simulated startup handoff. The raw
+`milestone-loop-retention-startup-*` root retained its short spelling while
+strict realpath-backed operation fields observed the expanded identity.
+
+**Evidence.** Exact clean no-local/no-hardlink clone `C:/wp5aa1b/repo` at WP5z
+`7984d1ac9b9b41e2ad42a485d847245085ea26ee` / tree
+`8a71d2dcf7605a89c3bbff0a4e4eeee18cc8f5b3`, pinned Node `24.18.0`, pnpm
+`11.15.1`, no alternates, isolated store, and distinct
+`WP5AAB~1`/expanded TEMP reproduced 0/1. Its 1,837-byte report, 9,044-byte
+ERROR/no-receipt manifest, and 1,161-byte telemetry manifest have SHA-256
+`f66544c2a78a743219c5f7257b6fcff3247697755bbdee0387f91cda254e7ff3`,
+`1de9a918c8cb80badcde9e10cd63e11acb895fe11ea19f79a4e4962b64782a44`,
+and `4972e099ccf619f874932e91010166d38607eb1d95a091a2b80e4adb0e1ee3d9`.
+Assertion-only tree `e65c1dd9c462694b34b0ee94714d12190926b123` imported promise
+`realpath` and asserted `expect(await realpath(root)).toBe(root)` immediately
+after creation. The sole case failed directly there before temporary-root
+registration, config, Git, state, or retention setup. Its 1,418-byte report,
+9,038-byte ERROR manifest, and 1,158-byte telemetry manifest have SHA-256
+`d2cd7eea0d8639134570ae93f48d509fa667bcffd1f108cb63b28683c1f5f6b5`,
+`6cdc8853412442ad75c399f39164803aa027cfd3e2defbfc1ef2c2f7f841d36d`,
+and `34813a605e8ac205cbc1f7a619c561523590ed00dd05a8261949178335b11ce8`.
+Red roots are
+`artifacts/manual/wp5aa-orchestrator-retention-recovery-{red,owner-red}/`.
+
+**Correction and verification.** Only the fresh fixture root now uses
+`realpath(await mkdtemp(...))`; the assertion remains before all consumers.
+Production retention operation/recovery, state, schema, lease, orchestrator,
+strict path checks, and the intentional fault are byte-identical. Corrected
+tree `719d6ebc6e564eb5d394945214efbafff5704553` passed Windows 1/1, zero
+skips. Its report/receipt/manifest are 1,029/616/9,277 bytes with SHA-256
+`3de986ada7d2ca8c13e31a236456464bfc4f16b37f93601bdf7e1e02668d357b`,
+`d98a428e7866400102d3dbb4b779ed82f4a50d373aa222b6a3c12ae3194b7561`,
+and `c951af1d022b44849ede607e13efaf8a8f75705149a9ef7492cecdda0efa7e83`.
+The identical tree passed WSL2 ext4 1/1; its report/receipt/manifest are
+1,035/616/9,237 bytes with SHA-256
+`0fad0767b394f5bc5d5e598417e8185522827ed7ceb4598741836dc7cd99f606`,
+`1a2ca8b6d3666c567abefe6afb9b200d1dba1f30ffe78656cfa13051a1cf4033`,
+and `9be9e06ae668657119267121400d5ea9e125aa247d97d922ee2b8f830106325c`.
+Green roots are
+`artifacts/manual/wp5aa-orchestrator-retention-recovery-{windows,linux}-green/`;
+bindings and source blobs match. No decision record is needed.
+
+Next is historical `git-isolation.test.ts` at `1786995290362`: two passes and
+two failures. Only its first two raw `milestone-loop-git-*` parents derive
+repositories that cross strict workspace creation; its later two raw parents
+serve direct Git inspection and already passed. The later sites are explicitly
+out of scope absent their own red proof, preventing bulk canonicalization.
+
+**Commit.** Assigned by the cohesive WP5aa commit containing this entry; local
+and unpushed.
+
+**Known gaps.** Remaining Git/retention/deterministic/artifact/clone files,
+the Windows aggregate, final broader frozen-candidate checks, POSIX `setsid`,
+CAL-1, hidden validation, product breadth, readiness, and human verification
+remain open. No completion claim is made.
+
 ## 2026-08-22 — WP5z canonical contract-integrity clone parent
 
 **Objective and cause.** From exact clean WP5y, reproduce historical

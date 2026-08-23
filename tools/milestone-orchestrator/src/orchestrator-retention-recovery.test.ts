@@ -1,6 +1,13 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, rm, stat, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  realpath,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
@@ -92,9 +99,10 @@ describe("retention-apply orchestrator startup recovery", () => {
     "recovers the canonical deletion before protected-root top-up",
     { timeout: 60_000 },
     async () => {
-      const root = await mkdtemp(
-        join(tmpdir(), "milestone-loop-retention-startup-"),
+      const root = await realpath(
+        await mkdtemp(join(tmpdir(), "milestone-loop-retention-startup-")),
       );
+      expect(await realpath(root)).toBe(root);
       temporaryDirectories.push(root);
       const config = validConfig({
         evidenceRetention: { artifactRoot: "artifacts", keepRecentRuns: 1 },
