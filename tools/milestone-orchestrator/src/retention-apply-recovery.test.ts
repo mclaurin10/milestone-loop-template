@@ -1,6 +1,6 @@
 import { spawn, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdtemp, readFile, rm, stat } from "node:fs/promises";
+import { mkdtemp, readFile, realpath, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -171,9 +171,10 @@ async function snapshot(metadataPath: string): Promise<FinalSnapshot> {
 }
 
 async function preparedFixture(label: string): Promise<string> {
-  const directory = await mkdtemp(
-    join(tmpdir(), `milestone-loop-retention-${label}-`),
+  const directory = await realpath(
+    await mkdtemp(join(tmpdir(), `milestone-loop-retention-${label}-`)),
   );
+  expect(await realpath(directory)).toBe(directory);
   temporaryDirectories.push(directory);
   const metadataPath = join(directory, "metadata.json");
   const prepared = worker("prepare", metadataPath);

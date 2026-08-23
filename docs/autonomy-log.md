@@ -3,6 +3,68 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-22 — WP5ac canonical retention-apply recovery fixture directory
+
+**Objective and cause.** From exact clean WP5ab, reproduce both historical
+retention hard-loss failures, prove `preparedFixture()` before changing it,
+and preserve the crash worker plus production retention/state/schema/lease
+semantics. Both cases were 0/2 because the raw
+`milestone-loop-retention-<label>-*` directory fed short metadata and derived
+repository paths to the worker; its first retention persistence rejected the
+pending operation as schema-invalid.
+
+**Evidence.** Exact no-local/no-hardlink clone `C:/wp5ac1b/repo` at WP5ab
+`2dcca3ad78394ba01d1a410587383ceabf2cb87b` / tree
+`c17c5f0a6b3af174d8ad7b919e2aef135feb775f`, pinned Node `24.18.0`, pnpm
+`11.15.1`, no alternates, isolated store, and distinct
+`WP5ACB~1`/expanded TEMP reproduced 0/2. Its 4,099-byte report, 9,034-byte
+ERROR/no-receipt manifest, and 1,159-byte telemetry manifest have SHA-256
+`06284483e4e3d19a7b5254424b8caa40d018f3e3f492a6c46e0d783e224f6fbd`,
+`b9e2aa46cc7f9d03f204b12237184242543c26fbc4eacf7a26e76f176df3425f`,
+and `d4a99c6c99768dd034c7d8db7d1d967fac376573db067ac091f2d4819b2740ef`.
+Assertion-only tree `1853c6787addcb9cadc39c94f935f368810826fb` imported promise
+`realpath` and asserted `expect(await realpath(directory)).toBe(directory)`
+immediately after creation. Both cases failed there before registration,
+metadata derivation, or worker launch. Its 2,337-byte report, 9,026-byte ERROR
+manifest, and 1,156-byte telemetry manifest have SHA-256
+`30db1aa209e7aa0cd47c203dc6fab92f8157a59e9af1c6131002d7fae3675f91`,
+`c4545c0bbfc4d2ef2c76dd0f122d5b756edb0058ccd871ac51b17ea6ba99031a`,
+and `38e1f2b6e99d89b74f201dc126e4648e22a61bcea941fab3d0fba77f29a3cb14`.
+Red roots are
+`artifacts/manual/wp5ac-retention-apply-recovery-{red,owner-red}/`.
+
+**Correction and verification.** Only `preparedFixture()`'s fresh directory
+now uses `realpath(await mkdtemp(...))`; the assertion remains. The worker,
+nine declared fault points and exit 86, recovery operation, state/schema,
+leases, and caller paths are byte-identical. Corrected tree
+`92c4b1a6d30083dbcd4987d75340fd23394368da` passed Windows 2/2, zero
+skips, after executing the complete nine-fault matrix and synchronized
+contenders. Its report/receipt/manifest are 1,350/609/9,266 bytes with SHA-256
+`976c1528e3d9cc567dd0df891fae598263b956c394d150fb154558005688bb75`,
+`8d920cb8129fbfaee7a326ca4d3ba85e84f78631d4de211e19165b251ebb1c6d`,
+and `161944372f695155e93d497d8e77a5e830c1e07ef4f5bffa14372bfb0e6fce5a`.
+The identical full matrix passed WSL2 ext4 2/2; its report/receipt/manifest are
+1,356/609/9,226 bytes with SHA-256
+`837d10424a05bc8dcf69be891a4dc0611f06a54170ec9d2b15739cc7e5257241`,
+`469765880868e0ad1cf644a0bcf89e6c80471ef79fede35e09af2e073932a9e7`,
+and `505fb9e93b2a6e9d11c82a6bf9812d520f406b5163fc0dc5c16f1a0021847bef`.
+Green roots are
+`artifacts/manual/wp5ac-retention-apply-recovery-{windows,linux}-green/`;
+bindings and source blobs match. No decision record is needed.
+
+Next is historical `deterministic-operations.test.ts` at `1786995301890`:
+0/2. Its shared `deterministicFixture()` owns a raw
+`milestone-loop-deterministic-*` root that crosses strict orchestrator Git
+inspection. It remains open for exact reproduction/direct proof.
+
+**Commit.** Assigned by the cohesive WP5ac commit containing this entry; local
+and unpushed.
+
+**Known gaps.** Remaining deterministic/artifact/clone files, the Windows
+aggregate, final broader frozen-candidate checks, POSIX `setsid`, CAL-1,
+hidden validation, product breadth, readiness, and human verification remain
+open. No completion claim is made.
+
 ## 2026-08-22 — WP5ab canonical scoped Git-isolation workspace parents
 
 **Objective and cause.** From exact clean WP5aa, reproduce historical
