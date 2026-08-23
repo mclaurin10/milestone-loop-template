@@ -3,6 +3,80 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-23 — WP5 Session 3 hosted Windows fresh-adopter repair candidate
+
+**Failed hosted run retained.** Exact runtime CI run `32638898310`, attempt 1,
+failed on candidate `43e609bc6b754bcfee0c3af88a05be68b9e26850` / tree
+`3258c1c65835c275b2462eb6dd8f67c346a4d88e`. Controller Linux/Windows,
+fresh-adopter Linux, and real trusted-container Linux succeeded; only the
+Windows fresh-adopter job failed, while all five unconditional uploads
+succeeded. Run/job/check/artifact metadata, five annotation sets, the failed
+job log, all five server-digest-matching archives, and safely extracted
+contents are retained under `artifacts/hosted/run-32638898310/`. The failed
+Windows archive is 9,712 bytes with SHA-256
+`4184d3799bdcb5d2b4636425b1d90869e102486318d67f3e02aa5039b9dafbf8`.
+The annotation inventory has one failure and zero warnings, confirming that
+the prior Node 20 action-runtime warning is closed.
+
+The exact six-command ledger passed `template-create` and `install`, then
+`commission` exited 1 for documented argv
+`pnpm loop:commission -- --input tools/milestone-orchestrator/config/commissioning-input.json`
+from the generated repository with inherited job environment plus `CI=true`.
+Manifest add/commit and generated verify never ran; neither `smoke-result.json`
+nor `receipt-audit.json` exists. The retained ERROR is not reinterpreted as a
+pass.
+
+**Causal reproduction and red invariant.** A no-local/no-hardlink clean clone
+of exact `43e609b` was installed frozen with copy imports under Node `24.18.0`,
+pnpm `11.15.1`, `CI=true`, isolated writable roots, and a genuine NTFS short
+TEMP spelling beneath `C:\w5s3r1\HOSTED~1`. The exact workflow smoke command
+reproduced commission exit 1 before manifest or verify. A spawned child probe
+retains short cwd/input, while `realpath` and Git report the expanded root;
+lexical `relative()` consequently begins with `..` and the unchanged strict
+commissioning guard correctly refuses the apparent escape. The 488-byte probe
+and 1,852-byte smoke log have SHA-256
+`56572f1f931f45e2984d58b4cc2d3418127b44a9e2c90d55070c04bdad5132db`
+and `d08520003770cc12dec9fcd4d5f1917e10ee85c360c4f428ad4f6a0667769c43`.
+
+The new root-creation test was then run against old production semantics in
+that exact clone. It failed only because
+`createCanonicalFreshAdopterTemporaryRoot` did not exist; the other 19 tests,
+including all 13 commissioning tests, passed. The 8,852-byte failing Vitest
+report at
+`artifacts/hosted/run-32638898310/reproduction/windows-8dot3-pre-fix/focused-regression-red/`
+has SHA-256
+`91d829f2b86846fbb13efe0d6fb65c1337e1e2a8c10d27ff843293b4debd7947`.
+
+**Correction and focused evidence.** The fresh-adopter coordinator now
+canonicalizes only its newly created temporary root once, equivalent to
+`realpath(await mkdtemp(...))`, before deriving the generated repository. The
+regression injects a hosted-style short spelling and requires create-then-
+canonicalize call order plus the expanded result. Commissioning
+implementation, CLI, and tests remain blob-identical to `43e609b`; no
+caller-controlled input, containment rule, command ledger, platform branch,
+receipt rule, or cleanup behavior changed. This reuses the existing durable
+producer-owned canonical-root decision, so no decision-log entry is added.
+
+Pinned receipt-owning focused verification at
+`artifacts/manual/wp5-session3-focused-green-v1/` passed 20/20 tests with zero
+failures or skips. Its 7,688-byte report, 663-byte PASS receipt, and 1,533-byte
+PASS manifest have SHA-256
+`f0f0f30f005ff631d9719d537af43addd6b9e47ac24dae2db205b28f135b5be5`,
+`269275fdab68319b2cf37d4afea265f254d7344205170b5b81bb70d13cbeccda`,
+and `986f90f199ea89c1433f9600e0faa21dc9114e77969792fef354934c958b718c`.
+Pre-freeze typecheck, lint, and format also passed with independently matching
+receipts/artifacts under their `artifacts/manual/wp5-session3-*-pre-freeze-v1/`
+roots. These dirty-tree runs are iteration evidence only.
+
+**Commit and remaining gates.** Assigned by the cohesive repair commit that
+contains this entry. Before the one authorized normal push, that exact clean
+commit still requires one real Windows six-command adopter/browser journey,
+receipt-owning `test:orchestrator`, typecheck, lint, and format checks, and
+independent evidence validation from clean clones. The resulting hosted run
+must then finish all five jobs green and have all five artifacts downloaded
+and independently audited. No source no-argument verify, template proof,
+CAL-1, hidden validation, WP6, product expansion, or readiness claim occurred.
+
 ## 2026-08-22 — WP5 Session 2 frozen-candidate isolation correction
 
 **Passing adopter journey.** Separator-repair candidate

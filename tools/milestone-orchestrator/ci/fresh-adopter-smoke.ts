@@ -8,6 +8,7 @@ import {
   mkdtemp,
   readFile,
   readdir,
+  realpath,
   rm,
   writeFile,
 } from "node:fs/promises";
@@ -116,6 +117,22 @@ export interface SourcePnpmStoreInvocation {
 export type SourcePnpmStoreRunner = (
   invocation: SourcePnpmStoreInvocation,
 ) => Promise<Pick<CommandCapture, "stdout">>;
+
+export interface FreshAdopterTemporaryRootDependencies {
+  readonly createTemporaryRoot?: (prefix: string) => Promise<string>;
+  readonly canonicalizeTemporaryRoot?: (path: string) => Promise<string>;
+}
+
+export async function createCanonicalFreshAdopterTemporaryRoot(
+  dependencies: FreshAdopterTemporaryRootDependencies = {},
+): Promise<string> {
+  const createTemporaryRoot = dependencies.createTemporaryRoot ?? mkdtemp;
+  const canonicalizeTemporaryRoot =
+    dependencies.canonicalizeTemporaryRoot ?? realpath;
+  return canonicalizeTemporaryRoot(
+    await createTemporaryRoot(join(tmpdir(), "fresh-adopter-ci-")),
+  );
+}
 
 function assertion(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -1010,7 +1027,7 @@ export async function runFreshAdopterCiSmoke(
     "Resolved pnpm store path must be an existing directory.",
   );
 
-  const temporaryRoot = await mkdtemp(join(tmpdir(), "fresh-adopter-ci-"));
+  const temporaryRoot = await createCanonicalFreshAdopterTemporaryRoot();
   const repositoryRoot = resolve(temporaryRoot, "repository");
   const commands = createFreshAdopterQuickstartPlan({
     definitionPath,

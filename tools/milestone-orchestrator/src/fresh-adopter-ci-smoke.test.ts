@@ -7,6 +7,7 @@ import {
   assertFreshAdopterCommandLedger,
   assertFreshAdopterQuickstartPlan,
   assertGeneratedRepositoryObservation,
+  createCanonicalFreshAdopterTemporaryRoot,
   createFreshAdopterCommandLedger,
   createFreshAdopterQuickstartPlan,
   generatedOfflineInstallArguments,
@@ -61,6 +62,31 @@ function repositoryObservation(): GeneratedRepositoryObservation {
 }
 
 describe("fresh-adopter CI smoke", () => {
+  it("canonicalizes the coordinator-owned temporary root once at creation", async () => {
+    const shortRoot =
+      "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\fresh-adopter-ci-test";
+    const canonicalRoot =
+      "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\fresh-adopter-ci-test";
+    const calls: string[] = [];
+
+    await expect(
+      createCanonicalFreshAdopterTemporaryRoot({
+        createTemporaryRoot: async (prefix) => {
+          calls.push(`create:${prefix}`);
+          return shortRoot;
+        },
+        canonicalizeTemporaryRoot: async (path) => {
+          calls.push(`canonicalize:${path}`);
+          return canonicalRoot;
+        },
+      }),
+    ).resolves.toBe(canonicalRoot);
+    expect(calls).toEqual([
+      `create:${join(tmpdir(), "fresh-adopter-ci-")}`,
+      `canonicalize:${shortRoot}`,
+    ]);
+  });
+
   it("parses the strict two-path CLI", () => {
     expect(
       parseFreshAdopterSmokeArguments([
