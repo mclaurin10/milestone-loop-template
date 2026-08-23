@@ -3,6 +3,70 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-22 — WP5z canonical contract-integrity clone parent
+
+**Objective and cause.** From exact clean WP5y, reproduce historical
+`contract-integrity.test.ts`, prove its separate fresh parent owner, preserve
+the corruption semantics and strict evidence-context consumer, and verify one
+narrow test-only correction on Windows-short and Linux ext4. Historical and
+current baseline were one pass/one failure: the corrupt adapter exited 3
+instead of its expected failure exit 1 because `commissionedClone()` derived
+the evaluated repository from a noncanonical `contract-integrity-*` parent.
+
+**Evidence.** Exact no-local/no-hardlink clone `C:/wp5z1b/repo` at WP5y
+`56dc9efbff64fa14e6d2787564b49b4284e74a96` / tree
+`56842641f182a009a4861b0b8d4036edfee5c82e`, pinned Node `24.18.0`, pnpm
+`11.15.1`, no alternates, an isolated store, and distinct
+`WP5ZBA~1`/expanded TEMP reproduced 1/2. Its 2,478-byte report, 9,030-byte
+ERROR/no-receipt manifest, and 1,161-byte telemetry manifest have SHA-256
+`037366c351af5fcb9d87fc2532ba2439bb3acd5930328021fa3b4466e5db2944`,
+`774bcac2373e364a1d31da1a991c68f7a030c86520216f7845d9a1beb2fac173`,
+and `b697bfc52ea9e54984b79b4711314d39ceb780a1ab84768aedd07ad2e2b57131`.
+Assertion-only tree `f7b31495eaa92d038d268f4b50279739799b13c4` imported promise
+`realpath` and asserted `expect(await realpath(parent)).toBe(parent)` directly
+after creation. Both cases failed at `commissionedClone()` before temporary
+registration or Git clone setup. Its 2,348-byte report, 9,024-byte ERROR
+manifest, and 1,158-byte telemetry manifest have SHA-256
+`d411673ff536e02f7283dd0dea495f534f97a693565ecb4f2d2285b6285f284c`,
+`f8e0359ea748f15366dd0a7a8ce39eca5be180e3cb1428e183092834db443186`,
+and `8290973862ef8b097a7eee7ae7901d2e0bf2db61a9e5b42459f33c93c9a8a279`.
+Red roots are `artifacts/manual/wp5z-contract-integrity-{red,owner-red}/`.
+
+**Correction and verification.** Only the fresh parent now uses
+`realpath(await mkdtemp(...))`; the assertion remains before clone derivation.
+The contract evaluator, verifier/invariant adapter, strict evidence-context
+check, intentionally corrupted manifest, and expected exit behavior are
+byte-identical. Corrected tree
+`d9c72bfcf2796796cc4468f2f1be1326f1440ee5` passed Windows 2/2, zero
+skips. Its report/receipt/manifest are 1,386/603/9,262 bytes with SHA-256
+`8bfc62c77e06f0e283479f97cecc6eadcfd2a5d6b15fa8347cee392a12c554ef`,
+`3916469e7e22907ce2ef8524348c7b0762eb8f5f42811443b3ea005102e295cb`,
+and `6859e79a6398e35e403c3f4afa5b6710225e01ff565899caedaba92fac1fbf92`.
+The identical tree passed WSL2 ext4 2/2; its report/receipt/manifest are
+1,392/603/9,223 bytes with SHA-256
+`d8eea9d51fd7ef936596b469d8b9f7794547e7100b91a51643381b21a1c336b8`,
+`037538f5e8b38bf8140e9f637e32579bd3c99c69bd010dd27577f5ac7a19b9a9`,
+and `f8c5180617004ed468be6966d4abb0a033d51034c4dc50507b401bf598b1e97b`.
+Green roots are
+`artifacts/manual/wp5z-contract-integrity-{windows,linux}-green/`; bindings and
+source blobs match. This is a test fixture correction, so no decision record
+is needed.
+
+Next is historical `orchestrator-retention-recovery.test.ts` at
+`1786995288202`: 0/1. Its pending retention operation became schema-invalid
+before the expected simulated handoff. Current source owns a raw
+`milestone-loop-retention-startup-*` root; operation planning resolves that
+short spelling while strict realpath-backed artifact fields use the expanded
+root. It remains open for exact reproduction and direct proof.
+
+**Commit.** Assigned by the cohesive WP5z commit containing this entry; local
+and unpushed.
+
+**Known gaps.** Remaining retention/Git/deterministic/artifact/clone files,
+the Windows aggregate, final broader frozen-candidate checks, POSIX `setsid`,
+CAL-1, hidden validation, product breadth, readiness, and human verification
+remain open. No completion claim is made.
+
 ## 2026-08-22 — WP5y canonical Windows workspace-cleanup fixture root
 
 **Objective and cause.** From exact clean WP5x, reproduce and repair only the

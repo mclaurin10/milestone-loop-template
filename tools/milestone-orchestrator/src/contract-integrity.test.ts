@@ -5,6 +5,7 @@ import {
   mkdir,
   mkdtemp,
   readFile,
+  realpath,
   rm,
   writeFile,
 } from "node:fs/promises";
@@ -76,7 +77,10 @@ function isolatedLoopEnvironment(
 }
 
 async function commissionedClone(): Promise<string> {
-  const parent = await mkdtemp(join(tmpdir(), "contract-integrity-"));
+  const parent = await realpath(
+    await mkdtemp(join(tmpdir(), "contract-integrity-")),
+  );
+  expect(await realpath(parent)).toBe(parent);
   temporaryDirectories.push(parent);
   const root = join(parent, "repository");
   const cloned = command(
