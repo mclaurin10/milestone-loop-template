@@ -3,6 +3,74 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-22 — WP5ae canonical container-artifact fixture roots
+
+**Objective and cause.** From exact clean WP5ad, reproduce the four historical
+container-artifact failures, prove shared `root(prefix)` before changing it,
+and preserve publication, inventories, strict link/containment guards, and
+independent/combined quotas. The complete file reproduced one pass/four
+failures: all filesystem cases used raw `milestone-loop-export-*` roots whose
+NTFS 8.3 spelling disagreed with promise `realpath`; the path-free combined
+quota case passed.
+
+**Evidence.** Exact no-local/no-hardlink clone `C:/wp5ae1b/repo` at WP5ad
+`b6aad15fb5d2f32471503092a2b5d375e9076a3b` / tree
+`0c30ff54851e12d824454a71e84472a58f8050ec`, pinned Node `24.18.0`, pnpm
+`11.15.1`, no alternates, isolated store, and distinct
+`WP5AEB~1`/expanded TEMP reproduced 1/5. Its 5,159-byte report, 8,617-byte
+ERROR/no-receipt manifest, and 1,154-byte telemetry manifest have SHA-256
+`0430857911ff3d037b0a0bba9690a4e80438072e0340a400286a8b71c49250ae`,
+`d25b6c5857e6cfcb49772c97d79c6c8cd84749bb90aea3cd69054360689586d9`,
+and `2b2d29a526222bd39690ec67ee18444509f0af81e8c25844971c385601684482`.
+Assertion-only tree `66ad885c9cfdc19f5b3a44996275ca61ebc6304c` imported promise
+`realpath` and asserted `expect(await realpath(value)).toBe(value)` immediately
+after creation. All four filesystem cases failed directly there before root
+registration or artifact inventory/publication; the path-free case remained
+passing. Its 4,133-byte report, 8,629-byte ERROR manifest, and 1,160-byte
+telemetry manifest have SHA-256
+`cfc4a82e96b0c5e7bcfeadd5fe6701d03ed761c36fbbc8462c28cb476ac511e9`,
+`dc716573f1f566d77aa7a2170290582e5125e067db1720301a142e806a9826b9`,
+and `e37520a4e00378f95c64d67c267de4c9f07fc85e6b370e4081adfc2e5b3a60e2`.
+Red roots are `artifacts/manual/wp5ae-container-artifacts-{red,owner-red}/`.
+
+**Correction and verification.** Only shared `root(prefix)`'s fresh value now
+uses `realpath(await mkdtemp(...))`; the assertion remains. Production
+artifact inventory/publication, stable-root and link guards, containment,
+quotas, and caller paths are byte-identical. Corrected tree
+`d377ae2cca1620fbd42293d606f81f8f44e9521d` passed Windows 5/5, zero
+skips, including symbolic-link/junction, hard-link, substituted-parent,
+linked-ancestor, and quota behavior. Its report/receipt/manifest are
+2,262/604/8,868 bytes with SHA-256
+`573be220bd552b2a9e4cfd7b6f0c10fdbd29bc94b8e4441bba1bab5f227c4eff`,
+`54f644d0a3b5173f17bf9e1584bcb6a7b9131dde6a45f7ed6bbcb5638653c2bb`,
+and `3e2d7fdcf41fb26c14af34cd5537fc5eec7467128a2970a15b7762693cc4ec8a`.
+The identical full file passed WSL2 ext4 5/5; its report/receipt/manifest are
+2,269/604/8,828 bytes with SHA-256
+`ccbefd998c8fce17fb64b646bbdc75c07574268f39f016d7e954f929041d91bd`,
+`6911219ee6ef3879c56a80bf3a20c80b1ab8e552fd57746a284ff030aec8c133`,
+and `cbc72fed967065d7a2cee8437b6508b34c68ff180f8e35e947c3c49c59b6a66f`.
+Green roots are
+`artifacts/manual/wp5ae-container-artifacts-{windows,linux}-green/`; bindings
+and source blobs match. One nonqualifying baseline setup install inherited the
+source cwd; it ran no test, wrote no evidence, changed no tracked byte, and
+left source dependencies bound to the established store. One owner-clone
+setup process could not start because its not-yet-created cwd was selected;
+it made no filesystem change. No decision record is needed.
+
+Next is historical `verification-clone.test.ts` at `1786995311714`: one pass
+and two failures. The first two cases pass shared `repository()`'s raw
+`milestone-loop-clone-source-*` root to strict candidate inspection. The third
+creates the same source but passes a derived junction to the linked-root guard
+and historically passes. It remains open for exact current reproduction and
+direct proof.
+
+**Commit.** Assigned by the cohesive WP5ae commit containing this entry; local
+and unpushed.
+
+**Known gaps.** The verification-clone file, frozen Windows aggregate and
+broader checks, POSIX `setsid`, CAL-1, hidden validation, product breadth,
+readiness, and human verification remain open. No completion claim is made.
+
 ## 2026-08-22 — WP5ad canonical deterministic-operations fixture root
 
 **Objective and cause.** From exact clean WP5ac, reproduce both historical

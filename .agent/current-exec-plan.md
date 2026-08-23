@@ -1,21 +1,22 @@
 # Current Execution Plan
 
-**Status:** WP5ae container-artifact fixture exact reproduction
+**Status:** WP5af verification-clone fixture exact reproduction
 **Updated:** 2026-08-22
 **Owner:** autonomous loop
 
 ## Objective
 
-With WP5ad's deterministic fixture finalized, reproduce and repair only
-`tools/milestone-orchestrator/src/container-artifacts.test.ts::root(prefix)`'s
-fresh roots. Use an exact clean committed WP5ad clone, genuine NTFS 8.3 TEMP,
-direct assertion-only proof, minimal helper-root canonicalization, complete
-Windows 5-case coverage, Linux ext4 parity, and one separate local commit.
+With WP5ae's artifact fixture finalized, reproduce and repair only
+`tools/milestone-orchestrator/src/verification-clone.test.ts::repository()`'s
+fresh source repository. Use an exact clean committed WP5ae clone, genuine
+NTFS 8.3 TEMP, direct assertion-only proof, minimal helper-root
+canonicalization, complete Windows 3-case coverage, Linux ext4 parity, and
+one separate local commit.
 
-Do not alter artifact inventory/publication, link and containment guards,
-quota enforcement, caller/pre-existing paths, readiness/CAL-1 state, or the
-later verification-clone owner. Do not run source no-argument `pnpm verify`,
-push, or claim readiness.
+Do not alter production disposable-clone creation, Git identity/cleanliness,
+no-alternates/origin-free guarantees, symlink rejection, caller/pre-existing
+paths, readiness/CAL-1 state, or broader verification commands. Do not run
+source no-argument `pnpm verify`, push, or claim readiness.
 
 ## Goal Constraints
 
@@ -26,8 +27,8 @@ push, or claim readiness.
 - Use Node `24.18.0`, pnpm `11.15.1`, clean no-local/no-hardlink clones,
   compact distinct Windows short TEMP, Linux ext4, serial Vitest, and isolated
   writable roots.
-- Change only the test-owned helper's just-created root and retain a direct
-  promise-realpath assertion before registration or any artifact operation.
+- Change only the test-owned helper's just-created repository root and retain
+  a direct promise-realpath assertion before registration or Git setup.
   Production paths remain byte-identical unless a separate direct proof
   forces replanning.
 - Keep one local commit per causal owner; broader Session 1 checks run exactly
@@ -35,52 +36,57 @@ push, or claim readiness.
 
 ## Baseline Evidence
 
-- WP5ad unchanged and assertion-only trees are 0/2 ERROR/no receipt; corrected
-  tree `7e75d91da01463701f7a7f5bd5025e0edc544581` passes the full Windows
-  and Linux ext4 owner file 2/2 with valid bindings.
-- WP5ad started from WP5ac commit
-  `1836a5da5a3e0c287aa5b874bf4fa2c6fd299013` / tree
-  `283c6f1155841cd71df3797eb3fb79bb58a0005a`; its cohesive commit assigns
+- WP5ae unchanged/assertion trees are 1/5 ERROR/no receipt; corrected tree
+  `d377ae2cca1620fbd42293d606f81f8f44e9521d` passes the complete Windows
+  and Linux ext4 owner file 5/5 with valid bindings.
+- WP5ae started from WP5ad commit
+  `b6aad15fb5d2f32471503092a2b5d375e9076a3b` / tree
+  `0c30ff54851e12d824454a71e84472a58f8050ec`; its cohesive commit assigns
   the exact base for this plan.
-- Historical `container-artifacts.test.ts` at `1786995304153` is 1/5. The
-  first four cases share raw `root(prefix)` fresh directories; the fifth
-  combined-limit case creates no filesystem root and passed. Current outcome
-  is not assumed.
+- Historical `verification-clone.test.ts` at `1786995311714` is 1/3. The
+  first two cases pass the raw shared `repository()` root to strict candidate
+  inspection and fail. The third uses the same source creator but passes a
+  derived junction to the ordinary-directory guard and historically passes.
+  Current outcome is not assumed.
 
 ## Steps
 
-1. [x] Prove WP5ad baseline/owner/correction, pass both complete platform
+1. [x] Prove WP5ae baseline/owner/correction, pass both complete platform
        files, audit identities, and prepare its test/log/plan-only commit.
-2. [ ] **In progress:** From the committed WP5ad state, construct an exact
-       clean clone and reproduce unchanged WP5ae under genuine short TEMP;
-       retain ERROR/no receipt if current 1/5 remains.
-3. [ ] Add only promise `realpath` and a direct equality assertion inside
-       `root(prefix)` in a second exact clone; retain assertion-localized red
-       before root registration or artifact operations.
+2. [ ] **In progress:** From committed WP5ae, construct an exact clean clone
+       and reproduce unchanged WP5af under genuine short TEMP; retain
+       ERROR/no receipt if current 1/3 remains.
+3. [ ] Add only promise `realpath` and a direct equality assertion immediately
+       after the shared helper creates its root. Retain the assertion-localized
+       red before registration/Git; because all three cases use the helper,
+       the proof may intentionally localize the historically passing junction
+       case too without changing its production behavior.
 4. [ ] Canonicalize only the helper-created root, retain the assertion, and
-       pass the complete Windows file 5/5 with a valid receipt.
-5. [ ] Pass the identical corrected tree 5/5 on Linux ext4, audit bindings,
-       and classify `verification-clone.test.ts` without changing it.
-6. [ ] Record, audit, and commit WP5ae narrowly; hand off the active plan.
+       pass the complete Windows file 3/3 with the junction rejection intact
+       and a valid receipt.
+5. [ ] Pass the identical corrected tree 3/3 on Linux ext4, audit bindings,
+       and classify the frozen-candidate verification handoff.
+6. [ ] Record, audit, and commit WP5af narrowly; freeze all intended tracked
+       Session 1 bytes before broader commands.
 
 ## Acceptance Criteria
 
-- WP5ad commit contains only its deterministic test, autonomy entry, and this
+- WP5ae commit contains only its artifact test, autonomy entry, and this
   handoff plan after exact Windows/Linux parity.
-- WP5ae baseline/assertion retain truthful counts and ERROR/no receipt; the
-  assertion proves the helper root before registration or strict artifact
-  consumers.
-- Corrected Windows/Linux pass 5/5 with valid receipts. Artifact production,
-  link/containment/quota consumers, and caller paths stay unchanged;
-  immutable/lifecycle/protected identities remain exact; one local commit,
-  no push.
+- WP5af baseline retains truthful counts and ERROR/no receipt; the assertion
+  directly proves the shared helper root before registration or Git setup.
+- Corrected Windows/Linux pass 3/3 with valid receipts. Production clone/Git
+  and symlink consumers stay unchanged; immutable/lifecycle/protected
+  identities remain exact; one local commit, no push.
+- The next plan freezes tracked records before the six required broader
+  commands and does not run source no-argument `pnpm verify`.
 
 ## Verification
 
-`pnpm exec tsx tools/run-tool-evidence.mjs invariant-vitest tools/milestone-orchestrator/src/container-artifacts.test.ts --fileParallelism=false`
+`pnpm exec tsx tools/run-tool-evidence.mjs invariant-vitest tools/milestone-orchestrator/src/verification-clone.test.ts --fileParallelism=false`
 
 Retain under
-`artifacts/manual/wp5ae-container-artifacts-{red,owner-red,windows-green,linux-green}/`.
+`artifacts/manual/wp5af-verification-clone-{red,owner-red,windows-green,linux-green}/`.
 After Session 1 bytes freeze, run exactly once from isolated identical clones:
 `pnpm test:invariants`, `pnpm test:orchestrator`, `pnpm test:unit`,
 `pnpm typecheck`, `pnpm lint`, and `pnpm format:check`; at most two heavy
@@ -88,21 +94,23 @@ commands overlap. Never run source no-argument `pnpm verify`.
 
 ## Risks and Recovery
 
-- Preserve symbolic-link, junction, hard-link, destination-parent,
-  containment, and independent/combined quota assertions; only the helper's
-  producer-owned fresh spelling is in scope.
-- Keep expanded TEMP compact while proving a distinct 8.3 alias.
+- Preserve dirty-source, commit-mismatch, no-origin, no-alternates, cleanup,
+  and linked-root rejection assertions; only the helper's producer-owned fresh
+  spelling is in scope.
+- The assertion-only proof can fail all three cases because the helper is
+  shared; only the first two baseline failures cross stable candidate-root
+  inspection. This distinction must remain explicit in evidence.
 - A production red after helper canonicalization requires separate proof and
   replan. Recovery is ordinary revert; no push/ref rewrite/bulk edit.
 
 ## Progress and Evidence
 
-- 2026-08-22: WP5ad retained baseline/assertion 0/2 and passed the identical
-  complete Windows-short and Linux ext4 files 2/2.
-- 2026-08-22: Historical/current source identify `root(prefix)` next; WP5ae
-  is unmodified.
+- 2026-08-22: WP5ae retained baseline/assertion 1/5 and passed the identical
+  complete Windows-short and Linux ext4 files 5/5.
+- 2026-08-22: Historical/current source identify shared `repository()` next;
+  WP5af is unmodified.
 
 ## Next Action
 
-Commit WP5ad, then construct an exact clean clone of that commit and reproduce
-the unchanged five-case WP5ae file under genuine short TEMP.
+Commit WP5ae, then construct an exact clean clone of that commit and reproduce
+the unchanged three-case WP5af file under genuine short TEMP.

@@ -4,6 +4,7 @@ import {
   mkdtemp,
   mkdir,
   readFile,
+  realpath,
   rm,
   symlink,
   writeFile,
@@ -28,7 +29,8 @@ afterEach(async () => {
 });
 
 async function root(prefix: string): Promise<string> {
-  const value = await mkdtemp(join(tmpdir(), prefix));
+  const value = await realpath(await mkdtemp(join(tmpdir(), prefix)));
+  expect(await realpath(value)).toBe(value);
   roots.push(value);
   return value;
 }
