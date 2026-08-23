@@ -3,6 +3,67 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-22 — WP5ab canonical scoped Git-isolation workspace parents
+
+**Objective and cause.** From exact clean WP5aa, reproduce historical
+`git-isolation.test.ts`, prove and repair only its two failing
+workspace-creating parents, and leave two historically passing direct-Git
+roots untouched. Baseline was and remains two passes/two failures. Only the
+first two cases derive `source` repositories from raw `milestone-loop-git-*`
+parents and cross strict workspace Git inspection; those short spellings
+conflicted with expanded realpaths.
+
+**Evidence.** Exact no-local/no-hardlink clone `C:/wp5ab1b/repo` at WP5aa
+`0de6fea0796c33341560699334ac7ef2867d329e` / tree
+`708af19aec17e39d3c548f29d01c87643e071a88`, pinned Node `24.18.0`, pnpm
+`11.15.1`, no alternates, isolated store, and distinct
+`WP5ABB~1`/expanded TEMP reproduced 2/4. Its 3,208-byte report, 9,018-byte
+ERROR/no-receipt manifest, and 1,157-byte telemetry manifest have SHA-256
+`7c220f4834662bda974b0f39e517572a294acfc1475dc479256219a53f4cb2a3`,
+`318f20cd8eb0d8f086bf0852ecad720dfb599e16fe2b26ae868d08193b0b8363`,
+and `b6acbb20671bd96d0fa22d6ee22b7293472bd33eb74a084c40a5efdae083d6db`.
+Assertion-only tree `da8a74f84d8c705e29c97a35991d906926da38fd` imported promise
+`realpath` and added direct parent assertions only at the first two sites.
+Those two cases failed at the new lines before repository creation; the later
+two raw-parent cases stayed byte-identical and passed. Its 2,522-byte report,
+9,011-byte ERROR manifest, and 1,154-byte telemetry manifest have SHA-256
+`78c638e85f7f0bdd06c7c11e58e5e0429a3d96df7df3df339a8828a4e23f97c1`,
+`98b0f9052e97a591386a63df9ca56aac66e98684adab3c94827861757becf4cd`,
+and `a73ecd13f971425c28e9524e0a0b4a02450b7422f2b3d1d9ea87d8d0fcadb556`.
+Red roots are `artifacts/manual/wp5ab-git-isolation-{red,owner-red}/`.
+
+**Correction and verification.** Only the first two fresh parents now use
+`realpath(await mkdtemp(...))`, retaining assertions. The later two parents,
+all production Git identity/integration and workspace code, and all
+caller/pre-existing paths are unchanged. Corrected tree
+`6c14d7c450df1613beeff3d6b767f5c1eb8e03f5` passed Windows 4/4, zero
+skips. Its report/receipt/manifest are 1,794/598/9,251 bytes with SHA-256
+`11b99ff6e9ec9db86d94f6d5e74aafaacb7e95d5151be9a47b20a9523f327e9f`,
+`38452d8eaf8ffa13dac3122c1d5cbcc915bf979c1ea88a4bdde06f8d31f67ec7`,
+and `b649f518b6b9e13788d4ee4414e67a7bb9c554a1763cce5569a268e3e033d08c`.
+The identical tree passed WSL2 ext4 4/4; its report/receipt/manifest are
+1,793/598/9,211 bytes with SHA-256
+`ab4c2be77f49b4403ea99388e6c63a5188119d08082da51f5255459ef1deb7cf`,
+`c9465f7ae2fc12bd36415a65130b044b0040be9656ff2126a39f470b0bb5108e`,
+and `c038f93f62199690331e3f862fb30167a86418e120a636fe0456ea482132936a`.
+Green roots are `artifacts/manual/wp5ab-git-isolation-{windows,linux}-green/`;
+bindings and source blobs match. No decision record is needed.
+
+Next is historical `retention-apply-recovery.test.ts` at `1786995292928`:
+0/2. Its `preparedFixture()` owns a raw
+`milestone-loop-retention-<label>-*` directory. The subprocess derives its
+repository and metadata from that spelling, then strict realpath-backed
+retention state rejects the pending operation. The worker and production
+retention code remain out of scope pending exact reproduction/direct proof.
+
+**Commit.** Assigned by the cohesive WP5ab commit containing this entry; local
+and unpushed.
+
+**Known gaps.** Remaining retention/deterministic/artifact/clone files, the
+Windows aggregate, final broader frozen-candidate checks, POSIX `setsid`,
+CAL-1, hidden validation, product breadth, readiness, and human verification
+remain open. No completion claim is made.
+
 ## 2026-08-22 — WP5aa canonical retention-startup fixture root
 
 **Objective and cause.** From exact clean WP5z, reproduce the next historical

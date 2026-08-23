@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -32,7 +32,10 @@ function git(repository: string, ...args: string[]): string {
 
 describe("Git isolation", () => {
   it("keeps failed work isolated and integrates only an approved fast-forward", async () => {
-    const parent = await mkdtemp(join(tmpdir(), "milestone-loop-git-"));
+    const parent = await realpath(
+      await mkdtemp(join(tmpdir(), "milestone-loop-git-")),
+    );
+    expect(await realpath(parent)).toBe(parent);
     temporaryDirectories.push(parent);
     const repository = join(parent, "source");
     await import("node:fs/promises").then(({ mkdir }) => mkdir(repository));
@@ -88,7 +91,10 @@ describe("Git isolation", () => {
   }, 30_000);
 
   it("refuses integration when the approved candidate identity drifted", async () => {
-    const parent = await mkdtemp(join(tmpdir(), "milestone-loop-git-"));
+    const parent = await realpath(
+      await mkdtemp(join(tmpdir(), "milestone-loop-git-")),
+    );
+    expect(await realpath(parent)).toBe(parent);
     temporaryDirectories.push(parent);
     const repository = join(parent, "source");
     await import("node:fs/promises").then(({ mkdir }) => mkdir(repository));
