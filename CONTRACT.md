@@ -208,17 +208,23 @@ attempts, stream closure, drain, truncation counts). A `TIMEOUT` remains
 non-passing and telemetry classifications are unchanged.
 
 The source exact-runtime CI workflow is a diagnostic execution boundary, not
-a second completion path. It installs and asserts Node `24.18.0` plus pnpm
-`11.15.1`; runs the existing receipt-owning invariant, orchestrator, unit, and
-static commands on Linux and Windows with distinct uploaded evidence roots;
-and never invokes source no-argument `pnpm verify`. Its separate generated-
-adopter smoke uses the public creator, an offline frozen copy-mode install,
-generated typecheck/unit receipts, and an independent artifact-hash audit, but
-does not commission or reproduce the WP4d bootstrap proof. The Linux-only OCI
-job must reach a real Docker Engine and execute the complete existing
-`test:oci-container` matrix. Workflow/YAML tests, action exit zero, a mock
-container, or a hosted job status cannot by themselves authorize integration
-or satisfy autonomous readiness.
+a source-readiness completion path. It installs and asserts Node `24.18.0`
+plus pnpm `11.15.1`; runs the existing receipt-owning invariant, orchestrator,
+unit, and static commands on Linux and Windows with distinct uploaded evidence
+roots; and never invokes source no-argument `pnpm verify`. Its separate
+generated-adopter smoke executes the documented quickstart through the public
+creator, offline frozen copy-mode install, one-shot commissioning, exact
+manifest add/commit, and one literal generated-repository no-argument
+`pnpm verify`. It validates the sole commissioning output and clean
+three-commit bootstrap identity, copies the complete verifier tree before
+temporary cleanup, and reuses the packaged-proof audit owner to independently
+check every required receipt, manifest, declared artifact, candidate binding,
+test result, screenshot, and browser diagnostic. The versioned result claims
+only generated bootstrap completion, remains non-readiness, and does not invoke
+`loop:template:prove`. The Linux-only OCI job must reach a real Docker Engine
+and execute the complete existing `test:oci-container` matrix. Workflow/YAML
+tests, action exit zero, a mock container, or a hosted job status cannot by
+themselves authorize integration or satisfy autonomous readiness.
 
 ## 5. Verification manifest
 

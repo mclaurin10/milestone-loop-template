@@ -37,11 +37,15 @@ async function writeJson(path: string, value: unknown): Promise<Buffer> {
 async function createAuditFixture(): Promise<{
   root: string;
   mutableArtifact: string;
+  mutableReceipt: string;
+  screenshotPath: string;
 }> {
   const root = await mkdtemp(join(tmpdir(), "fresh-adopter-audit-"));
   temporaryRoots.push(root);
   const stages: Record<string, unknown>[] = [];
   let mutableArtifact = "";
+  let mutableReceipt = "";
+  let screenshotPath = "";
 
   for (const stageId of stageIds) {
     if (stageId === "contract-integrity") {
@@ -73,6 +77,7 @@ async function createAuditFixture(): Promise<{
         sha256: digest(buffer),
       });
       mutableArtifact ||= absolute;
+      if (kind === "screenshot") screenshotPath = absolute;
     };
 
     if (stageId === "bootstrap-tests")
@@ -115,10 +120,9 @@ async function createAuditFixture(): Promise<{
       ],
       artifacts: declarations,
     };
-    const receiptContents = await writeJson(
-      join(root, directory, "result.json"),
-      receipt,
-    );
+    const receiptPath = join(root, directory, "result.json");
+    const receiptContents = await writeJson(receiptPath, receipt);
+    mutableReceipt ||= receiptPath;
     await writeJson(join(root, directory, "manifest.json"), {
       schemaVersion: "1.0.0",
       status: "PASS",
@@ -187,7 +191,7 @@ async function createAuditFixture(): Promise<{
     },
     stages,
   });
-  return { root, mutableArtifact };
+  return { root, mutableArtifact, mutableReceipt, screenshotPath };
 }
 
 afterEach(async () => {
@@ -287,5 +291,58 @@ describe("fresh-adopter proof", () => {
         expectedTree: tree,
       }),
     ).rejects.toThrow(/no receipt-owning command/u);
+  });
+
+  it("rejects missing or tampered command receipts", async () => {
+    const missing = await createAuditFixture();
+    await rm(missing.mutableReceipt);
+    await expect(
+      auditBootstrapVerification({
+        repositoryRoot: missing.root,
+        verificationRoot: missing.root,
+        expectedCommit: commit,
+        expectedTree: tree,
+      }),
+    ).rejects.toThrow();
+
+    const tampered = await createAuditFixture();
+    await writeFile(tampered.mutableReceipt, '{"status":"PASS"}\n');
+    await expect(
+      auditBootstrapVerification({
+        repositoryRoot: tampered.root,
+        verificationRoot: tampered.root,
+        expectedCommit: commit,
+        expectedTree: tree,
+      }),
+    ).rejects.toThrow(/schemaVersion|stageId/u);
+  });
+
+  it("rejects wrong candidate identity and an absent browser screenshot", async () => {
+    const wrongCandidate = await createAuditFixture();
+    const resultPath = join(wrongCandidate.root, "result.json");
+    const result = JSON.parse(await readFile(resultPath, "utf8")) as {
+      candidate: { gitCommit: string };
+    };
+    result.candidate.gitCommit = "c".repeat(40);
+    await writeFile(resultPath, `${JSON.stringify(result, null, 2)}\n`);
+    await expect(
+      auditBootstrapVerification({
+        repositoryRoot: wrongCandidate.root,
+        verificationRoot: wrongCandidate.root,
+        expectedCommit: commit,
+        expectedTree: tree,
+      }),
+    ).rejects.toThrow(/candidate\.gitCommit/u);
+
+    const absentScreenshot = await createAuditFixture();
+    await rm(absentScreenshot.screenshotPath);
+    await expect(
+      auditBootstrapVerification({
+        repositoryRoot: absentScreenshot.root,
+        verificationRoot: absentScreenshot.root,
+        expectedCommit: commit,
+        expectedTree: tree,
+      }),
+    ).rejects.toThrow();
   });
 });

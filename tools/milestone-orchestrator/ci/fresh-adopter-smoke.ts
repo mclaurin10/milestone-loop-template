@@ -2,10 +2,12 @@ import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
 import {
+  cp,
   lstat,
   mkdir,
   mkdtemp,
   readFile,
+  readdir,
   rm,
   writeFile,
 } from "node:fs/promises";
@@ -13,49 +15,83 @@ import { tmpdir } from "node:os";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 
+import {
+  auditBootstrapVerification,
+  type ProofFileIdentity,
+} from "../src/adopter-package-proof.js";
+
 export const FRESH_ADOPTER_CI_SMOKE_SCHEMA_VERSION =
-  "fresh-adopter-ci-smoke.v1" as const;
+  "fresh-adopter-ci-smoke.v2" as const;
 
 const EXPECTED_NODE_VERSION = "v24.18.0";
 const EXPECTED_PNPM_VERSION = "11.15.1";
+const COMMISSIONING_INPUT_PATH =
+  "tools/milestone-orchestrator/config/commissioning-input.json";
+const ACTIVE_MANIFEST_PATH = ".agent/verification-manifest.json";
+const MANIFEST_COMMIT_MESSAGE = "activate bootstrap verification manifest";
 const READINESS_MARKER_PATH = ".agent/readiness-profile-activated.json";
 const CONFIG_SCHEMA_PATH =
   "tools/milestone-orchestrator/schemas/orchestrator-config.schema.json";
 const POLICY_SCHEMA_PATH =
   "tools/milestone-orchestrator/schemas/model-policy.schema.json";
 
+export const FRESH_ADOPTER_QUICKSTART_COMMAND_IDS = [
+  "template-create",
+  "install",
+  "commission",
+  "manifest-add",
+  "manifest-commit",
+  "no-argument-verify",
+] as const;
+
 type JsonRecord = Record<string, unknown>;
+type QuickstartCommandId =
+  (typeof FRESH_ADOPTER_QUICKSTART_COMMAND_IDS)[number];
+type QuickstartCommandScope = "source-checkout" | "generated-repository";
 
 export interface FreshAdopterSmokeArguments {
   readonly definitionPath: string;
   readonly outputPath: string;
 }
 
-export interface AuditedCommandEvidence {
-  readonly stageId: string;
-  readonly commandId: string;
-  readonly receipt: {
-    readonly path: string;
-    readonly bytes: number;
-    readonly sha256: string;
+export interface FreshAdopterQuickstartCommand {
+  readonly id: QuickstartCommandId;
+  readonly scope: QuickstartCommandScope;
+  readonly argv: readonly string[];
+  readonly displayArgv: readonly string[];
+}
+
+export interface FreshAdopterCommandLedgerEntry {
+  readonly order: number;
+  readonly id: QuickstartCommandId;
+  readonly scope: QuickstartCommandScope;
+  readonly argv: readonly string[];
+  readonly status: "PASS";
+  readonly exitCode: 0;
+  readonly durationMs: number;
+}
+
+export interface GeneratedRepositoryObservation {
+  readonly branch: string;
+  readonly commitCount: number;
+  readonly status: string;
+  readonly defaultProfile: string;
+  readonly packageManager: string;
+  readonly readinessMarkerTree: boolean;
+  readonly readinessMarkerHistory: boolean;
+  readonly configuredUserName: string;
+  readonly configuredUserEmail: string;
+  readonly manifestCommit: {
+    readonly commit: string;
+    readonly tree: string;
+    readonly subject: string;
+    readonly authorName: string;
+    readonly authorEmail: string;
+    readonly authorDate: string;
+    readonly committerName: string;
+    readonly committerEmail: string;
+    readonly committerDate: string;
   };
-  readonly manifest: {
-    readonly path: string;
-    readonly bytes: number;
-    readonly sha256: string;
-  };
-  readonly artifacts: readonly {
-    readonly path: string;
-    readonly kind: string;
-    readonly bytes: number;
-    readonly sha256: string;
-  }[];
-  readonly tests: {
-    readonly total: number;
-    readonly passed: number;
-    readonly failed: number;
-    readonly skipped: number;
-  } | null;
 }
 
 interface CommandCapture {
@@ -65,6 +101,21 @@ interface CommandCapture {
   readonly stdout: string;
   readonly stderr: string;
 }
+
+interface PnpmInvocation {
+  readonly executable: string;
+  readonly prefixArguments: readonly string[];
+}
+
+export interface SourcePnpmStoreInvocation {
+  readonly id: "pnpm-store-path";
+  readonly args: readonly ["store", "path"];
+  readonly cwd: string;
+}
+
+export type SourcePnpmStoreRunner = (
+  invocation: SourcePnpmStoreInvocation,
+) => Promise<Pick<CommandCapture, "stdout">>;
 
 function assertion(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -97,6 +148,18 @@ function integer(value: unknown, label: string): number {
 function exact(value: unknown, expected: unknown, label: string): void {
   assertion(
     value === expected,
+    `${label} must equal ${JSON.stringify(expected)}, got ${JSON.stringify(value)}.`,
+  );
+}
+
+function exactStringArray(
+  value: readonly string[],
+  expected: readonly string[],
+  label: string,
+): void {
+  assertion(
+    value.length === expected.length &&
+      value.every((entry, index) => entry === expected[index]),
     `${label} must equal ${JSON.stringify(expected)}, got ${JSON.stringify(value)}.`,
   );
 }
@@ -141,7 +204,7 @@ async function regularFileIdentity(
   root: string,
   path: string,
   kind: string,
-): Promise<{ path: string; kind: string; bytes: number; sha256: string }> {
+): Promise<ProofFileIdentity> {
   const absolute = containedPath(root, path, `${kind} path`);
   const metadata = await lstat(absolute);
   assertion(
@@ -273,25 +336,11 @@ async function runChecked(
 function git(repositoryRoot: string, args: readonly string[]): string {
   const result = runCommand("git", "git", ["-C", repositoryRoot, ...args], {
     cwd: repositoryRoot,
+    env: { ...process.env, GIT_OPTIONAL_LOCKS: "0" },
   });
   if (result.exitCode !== 0) throw commandFailure(result);
   return result.stdout.trim();
 }
-
-interface PnpmInvocation {
-  readonly executable: string;
-  readonly prefixArguments: readonly string[];
-}
-
-export interface SourcePnpmStoreInvocation {
-  readonly id: "pnpm-store-path";
-  readonly args: readonly ["store", "path"];
-  readonly cwd: string;
-}
-
-export type SourcePnpmStoreRunner = (
-  invocation: SourcePnpmStoreInvocation,
-) => Promise<Pick<CommandCapture, "stdout">>;
 
 function absolutePnpmStorePath(value: string): string {
   assertion(
@@ -373,11 +422,7 @@ async function runPnpm(
     id,
     pnpm.executable,
     [...pnpm.prefixArguments, ...args],
-    {
-      cwd,
-      env,
-      timeoutMs,
-    },
+    { cwd, env, timeoutMs },
   );
 }
 
@@ -394,153 +439,402 @@ function parseStructuredOutput(stdout: string, label: string): JsonRecord {
   }
 }
 
-export async function auditCommandEvidence(input: {
-  readonly evidenceRoot: string;
-  readonly displayRoot: string;
-  readonly expectedStageId: string;
-  readonly expectedCommandId: string;
-  readonly expectedCommit: string;
-  readonly expectedTree: string;
-  readonly expectVitest: boolean;
-}): Promise<AuditedCommandEvidence> {
-  const receiptPath = resolve(input.evidenceRoot, "result.json");
-  const receiptContents = await readFile(receiptPath);
-  const receipt = record(
-    JSON.parse(receiptContents.toString("utf8")),
-    `${input.expectedCommandId} receipt`,
+function expectedQuickstartCommands(input: {
+  readonly definitionPath: string;
+  readonly definitionDisplayPath: string;
+  readonly repositoryRoot: string;
+  readonly sourceStorePath: string;
+}): readonly FreshAdopterQuickstartCommand[] {
+  const installArguments = generatedOfflineInstallArguments(
+    input.sourceStorePath,
   );
-  exact(receipt["schemaVersion"], "1.0.0", "receipt.schemaVersion");
-  exact(receipt["stageId"], input.expectedStageId, "receipt.stageId");
-  exact(receipt["commandId"], input.expectedCommandId, "receipt.commandId");
-  exact(receipt["status"], "PASS", "receipt.status");
-  assertion(
-    Array.isArray(receipt["checks"]),
-    "receipt.checks must be an array.",
-  );
-  const checks = receipt["checks"];
-  assertion(checks.length > 0, "receipt.checks must not be empty.");
-  for (const [index, check] of checks.entries())
-    exact(
-      record(check, `receipt.checks[${index}]`)["status"],
-      "PASS",
-      `receipt.checks[${index}].status`,
-    );
+  return [
+    {
+      id: "template-create",
+      scope: "source-checkout",
+      argv: [
+        "pnpm",
+        "loop:template:create",
+        "--",
+        "--definition",
+        input.definitionPath,
+        "--output",
+        input.repositoryRoot,
+      ],
+      displayArgv: [
+        "pnpm",
+        "loop:template:create",
+        "--",
+        "--definition",
+        slash(input.definitionDisplayPath),
+        "--output",
+        "<generated-repository>",
+      ],
+    },
+    {
+      id: "install",
+      scope: "generated-repository",
+      argv: ["pnpm", ...installArguments],
+      displayArgv: [
+        "pnpm",
+        "install",
+        "--offline",
+        "--frozen-lockfile",
+        "--package-import-method=copy",
+        "--store-dir",
+        "<source-pnpm-store>",
+      ],
+    },
+    {
+      id: "commission",
+      scope: "generated-repository",
+      argv: [
+        "pnpm",
+        "loop:commission",
+        "--",
+        "--input",
+        COMMISSIONING_INPUT_PATH,
+      ],
+      displayArgv: [
+        "pnpm",
+        "loop:commission",
+        "--",
+        "--input",
+        COMMISSIONING_INPUT_PATH,
+      ],
+    },
+    {
+      id: "manifest-add",
+      scope: "generated-repository",
+      argv: ["git", "add", ACTIVE_MANIFEST_PATH],
+      displayArgv: ["git", "add", ACTIVE_MANIFEST_PATH],
+    },
+    {
+      id: "manifest-commit",
+      scope: "generated-repository",
+      argv: ["git", "commit", "-m", MANIFEST_COMMIT_MESSAGE],
+      displayArgv: ["git", "commit", "-m", MANIFEST_COMMIT_MESSAGE],
+    },
+    {
+      id: "no-argument-verify",
+      scope: "generated-repository",
+      argv: ["pnpm", "verify"],
+      displayArgv: ["pnpm", "verify"],
+    },
+  ];
+}
 
-  assertion(
-    Array.isArray(receipt["artifacts"]),
-    "receipt.artifacts must be an array.",
+export function assertFreshAdopterQuickstartPlan(
+  commands: readonly FreshAdopterQuickstartCommand[],
+  input: {
+    readonly definitionPath: string;
+    readonly definitionDisplayPath: string;
+    readonly repositoryRoot: string;
+    readonly sourceStorePath: string;
+  },
+): void {
+  const expected = expectedQuickstartCommands(input);
+  exact(
+    commands.length,
+    FRESH_ADOPTER_QUICKSTART_COMMAND_IDS.length,
+    "quickstart command count",
   );
-  const artifactValues = receipt["artifacts"];
-  assertion(artifactValues.length > 0, "receipt.artifacts must not be empty.");
-  const artifacts = [];
-  let testReport: JsonRecord | null = null;
-  for (const [index, value] of artifactValues.entries()) {
-    const declaration = record(value, `receipt.artifacts[${index}]`);
-    const path = stringValue(
-      declaration["path"],
-      `receipt.artifacts[${index}].path`,
+  for (const [index, expectedCommand] of expected.entries()) {
+    const command = commands[index];
+    assertion(command !== undefined, `quickstart command ${index + 1} exists`);
+    exact(command.id, expectedCommand.id, `quickstart[${index}].id`);
+    exact(command.scope, expectedCommand.scope, `quickstart[${index}].scope`);
+    exactStringArray(
+      command.argv,
+      expectedCommand.argv,
+      `quickstart[${index}].argv`,
     );
-    const kind = stringValue(
-      declaration["kind"],
-      `receipt.artifacts[${index}].kind`,
+    exactStringArray(
+      command.displayArgv,
+      expectedCommand.displayArgv,
+      `quickstart[${index}].displayArgv`,
     );
-    const actual = await regularFileIdentity(input.evidenceRoot, path, kind);
-    exact(
-      declaration["bytes"],
-      actual.bytes,
-      `receipt.artifacts[${index}].bytes`,
-    );
-    exact(
-      declaration["sha256"],
-      actual.sha256,
-      `receipt.artifacts[${index}].sha256`,
-    );
-    const parsed = record(
-      await readJson(resolve(input.evidenceRoot, path), `${kind} artifact`),
-      `${kind} artifact`,
-    );
-    if (kind === "vitest-report") testReport = parsed;
-    else exact(parsed["status"], "PASS", `${kind}.status`);
-    artifacts.push(actual);
   }
-
-  const manifestContents = await readFile(
-    resolve(input.evidenceRoot, "manifest.json"),
+  const verifyCommands = commands.filter(
+    (command) => command.argv[0] === "pnpm" && command.argv[1] === "verify",
   );
-  const manifest = record(
-    JSON.parse(manifestContents.toString("utf8")),
-    `${input.expectedCommandId} manifest`,
-  );
-  exact(manifest["schemaVersion"], "1.0.0", "manifest.schemaVersion");
-  exact(manifest["stageId"], input.expectedStageId, "manifest.stageId");
-  exact(manifest["commandId"], input.expectedCommandId, "manifest.commandId");
-  exact(manifest["status"], "PASS", "manifest.status");
-  const candidate = record(manifest["candidate"], "manifest.candidate");
-  exact(candidate["gitCommit"], input.expectedCommit, "candidate.gitCommit");
-  exact(candidate["gitTree"], input.expectedTree, "candidate.gitTree");
-  exact(candidate["workingTreeDirty"], false, "candidate.workingTreeDirty");
-  const manifestReceipt = record(manifest["receipt"], "manifest.receipt");
-  exact(manifestReceipt["path"], "result.json", "manifest.receipt.path");
+  exact(verifyCommands.length, 1, "no-argument verify command count");
   exact(
-    manifestReceipt["bytes"],
-    receiptContents.byteLength,
-    "manifest.receipt.bytes",
+    verifyCommands[0]?.scope,
+    "generated-repository",
+    "no-argument verify command scope",
   );
-  exact(
-    manifestReceipt["sha256"],
-    sha256(receiptContents),
-    "manifest.receipt.sha256",
+  exactStringArray(
+    verifyCommands[0]?.argv ?? [],
+    ["pnpm", "verify"],
+    "literal no-argument verify argv",
   );
+  assertion(
+    !commands.some(
+      (command) =>
+        command.scope === "source-checkout" &&
+        command.argv[0] === "pnpm" &&
+        command.argv[1] === "verify",
+    ),
+    "Fresh-adopter quickstart may not invoke source no-argument pnpm verify.",
+  );
+}
 
-  let tests: AuditedCommandEvidence["tests"] = null;
-  if (input.expectVitest) {
-    assertion(testReport !== null, "Unit evidence omitted its Vitest report.");
-    tests = {
-      total: integer(testReport["numTotalTests"], "vitest.numTotalTests"),
-      passed: integer(testReport["numPassedTests"], "vitest.numPassedTests"),
-      failed: integer(testReport["numFailedTests"], "vitest.numFailedTests"),
-      skipped: integer(testReport["numPendingTests"], "vitest.numPendingTests"),
+export function createFreshAdopterQuickstartPlan(input: {
+  readonly definitionPath: string;
+  readonly definitionDisplayPath: string;
+  readonly repositoryRoot: string;
+  readonly sourceStorePath: string;
+}): readonly FreshAdopterQuickstartCommand[] {
+  const commands = expectedQuickstartCommands(input);
+  assertFreshAdopterQuickstartPlan(commands, input);
+  return commands;
+}
+
+export function createFreshAdopterCommandLedger(
+  commands: readonly FreshAdopterQuickstartCommand[],
+  captures: readonly CommandCapture[],
+): readonly FreshAdopterCommandLedgerEntry[] {
+  exact(captures.length, commands.length, "quickstart capture count");
+  const ledger = commands.map((command, index) => {
+    const capture = captures[index];
+    assertion(capture !== undefined, `quickstart capture ${index + 1} exists`);
+    exact(capture.id, command.id, `quickstart capture ${index + 1} id`);
+    exact(capture.exitCode, 0, `${command.id} exit code`);
+    return {
+      order: index + 1,
+      id: command.id,
+      scope: command.scope,
+      argv: command.displayArgv,
+      status: "PASS" as const,
+      exitCode: 0 as const,
+      durationMs: capture.durationMs,
     };
-    exact(tests.failed, 0, "vitest failed tests");
-    exact(tests.skipped, 0, "vitest skipped tests");
-    assertion(
-      tests.passed >= 4,
-      "Fresh adopter smoke ran fewer than four tests.",
-    );
-    exact(tests.total, tests.passed, "vitest total/passed parity");
-  } else {
-    assertion(
-      testReport === null,
-      "Non-test evidence declared a Vitest report.",
-    );
-  }
+  });
+  assertFreshAdopterCommandLedger(ledger, commands);
+  return ledger;
+}
 
-  const receiptDisplayPath = slash(
-    relative(input.displayRoot, resolve(input.evidenceRoot, "result.json")),
+export function assertFreshAdopterCommandLedger(
+  ledger: readonly FreshAdopterCommandLedgerEntry[],
+  commands: readonly FreshAdopterQuickstartCommand[],
+): void {
+  exact(ledger.length, commands.length, "quickstart ledger count");
+  for (const [index, command] of commands.entries()) {
+    const entry = ledger[index];
+    assertion(entry !== undefined, `quickstart ledger ${index + 1} exists`);
+    exact(entry.order, index + 1, `quickstart ledger ${index}.order`);
+    exact(entry.id, command.id, `quickstart ledger ${index}.id`);
+    exact(entry.scope, command.scope, `quickstart ledger ${index}.scope`);
+    exactStringArray(entry.argv, command.displayArgv, `ledger ${index}.argv`);
+    exact(entry.status, "PASS", `quickstart ledger ${index}.status`);
+    exact(entry.exitCode, 0, `quickstart ledger ${index}.exitCode`);
+    integer(entry.durationMs, `quickstart ledger ${index}.durationMs`);
+  }
+}
+
+async function auditCommissioningPublication(
+  repositoryRoot: string,
+  stdout: string,
+): Promise<ProofFileIdentity> {
+  const commissioning = parseStructuredOutput(stdout, "commissioning result");
+  exact(
+    commissioning["schemaVersion"],
+    "loop-commissioning-result.v1",
+    "commissioning.schemaVersion",
   );
-  const manifestDisplayPath = slash(
-    relative(input.displayRoot, resolve(input.evidenceRoot, "manifest.json")),
+  exact(commissioning["status"], "PASS", "commissioning.status");
+  const generatedFiles = commissioning["generatedFiles"];
+  assertion(
+    Array.isArray(generatedFiles),
+    "commissioning.generatedFiles must be an array.",
   );
+  exact(generatedFiles.length, 1, "commissioning generated file count");
+  const declaration = record(
+    generatedFiles[0],
+    "commissioning.generatedFiles[0]",
+  );
+  exact(
+    declaration["path"],
+    ACTIVE_MANIFEST_PATH,
+    "commissioning manifest path",
+  );
+  const identity = await regularFileIdentity(
+    repositoryRoot,
+    ACTIVE_MANIFEST_PATH,
+    "verification-manifest",
+  );
+  exact(declaration["bytes"], identity.bytes, "commissioning manifest bytes");
+  exact(
+    declaration["sha256"],
+    identity.sha256,
+    "commissioning manifest sha256",
+  );
+  const untracked = git(repositoryRoot, [
+    "ls-files",
+    "--others",
+    "--exclude-standard",
+    "-z",
+  ])
+    .split("\0")
+    .filter(Boolean)
+    .map(slash);
+  exactStringArray(
+    untracked,
+    [ACTIVE_MANIFEST_PATH],
+    "commissioning untracked surface",
+  );
+  exact(git(repositoryRoot, ["diff", "--name-only"]), "", "tracked diff");
+  exact(
+    git(repositoryRoot, ["diff", "--cached", "--name-only"]),
+    "",
+    "staged diff",
+  );
+  return identity;
+}
+
+export function assertGeneratedRepositoryObservation(
+  observation: GeneratedRepositoryObservation,
+  expected: {
+    readonly branch: string;
+    readonly userName: string;
+    readonly userEmail: string;
+    readonly commitTimestamp: string;
+  },
+): void {
+  exact(observation.branch, expected.branch, "generated branch");
+  exact(observation.commitCount, 3, "generated commit count");
+  exact(observation.status, "", "generated Git status");
+  exact(observation.defaultProfile, "bootstrap", "generated default profile");
+  exact(
+    observation.packageManager,
+    `pnpm@${EXPECTED_PNPM_VERSION}`,
+    "generated package manager",
+  );
+  exact(
+    observation.readinessMarkerTree,
+    false,
+    "generated readiness marker tree",
+  );
+  exact(
+    observation.readinessMarkerHistory,
+    false,
+    "generated readiness marker history",
+  );
+  exact(
+    observation.configuredUserName,
+    expected.userName,
+    "generated configured Git user name",
+  );
+  exact(
+    observation.configuredUserEmail,
+    expected.userEmail,
+    "generated configured Git user email",
+  );
+  exact(
+    observation.manifestCommit.subject,
+    MANIFEST_COMMIT_MESSAGE,
+    "manifest commit subject",
+  );
+  exact(
+    observation.manifestCommit.authorName,
+    expected.userName,
+    "manifest commit author name",
+  );
+  exact(
+    observation.manifestCommit.authorEmail,
+    expected.userEmail,
+    "manifest commit author email",
+  );
+  exact(
+    observation.manifestCommit.committerName,
+    expected.userName,
+    "manifest commit committer name",
+  );
+  exact(
+    observation.manifestCommit.committerEmail,
+    expected.userEmail,
+    "manifest commit committer email",
+  );
+  exact(
+    Date.parse(observation.manifestCommit.authorDate),
+    Date.parse(expected.commitTimestamp),
+    "manifest commit author timestamp",
+  );
+  exact(
+    Date.parse(observation.manifestCommit.committerDate),
+    Date.parse(expected.commitTimestamp),
+    "manifest commit committer timestamp",
+  );
+  assertion(
+    /^[0-9a-f]{40}$/u.test(observation.manifestCommit.commit) &&
+      /^[0-9a-f]{40}$/u.test(observation.manifestCommit.tree),
+    "Manifest commit and tree must be full Git object IDs.",
+  );
+}
+
+async function observeGeneratedRepository(
+  repositoryRoot: string,
+): Promise<GeneratedRepositoryObservation> {
+  const packageJson = record(
+    await readJson(
+      resolve(repositoryRoot, "package.json"),
+      "generated package",
+    ),
+    "generated package",
+  );
+  const verification = record(
+    record(packageJson["milestoneLoop"], "generated milestoneLoop")[
+      "verification"
+    ],
+    "generated verification",
+  );
+  const commitFields = git(repositoryRoot, [
+    "log",
+    "-1",
+    "--format=%H%x00%T%x00%s%x00%an%x00%ae%x00%aI%x00%cn%x00%ce%x00%cI",
+  ]).split("\0");
+  exact(commitFields.length, 9, "manifest commit field count");
   return {
-    stageId: input.expectedStageId,
-    commandId: input.expectedCommandId,
-    receipt: {
-      path: receiptDisplayPath,
-      bytes: receiptContents.byteLength,
-      sha256: sha256(receiptContents),
+    branch: git(repositoryRoot, ["branch", "--show-current"]),
+    commitCount: Number(git(repositoryRoot, ["rev-list", "--count", "HEAD"])),
+    status: git(repositoryRoot, [
+      "status",
+      "--porcelain=v1",
+      "--untracked-files=all",
+    ]),
+    defaultProfile: stringValue(
+      verification["defaultProfile"],
+      "generated default profile",
+    ),
+    packageManager: stringValue(
+      packageJson["packageManager"],
+      "generated package manager",
+    ),
+    readinessMarkerTree: existsSync(
+      resolve(repositoryRoot, READINESS_MARKER_PATH),
+    ),
+    readinessMarkerHistory:
+      git(repositoryRoot, [
+        "log",
+        "--all",
+        "--format=%H",
+        "--",
+        READINESS_MARKER_PATH,
+      ]).length > 0,
+    configuredUserName: git(repositoryRoot, ["config", "--get", "user.name"]),
+    configuredUserEmail: git(repositoryRoot, ["config", "--get", "user.email"]),
+    manifestCommit: {
+      commit: commitFields[0] ?? "",
+      tree: commitFields[1] ?? "",
+      subject: commitFields[2] ?? "",
+      authorName: commitFields[3] ?? "",
+      authorEmail: commitFields[4] ?? "",
+      authorDate: commitFields[5] ?? "",
+      committerName: commitFields[6] ?? "",
+      committerEmail: commitFields[7] ?? "",
+      committerDate: commitFields[8] ?? "",
     },
-    manifest: {
-      path: manifestDisplayPath,
-      bytes: manifestContents.byteLength,
-      sha256: sha256(manifestContents),
-    },
-    artifacts: artifacts.map((artifact) => ({
-      ...artifact,
-      path: slash(
-        relative(input.displayRoot, resolve(input.evidenceRoot, artifact.path)),
-      ),
-    })),
-    tests,
   };
 }
 
@@ -550,6 +844,74 @@ async function assertRegularFile(path: string, label: string): Promise<void> {
     metadata.isFile() && !metadata.isSymbolicLink(),
     `${label} must be a regular non-symlink file.`,
   );
+}
+
+async function verificationDirectories(
+  repositoryRoot: string,
+): Promise<readonly string[]> {
+  const artifactRoot = resolve(repositoryRoot, "artifacts");
+  if (!existsSync(artifactRoot)) return [];
+  const entries = await readdir(artifactRoot, { withFileTypes: true });
+  return entries
+    .filter((entry) => entry.isDirectory() && entry.name.startsWith("verify-"))
+    .map((entry) => entry.name)
+    .sort();
+}
+
+async function regularFileInventory(
+  root: string,
+): Promise<readonly ProofFileIdentity[]> {
+  const inventory: ProofFileIdentity[] = [];
+  async function walk(directory: string): Promise<void> {
+    const entries = await readdir(directory, { withFileTypes: true });
+    entries.sort((left, right) => left.name.localeCompare(right.name));
+    for (const entry of entries) {
+      const absolute = resolve(directory, entry.name);
+      const metadata = await lstat(absolute);
+      assertion(
+        !metadata.isSymbolicLink(),
+        `Retained verification evidence contains a symbolic link: ${slash(relative(root, absolute))}.`,
+      );
+      if (metadata.isDirectory()) await walk(absolute);
+      else {
+        assertion(
+          metadata.isFile(),
+          `Retained verification evidence contains a special file: ${slash(relative(root, absolute))}.`,
+        );
+        const contents = await readFile(absolute);
+        inventory.push({
+          path: slash(relative(root, absolute)),
+          kind: "retained-verification-file",
+          bytes: contents.byteLength,
+          sha256: sha256(contents),
+        });
+      }
+    }
+  }
+  await walk(root);
+  assertion(inventory.length > 0, "Verification evidence inventory is empty.");
+  return inventory.sort((left, right) => left.path.localeCompare(right.path));
+}
+
+function assertMatchingInventory(
+  source: readonly ProofFileIdentity[],
+  retained: readonly ProofFileIdentity[],
+): void {
+  exact(retained.length, source.length, "retained verification file count");
+  for (const [index, expected] of source.entries()) {
+    const actual = retained[index];
+    assertion(actual !== undefined, `retained evidence file ${index} exists`);
+    exact(actual.path, expected.path, `retained evidence ${index}.path`);
+    exact(actual.bytes, expected.bytes, `retained evidence ${index}.bytes`);
+    exact(actual.sha256, expected.sha256, `retained evidence ${index}.sha256`);
+  }
+}
+
+async function writeJson(path: string, value: unknown): Promise<void> {
+  await writeFile(path, `${JSON.stringify(value, null, 2)}\n`, {
+    encoding: "utf8",
+    flag: "wx",
+  });
 }
 
 export async function runFreshAdopterCiSmoke(
@@ -562,6 +924,34 @@ export async function runFreshAdopterCiSmoke(
   const sourceRoot = resolve(import.meta.dirname, "../../..");
   const definitionPath = resolve(sourceRoot, args.definitionPath);
   await assertRegularFile(definitionPath, "Adopter definition");
+  const definition = record(
+    await readJson(definitionPath, "adopter definition"),
+    "adopter definition",
+  );
+  const definitionProject = record(
+    definition["project"],
+    "adopter definition project",
+  );
+  const definitionGit = record(definition["git"], "adopter definition git");
+  const expectedBranch = stringValue(
+    definitionProject["targetBranch"],
+    "adopter target branch",
+  );
+  const expectedUserName = stringValue(
+    definitionGit["userName"],
+    "adopter Git user name",
+  );
+  const expectedUserEmail = stringValue(
+    definitionGit["userEmail"],
+    "adopter Git user email",
+  );
+  const definitionTimestamp = stringValue(
+    definitionGit["timestamp"],
+    "adopter Git timestamp",
+  );
+  const commitTimestamp = new Date(
+    Date.parse(definitionTimestamp) + 2 * 60_000,
+  ).toISOString();
 
   const outputRoot = resolve(sourceRoot, args.outputPath);
   const outputRelative = slash(relative(sourceRoot, outputRoot));
@@ -622,114 +1012,96 @@ export async function runFreshAdopterCiSmoke(
 
   const temporaryRoot = await mkdtemp(join(tmpdir(), "fresh-adopter-ci-"));
   const repositoryRoot = resolve(temporaryRoot, "repository");
+  const commands = createFreshAdopterQuickstartPlan({
+    definitionPath,
+    definitionDisplayPath: args.definitionPath,
+    repositoryRoot,
+    sourceStorePath,
+  });
   let primaryError: Error | null = null;
   let result: JsonRecord | null = null;
   try {
+    const captures: CommandCapture[] = [];
+    const createCommand = commands[0]!;
     const createCapture = await runPnpm(
       outputRoot,
-      "create-package",
+      createCommand.id,
       pnpm,
-      [
-        "run",
-        "loop:template:create",
-        "--definition",
-        definitionPath,
-        "--output",
-        repositoryRoot,
-      ],
+      createCommand.argv.slice(1),
       sourceRoot,
       process.env,
       600_000,
     );
+    captures.push(createCapture);
     const packageResult = parseStructuredOutput(
       createCapture.stdout,
       "adopter package creator",
     );
 
     const childEnvironment = { ...process.env, CI: "true" };
-    await runPnpm(
+    const installCommand = commands[1]!;
+    captures.push(
+      await runPnpm(
+        outputRoot,
+        installCommand.id,
+        pnpm,
+        installCommand.argv.slice(1),
+        repositoryRoot,
+        childEnvironment,
+        900_000,
+      ),
+    );
+
+    const commissionCommand = commands[2]!;
+    const commissionCapture = await runPnpm(
       outputRoot,
-      "install",
+      commissionCommand.id,
       pnpm,
-      generatedOfflineInstallArguments(sourceStorePath),
+      commissionCommand.argv.slice(1),
       repositoryRoot,
       childEnvironment,
-      900_000,
-    );
-
-    const candidateCommit = git(repositoryRoot, ["rev-parse", "HEAD"]);
-    const candidateTree = git(repositoryRoot, ["rev-parse", "HEAD^{tree}"]);
-    const typecheckRoot = resolve(outputRoot, "evidence", "typecheck");
-    const unitRoot = resolve(outputRoot, "evidence", "test-unit");
-    await runPnpm(
-      outputRoot,
-      "typecheck",
-      pnpm,
-      ["typecheck"],
-      repositoryRoot,
-      {
-        ...childEnvironment,
-        LOOP_VERIFY_COMMAND_ARTIFACT_DIR: typecheckRoot,
-      },
       600_000,
     );
-    await runPnpm(
-      outputRoot,
-      "test-unit",
-      pnpm,
-      ["test:unit"],
+    captures.push(commissionCapture);
+    const manifestIdentity = await auditCommissioningPublication(
       repositoryRoot,
-      {
-        ...childEnvironment,
-        LOOP_VERIFY_COMMAND_ARTIFACT_DIR: unitRoot,
-      },
-      900_000,
+      commissionCapture.stdout,
     );
 
-    const [typecheck, unit] = await Promise.all([
-      auditCommandEvidence({
-        evidenceRoot: typecheckRoot,
-        displayRoot: outputRoot,
-        expectedStageId: "typecheck",
-        expectedCommandId: "typecheck",
-        expectedCommit: candidateCommit,
-        expectedTree: candidateTree,
-        expectVitest: false,
-      }),
-      auditCommandEvidence({
-        evidenceRoot: unitRoot,
-        displayRoot: outputRoot,
-        expectedStageId: "bootstrap-tests",
-        expectedCommandId: "test:unit",
-        expectedCommit: candidateCommit,
-        expectedTree: candidateTree,
-        expectVitest: true,
-      }),
-    ]);
-
-    const packageJson = record(
-      await readJson(
-        resolve(repositoryRoot, "package.json"),
-        "generated package",
+    const addCommand = commands[3]!;
+    captures.push(
+      await runChecked(
+        outputRoot,
+        addCommand.id,
+        "git",
+        ["-C", repositoryRoot, ...addCommand.argv.slice(1)],
+        { cwd: repositoryRoot, env: childEnvironment },
       ),
-      "generated package",
     );
-    const verification = record(
-      record(packageJson["milestoneLoop"], "generated milestoneLoop")[
-        "verification"
-      ],
-      "generated verification",
+    const commitCommand = commands[4]!;
+    const commitEnvironment = {
+      ...childEnvironment,
+      GIT_AUTHOR_DATE: commitTimestamp,
+      GIT_COMMITTER_DATE: commitTimestamp,
+    };
+    captures.push(
+      await runChecked(
+        outputRoot,
+        commitCommand.id,
+        "git",
+        ["-C", repositoryRoot, ...commitCommand.argv.slice(1)],
+        { cwd: repositoryRoot, env: commitEnvironment },
+      ),
     );
-    exact(
-      verification["defaultProfile"],
-      "bootstrap",
-      "generated default profile",
-    );
-    exact(
-      packageJson["packageManager"],
-      `pnpm@${EXPECTED_PNPM_VERSION}`,
-      "generated package manager",
-    );
+
+    const repositoryObservation =
+      await observeGeneratedRepository(repositoryRoot);
+    assertGeneratedRepositoryObservation(repositoryObservation, {
+      branch: expectedBranch,
+      userName: expectedUserName,
+      userEmail: expectedUserEmail,
+      commitTimestamp,
+    });
     await Promise.all([
       assertRegularFile(
         resolve(repositoryRoot, CONFIG_SCHEMA_PATH),
@@ -740,44 +1112,87 @@ export async function runFreshAdopterCiSmoke(
         "Policy schema",
       ),
     ]);
-    assertion(
-      !existsSync(resolve(repositoryRoot, READINESS_MARKER_PATH)),
-      "Fresh adopter smoke unexpectedly contains the readiness marker.",
-    );
     exact(
-      git(repositoryRoot, [
-        "log",
-        "--all",
-        "--format=%H",
-        "--",
-        READINESS_MARKER_PATH,
-      ]),
-      "",
-      "fresh adopter readiness-marker history",
-    );
-    exact(
-      Number(git(repositoryRoot, ["rev-list", "--count", "HEAD"])),
-      2,
-      "fresh adopter commit count",
-    );
-    exact(
-      git(repositoryRoot, [
-        "status",
-        "--porcelain=v1",
-        "--untracked-files=all",
-      ]),
-      "",
-      "fresh adopter Git status",
+      (await verificationDirectories(repositoryRoot)).length,
+      0,
+      "pre-verification run directory count",
     );
 
-    const receipts = [typecheck, unit];
+    const verifyCommand = commands[5]!;
+    captures.push(
+      await runPnpm(
+        outputRoot,
+        verifyCommand.id,
+        pnpm,
+        verifyCommand.argv.slice(1),
+        repositoryRoot,
+        childEnvironment,
+        1_800_000,
+      ),
+    );
+    const verifyDirectories = await verificationDirectories(repositoryRoot);
+    exact(
+      verifyDirectories.length,
+      1,
+      "generated no-argument verification run directory count",
+    );
+    const verificationRoot = resolve(
+      repositoryRoot,
+      "artifacts",
+      verifyDirectories[0] ?? "",
+    );
+    const retainedVerificationRoot = resolve(outputRoot, "verification");
+    await cp(verificationRoot, retainedVerificationRoot, {
+      recursive: true,
+      errorOnExist: true,
+      force: false,
+    });
+    const [sourceVerificationInventory, retainedVerificationInventory] =
+      await Promise.all([
+        regularFileInventory(verificationRoot),
+        regularFileInventory(retainedVerificationRoot),
+      ]);
+    assertMatchingInventory(
+      sourceVerificationInventory,
+      retainedVerificationInventory,
+    );
+
+    const candidateCommit = repositoryObservation.manifestCommit.commit;
+    const candidateTree = repositoryObservation.manifestCommit.tree;
+    const verificationAudit = await auditBootstrapVerification({
+      repositoryRoot,
+      verificationRoot: retainedVerificationRoot,
+      expectedCommit: candidateCommit,
+      expectedTree: candidateTree,
+    });
+    await writeJson(resolve(outputRoot, "receipt-audit.json"), {
+      schemaVersion: "fresh-adopter-ci-receipt-audit.v2",
+      status: "PASS",
+      candidateCommit,
+      candidateTree,
+      stageCount: verificationAudit.stageCount,
+      receiptCount: verificationAudit.receiptCount,
+      artifactCount: verificationAudit.artifactCount,
+      artifactBytes: verificationAudit.artifactBytes,
+      testCount: verificationAudit.testCount,
+      retainedFileCount: retainedVerificationInventory.length,
+      retainedBytes: retainedVerificationInventory.reduce(
+        (total, entry) => total + entry.bytes,
+        0,
+      ),
+      inventory: verificationAudit.inventory,
+      retainedInventory: retainedVerificationInventory,
+    });
+
+    const commandLedger = createFreshAdopterCommandLedger(commands, captures);
     result = {
       schemaVersion: FRESH_ADOPTER_CI_SMOKE_SCHEMA_VERSION,
       status: "PASS",
+      completionClaim: "bootstrap_complete",
       completionEligible: false,
       autonomousReadinessEquivalent: false,
       distinction:
-        "CI smoke only; this does not run no-argument verification or replace the retained WP4d bootstrap proof.",
+        "Generated-repository bootstrap completion only; this CI smoke is not autonomous readiness and does not verify the readiness source checkout.",
       startedAt: startedAt.toISOString(),
       finishedAt: new Date().toISOString(),
       platform: {
@@ -790,59 +1205,61 @@ export async function runFreshAdopterCiSmoke(
         commit: sourceBefore.head,
         tree: sourceBefore.tree,
         trackedIdentityUnchanged: true,
+        noArgumentVerifyInvocations: 0,
       },
       project: packageResult["project"],
+      commissioning: {
+        invocationCount: 1,
+        generatedFileCount: 1,
+        manifest: manifestIdentity,
+      },
       generatedRepository: {
         commit: candidateCommit,
         tree: candidateTree,
-        commitCount: 2,
+        branch: repositoryObservation.branch,
+        commitCount: repositoryObservation.commitCount,
         clean: true,
-        defaultProfile: "bootstrap",
-        readinessMarkerTree: false,
-        readinessMarkerHistory: false,
+        defaultProfile: repositoryObservation.defaultProfile,
+        readinessMarkerTree: repositoryObservation.readinessMarkerTree,
+        readinessMarkerHistory: repositoryObservation.readinessMarkerHistory,
         schemas: [CONFIG_SCHEMA_PATH, POLICY_SCHEMA_PATH],
+        manifestCommit: repositoryObservation.manifestCommit,
       },
-      commands: [
-        {
-          id: createCapture.id,
-          durationMs: createCapture.durationMs,
-          exitCode: createCapture.exitCode,
-        },
-        {
-          id: "install",
-          status: "PASS",
-          storeBinding: {
-            mode: "explicit-source-store",
-            pathSha256: sha256(Buffer.from(sourceStorePath, "utf8")),
-          },
-        },
-        {
-          id: "typecheck",
-          status: "PASS",
-        },
-        {
-          id: "test-unit",
-          status: "PASS",
-        },
-      ],
-      receiptAudit: {
+      commandLedger,
+      verificationAudit: {
         status: "PASS",
-        receiptCount: receipts.length,
-        artifactCount: receipts.reduce(
-          (total, receipt) => total + receipt.artifacts.length,
+        invocation: ["pnpm", "verify"],
+        invocationCount: 1,
+        runId: verificationAudit.runId,
+        resultPath: "verification/result.json",
+        resultBytes: verificationAudit.resultBytes,
+        resultSha256: verificationAudit.resultSha256,
+        stageCount: verificationAudit.stageCount,
+        receiptCount: verificationAudit.receiptCount,
+        artifactCount: verificationAudit.artifactCount,
+        artifactBytes: verificationAudit.artifactBytes,
+        testCount: verificationAudit.testCount,
+        retainedFileCount: retainedVerificationInventory.length,
+        retainedBytes: retainedVerificationInventory.reduce(
+          (total, entry) => total + entry.bytes,
           0,
         ),
-        artifactBytes: receipts.reduce(
-          (total, receipt) =>
-            total +
-            receipt.artifacts.reduce(
-              (subtotal, artifact) => subtotal + artifact.bytes,
-              0,
-            ),
-          0,
-        ),
-        tests: unit.tests,
-        receipts,
+      },
+      browser: {
+        screenshotPath: `verification/${verificationAudit.screenshot.path}`,
+        screenshotBytes: verificationAudit.screenshot.bytes,
+        screenshotSha256: verificationAudit.screenshot.sha256,
+        diagnosticsClean: true,
+      },
+      redundantStandaloneCommands: {
+        removed: ["pnpm typecheck", "pnpm test:unit"],
+        replacement:
+          "The shared bootstrap audit requires the generated verifier's typecheck and bootstrap-tests receipts and artifacts, so the same production boundaries are not launched twice.",
+      },
+      retained: {
+        verificationRoot: "verification",
+        receiptAuditPath: "receipt-audit.json",
+        commandLogRoot: "logs",
       },
     };
   } catch (error) {
@@ -883,11 +1300,7 @@ export async function runFreshAdopterCiSmoke(
 
   if (primaryError) throw primaryError;
   assertion(result !== null, "Fresh-adopter CI smoke produced no result.");
-  await writeFile(
-    resolve(outputRoot, "smoke-result.json"),
-    `${JSON.stringify(result, null, 2)}\n`,
-    { encoding: "utf8", flag: "wx" },
-  );
+  await writeJson(resolve(outputRoot, "smoke-result.json"), result);
   return result;
 }
 
@@ -896,8 +1309,9 @@ async function main(): Promise<number> {
     const result = await runFreshAdopterCiSmoke(
       parseFreshAdopterSmokeArguments(process.argv.slice(2)),
     );
+    const audit = record(result["verificationAudit"], "verificationAudit");
     process.stdout.write(
-      `Fresh-adopter CI smoke passed ${record(result["receiptAudit"], "receiptAudit")["receiptCount"]} receipt-owning checks.\n`,
+      `Fresh-adopter CI smoke proved bootstrap with ${audit["receiptCount"]} audited receipts and retained browser evidence.\n`,
     );
     return 0;
   } catch (error) {

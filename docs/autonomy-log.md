@@ -3,6 +3,71 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-22 — WP5 Session 2 full-quickstart adopter smoke
+
+**Objective and baseline.** Close WP5's documented-quickstart coverage gap
+without rerunning the retained WP4d package proof, invoking source no-argument
+verification, or duplicating generated typecheck/unit execution. Fresh fetch
+confirmed `HEAD == origin/master ==`
+`dbf70e9b730f4e44f81862e159e127c252f64fd6`, tree
+`266f9b23432bd297cc027395b490db9ad82f39c4`, and zero divergence. The latest
+public starting-state Exact runtime CI run `32616522784` passed all five jobs
+on that exact commit. The existing `fresh-adopter-ci-smoke.v1` stopped at a
+clean two-commit repository and separately audited only generated typecheck and
+unit receipts, while the README additionally required commission, manifest
+add/commit, and literal no-argument verification.
+
+**Outcome.** `fresh-adopter-ci-smoke.v2` has one pure, exact six-command plan
+and one versioned ordered execution ledger: documented public creator from the
+source checkout; generated offline/frozen/copy-mode install bound to the
+source-cwd store; one generated commission; exact manifest add; deterministic
+manifest commit; and one literal generated-repository `pnpm verify`. The plan
+rejects wrong order/count/argv/scope and any source-level no-argument verify.
+Commissioning must report only `.agent/verification-manifest.json`, and its
+bytes/SHA-256 plus the complete untracked/tracked/staged surface are checked
+before the commit. Fixture Git identity and the definition-derived third
+timestamp are verified with the requested branch, exactly three commits, a
+clean tree, bootstrap default, and no readiness marker in tree or history.
+
+The coordinator copies the complete verifier run before temporary cleanup,
+byte/hash-compares the source and retained inventories, then calls the existing
+`auditBootstrapVerification` owner on the retained copy. That shared audit
+requires bootstrap status/profile/claim, both candidate captures, all nine
+ordered stages, every command receipt/manifest/artifact identity, at least four
+passing unit tests, a substantive screenshot, and clean browser diagnostics.
+The old standalone typecheck/unit launches and their weaker two-receipt audit
+are removed because those same production boundaries are now mandatory within
+the shared aggregate audit. README and repository-contract prose describe the
+new bootstrap/non-readiness distinction accurately.
+
+**Focused verification.** Under pinned Node `24.18.0` and pnpm `11.15.1`, one
+receipt-owning serial invocation of `invariant-vitest` passed all 4 reported
+suites / 11 tests with zero failures or skips across
+`fresh-adopter-ci-smoke.test.ts` and `adopter-package-proof.test.ts`. The
+4,204-byte report, 693-byte PASS receipt, and 9,259-byte PASS manifest at
+`artifacts/manual/wp5-session2-step4-focused-1/evidence/` have SHA-256
+`07beb77c334e0951a60a2acd6dd4cf39ab1f6170a92481f7ae51761f97c713ec`,
+`2c7e8b2da78f592f219eafc1480f1d06fc71011017f8626c74a3003a06be68b6`,
+and `428050b562b6a795dfa6ddc6dea1e68c6b19e1bcaa38055450d547f1a46ea59f`.
+Mutations cover wrong command order/count, ledger drift, source verify, dirty or
+two-commit repositories, readiness history, missing/tampered receipts,
+tampered artifacts, wrong candidate identity, and absent screenshots. Direct
+targeted ESLint and Prettier checks also passed. Telemetry initialization was
+honestly non-semantic/unavailable because the direct loader could not resolve
+the source `.js` projection for `path-safety.ts`; the valid command-owned
+manifest records null telemetry rather than claiming a telemetry receipt.
+
+**Commit.** Assigned by the cohesive Step 4 commit containing this entry; no
+push.
+
+**Known final-session gates.** Per the frozen Session 2 cadence, the expensive
+real Windows create/install/commission/commit/verify/browser journey runs once
+only after the action-pin increment and all tracked records are committed. The
+Node 24 action migration, final broader checks, ignored final audit, and hosted
+Session 3 matrix remain open. POSIX supervision, CAL-1, hidden validation,
+product breadth, autonomous readiness, and human verification remain out of
+scope; no readiness claim is made.
+
 ## 2026-08-22 — WP5af canonical verification-clone fixture roots
 
 **Objective and cause.** From exact clean WP5ae, reproduce the two remaining

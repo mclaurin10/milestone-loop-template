@@ -1,88 +1,156 @@
 # Current Execution Plan
 
-**Status:** WP5ag Session 1 frozen-candidate verification
+**Status:** WP5 recommended Session 2 implementation
 **Updated:** 2026-08-22
 **Owner:** autonomous loop
 
 ## Objective
 
-Commit WP5af's final focused owner, freeze every intended Session 1 tracked
-byte, and run the six required broader commands exactly once from isolated
-no-local/no-hardlink Windows clones of the identical committed candidate. Audit
-every command-owned receipt, artifact, manifest, toolchain, count, skip, and
-candidate binding; retain a final ignored audit without changing tracked bytes.
+Complete WP5 recommended Session 2 as two cohesive increments: make the
+fresh-adopter CI smoke execute and independently audit every documented
+quickstart command through one generated-repository no-argument bootstrap
+verification, then replace all nine JavaScript-action references with current
+official Node 24-compatible stable releases pinned by immutable full commit
+SHA. Freeze one final candidate, run the real Windows adopter journey once,
+and run the six broader source checks once from isolated exact clones.
 
-Do not edit tracked files after the freeze, run source no-argument
-`pnpm verify`, push, alter serial Vitest behavior, claim readiness, or treat a
-zero exit without a valid receipt as passing.
+Do not run source no-argument `pnpm verify`, invoke `loop:template:prove`, run
+the real Docker matrix, trigger or dispatch hosted CI, push, implement POSIX
+supervision, start CAL-1, add product/readiness scope, enter hidden validation,
+or begin WP6 deduplication. The final hosted matrix belongs to Session 3.
 
 ## Goal Constraints
 
-- Preserve immutable baseline/active hashes, readiness marker/default, CAL-1
-  open/zero, protected file SHA
+- Preserve Node `24.18.0`, pnpm `11.15.1`, readiness default and permanent
+  marker, CAL-1 open/not started, and every immutable baseline/active hash.
+- Preserve protected untracked
+  `Implementation-ready improvement plan 8-5-26.txt` at SHA-256
   `53ea98fb1cb880163a02d3b1d9365963e3fe891025ae3630f00bd4c9232293b1`,
-  and required ignored residue.
-- Use Node `24.18.0`, pnpm `11.15.1`, exact clean no-local/no-hardlink clones,
-  compact distinct Windows short TEMP, and unique checkout, Corepack, store,
-  telemetry, and command-evidence roots for every command.
-- Run no more than two broader commands concurrently and do not overlap the
-  two longest duplicate test aggregates if that would jeopardize timeouts.
-- Any tracked change after a successful broader command invalidates its
-  receipt. Final results therefore belong in retained ignored evidence and the
-  final response, not a post-freeze tracked edit.
+  plus `.tools/corepack-home-readonly-probe` and
+  `.tools/wp5r-corepack-probe`.
+- Generated-adopter verification must run from its clean three-commit
+  bootstrap history, never the readiness source checkout, and must remain
+  explicitly distinct from autonomous readiness.
+- Reuse the independent `auditBootstrapVerification` owner from
+  `adopter-package-proof.ts`; do not introduce a second weaker receipt or
+  artifact audit.
+- Keep workflow permissions read-only, full history checkout,
+  `persist-credentials: false`, exact application runtime pins, independent
+  adopter/container scheduling, platform coverage, unique evidence roots,
+  unconditional uploads, and full-SHA action pinning.
 
-## Frozen-Candidate Inputs
+## Baseline Evidence
 
-- WP5af base is WP5ae commit
-  `37f5be3a4d97c77878dbcae03b3739cbb74b61fd` / tree
-  `cb099e63a733e5ccff98a3f0937e232bb00c6852`.
-- WP5af final test-only corrected tree
-  `15355fb65128893074d86ed489a8add59a9e69f3` passes Windows and Linux ext4
-  3/3 with valid receipts. Production verification-clone code is unchanged.
-- The complete retained hosted-Windows focused inventory is exhausted.
-  Every changed causal owner has direct red proof, Windows full-file green,
-  Linux ext4 parity, and a separate local commit or the pending WP5af commit.
-- Origin remains published WP5q `3113c13182951814459628cebe252fe97fd93d9a`;
-  all Session 1 commits remain local and must not be pushed.
+- Fresh fetch confirms `HEAD == origin/master ==`
+  `dbf70e9b730f4e44f81862e159e127c252f64fd6`, tree
+  `266f9b23432bd297cc027395b490db9ad82f39c4`, divergence `0/0`.
+- The only nonignored entry is the protected human plan with its expected
+  hash. Required ignored probes are present. Source default is `readiness`,
+  its marker is present, and immutable lock baseline/active hashes match with
+  CAL-1 `open_not_started` / count zero.
+- Session 1 retained audit
+  `artifacts/manual/wp5ag-session1-final-audit/audit-result.json` reports all
+  six qualifying commands passing with valid receipts on this tree. Its
+  historical pre-push `originMaster` field is intentionally unchanged.
+- Latest public Exact runtime CI run `32616522784` completed successfully on
+  this exact commit: controller Linux/Windows, adopter Linux/Windows, and real
+  trusted-container jobs all passed. This is starting-state evidence only.
+- Current adopter smoke schema `fresh-adopter-ci-smoke.v1` stops at a clean
+  two-commit repository and separately runs generated typecheck/unit. README
+  documents install, one-shot commission, manifest add/commit, and literal
+  no-argument verify that the smoke does not execute.
+- Current workflow repeats checkout `v4.2.2`, setup-node `v4.4.0`, and
+  upload-artifact `v4.6.2` pins three times each; their metadata is Node 20.
+  Official latest stable/tag resolution and metadata inspection found:
+  checkout `v7.0.1` at `3d3c42e5aac5ba805825da76410c181273ba90b1`,
+  setup-node `v7.0.0` at `820762786026740c76f36085b0efc47a31fe5020`,
+  and upload-artifact `v7.0.1` at
+  `043fb46d1a93c77aae656e7c1c64a875d1fc6a0a`; all three exact `action.yml`
+  files declare `runs.using: node24` and all observed release tags resolve
+  directly to commit objects.
 
 ## Steps
 
-1. [x] Complete all projected focused owners through WP5af with exact
-       reproduction, direct proof, minimal correction, and platform parity.
-2. [ ] **In progress:** Format/audit/stage only WP5af's test, autonomy entry,
-       and this handoff plan; commit narrowly and record the resulting exact
-       commit/tree as the immutable Session 1 candidate.
-3. [ ] Create six independent exact clean clones of that commit, each with its
-       own Node-facing PATH, Corepack cache, fresh writable pnpm store,
-       genuine distinct NTFS 8.3 TEMP/TMP/TMPDIR, telemetry run ID, and
-       command artifact directory. Verify no alternates and exact clean HEAD.
-4. [ ] Run exactly once on the frozen candidate:
-       `pnpm test:invariants`, `pnpm test:orchestrator`, `pnpm test:unit`,
-       `pnpm typecheck`, `pnpm lint`, and `pnpm format:check`.
-5. [ ] Independently verify every declared artifact's bytes/SHA-256, receipt
-       schema/status, manifest PASS and candidate commit/tree, command/test
-       counts and skips, toolchain, and clone cleanliness.
-6. [ ] Write only ignored
-       `artifacts/manual/wp5ag-session1-final-audit/audit-result.json`; confirm
-       the authoritative tree remains clean apart from the protected untracked
-       file and disclosed ignored residue. Report exact results and gaps.
+1. [x] Inspect all required authority, plan, log, audit, adopter, workflow,
+       proof-audit, protected-state, origin, artifact, hosted-run, and official
+       action-release inputs; reconcile the stale Session 1 plan here.
+2. [x] Increment 4 — define a testable ordered quickstart
+       command plan/ledger; create/install/commission once; validate the sole
+       generated manifest; deterministically add/commit it; prove branch,
+       three commits, cleanliness, bootstrap profile, and absent readiness
+       marker in tree/history; run literal generated `pnpm verify` once; audit
+       it through the shared proof owner; copy complete verification evidence
+       before cleanup; emit a versioned result and fail-closed unit coverage.
+       Remove redundant standalone typecheck/unit launches only because the
+       audited aggregate requires their receipts and artifacts. Update
+       accurate README/contract prose and the autonomy log, run the focused
+       receipt-owning test, and commit this increment narrowly.
+3. [ ] **In progress:** Increment 5 — record official release/tag/SHA/runtime/migration
+       provenance in the decision log; replace all nine workflow references
+       and comments; centralize the exact allowlist/count contract; add
+       mutations for old pins, mutable tags, short SHAs, mixed job versions,
+       missing references, and non-allowlisted actions; update the autonomy
+       log and this plan to the final freeze, run the focused receipt-owning
+       workflow test, and commit narrowly.
+4. [ ] From the final committed candidate, run exactly one real Windows
+       generated-adopter create → offline frozen install → commission →
+       deterministic manifest commit → literal no-argument bootstrap verify →
+       shared independent audit journey. Retain the complete smoke output and
+       inspect the browser screenshot/diagnostics. Run Linux parity only if an
+       exact WSL/Linux browser boundary is already available; otherwise record
+       the limitation for Session 3 rather than broadening setup.
+5. [ ] Run exactly once from six isolated no-local/no-hardlink clones of the
+       identical commit/tree: `pnpm test:invariants`,
+       `pnpm test:orchestrator`, `pnpm test:unit`, `pnpm typecheck`,
+       `pnpm lint`, and `pnpm format:check`. Keep the two overlapping test
+       aggregates sequential and run at most two heavyweight commands at once.
+       Independently validate command-owned receipts, artifacts, manifests,
+       candidate bindings, counts/skips, toolchains, and clone cleanliness.
+6. [ ] Write only an ignored truthful Session 2 final audit, confirm the
+       tracked tree is clean under the protected-file exception, and hand off
+       the exact candidate to Session 3 for the hosted matrix without pushing
+       or making an autonomous-readiness claim.
 
 ## Acceptance Criteria
 
-- WP5af commit contains only its verification-clone test, evidence-backed
-  autonomy entry, and this frozen-candidate plan.
-- All six commands execute once against one identical committed tree, pass,
-  and own valid independently verified receipts/artifacts. Windows
-  `test:orchestrator` provides hosted-style aggregate coverage; focused Linux
-  ext4 parity already covers every changed owner.
-- No tracked byte changes after freeze; immutable/readiness/CAL-1/protected
-  identities remain exact; origin is unchanged; no push.
-- The final ignored audit truthfully records any failure or skip. Session 1 is
-  complete only if all six commands pass and the final working-tree audit is
-  clean under the stated exception.
+- The smoke's explicit ordered ledger proves exactly one source creator,
+  generated frozen install, generated commission, Git add, Git commit, and
+  generated no-argument verify in documented order; source-level verify is
+  structurally rejected.
+- Commissioning reports exactly `.agent/verification-manifest.json`, whose
+  actual bytes/SHA-256 match; the generated candidate is on the requested
+  branch, clean, bootstrap-default, exactly three commits, and has no readiness
+  marker in tree or history.
+- Shared independent audit validates verifier status/profile/claim, both
+  candidate captures, all required stages, every receipt/manifest/artifact
+  identity, test count, screenshot, and clean browser diagnostics. Complete
+  inspectable verifier evidence is copied before temporary cleanup.
+- Tests fail closed on command order/count drift, two-commit or dirty
+  repositories, missing/tampered evidence, wrong candidate identity, absent
+  screenshot, and any source no-argument verify invocation.
+- All nine workflow references equal the three official allowlisted full SHAs
+  exactly three times each; old pins, mutable/short/mixed/missing/unknown
+  references fail validation. Exact application runtime and all scheduling,
+  permissions, checkout, evidence, and prohibited-command boundaries remain.
+- Focused tests, one final Windows adopter integration, and all six final
+  broader commands pass with independently valid evidence on one exact frozen
+  tree. No qualifying invocation is repeated merely to refresh evidence.
+- Two cohesive commits are retained, no tracked byte changes after final
+  verification freeze, no push occurs, and Session 3 receives the precise
+  hosted-run next action. No autonomous-readiness claim is made.
 
 ## Verification
 
+Inner loop, each with unique evidence/telemetry/TEMP/Corepack/output roots and
+serial Vitest file execution:
+
+- `node tools/run-tool-evidence.mjs invariant-vitest tools/milestone-orchestrator/src/fresh-adopter-ci-smoke.test.ts tools/milestone-orchestrator/src/adopter-package-proof.test.ts --fileParallelism=false`
+- `node tools/run-tool-evidence.mjs invariant-vitest tools/milestone-orchestrator/src/exact-runtime-workflow-contract.test.ts --fileParallelism=false`
+
+Final committed candidate only:
+
+- One real Windows `fresh-adopter-smoke.ts` journey with a fresh retained
+  output root.
 - `pnpm test:invariants`
 - `pnpm test:orchestrator`
 - `pnpm test:unit`
@@ -90,27 +158,40 @@ zero exit without a valid receipt as passing.
 - `pnpm lint`
 - `pnpm format:check`
 
-Use their repository-prescribed command-owned evidence boundaries. Never run
-source no-argument `pnpm verify`.
+Never run source no-argument `pnpm verify` or `loop:template:prove`.
 
 ## Risks and Recovery
 
-- `test:orchestrator` and `test:unit` are long, overlapping suites. Keep their
-  clones and writable roots independent and schedule conservatively.
-- A failure is not a pass and must retain its ERROR evidence. Diagnose from
-  the isolated clone; if a tracked repair is required, this frozen candidate
-  is abandoned and affected final checks must be rerun on the new freeze.
-- Do not update this plan/log after a successful command. The ignored final
-  audit is the durable post-freeze evidence that preserves receipt identity.
+- The full adopter verifier launches Chromium and can be expensive. Exercise
+  command construction, ordering, and audit mutations in unit tests; launch
+  the real journey only after all intended tracked bytes are committed.
+- A generated verify failure is non-passing even if earlier commands succeed.
+  Retain logs, diagnose without rerunning the complete journey for routine
+  edits, and abandon/re-freeze the candidate if tracked repair is required.
+- Node 24 action majors require sufficiently current hosted/self-hosted runner
+  versions; official migration evidence and this repository's hosted-runner
+  labels are recorded. Do not infer support from the major number.
+- A final broader failure invalidates the frozen candidate. Preserve ERROR
+  evidence, repair causally, commit, and rerun affected final checks on the new
+  candidate rather than weakening or relabeling the gate.
+- Preserve all user and ignored residue. Ordinary Git commits provide rollback
+  for each cohesive increment; do not rewrite history or use destructive
+  cleanup.
 
 ## Progress and Evidence
 
-- 2026-08-22: All focused Windows failures in the retained inventory are
-  causally repaired and matched on Linux ext4.
-- 2026-08-22: WP5af final tree `15355fb` passes 3/3 on both platforms; tracked
-  WP5af records are ready for final format/audit/commit.
+- 2026-08-22: Required startup inspection and current remote/hosted/action
+  provenance reconciliation completed; no tracked implementation byte had
+  changed before this plan replacement.
+- 2026-08-22: Increment 4 now uses one exact six-command plan/ledger and the
+  shared bootstrap audit over a byte-identical retained verifier tree. Its
+  receipt-owning focused run passed 4 suites / 11 tests with zero failures or
+  skips at
+  `artifacts/manual/wp5-session2-step4-focused-1/evidence/`; direct targeted
+  ESLint and Prettier checks passed. The real browser journey remains reserved
+  for the final committed Session 2 candidate.
 
 ## Next Action
 
-Audit and commit WP5af, then create the six independent exact clones before
-running any broader command.
+Audit and commit Increment 4 narrowly, then migrate the nine action references
+and their executable allowlist/mutation contract as Increment 5.

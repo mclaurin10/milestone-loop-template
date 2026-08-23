@@ -1,95 +1,64 @@
-import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { join, resolve } from "node:path";
 
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import {
-  auditCommandEvidence,
+  assertFreshAdopterCommandLedger,
+  assertFreshAdopterQuickstartPlan,
+  assertGeneratedRepositoryObservation,
+  createFreshAdopterCommandLedger,
+  createFreshAdopterQuickstartPlan,
   generatedOfflineInstallArguments,
   parseFreshAdopterSmokeArguments,
   parsePnpmStorePath,
   resolveSourcePnpmStorePath,
+  type FreshAdopterCommandLedgerEntry,
+  type FreshAdopterQuickstartCommand,
+  type GeneratedRepositoryObservation,
 } from "../ci/fresh-adopter-smoke.js";
 
-const temporaryRoots: string[] = [];
 const commit = "a".repeat(40);
 const tree = "b".repeat(40);
 
-function sha256(contents: Buffer | string): string {
-  return createHash("sha256").update(contents).digest("hex");
+function planInput(): {
+  definitionPath: string;
+  definitionDisplayPath: string;
+  repositoryRoot: string;
+  sourceStorePath: string;
+} {
+  return {
+    definitionPath: resolve(tmpdir(), "source", "definition.json"),
+    definitionDisplayPath: "fixtures/fresh-adopter/definition.json",
+    repositoryRoot: resolve(tmpdir(), "generated-adopter"),
+    sourceStorePath: resolve(tmpdir(), "source-pnpm-store", "v11"),
+  };
 }
 
-async function writeJson(path: string, value: unknown): Promise<Buffer> {
-  const contents = Buffer.from(`${JSON.stringify(value, null, 2)}\n`);
-  await mkdir(dirname(path), { recursive: true });
-  await writeFile(path, contents);
-  return contents;
-}
-
-async function createEvidenceFixture(): Promise<{
-  root: string;
-  evidenceRoot: string;
-  artifactPath: string;
-}> {
-  const root = await mkdtemp(join(tmpdir(), "fresh-adopter-smoke-audit-"));
-  temporaryRoots.push(root);
-  const evidenceRoot = join(root, "evidence", "test-unit");
-  const artifactPath = join(evidenceRoot, "vitest-report.json");
-  const artifactContents = await writeJson(artifactPath, {
-    numTotalTests: 4,
-    numPassedTests: 4,
-    numFailedTests: 0,
-    numPendingTests: 0,
-  });
-  const receiptContents = await writeJson(join(evidenceRoot, "result.json"), {
-    schemaVersion: "1.0.0",
-    stageId: "bootstrap-tests",
-    commandId: "test:unit",
-    status: "PASS",
-    checks: [
-      {
-        id: "test-production-boundary",
-        summary: "real generated test boundary",
-        status: "PASS",
-      },
-    ],
-    artifacts: [
-      {
-        path: "vitest-report.json",
-        kind: "vitest-report",
-        bytes: artifactContents.byteLength,
-        sha256: sha256(artifactContents),
-      },
-    ],
-  });
-  await writeJson(join(evidenceRoot, "manifest.json"), {
-    schemaVersion: "1.0.0",
-    stageId: "bootstrap-tests",
-    commandId: "test:unit",
-    status: "PASS",
-    candidate: {
-      gitCommit: commit,
-      gitTree: tree,
-      workingTreeDirty: false,
+function repositoryObservation(): GeneratedRepositoryObservation {
+  return {
+    branch: "main",
+    commitCount: 3,
+    status: "",
+    defaultProfile: "bootstrap",
+    packageManager: "pnpm@11.15.1",
+    readinessMarkerTree: false,
+    readinessMarkerHistory: false,
+    configuredUserName: "Fixture Maintainer",
+    configuredUserEmail: "maintainer@example.invalid",
+    manifestCommit: {
+      commit,
+      tree,
+      subject: "activate bootstrap verification manifest",
+      authorName: "Fixture Maintainer",
+      authorEmail: "maintainer@example.invalid",
+      authorDate: "2026-08-15T19:02:00.000Z",
+      committerName: "Fixture Maintainer",
+      committerEmail: "maintainer@example.invalid",
+      committerDate: "2026-08-15T19:02:00.000Z",
     },
-    receipt: {
-      path: "result.json",
-      bytes: receiptContents.byteLength,
-      sha256: sha256(receiptContents),
-    },
-  });
-  return { root, evidenceRoot, artifactPath };
+  };
 }
-
-afterEach(async () => {
-  await Promise.all(
-    temporaryRoots
-      .splice(0)
-      .map((root) => rm(root, { recursive: true, force: true })),
-  );
-});
 
 describe("fresh-adopter CI smoke", () => {
   it("parses the strict two-path CLI", () => {
@@ -122,38 +91,147 @@ describe("fresh-adopter CI smoke", () => {
     ).toThrow(/only once/u);
   });
 
-  it("independently validates generated command receipts and artifacts", async () => {
-    const fixture = await createEvidenceFixture();
-    const result = await auditCommandEvidence({
-      evidenceRoot: fixture.evidenceRoot,
-      displayRoot: fixture.root,
-      expectedStageId: "bootstrap-tests",
-      expectedCommandId: "test:unit",
-      expectedCommit: commit,
-      expectedTree: tree,
-      expectVitest: true,
-    });
-    expect(result.receipt.path).toBe("evidence/test-unit/result.json");
-    expect(result.artifacts).toHaveLength(1);
-    expect(result.tests).toEqual({
-      total: 4,
-      passed: 4,
-      failed: 0,
-      skipped: 0,
-    });
+  it("plans every documented quickstart command once and in order", () => {
+    const input = planInput();
+    const commands = createFreshAdopterQuickstartPlan(input);
+    expect(commands.map((command) => command.id)).toEqual([
+      "template-create",
+      "install",
+      "commission",
+      "manifest-add",
+      "manifest-commit",
+      "no-argument-verify",
+    ]);
+    expect(commands.map((command) => command.displayArgv)).toEqual([
+      [
+        "pnpm",
+        "loop:template:create",
+        "--",
+        "--definition",
+        "fixtures/fresh-adopter/definition.json",
+        "--output",
+        "<generated-repository>",
+      ],
+      [
+        "pnpm",
+        "install",
+        "--offline",
+        "--frozen-lockfile",
+        "--package-import-method=copy",
+        "--store-dir",
+        "<source-pnpm-store>",
+      ],
+      [
+        "pnpm",
+        "loop:commission",
+        "--",
+        "--input",
+        "tools/milestone-orchestrator/config/commissioning-input.json",
+      ],
+      ["git", "add", ".agent/verification-manifest.json"],
+      ["git", "commit", "-m", "activate bootstrap verification manifest"],
+      ["pnpm", "verify"],
+    ]);
+    expect(
+      commands.some((command) =>
+        ["typecheck", "test:unit"].includes(command.argv[1] ?? ""),
+      ),
+    ).toBe(false);
 
-    await writeFile(fixture.artifactPath, '{"numPassedTests":5}\n');
-    await expect(
-      auditCommandEvidence({
-        evidenceRoot: fixture.evidenceRoot,
-        displayRoot: fixture.root,
-        expectedStageId: "bootstrap-tests",
-        expectedCommandId: "test:unit",
-        expectedCommit: commit,
-        expectedTree: tree,
-        expectVitest: true,
-      }),
-    ).rejects.toThrow(/bytes|sha256/u);
+    const captures = commands.map((command, index) => ({
+      id: command.id,
+      durationMs: index + 1,
+      exitCode: 0,
+      stdout: "",
+      stderr: "",
+    }));
+    const ledger = createFreshAdopterCommandLedger(commands, captures);
+    expect(ledger.map((entry) => entry.order)).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(ledger.every((entry) => entry.status === "PASS")).toBe(true);
+  });
+
+  it("fails closed on quickstart order, count, ledger, or source-verify drift", () => {
+    const input = planInput();
+    const commands = createFreshAdopterQuickstartPlan(input);
+    const reordered = [commands[1]!, commands[0]!, ...commands.slice(2)];
+    expect(() => assertFreshAdopterQuickstartPlan(reordered, input)).toThrow(
+      /quickstart\[0\]\.id/u,
+    );
+    expect(() =>
+      assertFreshAdopterQuickstartPlan(commands.slice(0, -1), input),
+    ).toThrow(/command count/u);
+
+    const sourceVerify = commands.map((command) =>
+      command.id === "no-argument-verify"
+        ? ({ ...command, scope: "source-checkout" } as const)
+        : command,
+    );
+    expect(() => assertFreshAdopterQuickstartPlan(sourceVerify, input)).toThrow(
+      /scope|source no-argument/u,
+    );
+
+    const ledger = commands.map((command, index) => ({
+      order: index + 1,
+      id: command.id,
+      scope: command.scope,
+      argv: command.displayArgv,
+      status: "PASS" as const,
+      exitCode: 0 as const,
+      durationMs: index + 1,
+    }));
+    const wrongOrder: FreshAdopterCommandLedgerEntry[] = ledger.map(
+      (entry, index) => ({ ...entry, order: index === 0 ? 2 : entry.order }),
+    );
+    expect(() => assertFreshAdopterCommandLedger(wrongOrder, commands)).toThrow(
+      /ledger 0\.order/u,
+    );
+    expect(() =>
+      assertFreshAdopterCommandLedger(ledger.slice(0, -1), commands),
+    ).toThrow(/ledger count/u);
+
+    const unallowlisted: FreshAdopterQuickstartCommand[] = [
+      ...commands,
+      {
+        id: "no-argument-verify",
+        scope: "source-checkout",
+        argv: ["pnpm", "verify"],
+        displayArgv: ["pnpm", "verify"],
+      },
+    ];
+    expect(() =>
+      assertFreshAdopterQuickstartPlan(unallowlisted, input),
+    ).toThrow(/command count|source no-argument/u);
+  });
+
+  it("requires a clean three-commit bootstrap repository with deterministic identity", () => {
+    const observation = repositoryObservation();
+    const expected = {
+      branch: "main",
+      userName: "Fixture Maintainer",
+      userEmail: "maintainer@example.invalid",
+      commitTimestamp: "2026-08-15T19:02:00.000Z",
+    };
+    expect(() =>
+      assertGeneratedRepositoryObservation(observation, expected),
+    ).not.toThrow();
+    expect(() =>
+      assertGeneratedRepositoryObservation(
+        { ...observation, commitCount: 2 },
+        expected,
+      ),
+    ).toThrow(/commit count/u);
+    expect(() =>
+      assertGeneratedRepositoryObservation(
+        { ...observation, status: "?? unexpected.txt" },
+        expected,
+      ),
+    ).toThrow(/Git status/u);
+    expect(() =>
+      assertGeneratedRepositoryObservation(
+        { ...observation, readinessMarkerHistory: true },
+        expected,
+      ),
+    ).toThrow(/marker history/u);
   });
 
   it("resolves the pinned source-cwd store and binds it to the offline child install", async () => {

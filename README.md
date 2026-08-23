@@ -237,13 +237,19 @@ report and produces no PASS receipt.
    invariant, orchestrator, unit, typecheck, lint, and format commands on
    `ubuntu-24.04` and `windows-2022`. A second matrix invokes the public
    package creator, performs an offline frozen copy-mode install in the
-   generated repository, runs its typecheck and four-test bootstrap unit
-   surface, then independently hashes both receipts and artifacts. That smoke
-   is deliberately smaller than `loop:template:prove`: it does not commission,
-   launch a browser, run no-argument verification, or claim bootstrap
-   completion. A third Linux-only job probes the real Docker Engine and runs
-   the complete trusted-container normal/adversarial matrix. Every job uploads
-   its platform-specific evidence.
+   generated repository, commissions exactly once, validates and commits only
+   the generated verification manifest with deterministic fixture identity,
+   then runs literal no-argument `pnpm verify` exactly once from that clean
+   three-commit bootstrap history. The coordinator copies the complete verifier
+   tree before deleting the temporary repository and reuses the packaged-proof
+   audit owner to check both candidate captures, every required stage receipt,
+   manifest, and declared artifact, the four-test unit surface, and the browser
+   screenshot and diagnostics. Its versioned ordered command ledger proves the
+   documented quickstart without invoking source no-argument verification or
+   `loop:template:prove`; the result claims generated bootstrap completion and
+   explicitly does not claim autonomous readiness. A third Linux-only job
+   probes the real Docker Engine and runs the complete trusted-container
+   normal/adversarial matrix. Every job uploads its platform-specific evidence.
 
    Local workflow-contract tests prove parseability, pins, commands, evidence
    separation, and the absence of mock OCI or completion shortcuts. They do
