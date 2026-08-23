@@ -118,6 +118,42 @@ async function executeFixture(fixture, options = {}) {
   });
 }
 
+async function createStoreAwarePnpm(fixture, options = {}) {
+  const storePath = join(fixture.parent, "seeded-store");
+  const executablePath = join(fixture.parent, "store-aware-pnpm.mjs");
+  await mkdir(storePath, { recursive: true });
+  await writeFile(
+    executablePath,
+    `import { mkdirSync, writeFileSync } from "node:fs";
+const args = process.argv.slice(2);
+const storePath = ${JSON.stringify(storePath)};
+const failInstall = ${JSON.stringify(options.failInstall === true)};
+if (args[0] === "store" && args[1] === "path") {
+  process.stdout.write(\`${"${storePath}"}\\n\`);
+} else if (args[0] === "install") {
+  const storeIndex = args.indexOf("--store-dir");
+  if (storeIndex < 0 || args[storeIndex + 1] !== storePath) {
+    process.stderr.write("offline install selected an unseeded default store\\n");
+    process.exitCode = 23;
+  } else if (failInstall) {
+    process.stderr.write("seeded offline store is deliberately unavailable\\n");
+    process.exitCode = 25;
+  }
+} else if (args[0] === "run" && args[1] === "build:production") {
+  mkdirSync("dist", { recursive: true });
+  writeFileSync("dist/app.js", "application");
+} else if (args[0] === "--version") {
+  process.stdout.write("11.15.1\\n");
+} else {
+  process.stderr.write(\`unexpected fake pnpm argv: ${"${JSON.stringify(args)}"}\\n\`);
+  process.exitCode = 24;
+}
+`,
+    "utf8",
+  );
+  return { executablePath, storePath };
+}
+
 describe("production-build evidence", () => {
   it("reports an absent production-build declaration as NOT_READY", async () => {
     const fixture = await createFixture({ declaration: undefined });
@@ -321,6 +357,69 @@ describe("production-build evidence", () => {
           /^[0-9a-f]{64}$/.test(file.sha256),
         ),
       ).toBe(true);
+    },
+    BUILD_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "reuses the source repository store for the disposable offline install",
+    async () => {
+      const fixture = await createFixture();
+      const fakePnpm = await createStoreAwarePnpm(fixture);
+      const originalNpmExecPath = process.env["npm_execpath"];
+      process.env["npm_execpath"] = fakePnpm.executablePath;
+      try {
+        const report = await executeFixture(fixture);
+
+        expect(report).toMatchObject({
+          dependencyStore: {
+            path: fakePnpm.storePath,
+            command: {
+              argv: ["pnpm", "store", "path"],
+              exitCode: 0,
+            },
+          },
+          preparation: {
+            argv: [
+              "pnpm",
+              "install",
+              "--frozen-lockfile",
+              "--offline",
+              "--package-import-method=copy",
+              "--store-dir",
+              fakePnpm.storePath,
+            ],
+            exitCode: 0,
+          },
+          outputs: { fileCount: 1 },
+        });
+      } finally {
+        if (originalNpmExecPath === undefined)
+          delete process.env["npm_execpath"];
+        else process.env["npm_execpath"] = originalNpmExecPath;
+      }
+    },
+    BUILD_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "retains bounded dependency-preparation diagnostics on failure",
+    async () => {
+      const fixture = await createFixture();
+      const fakePnpm = await createStoreAwarePnpm(fixture, {
+        failInstall: true,
+      });
+      const originalNpmExecPath = process.env["npm_execpath"];
+      process.env["npm_execpath"] = fakePnpm.executablePath;
+      try {
+        await expect(executeFixture(fixture)).rejects.toThrow(
+          /dependency preparation failed with exit 25: seeded offline store is deliberately unavailable/u,
+        );
+      } finally {
+        if (originalNpmExecPath === undefined)
+          delete process.env["npm_execpath"];
+        else process.env["npm_execpath"] = originalNpmExecPath;
+      }
     },
     BUILD_TEST_TIMEOUT_MS,
   );

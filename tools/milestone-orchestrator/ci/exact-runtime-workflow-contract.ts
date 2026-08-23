@@ -177,6 +177,9 @@ export async function validateExactRuntimeWorkflow(
   assertJobActionInventory(controller, "controller");
   includes(controller, "runner: ubuntu-24.04", "Linux controller runner");
   includes(controller, "runner: windows-2022", "Windows controller runner");
+  exactCount(controller, "timeoutMinutes: 60", 1);
+  exactCount(controller, "timeoutMinutes: 120", 1);
+  exactCount(controller, "timeout-minutes: ${{ matrix.timeoutMinutes }}", 1);
   for (const command of [
     "pnpm test:invariants",
     "pnpm test:orchestrator",

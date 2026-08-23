@@ -1,16 +1,16 @@
 # Current Execution Plan
 
-**Status:** WP5 recommended Session 3 hosted Windows fresh-adopter repair in progress
+**Status:** WP5 recommended Session 3 second hosted Windows fresh-adopter repair in progress
 **Updated:** 2026-08-23
 **Owner:** autonomous loop
 
 ## Objective
 
-Close WP5 hosted CI/quickstart validation by causally repairing the Windows
-fresh-adopter failure from Exact runtime CI run `32638898310`, freezing and
-pushing one evidence-backed replacement candidate, obtaining one fully green
-five-job Exact runtime CI run on that exact commit, and independently auditing
-every uploaded artifact.
+Close WP5 hosted CI/quickstart validation by causally repairing each Windows
+fresh-adopter failure exposed by Exact runtime CI runs `32638898310` and
+`32651184672`, freezing and pushing evidence-backed replacement candidates,
+obtaining one fully green five-job Exact runtime CI run on one exact commit,
+and independently auditing every uploaded artifact.
 
 Do not run source no-argument `pnpm verify`, invoke `loop:template:prove`, start
 CAL-1, enter hidden validation, begin WP6, add product/readiness scope, weaken
@@ -34,6 +34,14 @@ strict path/receipt/evidence checks, or claim autonomous readiness.
 - Hosted acceptance requires controller Linux/Windows, fresh-adopter
   Linux/Windows, and trusted-container Linux all to succeed on one exact SHA,
   with all required steps and unconditional uploads successful.
+- The production-build disposable clone must use the exact pnpm content store
+  already resolved from its clean source repository. Its frozen offline install
+  may not silently select a different empty store merely because the clone is
+  created on another Windows volume.
+- Preserve every controller command and its per-command/per-test timeout. The
+  Windows controller job may receive a larger matrix-specific outer timeout
+  only to let those unchanged commands finish; Linux retains its current
+  60-minute bound.
 
 ## Baseline Evidence
 
@@ -68,6 +76,26 @@ strict path/receipt/evidence checks, or claim autonomous readiness.
   the expanded Git root, and lexical containment correctly refused their
   apparent `..` relation. This is deterministic coordinator root-identity
   drift, not infrastructure and not permission to normalize arbitrary inputs.
+- Replacement commit `812dc9fe90c44688fb6b4558ea5ea14331c82363`
+  (tree `7922b78332a417056d9a2e389f806f5df4589fb0`) passed the exact local
+  Windows six-command adopter/browser journey and was pushed normally. Its
+  push-triggered run is `32651184672`; the first repair is effective there,
+  because commissioning and manifest publication pass.
+- Run `32651184672` exposes a second deterministic Windows-only defect at the
+  generated repository's production-build dependency preparation. The source
+  checkout and populated pnpm store are on `D:` (`D:\.pnpm-store\v11`),
+  while Node's temporary root and the disposable production-build clone are on
+  `C:`. The generated install explicitly pins the source store, but
+  `production-build.mjs` drops that store identity before its nested offline
+  install; pnpm therefore selects a different volume-local store and exits 1.
+  Linux uses one volume and passes.
+- The terminal run also cancelled Windows controller at the outer 60-minute
+  job boundary after invariant and controller suites passed. Its unit command
+  ran only 28 minutes before cancellation and left an ERROR manifest with no
+  receipt; later static steps were skipped. The exact local Node 24 unit suite
+  needs about 57 minutes by itself and passes 612 tests with two declared
+  Windows-only skips, so the combined unchanged Windows job cannot reliably fit
+  the existing 60-minute outer bound.
 
 ## Steps
 
@@ -85,26 +113,44 @@ strict path/receipt/evidence checks, or claim autonomous readiness.
        canonicalize only `realpath(await mkdtemp(...))` in
        `fresh-adopter-smoke.ts`; do not change commissioning or shared path
        guards. Run focused affected receipt-owning tests with serial files.
-4. [ ] Freeze the tracked repair plus tests, plan, and autonomy log; reuse the
+4. [x] Freeze the tracked repair plus tests, plan, and autonomy log; reuse the
        existing producer-owned canonical-root decision rather than duplicating
        it; commit the cohesive candidate and confirm protected/immutable/
        readiness/CAL-1 identities plus the protected-file tree exception.
-5. [ ] From exact clean no-local/no-hardlink clones of that commit, run one
+5. [x] From exact clean no-local/no-hardlink clones of that commit, run one
        real Windows create -> offline frozen install -> commission -> manifest
        commit -> generated no-argument verify -> shared independent audit
        journey, then receipt-owning `pnpm test:orchestrator`, `pnpm typecheck`,
        `pnpm lint`, and `pnpm format:check`. Independently verify receipts,
        artifacts, candidate binding, browser evidence, and clone cleanliness;
        push normally to `origin/master` once and identify the push-triggered
-       Exact runtime CI run without dispatching a duplicate.
-6. [ ] Monitor that run to terminal completion. If it exposes another genuine
-       defect, retain evidence and repeat a causal repair cycle; rerun an
-       unchanged SHA only with explicit proof of an external transient.
-7. [ ] On the final green SHA, download and safely extract all five artifacts,
-       independently audit controller, adopter, browser, and real-container
-       receipts/manifests/artifacts/candidates/tests, verify zero actionable
-       annotations and exact Node 24 action pins, and write only ignored
-       `artifacts/manual/wp5-session3-final-audit/audit-result.json`.
+       Exact runtime CI run without dispatching a duplicate. The local
+       aggregate disclosed two unchanged timing-only nonpasses whose exact
+       owners passed in isolation and on the prior hosted Windows run; no
+       timeout or success rule was changed.
+6. [x] Monitor the replacement run through the first terminal defect. Retain
+       its failed Windows artifact and direct logs; classify the cross-volume
+       pnpm store loss as deterministic and do not rerun unchanged `812dc9f`.
+7. [x] Add a red production-build regression that simulates a repository store
+       unavailable through the disposable clone's default selection. Resolve
+       the source store with the same pinned pnpm, validate one absolute path,
+       pass it explicitly to the nested frozen offline install, retain useful
+       subprocess diagnostics, and keep clean-clone/output/receipt rules
+       unchanged. Run focused production-build and adopter-package coverage.
+8. [x] Add a workflow-contract regression requiring Linux controller to retain
+       60 minutes and Windows controller to receive 120 minutes. Change only
+       the matrix-specific outer bound; preserve all six commands, per-test and
+       command limits, evidence roots, scheduling, and uploads.
+9. [ ] Freeze, commit, and validate the second repair from exact clean clones:
+       run one real Windows adopter/browser journey plus receipt-owning
+       typecheck, lint, format, and the applicable focused/broader tests. Push
+       normally once and identify only the push-triggered exact-SHA run.
+10. [ ] Monitor causal candidates until one five-job run is terminal green. On
+        the final green SHA, download and safely extract all five artifacts,
+        independently audit controller, adopter, browser, and real-container
+        receipts/manifests/artifacts/candidates/tests, verify zero actionable
+        annotations and exact Node 24 action pins, and write only ignored
+        `artifacts/manual/wp5-session3-final-audit/audit-result.json`.
 
 ## Acceptance Criteria
 
@@ -113,6 +159,14 @@ strict path/receipt/evidence checks, or claim autonomous readiness.
   red on `43e609b` semantics and green only after producer canonicalization.
 - Commissioning strictness and every unrelated caller-controlled path remain
   unchanged; Linux and Windows semantics stay shared.
+- The second Windows failure has retained direct evidence of source checkout
+  `D:`, populated store `D:\.pnpm-store\v11`, temporary build workspace
+  `C:`, and the nested offline preparation failure. A regression proves the
+  nested clone receives the exact validated source-store path explicitly.
+- The cancelled Windows controller artifact retains its passing invariant and
+  597-test controller receipts plus the unit ERROR manifest with no receipt.
+  The workflow contract proves only the Windows outer job bound increased; no
+  command, test, receipt, or success definition was weakened.
 - One exact replacement candidate passes the real local Windows six-command
   generated-adopter journey, affected focused/broader checks, typecheck, lint,
   and format with independently valid command-owned evidence.
@@ -199,9 +253,52 @@ redundant local Docker matrix.
   pass with independently matching receipts and declared artifacts. They are
   iteration evidence on a dirty tree, not substitutes for the required exact
   committed-candidate reruns. No new durable decision is introduced.
+- 2026-08-23: Repair commit `812dc9f` passed an exact clean local Windows
+  generated-adopter journey with 10 valid receipts, 18 artifacts, four tests,
+  and substantive clean browser evidence, then passed exact-clone typecheck,
+  lint, and format. Two unchanged aggregate test owners exceeded local timing
+  limits, passed immediately in isolation, and had passed hosted Windows; this
+  was disclosed without timeout changes. The normal push created only run
+  `32651184672`.
+- 2026-08-23: In run `32651184672`, fresh-adopter Linux and trusted-container
+  Linux pass. Fresh-adopter Windows advances through commissioning and manifest
+  commit, then the sole generated no-argument verify fails only the
+  production-build stage. Its artifact digest
+  `5deb8fb362232dd94b0675c10b286669b0f4d1e2ce3218b01ed71bdfe730347a`
+  is retained under `artifacts/hosted/run-32651184672/`. Direct workflow and
+  artifact evidence binds the populated source store to `D:` and the generated
+  plus production-build temporary workspaces to `C:`; the production wrapper
+  currently omits `--store-dir` from its nested offline install.
+- 2026-08-23: Terminal connector evidence confirms Linux controller also
+  passed, while Windows controller was cancelled at the 60-minute outer job
+  boundary. Its invariant and 597-test controller receipts pass; its unit
+  manifest is ERROR with no receipt after 28 minutes, later statics are skipped,
+  and unconditional upload passes. The 49,231-byte artifact's local digest
+  matches server SHA-256
+  `69e6801ce22a8e2c37518f02cf4cf5c03d34d6cf816ba8ec7c059623db61f90c`.
+- 2026-08-23: Current-semantics regressions retained three direct red reports:
+  missing production store argv, missing generated store environment, and
+  missing matrix-specific controller timeout. Their SHA-256 values are
+  `6f4e8f1ba9b7995642b9c45e7227576b1a21c10f2ca9f4091aed661e7887e0a7`,
+  `f3cadeb764792c88f188cffac39458bfe106d8714960e07f2077e61d40e03f36`,
+  and `34b811f722eb25969f35b5b10e1615e2b2cddda39ca97bdf9c3e063559d45d4a`.
+- 2026-08-23: Corrected exact Node/pnpm evidence passes 15/15 production
+  fixtures, 21/21 combined distributor/coordinator/workflow tests, typecheck,
+  lint, and format. The sole valid broad unit run passes 182/182 suites and
+  612/614 tests with zero failures; the two skips are the declared Windows-only
+  POSIX process-group cases. An earlier ambient-Node-25 launch was stopped with
+  no receipt and is nonqualifying. Linux controller remains at 60 minutes;
+  Windows alone receives a 120-minute outer bound, with every command and test
+  limit unchanged.
+- 2026-08-23: A pre-freeze invariant launch passed the protected-integrity
+  owner 13/13, then truthfully failed before the schema test because this shared
+  checkout's modules metadata names an older custom store that its trusted
+  sanitized child does not inherit. No rerun or code accommodation was made;
+  final checks will use a clean default-store clone.
 
 ## Next Action
 
-Commit this frozen tracked candidate, then run the one final real Windows
-adopter journey and the four receipt-owning committed-candidate checks from
-exact clean clones before the single authorized push.
+Freeze the tracked store-handoff and matrix-timebox repairs, commit the cohesive
+candidate, reconfirm protected/immutable/readiness/CAL-1 identities, then run
+the exact clean cross-volume Windows adopter journey and committed-candidate
+static/focused checks before the next normal push.

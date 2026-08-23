@@ -3,6 +3,60 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-23 — Matrix-specific outer controller timebox
+
+**Decision.** Exact runtime CI retains a 60-minute outer timeout for the Linux
+controller and assigns 120 minutes to the Windows controller through an
+explicit matrix field. All six controller commands, their order, evidence
+roots, internal supervisor limits, per-test limits, unconditional upload, and
+success criteria remain unchanged. The executable workflow contract requires
+both platform-specific values and rejects collapsing Windows back to 60.
+
+**Why.** In run `32651184672`, Windows invariants and the 597-test controller
+suite passed, then the outer 60-minute job clock cancelled the complete unit
+suite after only 28 minutes. The unit command retained an ERROR manifest with
+no receipt and later static steps were skipped. The same unchanged complete
+unit command passed 612 tests with two declared Windows-only POSIX skips under
+exact Node/pnpm locally, but required about 57 minutes by itself. Setup,
+invariants, controller, unit, and statics therefore cannot reliably fit the
+old Windows outer bound. Alternatives rejected: weakening or removing either
+test command, increasing per-test limits, splitting or conditionally skipping
+coverage, accepting cancellation, giving Linux unnecessary extra time, or
+rerunning the unchanged failing SHA as though cancellation were unexplained.
+
+**Affected files.** `.github/workflows/exact-runtime-ci.yml`, the executable
+workflow contract and its tests, `CONTRACT.md`, and `README.md`.
+
+## 2026-08-23 — Source-store pinning across production-build clone volumes
+
+**Decision.** Before creating its disposable clone, production-build evidence
+asks the currently pinned pnpm for `store path` from the exact clean source
+repository. Discovery must succeed and emit exactly one absolute path naming an
+existing real directory. The wrapper then supplies that exact path through
+`--store-dir` on the clone's frozen offline copy-mode install. The build report
+records both store discovery and the explicitly pinned preparation command, and
+bounded stdout/stderr is included when either subprocess fails. The
+fresh-adopter coordinator carries its already validated source-store identity
+through every generated-repository command as pnpm's
+`pnpm_config_store_dir`; it removes conflicting case variants first and retains
+the explicit install argv in the public command ledger.
+
+**Why.** Windows Exact runtime CI checks out the source on `D:` while Node's
+temporary directory is on `C:`. The generated adopter install correctly seeded
+and used `D:\.pnpm-store\v11`, but the nested production-build install omitted
+that identity and let pnpm select a different volume-local default store for
+the `C:` clone. Offline preparation therefore failed despite the required
+packages already existing in the proven source store. Store identity is an
+input to an offline build and must cross the disposable-clone boundary
+explicitly. Alternatives rejected: enabling network access, copying installed
+`node_modules`, relying on ambient/global pnpm configuration, hydrating a
+second implicit store, forcing the temporary root onto the checkout volume, or
+relabeling the hosted failure as infrastructure.
+
+**Affected files.** `tools/production-build.mjs`, its focused tests,
+the fresh-adopter CI coordinator and tests, `CONTRACT.md`, and the
+generated-adopter description in `README.md`.
+
 ## 2026-08-22 — Current Node 24 official actions with immutable pins (WP5 Session 2)
 
 **Decision.** The Exact runtime workflow allowlists and uses these official

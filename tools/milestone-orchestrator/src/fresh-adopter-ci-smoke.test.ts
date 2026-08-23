@@ -11,6 +11,7 @@ import {
   createFreshAdopterCommandLedger,
   createFreshAdopterQuickstartPlan,
   generatedOfflineInstallArguments,
+  generatedRepositoryEnvironment,
   parseFreshAdopterSmokeArguments,
   parsePnpmStorePath,
   resolveSourcePnpmStorePath,
@@ -287,6 +288,29 @@ describe("fresh-adopter CI smoke", () => {
       "--store-dir",
       storePath,
     ]);
+    const environment = generatedRepositoryEnvironment(resolved, {
+      PATH: "fixture-path",
+      CI: "false",
+      NPM_CONFIG_STORE_DIR: join(tmpdir(), "stale-store"),
+      PNPM_CONFIG_STORE_DIR: join(tmpdir(), "other-stale-store"),
+      FIXTURE_CANARY: "preserved",
+    });
+    expect(environment).toMatchObject({
+      PATH: "fixture-path",
+      CI: "true",
+      pnpm_config_store_dir: storePath,
+      FIXTURE_CANARY: "preserved",
+    });
+    expect(
+      Object.keys(environment).filter(
+        (key) => key.toLowerCase() === "pnpm_config_store_dir",
+      ),
+    ).toEqual(["pnpm_config_store_dir"]);
+    expect(
+      Object.keys(environment).some(
+        (key) => key.toLowerCase() === "npm_config_store_dir",
+      ),
+    ).toBe(false);
   });
 
   it("fails closed for unavailable or ambiguous source-store identity", async () => {

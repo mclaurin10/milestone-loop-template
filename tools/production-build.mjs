@@ -183,8 +183,45 @@ function assertProcessPassed(result, label) {
       result.error !== null
         ? `could not start: ${result.error}`
         : `failed with exit ${result.exitCode}${result.signal ? ` and signal ${result.signal}` : ""}`;
-    throw new Error(`${label} ${disposition}.`);
+    const detail = (result.stderr || result.stdout)
+      .replaceAll(/[\r\n]+/gu, " ")
+      .trim()
+      .slice(0, 2_000);
+    throw new Error(`${label} ${disposition}${detail ? `: ${detail}` : ""}.`);
   }
+}
+
+function parsePnpmStorePath(stdout) {
+  const paths = stdout
+    .split(/\r?\n/u)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+  if (paths.length !== 1 || !isAbsolute(paths[0])) {
+    throw new Error(
+      "Production-build pnpm store discovery must emit exactly one absolute path.",
+    );
+  }
+  return resolve(paths[0]);
+}
+
+async function resolvePnpmStore(repositoryRoot) {
+  const args = ["store", "path"];
+  const invocation = pnpmInvocation(args);
+  const command = runProcess(
+    invocation.command,
+    invocation.args,
+    repositoryRoot,
+    ["pnpm", ...args],
+  );
+  assertProcessPassed(command, "Production-build pnpm store discovery");
+  const path = parsePnpmStorePath(command.stdout);
+  const metadata = await lstat(path);
+  if (!metadata.isDirectory() || metadata.isSymbolicLink()) {
+    throw new Error(
+      `Production-build pnpm store must be an existing real directory: ${path}.`,
+    );
+  }
+  return { path, command };
 }
 
 function containedRelative(root, path, label) {
@@ -385,6 +422,7 @@ export async function runProductionBuild({
     commit: sourceCommitResult.stdout.trim(),
     tree: sourceTreeResult.stdout.trim(),
   };
+  const dependencyStore = await resolvePnpmStore(repositoryRoot);
 
   const temporaryRoot = await mkdtemp(
     join(tmpdir(), "milestone-loop-production-build-"),
@@ -427,6 +465,8 @@ export async function runProductionBuild({
       "--frozen-lockfile",
       "--offline",
       "--package-import-method=copy",
+      "--store-dir",
+      dependencyStore.path,
     ];
     const installInvocation = pnpmInvocation(installArgs);
     const install = runProcess(
@@ -481,9 +521,10 @@ export async function runProductionBuild({
         pnpmVersion: pnpmVersion.stdout.trim(),
       },
       productionBuild: contract,
+      dependencyStore,
       preparation: install,
       command,
-      commands: [install, command],
+      commands: [dependencyStore.command, install, command],
       outputs,
     };
     await mkdir(artifactDirectory, { recursive: true });

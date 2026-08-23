@@ -41,12 +41,19 @@ change once, at `CAL-1` close, under the rules in `AGENTS.md`.
 
   An absent declaration reports `NOT_READY` (exit 2) without a PASS receipt.
   The wrapper clones the exact clean candidate into a disposable directory,
-  prepares dependencies with the frozen lockfile in offline copy mode, removes
-  pre-existing declared outputs, runs `pnpm run <script>`, rejects mutations
-  outside the declared roots and every symlink/junction output, and requires at
-  least one nonempty regular output file. Its `build-report` records exact argv
-  plus sorted output paths, sizes, and SHA-256 hashes, then rechecks the output
-  inventory before issuing the receipt.
+  resolves exactly one existing absolute pnpm store from that source repository,
+  and prepares dependencies with the frozen lockfile in offline copy mode while
+  explicitly reusing that same store. A temporary-repository coordinator must
+  carry its previously validated store identity through pnpm's
+  `pnpm_config_store_dir`, rather than assume a later command will remember an
+  earlier `--store-dir` option. This remains valid when a Windows source
+  checkout and the disposable temporary clone are on different volumes. The
+  wrapper removes pre-existing declared outputs, runs `pnpm run <script>`,
+  rejects mutations outside the declared roots and every symlink/junction
+  output, and requires at least one nonempty regular output file. Its
+  `build-report` records store discovery, exact argv, and sorted output paths,
+  sizes, and SHA-256 hashes, then rechecks the output inventory before issuing
+  the receipt.
 
 - `scripts.verify` must be exactly `node scripts/verify.mjs` (checked by the
   environment stage).
@@ -211,8 +218,11 @@ The source exact-runtime CI workflow is a diagnostic execution boundary, not
 a source-readiness completion path. It installs and asserts Node `24.18.0`
 plus pnpm `11.15.1`; runs the existing receipt-owning invariant, orchestrator,
 unit, and static commands on Linux and Windows with distinct uploaded evidence
-roots; and never invokes source no-argument `pnpm verify`. Its separate
-generated-adopter smoke executes the documented quickstart through the public
+roots; and never invokes source no-argument `pnpm verify`. The controller matrix
+retains a 60-minute Linux outer job bound and gives Windows 120 minutes for that
+unchanged complete command sequence; command and per-test timeouts remain
+unchanged. The separate generated-adopter smoke executes the documented
+quickstart through the public
 creator, offline frozen copy-mode install, one-shot commissioning, exact
 manifest add/commit, and one literal generated-repository no-argument
 `pnpm verify`. It validates the sole commissioning output and clean

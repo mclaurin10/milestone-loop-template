@@ -68,14 +68,116 @@ Pre-freeze typecheck, lint, and format also passed with independently matching
 receipts/artifacts under their `artifacts/manual/wp5-session3-*-pre-freeze-v1/`
 roots. These dirty-tree runs are iteration evidence only.
 
-**Commit and remaining gates.** Assigned by the cohesive repair commit that
-contains this entry. Before the one authorized normal push, that exact clean
-commit still requires one real Windows six-command adopter/browser journey,
-receipt-owning `test:orchestrator`, typecheck, lint, and format checks, and
-independent evidence validation from clean clones. The resulting hosted run
-must then finish all five jobs green and have all five artifacts downloaded
-and independently audited. No source no-argument verify, template proof,
-CAL-1, hidden validation, WP6, product expansion, or readiness claim occurred.
+**First repair commit and local candidate evidence.** Commit
+`812dc9fe90c44688fb6b4558ea5ea14331c82363` / tree
+`7922b78332a417056d9a2e389f806f5df4589fb0` contains the canonical temporary-
+root repair. An exact clean no-local/no-hardlink clone then passed the real
+Windows six-command adopter journey under pinned Node/pnpm and a genuine short
+TEMP spelling. The generated three-commit bootstrap repository passed its sole
+no-argument verify with 9 stages, 10 valid receipts/manifests, 18 artifacts /
+135,779 bytes, and 4 tests. All 38 shared-audit and 51 retained inventory
+entries recomputed exactly; the substantive browser screenshot and diagnostics
+were inspected and clean. Byte-identical retained evidence is under
+`artifacts/manual/wp5-session3-windows-adopter-final/`. Exact-clone typecheck,
+lint, and format passed under
+`artifacts/manual/wp5-session3-final-local-checks/`.
+
+Two local orchestrator aggregates had one unchanged timing-only nonpass each:
+`target-integration-recovery` exceeded its explicit 600-second limit once and
+`worked-example` exceeded the default 5-second limit once. Each exact owner
+passed immediately in isolation, and both blobs had passed the retained prior
+hosted Windows run. No timeout, test, or success definition changed; all four
+records are retained under their named `wp5-session3-*` evidence roots. The
+normal push of `812dc9f` created only push run `32651184672`; no manual dispatch
+occurred.
+
+**Second hosted defect.** In run `32651184672`, fresh-adopter Linux and trusted
+container Linux pass. Windows fresh-adopter proves the first correction by
+passing template creation, generated install, commissioning, manifest add, and
+manifest commit. Its only failure is the production-build stage inside the
+generated repository's sole no-argument verify. The exact failed artifact is
+12,651 bytes with server- and local-matching SHA-256
+`5deb8fb362232dd94b0675c10b286669b0f4d1e2ce3218b01ed71bdfe730347a`
+and is safely extracted under `artifacts/hosted/run-32651184672/`.
+
+Direct job evidence places the source checkout at
+`D:\a\milestone-loop-template\milestone-loop-template`, its populated pnpm
+store at `D:\.pnpm-store\v11`, and the generated repository plus disposable
+production-build clone under Node's `C:` temporary root. The fresh-adopter
+install explicitly reuses the `D:` source store and passes. The copied
+`production-build.mjs` then starts another frozen offline install without a
+store argument; pnpm selects by the `C:` workspace boundary and exits 1 before
+the build command. Linux passes because checkout and temporary workspace share
+one volume. Current failure reporting also discards the preparation stdout and
+stderr, which will be corrected without weakening the nonzero failure.
+
+The same run later reached the controller job's outer 60-minute ceiling on
+Windows. Invariants and the controller suite had already passed; the retained
+orchestrator report has 597 passes, zero failures, and two explicitly Windows-
+skipped POSIX process-group tests. The complete unit command started at
+`2026-08-23T16:48:49.965Z`, was cancelled at
+`2026-08-23T17:17:06.078Z`, and retained an ERROR manifest with no receipt.
+Typecheck, lint, and format were consequently skipped; the unconditional
+controller upload passed. The 49,231-byte artifact has matching server/local
+SHA-256 `69e6801ce22a8e2c37518f02cf4cf5c03d34d6cf816ba8ec7c059623db61f90c`
+and is safely extracted under the same failed-run evidence root.
+
+**Second-repair local evidence.** The two new regressions first failed on the
+old semantics: production preparation omitted its seeded store (exit 23), and
+the generated environment helper was absent. Their JSON reports have SHA-256
+`6f4e8f1ba9b7995642b9c45e7227576b1a21c10f2ca9f4091aed661e7887e0a7`
+and `f3cadeb764792c88f188cffac39458bfe106d8714960e07f2077e61d40e03f36`.
+After correction, all 15 production-build tests pass and the receipt-owning
+distributor/coordinator selection passes 16/16 at
+`artifacts/manual/wp5-session3-store-repair-focused-v3/`. Exact Node
+`24.18.0` / pnpm `11.15.1` typecheck, lint, and format receipts pass and
+independently match at their `*-pre-freeze-v2` roots.
+
+An initial broad unit launch was stopped after process inspection proved pnpm
+had started package scripts under ambient Node `25.9.0`; it produced no receipt
+and is nonqualifying. With the exact Node directory prepended, the sole valid
+broad launch passed 182/182 suites and 612/614 tests with zero failures; its two
+skips are the declared Windows-only POSIX process-group tests. The 213,584-byte
+report's recomputed SHA-256 is
+`cbb56f1ce90e007c14417b3601803ccad94a073804c581a3c608c5f633e57122`,
+matching its PASS receipt at
+`artifacts/manual/wp5-session3-store-repair-unit-pre-freeze-v2/`. The command
+took about 57 minutes by itself, directly confirming that the unchanged
+controller command sequence cannot reliably fit a 60-minute Windows outer job
+bound.
+
+The workflow-contract timeout invariant then failed on the old fixed 60-minute
+job with report SHA-256
+`34b811f722eb25969f35b5b10e1615e2b2cddda39ca97bdf9c3e063559d45d4a`.
+The workflow now retains Linux at 60 minutes and selects 120 only for Windows
+through the controller matrix; every command, order, evidence root, internal
+supervisor, per-test limit, upload, and success criterion is unchanged. Final
+exact-runtime focused evidence passes 21/21 tests with report SHA-256
+`82241b660204c493550ca1494ddab866f3a6c1d4091f994f3bf25e98dda4f9b2`
+at `artifacts/manual/wp5-session3-store-and-timeout-focused-v2/`. Final
+pre-freeze exact Node/pnpm typecheck, lint, and format receipts also pass and
+independently match under their `wp5-session3-store-timeout-*-pre-freeze-v2`
+roots. One preceding format invocation correctly failed on an unformatted
+validator and remains non-passing evidence; Prettier changed only formatting
+before those final reruns.
+
+A pre-freeze `test:invariants` launch is also retained as non-passing at
+`artifacts/manual/wp5-session3-store-timeout-invariants-pre-freeze-v1/`.
+Its protected-integrity owner passed all 13 immutable/readiness checks with a
+valid receipt. The next schema entry stopped before Vitest because this shared
+working copy's `node_modules` records the earlier custom
+`C:\wp5tsr1\pnpm-home\store\v11`, while the trusted invariant child correctly
+removes outer store and CI overrides; pnpm refused the resulting non-TTY purge.
+This is the already documented operator-preparation mismatch, not a source
+regression. Final candidate checks will use a newly installed clean clone whose
+default store matches its modules metadata.
+
+**Remaining gates.** The next exact commit still requires the real local
+Windows cross-volume journey and applicable receipt-owning checks before one
+normal push. A hosted run must then finish all five jobs green, and all five
+artifacts must be downloaded and independently audited. No source no-argument
+verify, template proof, CAL-1, hidden validation, WP6, product expansion, or
+readiness claim occurred.
 
 ## 2026-08-22 — WP5 Session 2 frozen-candidate isolation correction
 

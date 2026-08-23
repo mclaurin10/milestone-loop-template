@@ -82,6 +82,7 @@ describe("exact-runtime CI workflow contract", () => {
     const mutations = [
       workflow.replace('node-version: "24.18.0"', 'node-version: "24"'),
       workflow.replace("runner: windows-2022", "runner: ubuntu-24.04"),
+      workflow.replace("timeoutMinutes: 120", "timeoutMinutes: 60"),
       workflow.replace("run: pnpm test:orchestrator", "run: pnpm test:unit"),
       workflow.replace(
         "controller-${{ matrix.platform }}/format",

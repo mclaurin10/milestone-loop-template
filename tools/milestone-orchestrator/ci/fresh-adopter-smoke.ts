@@ -404,6 +404,26 @@ export function generatedOfflineInstallArguments(
   ];
 }
 
+export function generatedRepositoryEnvironment(
+  sourceStorePath: string,
+  baseEnvironment: NodeJS.ProcessEnv = process.env,
+): NodeJS.ProcessEnv {
+  const environment = { ...baseEnvironment };
+  for (const key of Object.keys(environment)) {
+    if (
+      key.toLowerCase() === "ci" ||
+      key.toLowerCase() === "npm_config_store_dir" ||
+      key.toLowerCase() === "pnpm_config_store_dir"
+    )
+      delete environment[key];
+  }
+  return {
+    ...environment,
+    CI: "true",
+    pnpm_config_store_dir: absolutePnpmStorePath(sourceStorePath),
+  };
+}
+
 function pnpmInvocation(): PnpmInvocation {
   const value = process.env["npm_execpath"];
   if (value !== undefined && isAbsolute(value) && existsSync(value))
@@ -1055,7 +1075,7 @@ export async function runFreshAdopterCiSmoke(
       "adopter package creator",
     );
 
-    const childEnvironment = { ...process.env, CI: "true" };
+    const childEnvironment = generatedRepositoryEnvironment(sourceStorePath);
     const installCommand = commands[1]!;
     captures.push(
       await runPnpm(

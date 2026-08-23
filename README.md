@@ -235,13 +235,19 @@ report and produces no PASS receipt.
    `24.18.0` and pnpm `11.15.1`, asserts those installed versions, and keeps
    three CI boundaries separate. The controller matrix runs the receipt-owning
    invariant, orchestrator, unit, typecheck, lint, and format commands on
-   `ubuntu-24.04` and `windows-2022`. A second matrix invokes the public
-   package creator, performs an offline frozen copy-mode install in the
-   generated repository, commissions exactly once, validates and commits only
-   the generated verification manifest with deterministic fixture identity,
-   then runs literal no-argument `pnpm verify` exactly once from that clean
-   three-commit bootstrap history. The coordinator copies the complete verifier
-   tree before deleting the temporary repository and reuses the packaged-proof
+   `ubuntu-24.04` and `windows-2022`; its outer job bound is 60 minutes on Linux
+   and 120 minutes on Windows so the unchanged full command sequence can
+   finish without weakening command or test limits. A second matrix invokes
+   the public package creator, performs an offline frozen copy-mode install in
+   the generated repository, commissions exactly once, validates and commits
+   only the generated verification manifest with deterministic fixture
+   identity, then runs literal no-argument `pnpm verify` exactly once from that
+   clean three-commit bootstrap history. Production-build evidence resolves the
+   populated pnpm store from the clean generated repository and pins that same
+   store on its disposable clone's offline install, including when Windows
+   checkout and temporary roots occupy different volumes. The coordinator
+   copies the complete verifier tree before deleting the temporary repository
+   and reuses the packaged-proof
    audit owner to check both candidate captures, every required stage receipt,
    manifest, and declared artifact, the four-test unit surface, and the browser
    screenshot and diagnostics. Its versioned ordered command ledger proves the
