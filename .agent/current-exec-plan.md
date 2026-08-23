@@ -1,6 +1,6 @@
 # Current Execution Plan
 
-**Status:** WP5 recommended Session 2 final-candidate freeze
+**Status:** WP5 recommended Session 2 replacement-candidate freeze
 **Updated:** 2026-08-22
 **Owner:** autonomous loop
 
@@ -92,21 +92,28 @@ or begin WP6 deduplication. The final hosted matrix belongs to Session 3.
        missing references, and non-allowlisted actions; update the autonomy
        log and this plan to the final freeze, run the focused receipt-owning
        workflow test, and commit narrowly.
-4. [ ] **In progress after the Increment 5 commit:** From the final committed candidate, run exactly one real Windows
+4. [x] Repair the documented pnpm separator contract exposed
+       by the first frozen-candidate journey: both public quickstart CLIs must
+       accept exactly one leading `--` while retaining all strict option,
+       duplication, and unknown-option failures. Add focused adopter and
+       commissioning parser tests, rerun the affected receipt-owning files,
+       record the failed candidate truthfully, and commit a narrow repair that
+       becomes the replacement final candidate.
+5. [ ] **In progress after the repair commit:** From the replacement final committed candidate, run exactly one real Windows
        generated-adopter create → offline frozen install → commission →
        deterministic manifest commit → literal no-argument bootstrap verify →
        shared independent audit journey. Retain the complete smoke output and
        inspect the browser screenshot/diagnostics. Run Linux parity only if an
        exact WSL/Linux browser boundary is already available; otherwise record
        the limitation for Session 3 rather than broadening setup.
-5. [ ] Run exactly once from six isolated no-local/no-hardlink clones of the
+6. [ ] Run exactly once from six isolated no-local/no-hardlink clones of the
        identical commit/tree: `pnpm test:invariants`,
        `pnpm test:orchestrator`, `pnpm test:unit`, `pnpm typecheck`,
        `pnpm lint`, and `pnpm format:check`. Keep the two overlapping test
        aggregates sequential and run at most two heavyweight commands at once.
        Independently validate command-owned receipts, artifacts, manifests,
        candidate bindings, counts/skips, toolchains, and clone cleanliness.
-6. [ ] Write only an ignored truthful Session 2 final audit, confirm the
+7. [ ] Write only an ignored truthful Session 2 final audit, confirm the
        tracked tree is clean under the protected-file exception, and hand off
        the exact candidate to Session 3 for the hosted matrix without pushing
        or making an autonomous-readiness claim.
@@ -128,6 +135,9 @@ or begin WP6 deduplication. The final hosted matrix belongs to Session 3.
 - Tests fail closed on command order/count drift, two-commit or dirty
   repositories, missing/tampered evidence, wrong candidate identity, absent
   screenshot, and any source no-argument verify invocation.
+- The exact documented `pnpm <script> -- --option` form works for creator and
+  commissioning; no separator, duplicated separators, later separators,
+  duplicate options, and unknown options retain their strict dispositions.
 - All nine workflow references equal the three official allowlisted full SHAs
   exactly three times each; old pins, mutable/short/mixed/missing/unknown
   references fail validation. Exact application runtime and all scheduling,
@@ -203,9 +213,22 @@ Never run source no-argument `pnpm verify` or `loop:template:prove`.
   workflow, and tests are the last intended tracked bytes. The Increment 5
   commit becomes the immutable candidate; all subsequent results must remain
   in ignored evidence and must not edit tracked records.
+- 2026-08-22: Candidate `d16bab91e8e1405c9b97aa572dc8fe9a168ea65d`
+  failed its only real journey before repository creation. Pnpm correctly
+  forwarded the documented separator, and `adopter-package-cli.ts` rejected it
+  as `Unknown adopter package option: --`. Retained nonqualifying logs are at
+  `artifacts/manual/wp5-session2-windows-adopter-final/`. The candidate is
+  invalidated; no broader command ran. WSL inspection found no Linux Node,
+  pnpm, or Chrome/Chromium boundary, so Linux parity remains Session 3 work.
+- 2026-08-22: The narrow separator repair preserves both strict CLIs while
+  accepting the documented single leading `--`. Its receipt-owning affected
+  run passed 10 suites / 28 tests with zero failures or skips at
+  `artifacts/manual/wp5-session2-separator-repair-focused-1/evidence/`;
+  targeted ESLint and Prettier passed. This repair commit is the replacement
+  final candidate; no tracked edit is permitted after it.
 
 ## Next Action
 
-Audit and commit Increment 5 narrowly. Record its exact commit/tree externally,
-then run one retained Windows adopter journey and the six broader commands from
-isolated exact clones without changing tracked bytes.
+Audit and commit the separator repair as the new freeze. Record its exact
+commit/tree externally, then rerun the real Windows journey once on that
+replacement identity before creating the six broader-check clones.

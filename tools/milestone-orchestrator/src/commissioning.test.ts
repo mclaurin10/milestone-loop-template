@@ -794,6 +794,9 @@ describe("commissioning CLI contract", () => {
     expect(
       parseCommissioningCliArguments(["--input", "commission.json"]),
     ).toEqual({ inputPath: "commission.json" });
+    expect(
+      parseCommissioningCliArguments(["--", "--input", "commission.json"]),
+    ).toEqual({ inputPath: "commission.json" });
     expect(() => parseCommissioningCliArguments([])).toThrow(
       /requires --input/,
     );
@@ -808,5 +811,13 @@ describe("commissioning CLI contract", () => {
     expect(() => parseCommissioningCliArguments(["--force"])).toThrow(
       /unknown commissioning option/i,
     );
+    expect(() =>
+      parseCommissioningCliArguments([
+        "--",
+        "--",
+        "--input",
+        "commission.json",
+      ]),
+    ).toThrow(/unknown commissioning option: --/i);
   });
 });

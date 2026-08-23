@@ -56,6 +56,18 @@ describe("adopter package definition", () => {
       definitionPath: "definition.json",
       outputPath: "fresh-repository",
     });
+    expect(
+      parseAdopterPackageCliArguments([
+        "--",
+        "--definition",
+        "definition.json",
+        "--output",
+        "fresh-repository",
+      ]),
+    ).toEqual({
+      definitionPath: "definition.json",
+      outputPath: "fresh-repository",
+    });
     expect(() =>
       parseAdopterPackageCliArguments(["--definition", "definition.json"]),
     ).toThrow(/requires --definition.*--output/);
@@ -69,6 +81,16 @@ describe("adopter package definition", () => {
         "repo",
       ]),
     ).toThrow(/only once/);
+    expect(() =>
+      parseAdopterPackageCliArguments([
+        "--",
+        "--",
+        "--definition",
+        "definition.json",
+        "--output",
+        "repo",
+      ]),
+    ).toThrow(/Unknown adopter package option: --/);
   });
 
   it("rejects extra keys, unsafe paths, source identities, and bad Git identity", () => {

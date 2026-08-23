@@ -11,15 +11,16 @@ export interface AdopterPackageCliArguments {
 export function parseAdopterPackageCliArguments(
   values: readonly string[],
 ): AdopterPackageCliArguments {
+  const normalizedValues = values[0] === "--" ? values.slice(1) : values;
   let definitionPath: string | undefined;
   let outputPath: string | undefined;
-  for (let index = 0; index < values.length; index += 1) {
-    const option = values[index];
+  for (let index = 0; index < normalizedValues.length; index += 1) {
+    const option = normalizedValues[index];
     if (option !== "--definition" && option !== "--output")
       throw new Error(
         `Unknown adopter package option: ${option ?? "(missing)"}.`,
       );
-    const value = values[index + 1];
+    const value = normalizedValues[index + 1];
     if (!value || value.startsWith("--"))
       throw new Error(`${option} requires one path.`);
     index += 1;

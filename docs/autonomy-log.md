@@ -3,6 +3,61 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-22 — WP5 Session 2 documented pnpm separator repair
+
+**Causal failure.** The first and only real journey on candidate
+`d16bab91e8e1405c9b97aa572dc8fe9a168ea65d` / tree
+`55dcc993ada05d17914313a50d0838326d9b0cec` failed before generated-repository
+creation. Pnpm correctly invoked the documented creator form as
+`tsx .../adopter-package-cli.ts "--" "--definition" ...`, but the CLI parser
+treated that leading script-argument separator as an unknown option. The same
+parser shape existed in commissioning, so merely changing the smoke's creator
+argv would have hidden the documented commission defect and would not execute
+the advertised quickstart. The failed candidate is non-passing; no broader
+command ran.
+
+Retained nonqualifying evidence is
+`artifacts/manual/wp5-session2-windows-adopter-final/logs/`. Its 688-byte
+creator stderr and 46-byte lifecycle stdout have SHA-256
+`dc856729ce4c01e2742eb345555c8bc94164bf3739f15bbade8ba8e1cf29ec2f` and
+`70691ee46df8bffd84dd117eb9297af7108f7fc0b6be5f63d6cb30aef0d605b5`.
+The coordinator removed its temporary root and preserved source identity; no
+smoke result, bootstrap receipt, or completion claim was emitted.
+
+**Correction.** `parseAdopterPackageCliArguments` and
+`parseCommissioningCliArguments` now strip exactly one leading `--` before
+their unchanged strict option loops. Invocation without a separator remains
+accepted for internal callers. A duplicate or later separator still reaches
+the existing unknown-option failure; missing values, duplicate options, and
+unknown flags retain their prior failures. Production package generation and
+commissioning logic are byte-identical. This is the smallest repair that makes
+the exact documented `pnpm <script> -- --option` forms executable rather than
+rewriting the smoke ledger or weakening arbitrary option handling.
+
+**Focused verification.** Under pinned Node `24.18.0` and pnpm `11.15.1`, one
+receipt-owning serial invocation covered the fresh-smoke plan, shared bootstrap
+audit, adopter package, and commissioning files. All 10 reported suites / 28
+tests passed with zero failures or skips. The 10,499-byte report, 819-byte PASS
+receipt, and 9,320-byte PASS manifest at
+`artifacts/manual/wp5-session2-separator-repair-focused-1/evidence/` have
+SHA-256
+`85eb1fda55296ac0121a2f87e19c485bdba0abad2ba5cca3218a02f9ef352a53`,
+`98fd9728bfc9287fddda881ce574e09662c6cc50c3910577413af0cf004e991a`,
+and `612e6ee1719e00ab1f9cffce7fe2e18e5fde955e8b5e1ed7db1a51ba79c24fa6`.
+Direct targeted ESLint and Prettier checks passed. Direct telemetry again
+degraded honestly to null at the source `.js` projection boundary; receipt and
+artifact evidence remain valid and independently inspectable.
+
+**Commit.** Assigned by the cohesive separator-repair commit containing this
+entry; no push. It supersedes the failed candidate without rewriting either of
+the two primary Session 2 increment commits.
+
+**Known final-session gates.** The replacement committed tree still requires
+one successful Windows adopter/browser journey and the six once-only broader
+checks. WSL inspection found no Linux Node, pnpm, or Chrome/Chromium boundary,
+so local Linux parity is unavailable and remains an explicit Session 3 hosted
+matrix obligation. No autonomous-readiness claim is made.
+
 ## 2026-08-22 — WP5 Session 2 Node 24 official action pins
 
 **Objective and provenance.** Replace all nine repeated Node 20-metadata

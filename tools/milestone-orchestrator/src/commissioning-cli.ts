@@ -14,16 +14,17 @@ export interface CommissioningCliArguments {
 export function parseCommissioningCliArguments(
   values: readonly string[],
 ): CommissioningCliArguments {
+  const normalizedValues = values[0] === "--" ? values.slice(1) : values;
   let inputPath: string | undefined;
-  for (let index = 0; index < values.length; index += 1) {
-    const option = values[index];
+  for (let index = 0; index < normalizedValues.length; index += 1) {
+    const option = normalizedValues[index];
     if (option !== "--input")
       throw new Error(
         `Unknown commissioning option: ${option ?? "(missing)"}.`,
       );
     if (inputPath)
       throw new Error("Commissioning accepts exactly one --input option.");
-    const value = values[index + 1];
+    const value = normalizedValues[index + 1];
     if (!value || value.startsWith("--"))
       throw new Error("--input requires one file path.");
     inputPath = value;
