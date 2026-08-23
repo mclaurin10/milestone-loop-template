@@ -3,6 +3,83 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-22 — Current Node 24 official actions with immutable pins (WP5 Session 2)
+
+**Decision.** The Exact runtime workflow allowlists and uses these official
+stable releases, each exactly once per controller, fresh-adopter, and
+trusted-container job:
+
+- [`actions/checkout` v7.0.1](https://github.com/actions/checkout/releases/tag/v7.0.1)
+  at commit `3d3c42e5aac5ba805825da76410c181273ba90b1`; the exact
+  [`action.yml`](https://github.com/actions/checkout/blob/3d3c42e5aac5ba805825da76410c181273ba90b1/action.yml)
+  declares `runs.using: node24`.
+- [`actions/setup-node` v7.0.0](https://github.com/actions/setup-node/releases/tag/v7.0.0)
+  at commit `820762786026740c76f36085b0efc47a31fe5020`; the exact
+  [`action.yml`](https://github.com/actions/setup-node/blob/820762786026740c76f36085b0efc47a31fe5020/action.yml)
+  declares `runs.using: node24`.
+- [`actions/upload-artifact` v7.0.1](https://github.com/actions/upload-artifact/releases/tag/v7.0.1)
+  at commit `043fb46d1a93c77aae656e7c1c64a875d1fc6a0a`; the exact
+  [`action.yml`](https://github.com/actions/upload-artifact/blob/043fb46d1a93c77aae656e7c1c64a875d1fc6a0a/action.yml)
+  declares `runs.using: node24`.
+
+The releases were selected from each official repository's `releases/latest`
+record on 2026-08-22. Resolution then read the official `git/ref/tags/<tag>`
+object and would follow a returned annotated `tag` object through
+`git/tags/<sha>.object` until reaching the commit. All three selected refs
+currently returned `type: commit`, so the listed 40-character values are their
+direct commit targets rather than tag-object IDs. Runtime proof was read from
+`action.yml` at those commits, not inferred from the release number or moving
+major tag. The executable workflow contract owns this exact release/comment/
+SHA allowlist, requires three global and one per-job occurrences, and rejects
+every other action reference even if it is a full SHA.
+
+**Migration facts and disposition.** Checkout first moved to Node 24 in the
+official [v5.0.0 notes](https://github.com/actions/checkout/releases/tag/v5.0.0),
+which require Actions Runner `v2.327.1` or newer. Checkout
+[v6.0.0](https://github.com/actions/checkout/releases/tag/v6.0.0) moved
+persisted credentials to a separate runner-temp file; this workflow retains
+`persist-credentials: false`, so no credential persistence is adopted.
+Checkout [v7.0.0](https://github.com/actions/checkout/releases/tag/v7.0.0)
+migrated to ESM and blocks unsafe fork checkout for `pull_request_target` and
+`workflow_run`; this workflow uses `pull_request`, `push`, and manual dispatch,
+so its scheduling meaning is unchanged.
+
+Setup-node's official
+[v5.0.0 notes](https://github.com/actions/setup-node/releases/tag/v5.0.0)
+likewise establish Node 24 and Runner `v2.327.1`, while adding automatic cache
+detection. The [v6.0.0 notes](https://github.com/actions/setup-node/releases/tag/v6.0.0)
+limit automatic caching to npm. This workflow supplies no cache input and its
+package manager is pnpm, so no dependency cache or trust-boundary change is
+introduced. v7 migrates the action to ESM, adds cache-key outputs, removes a
+dummy `NODE_AUTH_TOKEN`, and updates dependencies; none alters the exact
+`node-version: 24.18.0` / `check-latest: false` inputs used here.
+
+Upload-artifact's official
+[v6.0.0 notes](https://github.com/actions/upload-artifact/releases/tag/v6.0.0)
+are the first to state that the action runs on Node 24 by default and requires
+Runner `v2.327.1`; v5's preliminary support still defaulted to Node 20. The
+[v7.0.0 notes](https://github.com/actions/upload-artifact/releases/tag/v7.0.0)
+add optional direct single-file upload via `archive: false` and migrate to ESM.
+This workflow retains default archive behavior for directory evidence,
+`if: always()`, `if-no-files-found: error`, unique platform roots, and 14-day
+retention, so the optional direct-upload behavior is not selected.
+
+**Why.** The previous checkout v4.2.2, setup-node v4.4.0, and upload-artifact
+v4.6.2 metadata declared Node 20; hosted logs warned that GitHub was forcing
+those actions onto Node 24. Current official Node 24 metadata removes that
+runtime ambiguity while immutable commit pins preserve the existing
+supply-chain policy. Alternatives rejected: keeping Node 20 metadata and
+depending on forced-runtime compatibility; pinning mutable major or release
+tags; using short SHAs; selecting versions from third-party summaries;
+assuming a major version implies Node 24; mixing releases across jobs; adding
+an action outside the exact three-action inventory; or changing application
+Node/pnpm pins, workflow permissions, checkout history/credentials, scheduling,
+or evidence upload semantics as part of this migration.
+
+**Affected files.** Exact-runtime workflow; executable workflow allowlist and
+mutation tests; Session 2 execution plan, autonomy log, and this decision
+record. Hosted execution of the frozen candidate remains Session 3 work.
+
 ## 2026-08-22 — Producer-owned canonical OCI export staging root (WP5q)
 
 **Decision.** The trusted-container executor canonicalizes its own freshly

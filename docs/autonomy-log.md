@@ -3,6 +3,63 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-22 — WP5 Session 2 Node 24 official action pins
+
+**Objective and provenance.** Replace all nine repeated Node 20-metadata
+action pins without changing application Node `24.18.0`, pnpm `11.15.1`,
+workflow trust, scheduling, command, or evidence boundaries. Official GitHub
+`releases/latest`, Git tag objects, exact commit metadata, and release migration
+notes were inspected for `actions/checkout`, `actions/setup-node`, and
+`actions/upload-artifact`. Each selected tag currently resolves directly to a
+commit rather than an annotated tag object; the resolver procedure explicitly
+dereferences annotated tags when present. Exact `action.yml` at every selected
+commit declares `runs.using: node24`.
+
+**Outcome.** All three jobs now use checkout `v7.0.1` at
+`3d3c42e5aac5ba805825da76410c181273ba90b1`, setup-node `v7.0.0` at
+`820762786026740c76f36085b0efc47a31fe5020`, and upload-artifact `v7.0.1`
+at `043fb46d1a93c77aae656e7c1c64a875d1fc6a0a`. The executable contract has
+one central release/repository/SHA allowlist, requires each exact reference and
+comment three times globally and once per job, requires nine full-SHA action
+references total, and rejects the three old SHAs, mutable tags, short SHAs,
+mixed full-SHA versions, missing occurrences, wrong comments, and any action
+outside the allowlist. It also now explicitly counts three
+`persist-credentials: false` settings, unconditional uploads, and
+`if-no-files-found: error` settings while preserving the existing history,
+runner, toolchain, command, root, independence, and real-Docker checks.
+
+The durable migration record in `docs/decision-log.md` links only official
+GitHub releases and exact repository metadata. It records the Node 24 minimum
+Runner `v2.327.1`, checkout credential/fork-trigger changes, setup-node cache
+and ESM changes, and upload-artifact's optional direct-upload behavior. None is
+selected in a way that changes this workflow: credentials remain disabled,
+the affected checkout event types are absent, no setup-node cache input is
+used, and evidence directories retain default archived upload.
+
+**Focused verification.** Under pinned Node `24.18.0` and pnpm `11.15.1`, one
+receipt-owning serial invocation passed the workflow contract's 2 reported
+suites / 5 tests with zero failures or skips. The 2,454-byte report, 640-byte
+PASS receipt, and 9,137-byte PASS manifest at
+`artifacts/manual/wp5-session2-step5-focused-1/evidence/` have SHA-256
+`c5a90eeefa4889bf80c9c97797156aedf861229f676f010d05fe773ba13f3dee`,
+`18aef769fcd5037ec59211679ecbc7c4ddef38a03c025b40981bae15411095bb`,
+and `fd5e0d74e99596cab8d2aa3a521190d10fe8e994b0d7ae3e367a23bbddecfa62`.
+Direct targeted ESLint and Prettier checks passed. As in Increment 4, direct
+telemetry initialization was honestly non-semantic/unavailable at the source
+`.js` projection boundary and the command-owned manifest records null
+telemetry; receipt and artifact validation are unaffected.
+
+**Commit.** Assigned by the cohesive action-migration commit containing this
+entry; no push.
+
+**Known final-session gates.** Step 4 is committed at
+`4cab466851160c0adba155032724c28f08ba99c3` / tree
+`e830ef8331191f26bc7a2d4597fbd743f45dcccd`. After this action increment is
+committed, that exact combined tree becomes the Session 2 candidate for one
+real Windows adopter journey and the six once-only broader checks. No hosted
+workflow is triggered here; Session 3 owns final Linux/Windows/Docker hosted
+validation. No autonomous-readiness claim is made.
+
 ## 2026-08-22 — WP5 Session 2 full-quickstart adopter smoke
 
 **Objective and baseline.** Close WP5's documented-quickstart coverage gap

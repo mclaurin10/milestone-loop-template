@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
+  EXACT_RUNTIME_ACTION_PINS,
   EXACT_RUNTIME_WORKFLOW_PATH,
   validateExactRuntimeWorkflow,
 } from "../ci/exact-runtime-workflow-contract.js";
@@ -20,6 +21,60 @@ describe("exact-runtime CI workflow contract", () => {
     await expect(
       validateExactRuntimeWorkflow(workflow),
     ).resolves.toBeUndefined();
+    expect(EXACT_RUNTIME_ACTION_PINS).toEqual([
+      {
+        name: "checkout",
+        repository: "actions/checkout",
+        release: "v7.0.1",
+        sha: "3d3c42e5aac5ba805825da76410c181273ba90b1",
+      },
+      {
+        name: "setup-node",
+        repository: "actions/setup-node",
+        release: "v7.0.0",
+        sha: "820762786026740c76f36085b0efc47a31fe5020",
+      },
+      {
+        name: "upload-artifact",
+        repository: "actions/upload-artifact",
+        release: "v7.0.1",
+        sha: "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+      },
+    ]);
+  });
+
+  it("rejects legacy, mutable, short, mixed, missing, or unknown action references", async () => {
+    const workflow = await readFile(workflowPath, "utf8");
+    const checkout =
+      "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1";
+    const setupNode =
+      "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020";
+    const uploadArtifact =
+      "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a";
+    const mutations = [
+      workflow.replace(
+        checkout,
+        "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+      ),
+      workflow.replace(
+        setupNode,
+        "actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+      ),
+      workflow.replace(
+        uploadArtifact,
+        "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+      ),
+      workflow.replace(checkout, "actions/checkout@v7.0.1"),
+      workflow.replace(checkout, "actions/checkout@3d3c42e"),
+      workflow.replace(checkout, `actions/checkout@${"f".repeat(40)}`),
+      workflow.replace(`        uses: ${checkout} # v7.0.1\n`, ""),
+      workflow.replace(checkout, `actions/cache@${"f".repeat(40)}`),
+      workflow.replace(`${checkout} # v7.0.1`, `${checkout} # v7`),
+    ];
+    for (const mutation of mutations) {
+      expect(mutation).not.toBe(workflow);
+      await expect(validateExactRuntimeWorkflow(mutation)).rejects.toThrow();
+    }
   });
 
   it("rejects weakened runtime, platform, command, evidence, and OCI boundaries", async () => {

@@ -1,6 +1,6 @@
 # Current Execution Plan
 
-**Status:** WP5 recommended Session 2 implementation
+**Status:** WP5 recommended Session 2 final-candidate freeze
 **Updated:** 2026-08-22
 **Owner:** autonomous loop
 
@@ -85,14 +85,14 @@ or begin WP6 deduplication. The final hosted matrix belongs to Session 3.
        audited aggregate requires their receipts and artifacts. Update
        accurate README/contract prose and the autonomy log, run the focused
        receipt-owning test, and commit this increment narrowly.
-3. [ ] **In progress:** Increment 5 — record official release/tag/SHA/runtime/migration
+3. [x] Increment 5 — record official release/tag/SHA/runtime/migration
        provenance in the decision log; replace all nine workflow references
        and comments; centralize the exact allowlist/count contract; add
        mutations for old pins, mutable tags, short SHAs, mixed job versions,
        missing references, and non-allowlisted actions; update the autonomy
        log and this plan to the final freeze, run the focused receipt-owning
        workflow test, and commit narrowly.
-4. [ ] From the final committed candidate, run exactly one real Windows
+4. [ ] **In progress after the Increment 5 commit:** From the final committed candidate, run exactly one real Windows
        generated-adopter create → offline frozen install → commission →
        deterministic manifest commit → literal no-argument bootstrap verify →
        shared independent audit journey. Retain the complete smoke output and
@@ -190,8 +190,22 @@ Never run source no-argument `pnpm verify` or `loop:template:prove`.
   `artifacts/manual/wp5-session2-step4-focused-1/evidence/`; direct targeted
   ESLint and Prettier checks passed. The real browser journey remains reserved
   for the final committed Session 2 candidate.
+- 2026-08-22: Increment 4 is commit
+  `4cab466851160c0adba155032724c28f08ba99c3`, tree
+  `e830ef8331191f26bc7a2d4597fbd743f45dcccd`. Increment 5 selects official
+  checkout `v7.0.1` / `3d3c42e5`, setup-node `v7.0.0` / `82076278`, and
+  upload-artifact `v7.0.1` / `043fb46d`; exact metadata says `node24`.
+  Its receipt-owning workflow-contract run passed 2 suites / 5 tests with zero
+  failures or skips at
+  `artifacts/manual/wp5-session2-step5-focused-1/evidence/`; direct targeted
+  ESLint and Prettier checks passed.
+- 2026-08-22: This plan, both autonomy entries, the action provenance decision,
+  workflow, and tests are the last intended tracked bytes. The Increment 5
+  commit becomes the immutable candidate; all subsequent results must remain
+  in ignored evidence and must not edit tracked records.
 
 ## Next Action
 
-Audit and commit Increment 4 narrowly, then migrate the nine action references
-and their executable allowlist/mutation contract as Increment 5.
+Audit and commit Increment 5 narrowly. Record its exact commit/tree externally,
+then run one retained Windows adopter journey and the six broader commands from
+isolated exact clones without changing tracked bytes.

@@ -3,6 +3,33 @@ import { format } from "prettier";
 export const EXACT_RUNTIME_WORKFLOW_PATH =
   ".github/workflows/exact-runtime-ci.yml" as const;
 
+export const EXACT_RUNTIME_ACTION_PINS = [
+  {
+    name: "checkout",
+    repository: "actions/checkout",
+    release: "v7.0.1",
+    sha: "3d3c42e5aac5ba805825da76410c181273ba90b1",
+  },
+  {
+    name: "setup-node",
+    repository: "actions/setup-node",
+    release: "v7.0.0",
+    sha: "820762786026740c76f36085b0efc47a31fe5020",
+  },
+  {
+    name: "upload-artifact",
+    repository: "actions/upload-artifact",
+    release: "v7.0.1",
+    sha: "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+  },
+] as const;
+
+const LEGACY_NODE20_ACTION_SHAS = [
+  "11bd71901bbe5b1630ceea73d27597364c9af683",
+  "49933ea5288caeca8642d1e84afbd3f7d6820020",
+  "ea165f8d65b6e75b540449e92b4886f43607fa02",
+] as const;
+
 const OCI_STORE_HYDRATION_SCRIPT = [
   "run: |",
   '          fixture_fetch_dir="$(mktemp -d)"',
@@ -45,10 +72,29 @@ function includes(source: string, needle: string, label: string): void {
 
 function assertCompleteHistoryCheckout(source: string, jobId: string): void {
   exactCount(source, "          fetch-depth: 0", 1);
+  exactCount(source, "          persist-credentials: false", 1);
   assertion(
     !source.includes("          fetch-depth: 1"),
     `${jobId} must not use a depth-one checkout because commissioned authority is Git-anchored.`,
   );
+}
+
+function actionReference(
+  pin: (typeof EXACT_RUNTIME_ACTION_PINS)[number],
+): string {
+  return `${pin.repository}@${pin.sha}`;
+}
+
+function assertJobActionInventory(source: string, jobId: string): void {
+  const references = [...source.matchAll(/^\s*uses:\s+(\S+)/gmu)].map(
+    (match) => match[1] ?? "",
+  );
+  assertion(
+    references.length === EXACT_RUNTIME_ACTION_PINS.length,
+    `${jobId} must contain exactly one checkout, setup-node, and upload-artifact action.`,
+  );
+  for (const pin of EXACT_RUNTIME_ACTION_PINS)
+    exactCount(source, `uses: ${actionReference(pin)}`, 1);
 }
 
 function assertIndependentJob(source: string, jobId: string): void {
@@ -93,21 +139,18 @@ export async function validateExactRuntimeWorkflow(
     "node tools/milestone-orchestrator/ci/assert-exact-toolchain.mjs",
     3,
   );
-  exactCount(
-    source,
-    "uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-    3,
-  );
-  exactCount(
-    source,
-    "uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
-    3,
-  );
-  exactCount(
-    source,
-    "uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
-    3,
-  );
+  for (const pin of EXACT_RUNTIME_ACTION_PINS) {
+    exactCount(source, `uses: ${actionReference(pin)} # ${pin.release}`, 3);
+    assertion(
+      !source.includes(`${pin.repository}@${pin.release}`),
+      `${pin.repository} may not use its mutable release tag.`,
+    );
+  }
+  for (const sha of LEGACY_NODE20_ACTION_SHAS)
+    assertion(
+      !source.includes(sha),
+      `Workflow retains legacy Node 20 action SHA ${sha}.`,
+    );
   const actionReferences = [...source.matchAll(/^\s*uses:\s+(\S+)/gmu)].map(
     (match) => match[1] ?? "",
   );
@@ -119,9 +162,19 @@ export async function validateExactRuntimeWorkflow(
     actionReferences.every((reference) => /@[0-9a-f]{40}$/u.test(reference)),
     "Every third-party action must be pinned to a full commit SHA.",
   );
+  const allowedReferences = new Set<string>(
+    EXACT_RUNTIME_ACTION_PINS.map(actionReference),
+  );
+  assertion(
+    actionReferences.every((reference) => allowedReferences.has(reference)),
+    "Workflow contains a non-allowlisted action reference.",
+  );
+  exactCount(source, "        if: always()", 3);
+  exactCount(source, "          if-no-files-found: error", 3);
 
   const controller = jobBlock(source, "controller");
   assertCompleteHistoryCheckout(controller, "controller");
+  assertJobActionInventory(controller, "controller");
   includes(controller, "runner: ubuntu-24.04", "Linux controller runner");
   includes(controller, "runner: windows-2022", "Windows controller runner");
   for (const command of [
@@ -155,6 +208,7 @@ export async function validateExactRuntimeWorkflow(
 
   const freshAdopter = jobBlock(source, "fresh-adopter-smoke");
   assertCompleteHistoryCheckout(freshAdopter, "fresh-adopter-smoke");
+  assertJobActionInventory(freshAdopter, "fresh-adopter-smoke");
   assertIndependentJob(freshAdopter, "fresh-adopter-smoke");
   includes(freshAdopter, "runner: ubuntu-24.04", "Linux adopter runner");
   includes(freshAdopter, "runner: windows-2022", "Windows adopter runner");
@@ -176,6 +230,7 @@ export async function validateExactRuntimeWorkflow(
 
   const trustedContainer = jobBlock(source, "trusted-container");
   assertCompleteHistoryCheckout(trustedContainer, "trusted-container");
+  assertJobActionInventory(trustedContainer, "trusted-container");
   assertIndependentJob(trustedContainer, "trusted-container");
   includes(
     trustedContainer,
