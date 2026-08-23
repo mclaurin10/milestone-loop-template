@@ -3,6 +3,91 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-22 — WP5af canonical verification-clone fixture roots
+
+**Objective and cause.** From exact clean WP5ae, reproduce the two remaining
+historical verification-clone failures while preserving production clone/Git
+and strict path behavior. Unchanged source reproduced one pass/two failures:
+the first two cases passed shared `repository()`'s raw
+`milestone-loop-clone-source-*` spelling to strict candidate inspection; the
+derived-junction case correctly stopped earlier at the linked-root guard and
+passed.
+
+**Baseline and source-root proof.** Exact no-local/no-hardlink clone
+`C:/wp5af1b/repo` at WP5ae
+`37f5be3a4d97c77878dbcae03b3739cbb74b61fd` / tree
+`cb099e63a733e5ccff98a3f0937e232bb00c6852`, pinned Node `24.18.0`, pnpm
+`11.15.1`, no alternates, isolated store, and distinct
+`WP5AFB~1`/expanded TEMP reproduced 1/3. Its 2,998-byte report, 8,615-byte
+ERROR/no-receipt manifest, and 1,153-byte telemetry manifest have SHA-256
+`199cafc444d3287e59afc58e389502bdd82c5852e262e7599f69ec31bfab4bf1`,
+`b30c8978348d5a2939acbcfb94d94e64a87df2f85ed93c010c35205749309150`,
+and `7ea9ea7979308803e5d7215c92c754dc3e0ff13bd3de52c7b92ee1cf51e81c1d`.
+Assertion-only tree `3d2c8e1c76d132710aaf207a78ede21a7666aa0b` imported promise
+`realpath` and asserted `expect(await realpath(root)).toBe(root)` immediately
+after shared creation. All three cases failed there before registration or Git
+setup; the third is explicitly proof-only localization because its baseline
+production input is the derived junction. Its 3,081-byte report, 8,626-byte
+ERROR manifest, and 1,159-byte telemetry manifest have SHA-256
+`30e076b314f484c74e3be29857e573a7c1b2a72571c6298620af85b85e835696`,
+`83245135417ea6e4acfa7c8c80f0851ba380a6e7844e463ebba6ad3d14970168`,
+and `f7d9cdafb336f95d86e082c6cc941a9500500af6f9db4b3c7ad98d81536dbccc`.
+Initial red roots are
+`artifacts/manual/wp5af-verification-clone-{red,owner-red}/`.
+
+**Downstream proof and disposition.** Canonical source-root tree
+`5357fd6b9283465f113d6557fa05f3838679d771` reached 2/3. The cloning case
+then rejected the omitted option's pre-existing default `tmpdir()` spelling as
+an unstable `Verification temporary parent`; dirty/mismatch and junction
+controls passed. Its 2,202-byte report, 8,618-byte ERROR manifest, and
+1,155-byte telemetry manifest have SHA-256
+`bb882d3118125953bfcbc89d0408df98f159f0b79fd468bf3af6a9ff76831223`,
+`3f8a2d16b9e45a24aa8c02e915cea695b18ca7fcdc8bd7d1452f71bcefafa3b9`,
+and `55fbd9ed32515cda2585cc59a5be506d0a3c2123d97b154ea5efb0736679ffaa`.
+Production does not create that parent, so its strict guard and the
+caller/environment path remain unchanged. Instead, assertion-only tree
+`58c8a713fbe5d8b641c5af9975e505f7b3db810c` supplied an explicit raw
+fixture-owned `milestone-loop-clone-parent-*` to the first case and asserted
+its equality before registration or the production call. Exactly that case
+failed; both controls passed. Its 2,027-byte report, 8,628-byte ERROR manifest,
+and 1,160-byte telemetry manifest have SHA-256
+`e1ab5b4f0ebd66f6a11d586cfd71556a217e81a3a2443a8e168b87d5186b545c`,
+`8304c8902f1541b47534212a49c611a25cd5aa0b0777974fab931637baec7653`,
+and `4465020f4f93e45cf68cbc3beae60ddf86ab6accf028ca3d07780d7495454b77`.
+These roots are
+`artifacts/manual/wp5af-verification-clone-{temporary-parent-red,temporary-parent-owner-red}/`.
+
+**Correction and verification.** Shared `repository()` now canonicalizes only
+its just-created source root and retains its assertion. The first cloning case
+creates, canonicalizes, asserts, registers, and explicitly passes its own fresh
+temporary parent. Production `verification-clone.ts`, default/caller paths,
+Git checks, cloning, cleanup, and link guards are byte-identical. Corrected
+tree `15355fb65128893074d86ed489a8add59a9e69f3` passed Windows 3/3,
+zero skips. Its report/receipt/manifest are 1,647/603/8,865 bytes with SHA-256
+`ab8371d0f502fc62cf6badeebed09faac16a69f8a478e156a8d22886e311d9d0`,
+`bb23ce4ed10fe4c5e65be2d9a333e48727e7859b05bb0e7f233e438d6cd27800`,
+and `0966f8794dc3dfc571bd584df4036dc36f3fd719ac7e02db320895b343d9dd11`.
+The identical full file passed WSL2 ext4 3/3; its report/receipt/manifest are
+1,661/603/8,825 bytes with SHA-256
+`73f570df5b2e1321d30ff3709f0b102190f19bf6f5e7627e3292bd97a890b332`,
+`d6b4caee4eb3ce6cbb11b2550e7c8c48221d4aa50ac468c88f630d34f3b6a22e`,
+and `e1d14e1f78834a577605d9a0cf1a212c9dc2a5611aa20bcf1cccb1d0f50655ad`.
+Green roots are
+`artifacts/manual/wp5af-verification-clone-{windows,linux}-green/`; bindings
+and source blobs match. No decision record is needed.
+
+The retained hosted-Windows focused inventory is now exhausted. The next step
+is to commit this owner, freeze all tracked Session 1 records, and run the six
+required broader commands exactly once from isolated identical Windows clones.
+Focused Linux ext4 parity exists for every changed owner.
+
+**Commit.** Assigned by the cohesive WP5af commit containing this entry; local
+and unpushed.
+
+**Known gaps.** Frozen broader checks, POSIX `setsid`, CAL-1, hidden
+validation, product breadth, readiness, and human verification remain open.
+No completion or readiness claim is made.
+
 ## 2026-08-22 — WP5ae canonical container-artifact fixture roots
 
 **Objective and cause.** From exact clean WP5ad, reproduce the four historical

@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -28,7 +28,10 @@ function git(root: string, args: readonly string[]): string {
 }
 
 async function repository() {
-  const root = await mkdtemp(join(tmpdir(), "milestone-loop-clone-source-"));
+  const root = await realpath(
+    await mkdtemp(join(tmpdir(), "milestone-loop-clone-source-")),
+  );
+  expect(await realpath(root)).toBe(root);
   roots.push(root);
   git(root, ["init", "--quiet", "--initial-branch=main"]);
   git(root, ["config", "user.name", "Verification Fixture"]);
@@ -42,10 +45,16 @@ async function repository() {
 describe("disposable verification clone", () => {
   it("creates an origin-free, no-alternates exact clone and cleans it idempotently", async () => {
     const source = await repository();
+    const temporaryParent = await realpath(
+      await mkdtemp(join(tmpdir(), "milestone-loop-clone-parent-")),
+    );
+    expect(await realpath(temporaryParent)).toBe(temporaryParent);
+    roots.push(temporaryParent);
     const commit = git(source, ["rev-parse", "HEAD"]);
     const clone = await createDisposableVerificationClone({
       sourceRepository: source,
       expectedCommit: commit,
+      temporaryParent,
       timeoutMs: 5_000,
     });
     expect(clone.sourceCommit).toBe(commit);
