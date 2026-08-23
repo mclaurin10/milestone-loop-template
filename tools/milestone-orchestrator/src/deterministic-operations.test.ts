@@ -1,6 +1,13 @@
 import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  realpath,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
@@ -12,7 +19,10 @@ import { StateStore } from "./state-store.js";
 import { validConfig, validReconciliationRecord } from "../test/fixtures.js";
 
 async function deterministicFixture(): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), "milestone-loop-deterministic-"));
+  const root = await realpath(
+    await mkdtemp(join(tmpdir(), "milestone-loop-deterministic-")),
+  );
+  expect(await realpath(root)).toBe(root);
   directories.push(root);
   const config = validConfig();
   for (const file of config.protectedPaths) {

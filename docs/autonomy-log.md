@@ -3,6 +3,74 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-22 — WP5ad canonical deterministic-operations fixture root
+
+**Objective and cause.** From exact clean WP5ac, reproduce both historical
+deterministic controller-operation failures, prove `deterministicFixture()`
+before changing it, and preserve status/dry-run inspection, lease exclusion,
+Git setup, configuration, state, and reconciliation semantics. Both cases were
+0/2 because the raw `milestone-loop-deterministic-*` root retained its NTFS
+8.3 spelling while strict orchestrator Git-root inspection resolved the
+expanded identity and rejected the mismatch as an unsafe Git root.
+
+**Evidence.** Exact no-local/no-hardlink clone `C:/wp5ad1b/repo` at WP5ac
+`1836a5da5a3e0c287aa5b874bf4fa2c6fd299013` / tree
+`283c6f1155841cd71df3797eb3fb79bb58a0005a`, pinned Node `24.18.0`, pnpm
+`11.15.1`, no alternates, isolated store, and distinct
+`WP5ADB~1`/expanded TEMP reproduced 0/2. Its 2,781-byte report, 9,030-byte
+ERROR/no-receipt manifest, and 1,157-byte telemetry manifest have SHA-256
+`2e78078b357f2a0cb9c9312523f7e18759f50175709e9bde632e15fd9ad4562f`,
+`3e52627db6557139afac4a58f02227d2988758d9f03e2ecdeeda10f7cecf2765`,
+and `b8f6ee2a43a343971fe9c33f45eb61f5b97909b8029e095e2fcf060973ca0e3f`.
+Assertion-only tree `dd32c85d060fee56c07f3cccde69e70ae53e0707` imported promise
+`realpath` and asserted `expect(await realpath(root)).toBe(root)` immediately
+after creation. Both cases failed directly there before root registration,
+protected/config file creation, Git initialization, or orchestrator open. Its
+2,334-byte report, 9,022-byte ERROR manifest, and 1,154-byte telemetry
+manifest have SHA-256
+`2514398330fb0f4035bdec19bf285a757c843a288e83abd08000fbd80370ebb3`,
+`5e1a40a73d5dd0194e4f9fd83a899f07ff10e9283a2f66f93adffac61777f9bb`,
+and `3513d07fa755ce43e7debae80e39a0f9488c28f0610df19c7800cae5c44ce73b`.
+Red roots are
+`artifacts/manual/wp5ad-deterministic-operations-{red,owner-red}/`.
+
+**Correction and verification.** Only `deterministicFixture()`'s fresh root
+now uses `realpath(await mkdtemp(...))`; the assertion remains. Production
+orchestrator/Git/lease/state/reconciliation code and caller paths are
+byte-identical. Corrected tree
+`7e75d91da01463701f7a7f5bd5025e0edc544581` passed Windows 2/2, zero
+skips. Its report/receipt/manifest are 1,331/609/8,861 bytes with SHA-256
+`4f0c982c0272683ebf91f8d3fa5864395ec26a9179341acb34f710a0964dbf55`,
+`abe4e112ba74c13a09cc1e9b1c1654f889850cafc3a3e14da4f3573fa2248bfa`,
+and `bee4de455f9fa74fe5f49495fdf1ab4cb13eb415d4dd63beeda1ba8d3c26eccf`.
+The identical full file passed WSL2 ext4 2/2; its report/receipt/manifest are
+1,353/609/8,821 bytes with SHA-256
+`f4c52e9170c11de1f98bc2c6c7dca70b375ea2d7fb13ad1fd316787769543ead`,
+`32e1d56c98e9d4ea2f42b54e368f273f49d454952c6d399a3a652afd04cf09b4`,
+and `b8b97bbec5e4553c6cec7dd32d124836052f23371f597d9a1fcc07da94972fa4`.
+Green roots are
+`artifacts/manual/wp5ad-deterministic-operations-{windows,linux}-green/`;
+bindings and source blobs match. The Linux setup had three nonqualifying
+wrapper exits before the test: one quoting loss created no clone, one pnpm
+install stopped for missing `CI=true`, and one post-install version probe
+received a carriage-return option. The exact clone remained clean, the CI
+install completed, and none of those setup attempts created command evidence.
+No decision record is needed.
+
+Next is historical `container-artifacts.test.ts` at `1786995304153`: one pass
+and four failures. The first four cases share raw `root(prefix)` fresh
+directories that cross strict artifact path checks; the fifth combined-limit
+case creates no filesystem root and passed. It remains open for exact current
+reproduction and direct proof.
+
+**Commit.** Assigned by the cohesive WP5ad commit containing this entry; local
+and unpushed.
+
+**Known gaps.** Remaining artifact/verification-clone files, the Windows
+aggregate, final broader frozen-candidate checks, POSIX `setsid`, CAL-1,
+hidden validation, product breadth, readiness, and human verification remain
+open. No completion claim is made.
+
 ## 2026-08-22 — WP5ac canonical retention-apply recovery fixture directory
 
 **Objective and cause.** From exact clean WP5ab, reproduce both historical
