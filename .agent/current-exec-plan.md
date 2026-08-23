@@ -1,6 +1,6 @@
 # Current Execution Plan
 
-**Status:** WP5 recommended Session 3 hosted Windows unit-fixture isolation repair in progress
+**Status:** WP5 recommended Session 3 hosted Linux fixture-cleanup repair pre-freeze
 **Updated:** 2026-08-23
 **Owner:** autonomous loop
 
@@ -8,7 +8,8 @@
 
 Close WP5 hosted CI/quickstart validation by causally repairing each Windows
 fresh-adopter failures exposed by Exact runtime CI runs `32638898310` and
-`32651184672`, plus the unit-fixture defect exposed by run `32660428700`,
+`32651184672`, the unit-fixture defect exposed by run `32660428700`, and the
+Linux temporary-repository cleanup race exposed by run `32673246286`,
 freezing and pushing evidence-backed replacement candidates,
 obtaining one fully green five-job Exact runtime CI run on one exact commit,
 and independently auditing every uploaded artifact.
@@ -111,6 +112,15 @@ strict path/receipt/evidence checks, or claim autonomous readiness.
   stores. The production guard is therefore effective; the deterministic defect
   is that legacy unit fixtures have no fixture-owned store and accidentally pass
   only on machines whose ambient default store already exists.
+- Fixture-isolation commit `97ee125b4ac2ab3f6823862fb9275b0e3297a153`
+  (tree `9c60d3150dccfc88f4cc947977d5d9ed1b11bb24`) passes the exact
+  missing-store owner, affected statics, timing-focused recovery owners, and a
+  real cross-volume Windows adopter journey. Its sole push run `32673246286`
+  proves both hosted adopter jobs and real Docker green. Linux invariants and
+  all controller tests pass, then unit reports one failure in unchanged
+  `adopter-package.test.ts`: after the test assertions finish, recursive fixture
+  cleanup races inside `.git/objects/pack` and raises transient `ENOTEMPTY`.
+  The unit report retains 613 passes, one failure, and one declared POSIX skip.
 
 ## Steps
 
@@ -168,12 +178,23 @@ strict path/receipt/evidence checks, or claim autonomous readiness.
         canonical `pnpm_config_store_dir` to direct and spawned fixture
         executions, remove conflicting case variants, restore process state,
         and keep the production existing-store guard unchanged.
-12. [ ] Run exact focused and broad unit coverage plus affected statics, freeze
+12. [x] Run exact focused and broad unit coverage plus affected statics, freeze
         and commit the cohesive fixture-isolation repair, then validate the
         exact clean candidate with one real cross-volume Windows adopter
         journey and committed-byte checks. Push normally once and identify only
         the push-triggered run.
-13. [ ] Monitor causal candidates until one five-job run is terminal green. On
+13. [x] Push fixture-isolation commit `97ee125`, identify only run
+        `32673246286`, and retain its signed Linux log plus server-digest-matching
+        controller archive. Classify the single `ENOTEMPTY` cleanup failure from
+        the extracted unit report without rerunning the unchanged SHA.
+14. [x] Preserve a deterministic regression for transient recursive fixture
+        cleanup failure, then add a bounded retry only for the adopter-package
+        test's owned temporary roots. Do not change package generation, Git
+        semantics, production cleanup, or any verification timeout.
+15. [ ] Run the focused adopter-package owner and affected broader/static checks,
+        freeze and commit the cohesive cleanup repair, validate the exact clean
+        candidate with one real Windows adopter journey, and push normally once.
+16. [ ] Monitor causal candidates until one five-job run is terminal green. On
         the final green SHA, download and safely extract all five artifacts,
         independently audit controller, adopter, browser, and real-container
         receipts/manifests/artifacts/candidates/tests, verify zero actionable
@@ -200,6 +221,11 @@ strict path/receipt/evidence checks, or claim autonomous readiness.
   one common absent ambient store. A regression must fail under an absent
   ambient store before correction and pass only when each fixture owns and
   explicitly supplies its store; production code remains fail-closed.
+- Run `32673246286` retains the Linux controller log/archive/report proving one
+  transient `ENOTEMPTY` during owned temp-repository cleanup after the
+  adopter-package test assertions. A deterministic regression must require a
+  bounded retry for that OS-level cleanup race without weakening any production
+  path, command, receipt, or timeout.
 - One exact replacement candidate passes the real local Windows six-command
   generated-adopter journey, affected focused/broader checks, typecheck, lint,
   and format with independently valid command-owned evidence.
@@ -351,8 +377,32 @@ redundant local Docker matrix.
   `20d7553aaf6d2c95d7df10c1980b3fd83da80269d54e7494e81f729b06a47159`,
   `9c3ce499bc8880beab24cc5068dfc8f78cb8af43eeabf4cb0076b3ef3d32b137`,
   and `59bec308c2145302b7cbe21ce6e7179a8f255a539c280a5afcdd012e8d50bff2`.
+- 2026-08-23: Fixture-isolation commit `97ee125` passed the exact missing-store
+  owner, affected statics, timing-owner receipts, and a real cross-volume
+  Windows adopter/browser journey before its sole normal push created run
+  `32673246286`. Both adopter jobs and real Docker pass. The Linux controller
+  passes invariants and all orchestrator tests, then reports 613/615 unit tests
+  passed with one declared POSIX skip and one post-assertion `ENOTEMPTY` in
+  `adopter-package.test.ts` fixture teardown. The signed log and exact
+  server-digest archive are retained under the run evidence root.
+- 2026-08-23: The cleanup regression first failed on a single injected
+  `ENOTEMPTY`; its 3,704-byte red report has SHA-256
+  `5952ead2374fbd25e5cf6fabb11db73c67e554345a74cb6cf1ca6b55bfe71208`.
+  The test-owned cleanup now retries only the same named transient filesystem
+  codes with bounded linear delay, rethrows permanent errors immediately, and
+  rethrows persistent transient errors after six total attempts. Focused
+  receipt-owning evidence passes 7/7 tests at
+  `artifacts/manual/wp5-session3-linux-cleanup-focused-v2/`. No production
+  implementation, workflow, timeout, or success definition changed.
+- 2026-08-23: After the final bounded-failure regression and records, exact
+  Node/pnpm typecheck, lint, and format each pass with independently matching
+  command-owned receipts. Their report SHA-256 values are
+  `4d838f11875a69cc73cbd612cc55c10ab3ea562c3276c5da904cf43cbc387c40`,
+  `a92393f74448ab5af8f4bf30a674d182d5295856c510471ba2b5d2d331d2b53c`,
+  and `239e8fcea2cca53dd3c05f314590bb64ceb24fc78600d452d1d2f669fb8b1dba`.
 
 ## Next Action
 
-Review and freeze the four-file fixture-isolation increment, then commit and
-validate it from clean exact clones before the next normal push.
+Freeze the repair records and test, commit the cohesive fixture-cleanup
+increment, then validate the exact clean candidate with one Windows adopter
+journey before the next normal push.

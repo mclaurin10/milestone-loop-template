@@ -3,7 +3,7 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
-## 2026-08-23 — WP5 Session 3 hosted Windows fresh-adopter repair candidate
+## 2026-08-23 — WP5 Session 3 hosted CI repair loop
 
 **Failed hosted run retained.** Exact runtime CI run `32638898310`, attempt 1,
 failed on candidate `43e609bc6b754bcfee0c3af88a05be68b9e26850` / tree
@@ -227,6 +227,63 @@ serially with independently matching receipts/artifacts under their
 are `20d7553aaf6d2c95d7df10c1980b3fd83da80269d54e7494e81f729b06a47159`,
 `9c3ce499bc8880beab24cc5068dfc8f78cb8af43eeabf4cb0076b3ef3d32b137`,
 and `59bec308c2145302b7cbe21ce6e7179a8f255a539c280a5afcdd012e8d50bff2`.
+
+**Fixture-isolation candidate.** Commit
+`97ee125b4ac2ab3f6823862fb9275b0e3297a153` / tree
+`9c60d3150dccfc88f4cc947977d5d9ed1b11bb24` contains only the fixture-store
+repair and its execution/autonomy records. An exact clean no-local/no-hardlink
+clone passed the missing-store owner 16/16 and typecheck, lint, and format with
+report SHA-256 values
+`43b9fed3bf59296ba6920726d84c2a89d38abda4bda205bd0ea7d50a0db293b5`,
+`3b1789ebd4c2a0df74844fb25acc2623e330e7b4933122ba411ffc7e277f8692`,
+and `e5eddea6f2afe341a6ec7146726e68430f01307685fadfdc4e9d9fbb054e1412`.
+A complete clean-clone unit run passed 611/615 tests, with two declared skips
+and two unchanged Windows recovery owners reaching their existing 600-second
+limits under local timing pressure; the exact two-file receipt rerun passed
+all 6 tests with report SHA-256
+`dbe4f86a1a457ca4f80ce967795b27218898415c98315217f0c40f2535f4252d`.
+No timeout or owner changed.
+
+The same exact commit passed a real Windows journey with source and store on
+`D:` and generated TEMP on `C:`. Independent audit matched 38 declared plus 51
+retained inventory entries, 10 manifests and receipts, all six ledger
+commands, one generated and zero source no-argument verifies, a clean
+three-commit bootstrap history, 9/9 generated stages, and 4/4 tests. The
+substantive 122,990-byte Chrome screenshot has SHA-256
+`da927d28bc0d2132d4f4e5fe347059d5fb11586452c38c5b40fc9fc808bf0c21`.
+The normal push created only Exact runtime run `32673246286`.
+
+**Hosted Linux cleanup defect.** Run `32673246286` proves both fresh-adopter
+jobs and the real trusted-container job green. Linux controller invariants and
+all orchestrator tests pass. Unit then reports 180/182 suites and 613/615 tests
+passed, with one declared POSIX skip and one failure after the adopter-package
+assertions: recursive removal of its owned temporary Git repository raises
+transient `ENOTEMPTY` inside `.git/objects/pack`. The test took only about 315
+milliseconds, so this is teardown rather than production package generation.
+The 79,019-byte signed artifact archive has matching server/local SHA-256
+`c6f53d0ebe926e8b7ffcf0438cdf60e561b776695f6cd020e7e55682008dc6a4`
+and is safely extracted under `artifacts/hosted/run-32673246286/`. No rerun of
+the unchanged SHA occurred.
+
+**Owned-fixture cleanup correction.** A deterministic injected `ENOTEMPTY`
+first failed on the old single-attempt teardown. Its 3,704-byte red report has
+SHA-256
+`5952ead2374fbd25e5cf6fabb11db73c67e554345a74cb6cf1ca6b55bfe71208`.
+Only `adopter-package.test.ts` teardown now retries its owned temporary roots
+for the named transient recursive-removal codes with five bounded retries and
+linear delay. Permanent failures rethrow on the first attempt, and persistent
+transient failures rethrow after six total attempts. Package generation, Git
+semantics, production cleanup, workflow commands, timeouts, and receipt rules
+remain unchanged. Receipt-owning focused evidence passes 7/7 tests with report
+SHA-256 `782ba5b08e94fd762396703340d955e5337892ba85659a6a6a6d6f342e9a6506`
+under `artifacts/manual/wp5-session3-linux-cleanup-focused-v2/`. This is test
+harness hygiene under the existing bounded-transient-retry policy, so it adds
+no durable product or architecture decision. After the final regression and
+records, exact Node/pnpm typecheck, lint, and format each pass with report
+SHA-256 values
+`4d838f11875a69cc73cbd612cc55c10ab3ea562c3276c5da904cf43cbc387c40`,
+`a92393f74448ab5af8f4bf30a674d182d5295856c510471ba2b5d2d331d2b53c`,
+and `239e8fcea2cca53dd3c05f314590bb64ceb24fc78600d452d1d2f669fb8b1dba`.
 
 **Remaining gates.** The next exact commit still requires the real local
 Windows cross-volume journey and applicable receipt-owning checks before one
