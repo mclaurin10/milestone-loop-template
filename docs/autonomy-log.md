@@ -3,6 +3,65 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-22 — WP5 Session 2 frozen-candidate isolation correction
+
+**Passing adopter journey.** Separator-repair candidate
+`731965fc65b1359ee77dc999b0e90abe3bbe2c9f` / tree
+`8f9021647a7f854f827a5646f0c26b0554de6725` passed its only real Windows
+journey at `artifacts/manual/wp5-session2-windows-adopter-final-2/`. The exact
+six-command ledger created the package, performed the offline frozen copy
+install, commissioned and deterministically committed the sole manifest, and
+ran literal generated-repository `pnpm verify` once. The generated candidate
+`005a04729e014a8751f49f91c77a3f9b5f54e699` / tree
+`8eb55ffa048900984aa8a08a09113e87fa344bab` is clean on `main` with exactly
+three commits, bootstrap default, and no readiness marker in its tree or
+history. Source no-argument verify invocation count remained zero.
+
+The generated verifier passed 9 stages, 10 receipts, 18 declared artifacts /
+136,233 bytes, and 4 tests. The retained copy contains 51 files / 210,556
+bytes. Independent recomputation matched all 38 audit inventory entries and
+all 51 retained inventory entries. The 5,346-byte smoke result and 20,965-byte
+shared audit have SHA-256
+`3381aa812e4e9eab494a0711e848a0ba9ec8e01190cead58477b1c1ec30a6d54` and
+`1d014fd9e02c4bc5f2659c8e24f150950477a95b7cc9d6b41e40b1fb45bd4ca0`.
+The 122,990-byte screenshot has SHA-256
+`da927d28bc0d2132d4f4e5fe347059d5fb11586452c38c5b40fc9fc808bf0c21`,
+visibly reports three worker ticks and four extracted units, and its browser
+diagnostics contain no console errors, page errors, or request failures. This
+is bootstrap completion only and is explicitly not autonomous readiness.
+
+**Non-passing broader launch.** The candidate's only
+`pnpm test:invariants` invocation, from a clean no-local/no-hardlink exact
+clone, retained a truthful failure under
+`artifacts/manual/wp5-session2-final-invariants/evidence/`. Its first
+protected-integrity entry passed all 13 contract checks with a valid receipt.
+The next schema entry stopped before Vitest because the clone's dependencies
+had been installed against
+`C:\wp5tsr1\pnpm-home\store\v11`, while the trusted nested child correctly
+removed the outer `npm_config_store_dir` and `CI` overrides; pnpm therefore
+refused to purge the mismatched modules directory without a TTY. The
+3,243-byte FAIL invariant report and 8,736-byte ERROR manifest have SHA-256
+`bdcbba261dced4f8fb542a0e2f4b4caac377ba229068e452376f87e716d4c8ab`
+and `4974498b41e7946981789bf0825ebf5fe7d5330747b464a3634d2322af453c78`.
+The other five broader commands were not launched. The failure is neither
+rerun nor relabeled.
+
+**Preparation correction.** A new disposable no-local/no-hardlink exact clone
+installed directly against pnpm's default
+`C:\Users\duncan\AppData\Local\pnpm\store\v11` with copy imports and no
+downloads. With both `CI` and `npm_config_store_dir` then absent, its exact
+pinned pnpm successfully crossed the dependency-status boundary and reported
+`vitest/4.1.10 win32-x64 node-v24.18.0`. This proves the preparation correction
+without changing product, verifier, or invariant code to accommodate an
+operator-created store mismatch.
+
+**Commit and remaining gates.** Assigned by this causal record commit, which
+becomes the second replacement candidate without rewriting prior commits. It
+still requires one fresh retained Windows adopter journey and all six broader
+commands exactly once from newly prepared default-store clones. WSL still has
+no exact Linux Node/pnpm/browser boundary, the hosted matrix remains Session 3,
+and no autonomous-readiness claim is made.
+
 ## 2026-08-22 — WP5 Session 2 documented pnpm separator repair
 
 **Causal failure.** The first and only real journey on candidate

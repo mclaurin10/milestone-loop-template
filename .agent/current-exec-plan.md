@@ -1,6 +1,6 @@
 # Current Execution Plan
 
-**Status:** WP5 recommended Session 2 replacement-candidate freeze
+**Status:** WP5 recommended Session 2 second replacement-candidate freeze
 **Updated:** 2026-08-22
 **Owner:** autonomous loop
 
@@ -99,21 +99,32 @@ or begin WP6 deduplication. The final hosted matrix belongs to Session 3.
        commissioning parser tests, rerun the affected receipt-owning files,
        record the failed candidate truthfully, and commit a narrow repair that
        becomes the replacement final candidate.
-5. [ ] **In progress after the repair commit:** From the replacement final committed candidate, run exactly one real Windows
+5. [x] From the first replacement committed candidate, run exactly one real Windows
        generated-adopter create → offline frozen install → commission →
        deterministic manifest commit → literal no-argument bootstrap verify →
        shared independent audit journey. Retain the complete smoke output and
        inspect the browser screenshot/diagnostics. Run Linux parity only if an
        exact WSL/Linux browser boundary is already available; otherwise record
        the limitation for Session 3 rather than broadening setup.
-6. [ ] Run exactly once from six isolated no-local/no-hardlink clones of the
-       identical commit/tree: `pnpm test:invariants`,
-       `pnpm test:orchestrator`, `pnpm test:unit`, `pnpm typecheck`,
-       `pnpm lint`, and `pnpm format:check`. Keep the two overlapping test
-       aggregates sequential and run at most two heavyweight commands at once.
-       Independently validate command-owned receipts, artifacts, manifests,
-       candidate bindings, counts/skips, toolchains, and clone cleanliness.
-7. [ ] Write only an ignored truthful Session 2 final audit, confirm the
+6. [x] Preserve and diagnose the first broader launch on that candidate. The
+       invariant suite's contract-integrity entry passed, but its nested pnpm
+       execution rejected dependency metadata prepared against a nondefault
+       shared store after the trusted child environment intentionally removed
+       the store override. Stop before launching the other five commands,
+       retain the non-passing evidence, prove fresh default-store preparation
+       survives the same nested pnpm boundary, and record the invalidated
+       candidate without rerunning it.
+7. [ ] Commit this causal record as the second replacement freeze, repeat the
+       real Windows journey once on that new identity, then run exactly once
+       from six newly isolated no-local/no-hardlink clones of the identical
+       commit/tree prepared directly against pnpm's default store:
+       `pnpm test:invariants`, `pnpm test:orchestrator`, `pnpm test:unit`,
+       `pnpm typecheck`, `pnpm lint`, and `pnpm format:check`. Keep the two
+       overlapping test aggregates sequential and run at most two heavyweight
+       commands at once. Independently validate command-owned receipts,
+       artifacts, manifests, candidate bindings, counts/skips, toolchains, and
+       clone cleanliness.
+8. [ ] Write only an ignored truthful Session 2 final audit, confirm the
        tracked tree is clean under the protected-file exception, and hand off
        the exact candidate to Session 3 for the hosted matrix without pushing
        or making an autonomous-readiness claim.
@@ -226,9 +237,29 @@ Never run source no-argument `pnpm verify` or `loop:template:prove`.
   `artifacts/manual/wp5-session2-separator-repair-focused-1/evidence/`;
   targeted ESLint and Prettier passed. This repair commit is the replacement
   final candidate; no tracked edit is permitted after it.
+- 2026-08-22: Separator repair commit
+  `731965fc65b1359ee77dc999b0e90abe3bbe2c9f`, tree
+  `8f9021647a7f854f827a5646f0c26b0554de6725`, passed its retained Windows
+  adopter journey at
+  `artifacts/manual/wp5-session2-windows-adopter-final-2/`: the generated
+  repository is a clean three-commit bootstrap candidate, its only literal
+  `pnpm verify` passed 9 stages / 10 receipts / 18 artifacts / 4 tests, and
+  independent recomputation matched all 38 declared and 51 retained file
+  identities. The screenshot and diagnostics are clean.
+- 2026-08-22: The candidate's only `pnpm test:invariants` launch retained a
+  non-passing report at
+  `artifacts/manual/wp5-session2-final-invariants/evidence/`. Its 13-check
+  protected-integrity entry passed; the next nested pnpm execution stopped at
+  the dependency-store metadata boundary before Vitest. The other five broader
+  commands did not launch. A fresh disposable no-local/no-hardlink clone
+  installed directly against pnpm's default store and then passed the same
+  no-override `pnpm exec vitest --version` boundary under Node `24.18.0` and
+  pnpm `11.15.1`. This record commit becomes a second replacement candidate;
+  no implementation byte is changed to mask an operator preparation error.
 
 ## Next Action
 
-Audit and commit the separator repair as the new freeze. Record its exact
-commit/tree externally, then rerun the real Windows journey once on that
-replacement identity before creating the six broader-check clones.
+Audit and commit this causal verification record as the second replacement
+freeze. Record its exact identity, then run one fresh Windows adopter journey
+and six once-only broader commands from new default-store clones without any
+further tracked edit.
