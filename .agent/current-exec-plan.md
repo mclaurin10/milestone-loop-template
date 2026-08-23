@@ -1,14 +1,15 @@
 # Current Execution Plan
 
-**Status:** WP5 recommended Session 3 second hosted Windows fresh-adopter repair in progress
+**Status:** WP5 recommended Session 3 hosted Windows unit-fixture isolation repair in progress
 **Updated:** 2026-08-23
 **Owner:** autonomous loop
 
 ## Objective
 
 Close WP5 hosted CI/quickstart validation by causally repairing each Windows
-fresh-adopter failure exposed by Exact runtime CI runs `32638898310` and
-`32651184672`, freezing and pushing evidence-backed replacement candidates,
+fresh-adopter failures exposed by Exact runtime CI runs `32638898310` and
+`32651184672`, plus the unit-fixture defect exposed by run `32660428700`,
+freezing and pushing evidence-backed replacement candidates,
 obtaining one fully green five-job Exact runtime CI run on one exact commit,
 and independently auditing every uploaded artifact.
 
@@ -96,6 +97,20 @@ strict path/receipt/evidence checks, or claim autonomous readiness.
   needs about 57 minutes by itself and passes 612 tests with two declared
   Windows-only skips, so the combined unchanged Windows job cannot reliably fit
   the existing 60-minute outer bound.
+- Replacement commit `97a94775a0ccbec6393fde15430e42c08b32e8fd`
+  (tree `10f401c011835819fe90c0ce6a332670bfea4fd0`) passed the exact
+  cross-volume Windows adopter journey, exact clean invariant/controller/static
+  checks, and was pushed normally. Run `32660428700` proves both hosted adopter
+  jobs and the real Docker job green; Linux controller also passes all six
+  commands. Windows invariants and all 597 controller tests pass, then unit
+  fails 9 production-build fixture assertions while 603 tests pass and the two
+  declared POSIX process-group tests skip.
+- Every unit failure reports the same missing ambient path,
+  `C:\Users\runneradmin\AppData\Local\pnpm\store\v11`. Both hosted
+  generated-adopter production builds pass with their real validated source
+  stores. The production guard is therefore effective; the deterministic defect
+  is that legacy unit fixtures have no fixture-owned store and accidentally pass
+  only on machines whose ambient default store already exists.
 
 ## Steps
 
@@ -141,11 +156,24 @@ strict path/receipt/evidence checks, or claim autonomous readiness.
        60 minutes and Windows controller to receive 120 minutes. Change only
        the matrix-specific outer bound; preserve all six commands, per-test and
        command limits, evidence roots, scheduling, and uploads.
-9. [ ] Freeze, commit, and validate the second repair from exact clean clones:
+9. [x] Freeze, commit, and validate the second repair from exact clean clones:
        run one real Windows adopter/browser journey plus receipt-owning
        typecheck, lint, format, and the applicable focused/broader tests. Push
        normally once and identify only the push-triggered exact-SHA run.
-10. [ ] Monitor causal candidates until one five-job run is terminal green. On
+10. [x] Monitor run `32660428700` through its terminal defect. Retain signed
+        metadata, Windows log, server-digest-matching safe extraction, and the
+        unit ERROR manifest/report; do not rerun the unchanged SHA.
+11. [x] Preserve a hosted-semantics red report, then give every production-build
+        unit fixture a real fixture-owned empty pnpm store. Pass that path via
+        canonical `pnpm_config_store_dir` to direct and spawned fixture
+        executions, remove conflicting case variants, restore process state,
+        and keep the production existing-store guard unchanged.
+12. [ ] Run exact focused and broad unit coverage plus affected statics, freeze
+        and commit the cohesive fixture-isolation repair, then validate the
+        exact clean candidate with one real cross-volume Windows adopter
+        journey and committed-byte checks. Push normally once and identify only
+        the push-triggered run.
+13. [ ] Monitor causal candidates until one five-job run is terminal green. On
         the final green SHA, download and safely extract all five artifacts,
         independently audit controller, adopter, browser, and real-container
         receipts/manifests/artifacts/candidates/tests, verify zero actionable
@@ -167,6 +195,11 @@ strict path/receipt/evidence checks, or claim autonomous readiness.
   597-test controller receipts plus the unit ERROR manifest with no receipt.
   The workflow contract proves only the Windows outer job bound increased; no
   command, test, receipt, or success definition was weakened.
+- Run `32660428700` retains the Windows controller archive/log/report proving
+  603 unit passes, 9 production-build fixture failures, two declared skips, and
+  one common absent ambient store. A regression must fail under an absent
+  ambient store before correction and pass only when each fixture owns and
+  explicitly supplies its store; production code remains fail-closed.
 - One exact replacement candidate passes the real local Windows six-command
   generated-adopter journey, affected focused/broader checks, typecheck, lint,
   and format with independently valid command-owned evidence.
@@ -295,10 +328,31 @@ redundant local Docker matrix.
   checkout's modules metadata names an older custom store that its trusted
   sanitized child does not inherit. No rerun or code accommodation was made;
   final checks will use a clean default-store clone.
+- 2026-08-23: Commit `97a94775` passed a real local `D:` source/store to `C:`
+  TEMP generated-adopter journey. Independent audit matched 38 declared plus
+  51 retained inventory entries, 10 manifests, 11 results, six ledger commands,
+  one generated/zero source verifies, and clean browser evidence. Exact clean
+  invariant, 597-pass controller, typecheck, lint, and format evidence passed.
+  Its sole push run `32660428700` finishes four jobs green; Windows unit retains
+  603 passes, 9 failures, and two declared skips. All failures are legacy
+  production-build fixtures resolving a nonexistent ambient runner store even
+  though both hosted production paths pass with real source stores.
+- 2026-08-23: The fixture-only correction passes the hosted-missing-store
+  focused owner 16/16 while leaving the ambient path absent. The exact pinned
+  receipt-owning complete unit suite then passes 182/182 suites and 613/615
+  tests with zero failures; its two skips are the same declared Windows POSIX
+  process-group cases. The 213,968-byte report and 484-byte receipt independently
+  match SHA-256
+  `f6940d74167fc6a2635d5eca7c77b7e3fa9f644067d4ab6e17244b5add6fb4b3`
+  and `6d107a7022ffe9b788cbf813cabbc5f689301c7ab44432e2f2638019fef83f8f`.
+- 2026-08-23: Exact Node/pnpm typecheck, lint, and format each pass serially
+  through their receipt owners after the final test implementation edit. Their report
+  SHA-256 values are
+  `20d7553aaf6d2c95d7df10c1980b3fd83da80269d54e7494e81f729b06a47159`,
+  `9c3ce499bc8880beab24cc5068dfc8f78cb8af43eeabf4cb0076b3ef3d32b137`,
+  and `59bec308c2145302b7cbe21ce6e7179a8f255a539c280a5afcdd012e8d50bff2`.
 
 ## Next Action
 
-Freeze the tracked store-handoff and matrix-timebox repairs, commit the cohesive
-candidate, reconfirm protected/immutable/readiness/CAL-1 identities, then run
-the exact clean cross-volume Windows adopter journey and committed-candidate
-static/focused checks before the next normal push.
+Review and freeze the four-file fixture-isolation increment, then commit and
+validate it from clean exact clones before the next normal push.

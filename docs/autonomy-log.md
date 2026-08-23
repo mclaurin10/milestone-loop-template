@@ -172,6 +172,62 @@ This is the already documented operator-preparation mismatch, not a source
 regression. Final candidate checks will use a newly installed clean clone whose
 default store matches its modules metadata.
 
+**Second repair candidate and third hosted defect.** Commit
+`97a94775a0ccbec6393fde15430e42c08b32e8fd` / tree
+`10f401c011835819fe90c0ce6a332670bfea4fd0` passed a real local cross-volume
+journey with source and store on `D:` and generated TEMP on `C:`. Its nested
+production-build report proves store discovery and offline preparation both use
+`D:\.pnpm-store\v11`. Independent audit matched all 38 declared and 51
+retained inventory entries, 10 manifests, 11 results, the exact six-command
+ledger, one generated/zero source no-argument verifies, and the substantive
+122,990-byte clean Chrome screenshot. Exact clean-clone invariants passed all
+four commands; the controller aggregate passed 597/599 tests with only the two
+declared Windows POSIX process-group skips; typecheck, serial lint, and format
+passed with exact clean candidate binding. The normal push created only run
+`32660428700`.
+
+That run finishes fresh-adopter Linux/Windows, trusted-container Linux, and
+controller Linux green. Windows invariants and all 597 controller tests pass;
+unit then runs 28 minutes and exits 1 rather than being cancelled. Its
+server-digest-matching 78,642-byte archive has SHA-256
+`be5ee04ae33af0129a483a75f56e4a356849d0a75941a4be4192bfc7ed4f3d80`
+and is safely extracted under `artifacts/hosted/run-32660428700/`. The retained
+unit report has 603 passes, 9 failures, and the two declared skips. All nine
+failures are `production-build.test.mjs` fixtures resolving nonexistent
+`C:\Users\runneradmin\AppData\Local\pnpm\store\v11`; both hosted adopter
+production builds pass with real source stores. The production existing-store
+guard is therefore correct, while legacy fixtures accidentally depend on an
+ambient machine store.
+
+**Fixture-isolation correction.** An exact Node 24 reproduction against
+`97a94775` points pnpm at a deliberately absent ambient store and reproduces
+the same 6/15 pass, 9/15 fail split. Its 12,610-byte JSON report has SHA-256
+`6818a44b1533c3cba1cd54490482dac2fd9ed314038bf444b4b4df849ce44dd0`
+under the failed-run reproduction root. Each fixture now creates its own exact
+versioned `pnpm-store/v11`, direct executions temporarily install the canonical
+`pnpm_config_store_dir` while restoring every prior case variant, and the
+spawned evidence-wrapper fixture receives the same sanitized environment.
+Production code and its fail-closed store validation are unchanged. The
+hosted-missing-store focused rerun passes 16/16 while proving the absent ambient
+path remains absent; its 5,422-byte report has SHA-256
+`36d340b74f5b357eaf2ec3cefaa251b2dfb4ad2a46603e36cac91c2818cced2e`.
+After the final clarity cleanup, the focused owner passes 16/16 again with
+report SHA-256
+`5d66b9f27cca20631b66713763d0bcaa2d3c5a2e48fcba1bd662185cdd0927a6`.
+The exact pinned receipt-owning complete unit suite passes all 182 suites and
+613/615 tests with zero failures; its two skips are exactly the declared
+Windows POSIX process-group tests. The 213,968-byte report and 484-byte PASS
+receipt independently match SHA-256
+`f6940d74167fc6a2635d5eca7c77b7e3fa9f644067d4ab6e17244b5add6fb4b3`
+and `6d107a7022ffe9b788cbf813cabbc5f689301c7ab44432e2f2638019fef83f8f`
+under `artifacts/manual/wp5-session3-fixture-store-unit-pre-freeze-v1/`.
+Exact Node `24.18.0` / pnpm `11.15.1` typecheck, lint, and format then pass
+serially with independently matching receipts/artifacts under their
+`wp5-session3-fixture-store-*-pre-freeze-v2` roots. The report SHA-256 values
+are `20d7553aaf6d2c95d7df10c1980b3fd83da80269d54e7494e81f729b06a47159`,
+`9c3ce499bc8880beab24cc5068dfc8f78cb8af43eeabf4cb0076b3ef3d32b137`,
+and `59bec308c2145302b7cbe21ce6e7179a8f255a539c280a5afcdd012e8d50bff2`.
+
 **Remaining gates.** The next exact commit still requires the real local
 Windows cross-volume journey and applicable receipt-owning checks before one
 normal push. A hosted run must then finish all five jobs green, and all five

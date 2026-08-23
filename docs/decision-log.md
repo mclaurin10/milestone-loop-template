@@ -3,6 +3,28 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-23 — Production-build unit fixtures own exact pnpm stores
+
+**Decision.** Every production-build unit fixture creates an empty real
+versioned pnpm store inside its disposable parent and supplies that exact path
+through canonical `pnpm_config_store_dir` to both direct and spawned fixture
+executions. Test helpers remove conflicting case variants before entry and
+restore the complete prior environment afterward. Production store discovery,
+existence validation, offline preparation, and reporting remain unchanged.
+
+**Why.** Exact runtime run `32660428700` proves both real generated-adopter
+production builds pass, but nine Windows unit fixtures fail before their owned
+assertions because a new hosted runner has no ambient
+`C:\Users\runneradmin\AppData\Local\pnpm\store\v11`. The same fixtures pass
+locally only because that machine-default store already exists. A fixture must
+own every filesystem precondition it exercises. Alternatives rejected: weaken
+or remove the production existing-store guard, create an ambient user store,
+skip the Windows assertions, seed a global CI-only path, or special-case GitHub
+Actions.
+
+**Affected files.** `tools/production-build.test.mjs` and the WP5 execution/
+autonomy records.
+
 ## 2026-08-23 — Matrix-specific outer controller timebox
 
 **Decision.** Exact runtime CI retains a 60-minute outer timeout for the Linux

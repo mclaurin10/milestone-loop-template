@@ -22,6 +22,10 @@ import {
 const repositoryRoot = resolve(import.meta.dirname, "..");
 const temporaryDirectories = [];
 const BUILD_TEST_TIMEOUT_MS = 30_000;
+const PNPM_STORE_ENVIRONMENT_KEYS = new Set([
+  "npm_config_store_dir",
+  "pnpm_config_store_dir",
+]);
 
 afterEach(async () => {
   await Promise.all(
@@ -57,7 +61,9 @@ async function createFixture(options = {}) {
   temporaryDirectories.push(parent);
   const repository = join(parent, "repository");
   const artifactDirectory = join(parent, "evidence");
+  const storePath = join(parent, "pnpm-store", "v11");
   await mkdir(repository, { recursive: true });
+  await mkdir(storePath, { recursive: true });
   const packageJson = {
     name: "production-build-fixture",
     private: true,
@@ -107,15 +113,54 @@ async function createFixture(options = {}) {
   runGit(repository, ["add", "--all"]);
   runGit(repository, ["commit", "-m", "fixture"]);
   await mkdir(artifactDirectory, { recursive: true });
-  return { artifactDirectory, parent, repository };
+  return { artifactDirectory, parent, repository, storePath };
+}
+
+function fixturePnpmEnvironment(fixture, baseEnvironment = process.env) {
+  const environment = { ...baseEnvironment };
+  for (const key of Object.keys(environment)) {
+    if (PNPM_STORE_ENVIRONMENT_KEYS.has(key.toLowerCase())) {
+      delete environment[key];
+    }
+  }
+  return {
+    ...environment,
+    pnpm_config_store_dir: fixture.storePath,
+  };
+}
+
+async function withFixturePnpmEnvironment(fixture, action) {
+  const originalEntries = Object.entries(process.env).filter(([key]) =>
+    PNPM_STORE_ENVIRONMENT_KEYS.has(key.toLowerCase()),
+  );
+  for (const key of Object.keys(process.env)) {
+    if (PNPM_STORE_ENVIRONMENT_KEYS.has(key.toLowerCase())) {
+      delete process.env[key];
+    }
+  }
+  process.env["pnpm_config_store_dir"] = fixture.storePath;
+  try {
+    return await action();
+  } finally {
+    for (const key of Object.keys(process.env)) {
+      if (PNPM_STORE_ENVIRONMENT_KEYS.has(key.toLowerCase())) {
+        delete process.env[key];
+      }
+    }
+    for (const [key, value] of originalEntries) {
+      process.env[key] = value;
+    }
+  }
 }
 
 async function executeFixture(fixture, options = {}) {
-  return runProductionBuild({
-    repositoryRoot: fixture.repository,
-    artifactDirectory: fixture.artifactDirectory,
-    ...options,
-  });
+  return withFixturePnpmEnvironment(fixture, () =>
+    runProductionBuild({
+      repositoryRoot: fixture.repository,
+      artifactDirectory: fixture.artifactDirectory,
+      ...options,
+    }),
+  );
 }
 
 async function createStoreAwarePnpm(fixture, options = {}) {
@@ -231,13 +276,13 @@ describe("production-build evidence", () => {
         {
           cwd: fixture.repository,
           encoding: "utf8",
-          env: {
+          env: fixturePnpmEnvironment(fixture, {
             ...process.env,
             LOOP_VERIFY_STAGE_ID: "production-build",
             LOOP_VERIFY_COMMAND_ID: "build",
             LOOP_VERIFY_COMMAND_ARTIFACT_DIR: fixture.artifactDirectory,
             LOOP_TELEMETRY_PARENT_MANAGED: "1",
-          },
+          }),
           windowsHide: true,
         },
       );
@@ -357,6 +402,30 @@ describe("production-build evidence", () => {
           /^[0-9a-f]{64}$/.test(file.sha256),
         ),
       ).toBe(true);
+    },
+    BUILD_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "isolates fixture builds from an absent ambient pnpm store",
+    async () => {
+      const fixture = await createFixture({
+        buildSource:
+          "import { mkdirSync, writeFileSync } from 'node:fs'; mkdirSync('dist', { recursive: true }); writeFileSync('dist/app.js', 'application');\n",
+      });
+      const absentAmbientStore = join(fixture.parent, "absent-ambient-store");
+      expect(existsSync(absentAmbientStore)).toBe(false);
+
+      const ambientFixture = {
+        ...fixture,
+        storePath: absentAmbientStore,
+      };
+      const report = await withFixturePnpmEnvironment(ambientFixture, () =>
+        executeFixture(fixture),
+      );
+
+      expect(report.dependencyStore.path).toBe(fixture.storePath);
+      expect(existsSync(absentAmbientStore)).toBe(false);
     },
     BUILD_TEST_TIMEOUT_MS,
   );
