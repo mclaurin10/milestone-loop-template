@@ -1,99 +1,106 @@
 # Current Execution Plan
 
-**Status:** WP5y exact reproduction
+**Status:** WP5z contract-integrity exact reproduction
 **Updated:** 2026-08-22
 **Owner:** autonomous loop
 
 ## Objective
 
-With the proved WP5x fixture-parent correction committed, repair
-`tools/milestone-orchestrator/src/workspace-cleanup.test.ts::fixture()` as the
-next separate hosted-Windows owner. Reproduce its full six-case file from exact
-clean WP5x under genuine NTFS 8.3 TEMP, retain direct assertion red,
-canonicalize only its fresh root, verify Windows and Linux ext4, and commit
-narrowly without pushing.
+With the proved WP5y fixture-root correction committed, reproduce and repair
+only the next historical Windows owner:
+`tools/milestone-orchestrator/src/contract-integrity.test.ts::commissionedClone()`.
+Use an exact clean WP5y clone under genuine NTFS 8.3 TEMP, retain a direct
+assertion-only owner proof, canonicalize only its newly created parent, verify
+the complete file on Windows and Linux ext4, and commit separately.
 
-Do not weaken consumers, normalize caller/pre-existing paths, change cleanup
-semantics, bundle later roots, run source no-argument `pnpm verify`, close
-CAL-1, or claim readiness.
+Do not alter contract-integrity meanings, expected corrupt-adapter exit
+semantics, evidence-context validation, immutable authority, strict consumers,
+caller/pre-existing paths, readiness/CAL-1 state, or later fixture owners. Do
+not run source no-argument `pnpm verify`, push, or claim readiness.
 
 ## Goal Constraints
 
-- Preserve immutable hashes, readiness marker/default, CAL-1 open/zero,
-  protected file SHA
+- Preserve immutable baseline/active hashes, readiness marker/default, CAL-1
+  open/zero, protected file SHA
   `53ea98fb1cb880163a02d3b1d9365963e3fe891025ae3630f00bd4c9232293b1`,
   and required ignored residue.
 - Use Node `24.18.0`, pnpm `11.15.1`, clean no-local/no-hardlink clones,
-  compact genuine Windows short TEMP, Linux ext4, serial Vitest, and isolated
+  compact distinct Windows short TEMP, Linux ext4, serial Vitest, and isolated
   writable roots.
-- Change only `workspace-cleanup.test.ts::fixture()`'s fresh root; retain a
-  direct assertion before Git/workspace setup. Production Git, workspace
-  cleanup/archive, reducer, state/schema, and caller paths stay byte-identical
-  unless a separate direct proof forces replanning.
-- One local cohesive commit per owner; broader Session 1 checks run once after
-  final tracked freeze.
+- Change only `commissionedClone()`'s freshly created parent and retain a
+  direct promise-realpath assertion before clone derivation. Contract code,
+  verifier/invariant adapters, evidence context, and corruption inputs remain
+  byte-identical unless a separate direct proof forces replanning.
+- Keep one local commit per causal owner. Run broader Session 1 checks once
+  only after all intended tracked bytes freeze.
 
 ## Baseline Evidence
 
-- Current HEAD before WP5x commit is WP5w
-  `e292d411bd6c3b18c8bba284eeed83132a351047` / tree
-  `6d273ab902cf5dd47b72f1813a02a3dbaf2739ea`, six ahead of origin.
-- WP5x exact baseline/assertion are 0/5 ERROR/no receipt. Corrected tree
-  `9e2438f1cb28798ce63e84e150601b00545d2587` passes Windows 5/5 and Linux
-  PASS 4 plus one existing Windows-only junction skip.
-- Historical `workspace-cleanup.test.ts` at `1786995278951` is 0/6. Strict
-  Git inspection rejects short `milestone-loop-cleanup-unit-*` against its
-  expanded realpath; current `fixture()` directly owns that fresh root.
+- WP5y baseline/assertion trees are 0/6 ERROR/no receipt; corrected tree
+  `74c712b5ac177e33e9578063909f0422272c8128` passes Windows and Linux ext4
+  6/6 with valid bindings.
+- WP5y commits from prior HEAD
+  `b58184a5572f64f35a748871090544a9c0f26c42` / tree
+  `d0bd256a6d98fcd1b2d9797f5ef06838df06131c`.
+- Historical `contract-integrity.test.ts` at `1786995282986` is 1/2. Its
+  corruption adapter exited 3 rather than the expected 1 because its evidence
+  context retained the short derived clone root while evaluation observed the
+  expanded identity. Current `commissionedClone()` owns the raw
+  `contract-integrity-*` parent; current outcome is not yet assumed.
 
 ## Steps
 
-1. [x] Format/stage WP5x test/log/plan only, audit identities, and commit
-       locally.
-2. [ ] **In progress:** Reproduce unchanged WP5y 0/6 from exact clean WP5x
-       under short TEMP;
-       retain ERROR/no receipt.
-3. [ ] Add only promise `realpath` plus a direct assertion beside the creator
-       in a second clone; retain assertion-localized red.
-4. [ ] Canonicalize only that fresh root, retain assertion, and pass complete
-       Windows 6/6 with receipt.
-5. [ ] Pass identical owner tree on Linux ext4 with only explicit pre-existing
-       platform skips accepted; audit bindings and classify next owner.
-6. [ ] Record/audit/commit WP5y narrowly and hand off the plan.
+1. [x] Prove WP5y baseline/owner/correction, pass Windows/Linux 6/6, audit
+       identities, and commit its test/log/plan only.
+2. [ ] **In progress:** Reproduce unchanged WP5z from an exact clean WP5y
+       clone under short TEMP; retain ERROR/no receipt if current red remains.
+3. [ ] Add only promise `realpath` and a direct parent equality assertion in a
+       second clone; retain the assertion-localized red before clone setup.
+4. [ ] Canonicalize only the fresh parent, retain the assertion, and pass the
+       complete two-case Windows file with a valid receipt.
+5. [ ] Pass the identical corrected tree on Linux ext4, audit bindings, and
+       classify the next retained owner without changing it.
+6. [ ] Record, audit, and commit WP5z narrowly; hand off the active plan.
 
 ## Acceptance Criteria
 
-- WP5x commits only test/log/plan after valid Windows/Linux parity.
-- WP5y baseline and assertion evidence remain ERROR/no receipt and localize
-  the owner before strict boundaries; corrected Windows and appropriate Linux
-  parity pass with valid receipts.
-- Production/caller paths unchanged; immutable/lifecycle/protected identities
-  exact; one local commit; no push.
+- WP5y commit contains only its fixture test, autonomy entry, and this handoff
+  plan after exact Windows/Linux parity.
+- WP5z baseline and assertion evidence accurately reflect current outcomes;
+  failed runs retain ERROR/no receipt and the assertion proves the parent
+  before any clone or contract adapter boundary.
+- Corrected Windows and appropriate Linux parity pass with valid receipts.
+  Production/contract consumers and caller paths stay unchanged; lifecycle,
+  immutable, and protected identities remain exact; one local commit, no push.
 
 ## Verification
 
-`pnpm exec tsx tools/run-tool-evidence.mjs invariant-vitest tools/milestone-orchestrator/src/workspace-cleanup.test.ts --fileParallelism=false`
+`pnpm exec tsx tools/run-tool-evidence.mjs invariant-vitest tools/milestone-orchestrator/src/contract-integrity.test.ts --fileParallelism=false`
 
 Retain under
-`artifacts/manual/wp5y-workspace-cleanup-{red,owner-red,windows-green,linux-green}/`.
-After Session 1 bytes freeze, run once from isolated identical clones:
+`artifacts/manual/wp5z-contract-integrity-{red,owner-red,windows-green,linux-green}/`.
+After Session 1 bytes freeze, run exactly once from isolated identical clones:
 `pnpm test:invariants`, `pnpm test:orchestrator`, `pnpm test:unit`,
-`pnpm typecheck`, `pnpm lint`, `pnpm format:check`; at most two heavy commands
-overlap. Never run source no-argument `pnpm verify`.
+`pnpm typecheck`, `pnpm lint`, and `pnpm format:check`; at most two heavy
+commands overlap. Never run source no-argument `pnpm verify`.
 
 ## Risks and Recovery
 
-- Keep expanded TEMP compact while proving a distinct 8.3 alias.
-- A downstream production red requires separate proof and replan.
-- Recovery is ordinary revert; no push/ref rewrite/lifecycle change/bulk edit.
+- Preserve the intentionally corrupt contract and expected exit-1 semantics;
+  only path spelling before the adapter is in scope.
+- Keep expanded TEMP compact enough for Git-for-Windows path budgets while
+  proving a distinct 8.3 alias.
+- A downstream production red requires separate proof and replan. Recovery is
+  ordinary revert; no push/ref rewrite/lifecycle change/bulk edit.
 
 ## Progress and Evidence
 
-- 2026-08-22: WP5x retained baseline/assertion 0/5, then passed Windows 5/5
-  and Linux PASS with one explicit Windows-only junction skip.
+- 2026-08-22: WP5y retained qualifying baseline/assertion 0/6 and passed the
+  identical corrected tree 6/6 on Windows-short and Linux ext4.
 - 2026-08-22: Historical/current source identify
-  `workspace-cleanup.test.ts::fixture()` next; WP5y is unmodified.
+  `contract-integrity.test.ts::commissionedClone()` next; WP5z is unmodified.
 
 ## Next Action
 
-Create an exact clean WP5x clone and reproduce unchanged WP5y under genuine
-short TEMP.
+Construct an exact clean WP5y clone and reproduce the unchanged two-case WP5z
+file under genuine short TEMP.

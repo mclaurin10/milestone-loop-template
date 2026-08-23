@@ -3,6 +3,7 @@ import {
   mkdir,
   mkdtemp,
   readFile,
+  realpath,
   rm,
   stat,
   writeFile,
@@ -69,7 +70,10 @@ async function fixture(
   readonly root: string;
   readonly operation: WorkspaceCleanupOperation;
 }> {
-  const root = await mkdtemp(join(tmpdir(), "milestone-loop-cleanup-unit-"));
+  const root = await realpath(
+    await mkdtemp(join(tmpdir(), "milestone-loop-cleanup-unit-")),
+  );
+  expect(await realpath(root)).toBe(root);
   temporaryDirectories.push(root);
   git(root, "init", "-b", "main");
   git(root, "config", "user.name", "Cleanup Operation Test");

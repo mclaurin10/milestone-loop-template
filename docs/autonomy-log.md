@@ -3,6 +3,81 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-22 — WP5y canonical Windows workspace-cleanup fixture root
+
+**Objective and cause.** From exact clean WP5x, reproduce and repair only the
+next retained fixture owner under genuine NTFS 8.3 TEMP, prove the owner before
+changing it, verify both controller platforms, and commit narrowly without
+pushing. Historical `workspace-cleanup.test.ts` was 0/6 at `1786995278951`.
+Its `fixture()` retained raw `milestone-loop-cleanup-unit-*` spelling before
+Git initialization and strict workspace inspection.
+
+**Evidence.** Exact no-local/no-hardlink clone `C:/wp5y1b/repo` at WP5x
+`b58184a5572f64f35a748871090544a9c0f26c42` / tree
+`d0bd256a6d98fcd1b2d9797f5ef06838df06131c`, no alternates, pinned Node
+`24.18.0` and pnpm `11.15.1`, an isolated store, and distinct
+`WP5YBA~1`/expanded TEMP reproduced 0/6. Every failure was the same strict Git
+root mismatch. Its report and ERROR/no-receipt manifest are 7,611/9,042 bytes
+with SHA-256
+`690912fd9335a28b026f226a46acba328fee52617b7e8167ba2a0416808b56bf`
+and `02380db3a68a778eb77df7f7333402011119366fbe17f3d218c873bd6b5f2248`.
+The 1,167-byte telemetry manifest is
+`f79ab313700a12e0fb83852a5de0b124a47b1353dd348801ce782e7f82c76bff`.
+Assertion-only tree `9c91525b39bbc61f1f893b45961d8c9fd34b11f4` imported promise
+`realpath` and added `expect(await realpath(root)).toBe(root)` immediately
+after `mkdtemp`. All six cases failed directly at that line before Git or
+workspace creation. Its 5,590-byte report, 9,020-byte ERROR manifest, and
+1,157-byte telemetry manifest are
+`9323d80fdd1b48a16dc70ffc03579c33c803afbd57306304b80a952fcf291ae2`,
+`1407d0339787d1bb87eef9477ae1c6f1fb2dcdfe521b7ab3018648b384582f52`,
+and `93b96095141a022e4a8ef4188e46cc9ae08bdf81ff5909198573d97ca9424959`.
+Red roots are `artifacts/manual/wp5y-workspace-cleanup-{red,owner-red}/`.
+
+**Correction and verification.** Only the fresh root now uses
+`realpath(await mkdtemp(...))`; the assertion remains before registration and
+Git setup. Production Git, workspace creation/cleanup/archive, state/schema,
+and caller-controlled paths remain byte-identical. Corrected tree
+`74c712b5ac177e33e9578063909f0422272c8128` passed Windows 6/6, zero
+skips. Its report/receipt/manifest are 2,778/602/9,259 bytes with SHA-256
+`96cebd7ff36eded1e27e5a8633b00e53592ee86dbe9e14505d3801474ed02eb8`,
+`46144ff0ac5c78e9aaa5461067ea0b987012cad730d9b1b33deb11504e3c5e4c`,
+and `90503aa191c8da42739a0939e0434183835f60397031b9f9c61a9d3bb3a2addd`.
+The identical tree passed WSL2 ext4 6/6, zero skips; its
+report/receipt/manifest are 2,793/602/9,220 bytes with SHA-256
+`ed83d52a867fd097afa101c1dbde6dab5568ab82103031358ee85a80b5ede907`,
+`6aada8dc726a4ab74f65f9c91877e4f6811d92afe3396f993365c215b6161078`,
+and `7c0f97af14f99743ffa276a5f62d27b3797242cab5df2fdc294792081b6b4c7f`.
+Green roots are
+`artifacts/manual/wp5y-workspace-cleanup-{windows,linux}-green/`. Bindings and
+the corrected source blob match exactly; no decision record is needed.
+
+**Nonqualifying setup diagnostics.** The first install wrapper inherited the
+source working directory. It ran no test, changed no tracked bytes, and the
+source dependency tree was immediately restored to its pinned store before
+the clone was installed with an explicit CWD guard. A later direct-Node red
+run bypassed `tsx`; its tests reproduced 0/6, but telemetry initialization
+could not resolve a TypeScript-side `.js` specifier. It is excluded from the
+qualifying record and retained under
+`artifacts/manual/wp5y-workspace-cleanup-telemetry-loader-red/` (7,630-byte
+report SHA
+`c46bef048286b1d953fe875f308c3f3a84dabb26b7897d9e32148119ce34e018`,
+8,880-byte ERROR manifest SHA
+`943c6c1da8a06e4498bd9ddac9efcd001294feb4ab667452479b0c00f731d2ef`).
+
+Next is historical `contract-integrity.test.ts` at `1786995282986`: one pass
+and one failure. The corruption adapter exited 3 because the evidence context
+used the short derived clone root while evaluation observed its expanded
+identity. Its separate `commissionedClone()` owns a raw
+`contract-integrity-*` parent and remains open rather than bundled.
+
+**Commit.** Assigned by the cohesive WP5y commit containing this entry; local
+and unpushed.
+
+**Known gaps.** Remaining contract/retention/Git/deterministic/artifact/clone
+files, the Windows aggregate, final broader frozen-candidate checks, POSIX
+`setsid`, CAL-1, hidden validation, product breadth, readiness, and human
+verification remain open. No completion claim is made.
+
 ## 2026-08-22 — WP5x canonical Windows workspace-create fixture parent
 
 **Objective and cause.** From exact clean WP5w, reproduce and repair only the
