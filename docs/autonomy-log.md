@@ -3,6 +3,65 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-22 — WP5x canonical Windows workspace-create fixture parent
+
+**Objective and cause.** From exact clean WP5w, reproduce and repair only the
+next retained fresh fixture owner, verify both controller platforms, and commit
+narrowly without pushing. `workspace-create.test.ts` was 0/5 at
+`1786995272196`. Its `fixture()` retained raw `milestone-loop-workspace-*`
+parent spelling and derived `source` from it; strict Git inspection correctly
+rejected the expanded source identity.
+
+**Evidence.** Exact no-local/no-hardlink WP5w clone `C:/wp5x1b/repo` at commit
+`e292d411bd6c3b18c8bba284eeed83132a351047` / tree
+`6d273ab902cf5dd47b72f1813a02a3dbaf2739ea`, pinned tools, no alternates/
+drift, and genuine `WP5XLO~1` TEMP reproduced 0/5. Report/ERROR manifest are
+5,676/9,025 bytes with SHA-256
+`5650beeae2750953e0dc30ad57674755d347c75516010bb563bc89f8aba8c537`
+and `5218316239d59f539c25503d80d3d929ab84aaf1a8eab203003e3872ca2b30b0`;
+no receipt exists. Assertion-only tree
+`84c028cdd7efd4ed187dee4c743aea93d64fe820` added promise `realpath` and
+`expect(await realpath(parent)).toBe(parent)` beside the creator. All five
+cases reported that equality failure directly or through their expected-error
+matcher before source derivation. Its 4,616-byte report and 9,018-byte ERROR
+manifest have SHA-256
+`00e453121d195d428ca673e9d9cd43723476b3ff8c754a7574e560e8e6af713d`
+and `07fe454a7b91aed0eddc3e3833022a5bf9dcf88d42ca88516edb334aa92afd03`.
+Red roots are `artifacts/manual/wp5x-workspace-create-{red,owner-red}/`.
+
+**Correction and verification.** Only the fresh parent now uses
+`realpath(await mkdtemp(...))`; the assertion remains before registration and
+source derivation. Production workspace/Git code and caller paths are
+unchanged. Tree `9e2438f1cb28798ce63e84e150601b00545d2587` passed Windows 5/5,
+zero skips. Its report/receipt/manifest are 2,287/601/9,241 bytes with SHA-256
+`590b64a536d0ea972a35ba14113f5dc2f6032a45b4481a89c80ba9e9dcdedbbe`,
+`f05d7fd9674e0c2cdfe99c8d4a91d9b775f38225bfb1bd30b518fc3c87acf829`,
+and `f53614222d855bf98614c9ae4cae5c9645430cd8fe918d2a29139bcb84174e29`.
+Linux ext4 PASS had four passes and the existing explicit Windows-only
+`it.runIf(process.platform === "win32")` junction test skipped. Its
+report/receipt/manifest are 2,267/601/9,205 bytes with SHA-256
+`a5023c4704220c0e9685ee4bce95f9715cb6f16af23222dde723a261f052dfdd`,
+`b293dcae208a0b4acf6738d76adc948492878f0c17b57d4dec57da13cee12624`,
+and `563685d7b8ae9ac0f21596c28ce1a1e7be7c23784989b738871a97e858cc6401`.
+Bindings match; no test/platform guard changed and no decision record is
+needed.
+
+A post-verification formatting attempt selected system Node `25.9.0`; pnpm
+stopped at its noninteractive module-reconciliation guard before formatting.
+Direct Prettier then confirmed all three commit paths were already formatted;
+the qualifying evidence above remains exclusively pinned Node `24.18.0`.
+
+Next is `workspace-cleanup.test.ts` at `1786995278951`: 0/6. Its separate
+`fixture()` retains raw `milestone-loop-cleanup-unit-*` before workspace/Git
+inspection. It remains open rather than bundled.
+
+**Commit.** Assigned by the cohesive WP5x commit containing this entry; local
+and unpushed.
+
+**Known gaps.** Later workspace/Git/retention/artifact/verification-clone
+clusters, POSIX `setsid`, CAL-1, hidden validation, product breadth, readiness,
+and human verification remain open. No completion claim is made.
+
 ## 2026-08-22 — WP5w canonical Windows target-integration fixture root
 
 **Objective and cause.** From exact clean WP5v, reproduce the next retained

@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import {
   mkdir,
   mkdtemp,
+  realpath,
   rename,
   rm,
   symlink,
@@ -39,7 +40,10 @@ function git(repository: string, ...args: string[]): string {
 }
 
 async function fixture() {
-  const parent = await mkdtemp(join(tmpdir(), "milestone-loop-workspace-"));
+  const parent = await realpath(
+    await mkdtemp(join(tmpdir(), "milestone-loop-workspace-")),
+  );
+  expect(await realpath(parent)).toBe(parent);
   temporaryDirectories.push(parent);
   const repositoryRoot = join(parent, "source");
   await mkdir(repositoryRoot);
