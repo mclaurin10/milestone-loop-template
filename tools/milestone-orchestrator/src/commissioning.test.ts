@@ -456,34 +456,32 @@ describe("deterministic repository commissioning", () => {
   );
 
   it("rejects missing and unrelated commissioning bases", async () => {
-    const missing = await repositoryFixture();
-    await mutateInput(missing, (input) => {
+    const fixture = await repositoryFixture();
+    const unrelatedCommit = git(
+      fixture.root,
+      "commit-tree",
+      git(fixture.root, "rev-parse", "HEAD^{tree}"),
+      "-m",
+      "unrelated base",
+    );
+    await mutateInput(fixture, (input) => {
       (input["commissioning"] as Record<string, unknown>)["baseCommit"] =
         "f".repeat(40);
     });
     await expect(
       commissionRepository({
-        repositoryRoot: missing.root,
-        inputPath: missing.inputPath,
+        repositoryRoot: fixture.root,
+        inputPath: fixture.inputPath,
       }),
     ).rejects.toThrow(/missing|exact commit/);
-
-    const unrelated = await repositoryFixture();
-    const unrelatedCommit = git(
-      unrelated.root,
-      "commit-tree",
-      git(unrelated.root, "rev-parse", "HEAD^{tree}"),
-      "-m",
-      "unrelated base",
-    );
-    await mutateInput(unrelated, (input) => {
+    await mutateInput(fixture, (input) => {
       (input["commissioning"] as Record<string, unknown>)["baseCommit"] =
         unrelatedCommit;
     });
     await expect(
       commissionRepository({
-        repositoryRoot: unrelated.root,
-        inputPath: unrelated.inputPath,
+        repositoryRoot: fixture.root,
+        inputPath: fixture.inputPath,
       }),
     ).rejects.toThrow(/not an ancestor/);
   });

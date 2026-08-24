@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
 import { lstat, readFile, realpath } from "node:fs/promises";
-import { relative, resolve } from "node:path";
+import { dirname, relative, resolve } from "node:path";
 
 import {
   candidateIdentitiesEqual,
@@ -37,12 +37,16 @@ export const CANDIDATE_PREPARE_FAULT_POINTS = [
   "after-intent-persisted",
   "after-worker-invocation-started-state",
   "after-worker-thread-recorded-state",
+  "after-worker-gateway-return",
   "after-worker-completed-state",
+  "before-worker-evidence-publish",
   "after-worker-evidence-artifact",
   "after-worker-evidence-recorded-state",
+  "after-checkpoint-staging",
   "after-checkpoint-prepared-state",
   "after-checkpoint-commit",
   "after-checkpoint-committed-state",
+  "before-checkpoint-evidence-publish",
   "after-checkpoint-artifact",
   "after-checkpoint-recorded-state",
   "after-completion-state",
@@ -57,7 +61,23 @@ export interface CandidatePrepareHooks {
   ) => void | Promise<void>;
 }
 
+export type CandidatePreparePreflightClassification =
+  "evidence-path-unsafe" | "unowned-evidence";
+
+export class CandidatePreparePreflightBlockedError extends Error {
+  constructor(
+    readonly classification: CandidatePreparePreflightClassification,
+    message: string,
+    readonly preservedPaths: readonly string[],
+  ) {
+    super(message);
+    this.name = "CandidatePreparePreflightBlockedError";
+  }
+}
+
 export type CandidatePrepareRecoveryClassification =
+  | "worker-resume-ready"
+  | "worker-evidence-missing"
   | "worker-evidence-ready"
   | "checkpoint-plan-ready"
   | "checkpoint-commit-ready"
@@ -72,6 +92,8 @@ export interface CandidatePrepareRecoveryInspection {
   readonly classification: CandidatePrepareRecoveryClassification;
   readonly disposition: "automatic" | "manual";
   readonly nextSafeAction:
+    | "resume-worker"
+    | "materialize-worker-evidence"
     | "record-worker-evidence"
     | "prepare-checkpoint"
     | "resume-checkpoint-commit"
@@ -136,6 +158,31 @@ export function candidatePrepareArtifactSha256(value: unknown): string {
   return sha256(candidatePrepareArtifactBytes(value));
 }
 
+export function candidatePrepareWorkerTurnArtifact(
+  operation: CandidatePrepareOperation,
+): unknown {
+  const result = operation.workerResult;
+  if (!result || result.finalResponse === null)
+    throw new Error(
+      "Candidate Worker evidence requires a canonical Worker response.",
+    );
+  return {
+    schemaVersion: "1.0.0",
+    attempt: operation.attempt,
+    threadId: result.threadId,
+    role: operation.workerRole,
+    requestedModel: operation.workerAssignment.model,
+    requestedReasoningEffort: operation.workerAssignment.reasoningEffort,
+    escalationReason:
+      operation.workerRole === "feature-worker-escalated"
+        ? (operation.workerInvocation?.escalationReason ?? null)
+        : null,
+    usage: result.usage,
+    itemCount: result.itemCount,
+    finalResponse: result.finalResponse,
+  };
+}
+
 export function candidatePrepareProposalContractSha256(
   milestone: MilestoneRecord,
 ): string {
@@ -179,6 +226,15 @@ export function candidatePrepareThreadLineageSha256(
   return candidatePrepareContextSha256(milestone.workerThreadLineage);
 }
 
+const candidateWorkspaceConfigKeys = [
+  "milestone-loop.source-root",
+  "milestone-loop.base-commit",
+  "milestone-loop.branch",
+  "milestone-loop.operation-id",
+  "core.autocrlf",
+  "core.eol",
+] as const;
+
 function localConfig(repository: string, key: string): string | null {
   const result = git(repository, ["config", "--local", "--get", key], true);
   if (result.status === 1 && !result.stdout) return null;
@@ -187,7 +243,39 @@ function localConfig(repository: string, key: string): string | null {
   return result.stdout;
 }
 
-export function planCandidatePrepareOperation(input: {
+function localCandidateWorkspaceConfig(
+  repository: string,
+): ReadonlyMap<string, string> {
+  const pattern = `^(${candidateWorkspaceConfigKeys
+    .map((key) => key.replaceAll(".", "\\."))
+    .join("|")})$`;
+  const result = git(
+    repository,
+    ["config", "--local", "--get-regexp", pattern],
+    true,
+  );
+  if (result.status !== 0 && !(result.status === 1 && !result.stdout))
+    throw new Error("Cannot inspect local candidate workspace configuration.");
+  const values = new Map<string, string[]>();
+  for (const line of result.stdout.split(/\r?\n/u)) {
+    if (!line) continue;
+    const separator = line.search(/\s/u);
+    if (separator <= 0)
+      throw new Error("Candidate workspace configuration is malformed.");
+    const key = line.slice(0, separator).toLowerCase();
+    const value = line.slice(separator + 1);
+    values.set(key, [...(values.get(key) ?? []), value]);
+  }
+  if (candidateWorkspaceConfigKeys.some((key) => values.get(key)?.length !== 1))
+    throw new Error(
+      "Candidate workspace configuration markers are missing or duplicated.",
+    );
+  return new Map(
+    candidateWorkspaceConfigKeys.map((key) => [key, values.get(key)![0]!]),
+  );
+}
+
+export async function planCandidatePrepareOperation(input: {
   readonly operationId: string;
   readonly inputStateGeneration: string;
   readonly inputStateRevision: number;
@@ -203,7 +291,7 @@ export function planCandidatePrepareOperation(input: {
   readonly startingCommits: readonly string[];
   readonly workerAssignment: CandidatePrepareOperation["workerAssignment"];
   readonly now: string;
-}): CandidatePrepareOperation {
+}): Promise<CandidatePrepareOperation> {
   const { state, milestone } = input;
   const workspace = milestone.workspace;
   if (!workspace || !state.run.id)
@@ -238,6 +326,36 @@ export function planCandidatePrepareOperation(input: {
       resolve(attemptRoot, "controller-checkpoint.json")
   )
     throw new Error("Candidate-prepare evidence paths are non-canonical.");
+  try {
+    await safeDirectoryChainAllowMissing(repositoryRoot, attemptRoot);
+  } catch (error) {
+    throw new CandidatePreparePreflightBlockedError(
+      "evidence-path-unsafe",
+      error instanceof Error ? error.message : String(error),
+      [attemptRoot, workspacePath],
+    );
+  }
+  for (const path of [
+    input.workerEventsPath,
+    input.workerTurnPath,
+    input.checkpointArtifactPath,
+  ]) {
+    try {
+      await assertEvidencePath(repositoryRoot, path);
+    } catch (error) {
+      throw new CandidatePreparePreflightBlockedError(
+        "evidence-path-unsafe",
+        error instanceof Error ? error.message : String(error),
+        [resolve(path), workspacePath],
+      );
+    }
+    if (existsSync(path))
+      throw new CandidatePreparePreflightBlockedError(
+        "unowned-evidence",
+        `Candidate-prepare evidence path already exists without an intent: ${resolve(path)}.`,
+        [resolve(path), workspacePath],
+      );
+  }
   const workspaceCreateOperationId = localConfig(
     workspacePath,
     "milestone-loop.operation-id",
@@ -336,6 +454,87 @@ async function safeDirectoryChain(root: string, target: string): Promise<void> {
   }
 }
 
+async function safeDirectoryChainAllowMissing(
+  root: string,
+  target: string,
+): Promise<void> {
+  const lexicalRoot = resolve(root);
+  const lexicalTarget = resolve(target);
+  if (!strictlyContained(lexicalRoot, lexicalTarget))
+    throw new Error("Candidate evidence path escapes the repository.");
+  const rootMetadata = await lstat(lexicalRoot);
+  if (!rootMetadata.isDirectory() || rootMetadata.isSymbolicLink())
+    throw new Error("Candidate evidence root is linked or is not a directory.");
+  const realRoot = await realpath(lexicalRoot);
+  if (!samePath(realRoot, lexicalRoot))
+    throw new Error("Candidate evidence root resolves through substitution.");
+  let current = lexicalRoot;
+  for (const segment of relative(lexicalRoot, lexicalTarget)
+    .split(/[\\/]+/u)
+    .filter(Boolean)) {
+    current = resolve(current, segment);
+    let metadata;
+    try {
+      metadata = await lstat(current);
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        "code" in error &&
+        (error as NodeJS.ErrnoException).code === "ENOENT"
+      )
+        return;
+      throw error;
+    }
+    if (!metadata.isDirectory() || metadata.isSymbolicLink())
+      throw new Error(
+        "Candidate evidence directory chain is linked or is not a directory.",
+      );
+    const resolved = await realpath(current);
+    if (!samePath(resolved, current) || !strictlyContained(realRoot, resolved))
+      throw new Error(
+        "Candidate evidence directory resolves outside its root.",
+      );
+  }
+}
+
+async function assertEvidencePath(root: string, target: string): Promise<void> {
+  const lexicalRoot = resolve(root);
+  const lexicalTarget = resolve(target);
+  if (!strictlyContained(lexicalRoot, lexicalTarget))
+    throw new Error("Candidate evidence path escapes the repository.");
+  await safeDirectoryChainAllowMissing(lexicalRoot, dirname(lexicalTarget));
+  if (!existsSync(lexicalTarget)) return;
+  const metadata = await lstat(lexicalTarget);
+  if (!metadata.isFile() || metadata.isSymbolicLink())
+    throw new Error("Candidate evidence path is linked or is not a file.");
+  const resolved = await realpath(lexicalTarget);
+  if (
+    !samePath(resolved, lexicalTarget) ||
+    !strictlyContained(lexicalRoot, resolved)
+  )
+    throw new Error("Candidate evidence path resolves outside the repository.");
+}
+
+export async function assertCandidatePrepareEvidencePaths(
+  operation: CandidatePrepareOperation,
+): Promise<void> {
+  const attemptRoot = dirname(operation.workerTurnPath);
+  if (
+    operation.workerEventsPath !==
+      resolve(attemptRoot, "worker-events.jsonl") ||
+    operation.workerTurnPath !== resolve(attemptRoot, "worker-turn.json") ||
+    operation.checkpointArtifactPath !==
+      resolve(attemptRoot, "controller-checkpoint.json")
+  )
+    throw new Error("Candidate evidence paths are non-canonical.");
+  for (const path of [
+    operation.workerEventsPath,
+    operation.workerTurnPath,
+    operation.checkpointArtifactPath,
+  ])
+    await assertEvidencePath(operation.repositoryRoot, path);
+}
+
 async function assertWorkspaceIdentity(
   operation: CandidatePrepareOperation,
 ): Promise<void> {
@@ -350,37 +549,38 @@ async function assertWorkspaceIdentity(
     !strictlyContained(operation.workspacePath, gitReal)
   )
     throw new Error("Workspace Git metadata resolves outside the workspace.");
-  const top = git(operation.workspacePath, [
+  const identity = git(operation.workspacePath, [
     "rev-parse",
     "--show-toplevel",
-  ]).stdout;
-  const gitDir = git(operation.workspacePath, [
-    "rev-parse",
     "--git-dir",
-  ]).stdout;
-  const commonDir = git(operation.workspacePath, [
-    "rev-parse",
     "--git-common-dir",
-  ]).stdout;
+    "--abbrev-ref",
+    "HEAD",
+  ]).stdout.split(/\r?\n/u);
+  if (identity.length !== 4)
+    throw new Error("Workspace Git identity output is malformed.");
+  const [top, gitDir, commonDir, branch] = identity;
   if (
+    !top ||
+    !gitDir ||
+    !commonDir ||
+    !branch ||
     !samePath(top, operation.workspacePath) ||
     !samePath(resolve(operation.workspacePath, gitDir), gitDirectory) ||
     !samePath(resolve(operation.workspacePath, commonDir), gitDirectory)
   )
     throw new Error("Workspace does not own one standalone Git directory.");
+  const config = localCandidateWorkspaceConfig(operation.workspacePath);
   if (
-    git(operation.workspacePath, ["branch", "--show-current"]).stdout !==
-      operation.workspaceBranch ||
-    localConfig(operation.workspacePath, "milestone-loop.source-root") !==
-      operation.repositoryRoot ||
-    localConfig(operation.workspacePath, "milestone-loop.base-commit") !==
+    branch !== operation.workspaceBranch ||
+    config.get("milestone-loop.source-root") !== operation.repositoryRoot ||
+    config.get("milestone-loop.base-commit") !==
       operation.workspaceBaseCommit ||
-    localConfig(operation.workspacePath, "milestone-loop.branch") !==
-      operation.workspaceBranch ||
-    localConfig(operation.workspacePath, "milestone-loop.operation-id") !==
+    config.get("milestone-loop.branch") !== operation.workspaceBranch ||
+    config.get("milestone-loop.operation-id") !==
       operation.workspaceCreateOperationId ||
-    localConfig(operation.workspacePath, "core.autocrlf") !== "false" ||
-    localConfig(operation.workspacePath, "core.eol") !== "lf"
+    config.get("core.autocrlf") !== "false" ||
+    config.get("core.eol") !== "lf"
   )
     throw new Error("Workspace controller identity markers are inconsistent.");
   if (git(operation.workspacePath, ["remote"]).stdout !== "")
@@ -393,12 +593,7 @@ async function assertWorkspaceIdentity(
     "rebase-merge",
     "rebase-apply",
   ]) {
-    const path = git(operation.workspacePath, [
-      "rev-parse",
-      "--git-path",
-      marker,
-    ]).stdout;
-    if (existsSync(resolve(operation.workspacePath, path)))
+    if (existsSync(resolve(gitDirectory, marker)))
       throw new Error(`Workspace Git operation ${marker} is active.`);
   }
 }
@@ -408,6 +603,7 @@ function blocked(
   classification: CandidatePrepareBlockedClassification,
   message: string,
   observedHead: string | null,
+  preservedPaths: readonly string[] = [operation.workspacePath],
 ): CandidatePrepareRecoveryInspection {
   return {
     operationId: operation.id,
@@ -416,7 +612,7 @@ function blocked(
     nextSafeAction: "manual-reconciliation-required",
     message,
     observedHead,
-    preservedPaths: [operation.workspacePath],
+    preservedPaths: [...new Set(preservedPaths)],
     checkpointResult: null,
   };
 }
@@ -437,12 +633,20 @@ function automatic(
   };
 }
 
-async function artifactHash(path: string): Promise<string | null> {
+async function artifactHash(
+  operation: CandidatePrepareOperation,
+  path: string,
+): Promise<string | null> {
+  await assertEvidencePath(operation.repositoryRoot, path);
   if (!existsSync(path)) return null;
   return sha256(await readFile(path));
 }
 
-async function workerEventThreadIds(path: string): Promise<readonly string[]> {
+async function workerEventThreadIds(
+  operation: CandidatePrepareOperation,
+  path: string,
+): Promise<readonly string[]> {
+  await assertEvidencePath(operation.repositoryRoot, path);
   if (!existsSync(path)) return [];
   const ids: string[] = [];
   for (const line of (await readFile(path, "utf8")).split(/\r?\n/u)) {
@@ -563,6 +767,7 @@ export async function prepareCandidateCheckpointPlan(input: {
 export async function inspectCandidatePrepareOperation(input: {
   readonly operation: CandidatePrepareOperation;
   readonly milestone: MilestoneRecord;
+  readonly workerPrompt?: string;
   readonly protectedPatterns: readonly string[];
   readonly protectedFiles: readonly ProtectedFileRecord[];
 }): Promise<CandidatePrepareRecoveryInspection> {
@@ -578,13 +783,33 @@ export async function inspectCandidatePrepareOperation(input: {
     await assertWorkspaceIdentity(operation);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    const code =
+      error instanceof Error && "code" in error
+        ? (error as NodeJS.ErrnoException).code
+        : undefined;
     return blocked(
       operation,
-      /escapes|linked|substituted|outside/u.test(message)
+      code === "ENOENT" || /escapes|linked|substituted|outside/u.test(message)
         ? "workspace-path-unsafe"
         : "workspace-identity-drift",
       message,
       null,
+    );
+  }
+  try {
+    await assertCandidatePrepareEvidencePaths(operation);
+  } catch (error) {
+    return blocked(
+      operation,
+      "evidence-path-unsafe",
+      error instanceof Error ? error.message : String(error),
+      null,
+      [
+        operation.workspacePath,
+        operation.workerEventsPath,
+        operation.workerTurnPath,
+        operation.checkpointArtifactPath,
+      ],
     );
   }
   let attempt;
@@ -609,6 +834,8 @@ export async function inspectCandidatePrepareOperation(input: {
       operation.protectedFilesSha256 ||
     candidatePrepareProtectedPatternsSha256(input.protectedPatterns) !==
       operation.protectedPatternsSha256 ||
+    (input.workerPrompt !== undefined &&
+      sha256(input.workerPrompt) !== operation.promptSha256) ||
     candidatePrepareWorkerPolicySha256(milestone) !==
       operation.workerPolicySha256 ||
     candidatePrepareRetryContextSha256(milestone) !==
@@ -701,8 +928,35 @@ export async function inspectCandidatePrepareOperation(input: {
       observedHead,
     );
 
+  if (operation.phase === "intent-persisted") {
+    const observedCandidate = candidateIdentityFrom(
+      operation.workspaceBaseCommit,
+      attempt,
+    );
+    if (
+      candidateIdentitiesEqual(
+        operation.startingCandidate,
+        observedCandidate,
+      ) &&
+      canonicalJson(operation.startingCommits) ===
+        canonicalJson(attempt.commits)
+    )
+      return automatic(operation, {
+        classification: "worker-resume-ready",
+        nextSafeAction: "resume-worker",
+        message:
+          "Exact intent-bound candidate is unchanged and the Worker gateway has not been entered.",
+        observedHead,
+      });
+    return blocked(
+      operation,
+      "candidate-drift",
+      "Candidate changed after intent publication but before authorized Worker launch.",
+      observedHead,
+    );
+  }
+
   if (
-    operation.phase === "intent-persisted" ||
     operation.phase === "worker-invocation-started" ||
     operation.phase === "worker-thread-recorded"
   )
@@ -722,6 +976,7 @@ export async function inspectCandidatePrepareOperation(input: {
     );
   try {
     const eventThreadIds = await workerEventThreadIds(
+      operation,
       operation.workerEventsPath,
     );
     if (
@@ -734,6 +989,7 @@ export async function inspectCandidatePrepareOperation(input: {
         "worker-context-drift",
         "Worker event evidence names a thread outside the canonical invocation.",
         observedHead,
+        [operation.workspacePath, operation.workerEventsPath],
       );
   } catch (error) {
     return blocked(
@@ -741,27 +997,58 @@ export async function inspectCandidatePrepareOperation(input: {
       "worker-evidence-conflict",
       error instanceof Error ? error.message : String(error),
       observedHead,
+      [operation.workspacePath, operation.workerEventsPath],
     );
   }
-  const workerArtifactHash = await artifactHash(operation.workerTurnPath);
+  let workerArtifactHash: string | null;
+  try {
+    workerArtifactHash = await artifactHash(
+      operation,
+      operation.workerTurnPath,
+    );
+  } catch (error) {
+    return blocked(
+      operation,
+      "worker-evidence-conflict",
+      error instanceof Error ? error.message : String(error),
+      observedHead,
+      [operation.workspacePath, operation.workerTurnPath],
+    );
+  }
   if (operation.phase === "worker-completed") {
+    if (operation.workerResult.finalResponse === null)
+      return blocked(
+        operation,
+        "legacy-worker-evidence-unrecoverable",
+        "Legacy canonical Worker completion lacks the response bytes required to reproduce derived evidence.",
+        observedHead,
+        [operation.workspacePath, operation.workerTurnPath],
+      );
+    if (workerArtifactHash === null)
+      return automatic(operation, {
+        classification: "worker-evidence-missing",
+        nextSafeAction: "materialize-worker-evidence",
+        message:
+          "Canonical Worker completion is exact; derived Worker evidence may be materialized.",
+        observedHead,
+      });
     if (workerArtifactHash === operation.workerResult.workerTurnSha256)
       return automatic(operation, {
-        classification: "checkpoint-plan-ready",
-        nextSafeAction: "prepare-checkpoint",
-        message:
-          "Exact derived Worker evidence and canonical Worker completion are ready for checkpoint planning.",
+        classification: "worker-evidence-ready",
+        nextSafeAction: "record-worker-evidence",
+        message: "Exact derived Worker evidence is ready to record.",
         observedHead,
       });
     return blocked(
       operation,
-      workerArtifactHash === null
-        ? "worker-outcome-ambiguous"
-        : "worker-evidence-conflict",
-      workerArtifactHash === null
-        ? "Durable Worker completion exists but its non-authoritative turn artifact is missing."
-        : "Worker turn artifact does not match the intent-bound hash.",
+      "worker-evidence-conflict",
+      "Worker turn artifact does not match the intent-bound hash.",
       observedHead,
+      [
+        operation.workspacePath,
+        operation.workerEventsPath,
+        operation.workerTurnPath,
+      ],
     );
   }
   if (workerArtifactHash !== operation.workerResult.workerTurnSha256)
@@ -770,6 +1057,11 @@ export async function inspectCandidatePrepareOperation(input: {
       "worker-evidence-conflict",
       "Worker turn artifact is missing or conflicts with canonical state.",
       observedHead,
+      [
+        operation.workspacePath,
+        operation.workerEventsPath,
+        operation.workerTurnPath,
+      ],
     );
   if (operation.phase === "worker-evidence-recorded")
     return automatic(operation, {
@@ -914,8 +1206,23 @@ export async function inspectCandidatePrepareOperation(input: {
       "checkpoint-artifact-conflict",
       "Checkpoint result lacks an expected derived-artifact hash.",
       observedHead,
+      [operation.workspacePath, operation.checkpointArtifactPath],
     );
-  const checkpointHash = await artifactHash(operation.checkpointArtifactPath);
+  let checkpointHash: string | null;
+  try {
+    checkpointHash = await artifactHash(
+      operation,
+      operation.checkpointArtifactPath,
+    );
+  } catch (error) {
+    return blocked(
+      operation,
+      "checkpoint-artifact-conflict",
+      error instanceof Error ? error.message : String(error),
+      observedHead,
+      [operation.workspacePath, operation.checkpointArtifactPath],
+    );
+  }
   if (operation.phase === "checkpoint-committed") {
     if (checkpointHash === null)
       return automatic(operation, {
@@ -937,6 +1244,7 @@ export async function inspectCandidatePrepareOperation(input: {
       "checkpoint-artifact-conflict",
       "Checkpoint artifact conflicts with canonical candidate state.",
       observedHead,
+      [operation.workspacePath, operation.checkpointArtifactPath],
     );
   }
   if (
@@ -955,5 +1263,6 @@ export async function inspectCandidatePrepareOperation(input: {
     "checkpoint-artifact-conflict",
     "Recorded checkpoint evidence is missing or conflicts with canonical state.",
     observedHead,
+    [operation.workspacePath, operation.checkpointArtifactPath],
   );
 }

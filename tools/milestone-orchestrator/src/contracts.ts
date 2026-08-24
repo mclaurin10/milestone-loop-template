@@ -1,7 +1,7 @@
 export const LEGACY_MILESTONE_SCHEMA_VERSION = "1.0.0" as const;
 export const PREVIOUS_MILESTONE_SCHEMA_VERSION = "1.1.0" as const;
 export const MILESTONE_SCHEMA_VERSION = "1.2.0" as const;
-export const STATE_SCHEMA_VERSION = "1.10.0" as const;
+export const STATE_SCHEMA_VERSION = "1.11.0" as const;
 export const CONFIG_SCHEMA_VERSION = "1.6.0" as const;
 export const REVIEW_LEGACY_SCHEMA_VERSION = "1.0.0" as const;
 export const REVIEW_SCHEMA_VERSION = "1.1.0" as const;
@@ -926,6 +926,8 @@ export type CandidatePrepareBlockedClassification =
   | "checkpoint-parent-drift"
   | "checkpoint-tree-drift"
   | "diff-policy-violation"
+  | "evidence-path-unsafe"
+  | "legacy-worker-evidence-unrecoverable"
   | "protected-file-drift"
   | "unexpected-commit"
   | "worker-context-drift"
@@ -947,6 +949,7 @@ export interface CandidatePrepareWorkerResult {
   readonly threadId: string;
   readonly usage: UsageRecord | null;
   readonly itemCount: number;
+  readonly finalResponse: string | null;
   readonly finalResponseSha256: string;
   readonly workerTurnSha256: string;
   readonly finishedAt: string;

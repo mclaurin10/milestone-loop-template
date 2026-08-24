@@ -3,6 +3,222 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-24 — WP2 candidate-prepare Session 2 closed
+
+**Outcome.** The omitted `candidate-prepare` boundary is behaviorally complete
+and fully verified. State `1.11.0` publishes exact pre-launch intent, resumes
+only the unchanged pre-launch window, preserves three post-launch ambiguous
+windows, stores reproducible canonical Worker response bytes, regenerates only
+derived evidence, validates exact paths/Git/policy/Worker/checkpoint identity,
+uses one semantic completion reducer, and serializes recovery through the
+controller lease and state CAS. Runtime/shipped schema, migration, immutable-
+field fencing, earlier-operation compatibility, and byte-preserving status/
+Doctor/inspection owners are green.
+
+**Timeout root cause and correction.** Broad unit final-2 timed out at its
+unchanged 3,600,000 ms evidence-child bound. The completed final-1 report and a
+Git Trace2 diagnostic identified 368 Git processes in one uninterrupted
+candidate and five 17-process standalone-identity sweeps. The identity checker
+now preserves every path, standalone Git, branch, config, remote, and active-
+operation assertion using one combined rev-parse, one exact six-key local-
+config query with duplicate detection, one remote query, and direct markers
+under the already proven `.git` directory. No timeout, classification, test,
+or gate changed. Two slower harness experiments—bounded-parallel fixture
+provisioning and a cloned seed repository—were reverted before qualifying
+evidence.
+
+**Qualifying evidence.** The exact-tree dedicated fault receipt at
+`artifacts/manual/candidate-prepare-session2-fault-matrix-final-5/` passes 9/9
+tests with zero skips/todos; its 16-row Node `v24.18.0` matrix is 13 automatic
+convergences and 3 preserved ambiguous blocks. Receipt/report/matrix SHA-256
+are
+`0b09967f47b0f2c09fd97e834cec57818202c881f96fafb9d8d422007e29a2e7`,
+`1c4342c8225d7e68009047a038fbc9d7b12e3d53d104696133db777d7d5e64f8`,
+and
+`3aef037641d2a4a9fa51d53903914872a1a6198d8bfdb4ac661c4db2fc71895c`.
+The exact 23-owner receipt at
+`artifacts/manual/candidate-prepare-session2-focused-closure-final-4/` passes
+56/56 suites and 203/203 tests with zero skips/todos; receipt/report SHA-256 are
+`fec242a211b5d305b379acda662c4f5ab11147625e3621f28aed3a1f203027d9`
+and
+`669852c4070eb48af598845b479db8133a8b9c3c53e2b571b5ec1f543c29b140`.
+
+Pinned final-tree `pnpm test:unit` at
+`artifacts/manual/candidate-prepare-session2-broad-unit-final-3/` passes
+186/186 suites and 635/635 tests with zero failures/skips/pending/todo in
+3,457,613 ms; receipt/report SHA-256 are
+`c469776611ad60d1cca228f39cf60159618f32d1caca8cdcdc2b92aebdcf68b8`
+and
+`13b46bdecc5efb78ebe537bfa760f672e4aa045629fe46e60f8dbff8ebaa335d`.
+Pinned final-tree `pnpm test:orchestrator` at
+`artifacts/manual/candidate-prepare-session2-broad-orchestrator-final-4/`
+passes 184/184 suites and 619/619 tests with zero failures/skips/pending/todo
+in 3,373,893 ms; receipt/report SHA-256 are
+`484bcc81be31df27f478a43adbaf9428d99e95aa42e4885baa7567ee1cdbb5b8`
+and
+`8de7d2f485bf80d966df99c2fd6ea695d1728a621f4d31b6d32f36df2ef676d3`.
+`pnpm loop:demo-safety` passes 6/6 scenarios; its retained artifact SHA-256 is
+`e141e76d7de88d2895e56a8800252c2389bbe8c111bb8c626de20cbdc5b40ce3`.
+Final post-document `pnpm typecheck`, `pnpm lint`, and `pnpm format:check`
+PASS receipts have SHA-256
+`5ba59474a2ec71d943a9ae12111a7c0abc6cc01abcb21b10c9b170a716e9d1f1`,
+`21b250e8a5a0921571bdc0df6dad934783db26d137ab78a423534bca7b58ddbc`,
+and
+`de65188c06f01e578cf371152fbbc84454a2c81b0d150ba9668ef7e14f3a3f0a`;
+`git diff --check` passes.
+
+**Integrity and boundary.** Frozen lock hashes equal baseline/active values,
+CAL-1 remains `open_not_started`, state and shipped schema are `1.11.0`, and
+the untracked human plan remains
+`53ea98fb1cb880163a02d3b1d9365963e3fe891025ae3630f00bd4c9232293b1`.
+No source no-argument verify, template proof, hidden validation, CAL-1, WP6,
+push, or product/readiness work occurred. The exact staged set contained the 22
+modified scoped paths plus the new resume-worker owner, no protected path, no
+ignored evidence, and not the human plan. Commit: the cohesive local commit
+containing this entry; the final handoff names its resulting identity.
+
+## 2026-08-24 — WP2 candidate-prepare Session 2 broad-unit timeout checkpoint
+
+**Safe-boundary outcome.** The final-tree pinned `pnpm test:unit` rerun was
+allowed to finish without interruption. It exited non-passing when the
+unchanged 3,600,000 ms evidence-child bound expired. Its retained ERROR
+manifest at
+`artifacts/manual/candidate-prepare-session2-broad-unit-final-2/manifest.json`
+spans 3,602,512 ms and has SHA-256
+`3d006e241b5745c0d54842e6b31a5211beb4ab754722453e4411eefbe3b3ef1d`;
+no test report or PASS receipt exists. The retained candidate matrix has
+SHA-256
+`dc4750752bb2a5e47537b5c249b046d90dc945653a4f0a5e1edf21661d9762c3`.
+This timeout is not credited as passing and its partial output is not used to
+infer test totals.
+
+**Changes and prior broad evidence.** The preceding unit attempt at
+`artifacts/manual/candidate-prepare-session2-broad-unit-final-1/` completed in
+3,532,934 ms but passed only 634/635 tests (184/186 suite entries, 1 failed
+test, 0 skipped/pending/todo): the sole failure was a 5,391 ms commissioning
+fixture test against the unchanged 5,000 ms bound. That owner now reuses one
+repository fixture for its sequential missing/unrelated-base assertions;
+focused evidence at
+`artifacts/manual/candidate-prepare-session2-commissioning-final-2/` passes
+13/13 tests with zero skips and the selected test takes 3,198.799 ms. Two
+formerly POSIX-skipped process-tree tests now execute real Windows `taskkill`
+tree behavior; focused evidence at
+`artifacts/manual/candidate-prepare-session2-process-supervisor-final-1/`
+passes 21/21 with zero skips. Before the commissioning edit, pinned
+`pnpm test:orchestrator` at
+`artifacts/manual/candidate-prepare-session2-broad-orchestrator-final-3/`
+passed 184/184 suites and 619/619 tests with zero skips in 3,299,024 ms. The
+earlier final-2 orchestrator receipt passed 617/619 with two skips and was
+correctly rejected as non-qualifying.
+
+**Candidate evidence and integrity.** The fresh receipt-owning baseline at
+`artifacts/manual/candidate-prepare-session2-fault-matrix-final-3/` passes 9/9
+tests in 910,272 ms with zero skips/todos. Its independently inspected 16-row
+matrix records Node `v24.18.0`, 13 automatic convergences, and 3 preserved
+ambiguous blocks; matrix/receipt/report SHA-256 values are
+`f14bc61c521690ae902020cbd286c2f1ef41c14acd0baa45a167979949d4500c`,
+`ac9bfc211743299c4d2327395a6120b1fff244fcb885927c9485f32d7ef70207`,
+and
+`2165e47d660dd234439e74bbf1f0132f4a57fb730e0cb989983d4fb1425ede9e`.
+The protected human plan remains byte-identical at SHA-256
+`53ea98fb1cb880163a02d3b1d9365963e3fe891025ae3630f00bd4c9232293b1`.
+
+**Diagnosis and next action.** No focused semantic failure is known. The
+remaining blocker is owner-level runtime attribution: after substantive
+Windows supervisor coverage, the serial unit aggregate no longer completed
+within the existing one-hour evidence bound. First identify the last completed
+and highest-cost removable fixture/teardown boundary, beginning with the
+15-minute candidate hard-loss owner and the changed supervisor/commissioning
+owners; add a focused performance regression and correct the root cause without
+changing tests, behavior, or timeouts. Then rerun both broad commands and all
+final static/demo/integrity checks. Commit: none. Candidate-prepare and WP2
+remain open; no partial commit, push, WP6, CAL-1, hidden validation,
+product/readiness work, source no-argument verify, or template proof occurred.
+
+## 2026-08-24 — WP2 candidate-prepare Session 2 verification checkpoint
+
+**Objective and current outcome.** Continue Session 1 sequentially and finish
+the omitted `candidate-prepare` recovery boundary without beginning WP6,
+CAL-1, hidden validation, product/readiness work, or unrelated cleanup. State
+`1.11.0` now retains canonical redacted Worker-response bytes, regenerates
+derived Worker/checkpoint evidence only from canonical authority, safely
+resumes only a pre-launch intent, blocks every ambiguous post-launch window,
+validates real contained workspace/evidence paths and full Git/policy/Worker
+context, fences immutable operation transitions, projects recovery read-only,
+and preserves legacy/unowned/conflicting state. The complete hard-loss,
+adversarial, repeated-resume, and synchronized two-contender owners are
+implemented. This is a verification checkpoint, not closure.
+
+**Performance root cause and correction.** The first broad orchestrator run
+at `artifacts/manual/candidate-prepare-session2-broad-orchestrator-final-1/`
+hit its unchanged 3,600,000 ms child bound and produced no report or PASS
+receipt; its manifest spans 1:18:35.858. A later candidate-only run at
+`artifacts/manual/candidate-prepare-session2-fault-matrix-parallel-final-1/`
+passed 7/9 and failed two unchanged 60-second cases. Git trace showed that
+every durable phase publication rewalked the complete immutable pending-
+operation generation lineage after canonical CAS, creating quadratic work.
+The state store now treats an exact transition-fenced successor that wins CAS
+as inductively lineage-validated in the same mutation-capable store; every
+fresh/mutation open still validates the complete chain. Candidate recovery
+also avoids redundant same-lease whole-worktree inspections between purely
+controller-owned transitions, while every restart, checkpoint preparation,
+and commit boundary retains full validation. Child crash execution is real and
+uses bounded batching rather than excessive parallel pressure. No timeout,
+test, gate, or success definition changed.
+
+**Passing focused evidence.** The pinned receipt command
+`node tools/run-tool-evidence.mjs invariant-vitest tools/milestone-orchestrator/src/candidate-prepare-baseline.test.ts --fileParallelism=false`
+passed 2/2 reported suites and 9/9 tests with zero failures, skips, pending
+tests, or todos at
+`artifacts/manual/candidate-prepare-session2-fault-matrix-final-2/`. Its
+manifest spans 15:18.984; receipt/report SHA-256 values are
+`0d2f061747e2056b35c57ea05d4505a5ea400c56ca699d591e3ff2d48bf993d8`
+and
+`e12cf3db4771fb9889211860a9691347abb49a3e6ea63366e2415894301de123`.
+The synchronized lease/CAS case is included. The separate standalone matrix
+output variable was omitted, so a fresh retained 16-row JSON remains the first
+unresolved evidence action.
+
+The exact 23-owner command is retained as `displayCommand` in
+`artifacts/manual/candidate-prepare-session2-focused-closure-final-3/manifest.json`.
+It passed 56/56 reported suites and 203/203 tests with zero failures, skips,
+pending tests, or todos. The manifest spans 24:06.836 and the report records
+1,435,719.655 ms of assertion time. Receipt/report SHA-256 values are
+`c8aa59afee3b15b01d42c60d985bbca284cc75badf56a3bdf4d4f6b626eec9ae`
+and
+`63850bdb790bcf0e6781a2cff2269638cab6d8db3ede90261236168406519b59`.
+It covers candidate/schema/store/status/Doctor/CLI plus candidate identity,
+lease, deterministic operations, reconciliation, path safety, lifecycle,
+cleanup, retention, and all four earlier operation-recovery kinds. Both
+receipts bind dirty iteration evidence to HEAD
+`069527e92744149f0041dcaa3c978cf773adace9` / tree
+`9972099e5f47a4246961dc81a01f869a4bf4662d` and ran only after pinned shell
+assertions for Node `v24.18.0` and pnpm `11.15.1`.
+
+**Other non-passing diagnostics.** The earlier focused owner receipt at
+`artifacts/manual/candidate-prepare-session2-focused-owners-final-1/` passed
+96/97 tests; its sole stale Doctor expectation was corrected. The first long-
+TEMP compatibility run at
+`artifacts/manual/candidate-prepare-session2-focused-compat-final-1/` passed
+92/115; all 23 failures were Windows fixture path-length setup defects, and
+the unchanged 115 tests passed under short unique TEMP at
+`artifacts/manual/candidate-prepare-session2-focused-compat-final-2/`. Two
+pre-fix filtered checkpoint diagnostics timed out at the unchanged 60-second
+test limit; after the lineage correction the same selected test passed in
+45,567 ms. Filtered diagnostics have eight expected filter skips and are not
+used as qualifying evidence.
+
+**Integrity, commit, and next gap.** The protected untracked human plan remains
+byte-identical at SHA-256
+`53ea98fb1cb880163a02d3b1d9365963e3fe891025ae3630f00bd4c9232293b1`.
+No source no-argument verify, template proof, hidden validation, CAL-1, WP6,
+push, or partial commit occurred. Commit: none; Session 2 and WP2 remain in
+progress. First rerun the full nine-test candidate owner with a current-tree
+`CANDIDATE_PREPARE_FAULT_MATRIX_OUTPUT`, inspect all 16 rows and the expected
+13 automatic/3 preserved split, then run fresh typecheck, lint, format,
+orchestrator, unit, demo-safety, and diff checks before any closure or cohesive
+commit.
+
 ## 2026-08-23 — WP2 candidate-prepare Session 1 core authority
 
 **Objective.** Establish executable red evidence for the omitted candidate

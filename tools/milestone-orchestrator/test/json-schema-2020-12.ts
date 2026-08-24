@@ -29,6 +29,9 @@ const SUPPORTED_KEYWORDS = new Set([
   "anyOf",
   "oneOf",
   "not",
+  "if",
+  "then",
+  "else",
   "required",
   "properties",
   "additionalProperties",
@@ -116,6 +119,14 @@ function assertSupportedSchema(value: unknown, path: string): void {
   }
   if (schema["not"] !== undefined)
     assertSupportedSchema(schema["not"], `${path}/not`);
+  for (const keyword of ["if", "then", "else"] as const)
+    if (schema[keyword] !== undefined)
+      assertSupportedSchema(schema[keyword], `${path}/${keyword}`);
+  if (
+    (schema["then"] !== undefined || schema["else"] !== undefined) &&
+    schema["if"] === undefined
+  )
+    throw new Error(`${path} uses then/else without if.`);
   if (
     (schema["minContains"] !== undefined ||
       schema["maxContains"] !== undefined) &&
@@ -320,6 +331,21 @@ function evaluate(
       }).length === 0;
     if (matched)
       errors.push(evaluationError(context, "not", "negated schema matched"));
+  }
+  if (schema["if"] !== undefined) {
+    const matched =
+      evaluate(schema["if"], instance, {
+        ...context,
+        schemaPath: `${context.schemaPath}/if`,
+      }).length === 0;
+    const branch = matched ? schema["then"] : schema["else"];
+    if (branch !== undefined)
+      errors.push(
+        ...evaluate(branch, instance, {
+          ...context,
+          schemaPath: `${context.schemaPath}/${matched ? "then" : "else"}`,
+        }),
+      );
   }
 
   if (typeof instance === "string") {

@@ -351,56 +351,57 @@ describe("bounded process supervision", () => {
     }
   }, 45_000);
 
-  // WP5: the SIGTERM-ignoring escalation path has never executed on this
-  // Windows host; Linux CI must prove it before any cross-platform claim.
-  it.skipIf(process.platform === "win32")(
-    "escalates a SIGTERM-ignoring child to a group SIGKILL",
-    async () => {
-      const startedAt = Date.now();
-      const result = await nodeFixture(
-        "process.on('SIGTERM', () => {}); setInterval(() => {}, 1000);",
-        { timeoutMs: 500, killGraceMs: 1_000 },
+  it("force-terminates a stubborn child through the platform tree boundary", async () => {
+    const startedAt = Date.now();
+    const result = await nodeFixture(
+      "process.on('SIGTERM', () => {}); setInterval(() => {}, 1000);",
+      { timeoutMs: 500, killGraceMs: 1_000 },
+    );
+    expect(result.supervision.timedOut).toBe(true);
+    if (process.platform === "win32") {
+      expect(result.supervision.termination?.attempted[0]).toBe(
+        "taskkill-tree-force",
       );
-      expect(result.supervision.timedOut).toBe(true);
+      expect(result.signal).toBeNull();
+    } else
       expect(result.supervision.termination?.attempted).toContain(
         "posix-group-sigkill",
       );
-      expect(result.supervision.termination?.rootExitObserved).toBe(true);
-      expect(Date.now() - startedAt).toBeLessThan(10_000);
-    },
-    20_000,
-  );
+    expect(result.supervision.termination?.rootExitObserved).toBe(true);
+    expect(Date.now() - startedAt).toBeLessThan(10_000);
+  }, 20_000);
 
-  // WP5: POSIX group ownership of grandchildren is unproven until Linux CI.
-  it.skipIf(process.platform === "win32")(
-    "group-kills a grandchild on timeout",
-    async () => {
-      const directory = await scratchDirectory(
-        "milestone-loop-supervisor-group-",
-      );
-      const pidFile = join(directory, "grandchild.pid");
-      spawnedPidFiles.push(pidFile);
-      const script = [
-        "const { spawn } = require('node:child_process');",
-        "spawn(process.execPath, ['-e', \"require('fs').writeFileSync(process.env.LOOP_TEST_PIDFILE, String(process.pid)); setInterval(() => {}, 1000);\"], { stdio: 'ignore', env: process.env });",
-        "setInterval(() => {}, 1000);",
-      ].join(" ");
-      const resultPromise = nodeFixture(script, {
-        timeoutMs: 1_000,
-        killGraceMs: 1_000,
-        env: { LOOP_TEST_PIDFILE: pidFile },
-      });
-      const grandchildPid = await readPidFile(pidFile);
-      const result = await resultPromise;
-      expect(result.supervision.timedOut).toBe(true);
-      const grandchildDead = await pollUntil(
-        () => !isProcessAlive(grandchildPid),
-        5_000,
-      );
-      expect(grandchildDead).toBe(true);
-    },
-    30_000,
-  );
+  it("tree-kills a grandchild on timeout", async () => {
+    const directory = await scratchDirectory(
+      "milestone-loop-supervisor-group-",
+    );
+    const pidFile = join(directory, "grandchild.pid");
+    spawnedPidFiles.push(pidFile);
+    const script = [
+      "const { spawn } = require('node:child_process');",
+      "const g = spawn(process.execPath, ['-e', \"require('fs').writeFileSync(process.env.LOOP_TEST_PIDFILE, String(process.pid)); setInterval(() => {}, 1000);\"], { stdio: 'ignore', env: process.env, detached: process.platform === 'win32' });",
+      "g.unref();",
+      "setInterval(() => {}, 1000);",
+    ].join(" ");
+    const resultPromise = nodeFixture(script, {
+      timeoutMs: 1_000,
+      killGraceMs: 1_000,
+      env: { LOOP_TEST_PIDFILE: pidFile },
+    });
+    const grandchildPid = await readPidFile(pidFile);
+    const result = await resultPromise;
+    expect(result.supervision.timedOut).toBe(true);
+    const grandchildDead = await pollUntil(
+      () => !isProcessAlive(grandchildPid),
+      5_000,
+    );
+    expect(grandchildDead).toBe(true);
+    expect(result.supervision.termination?.attempted[0]).toBe(
+      process.platform === "win32"
+        ? "taskkill-tree-force"
+        : "posix-group-sigterm",
+    );
+  }, 30_000);
 });
 
 class FakeStdio implements SupervisedStdioLike {

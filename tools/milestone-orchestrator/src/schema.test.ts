@@ -23,8 +23,40 @@ import {
   validState,
 } from "../test/fixtures.js";
 import { executionProviderIdentity } from "./execution-provider-identity.js";
+import { validateJsonSchema202012 } from "../test/json-schema-2020-12.js";
 
 describe("versioned orchestrator schemas", () => {
+  it("enforces conditional JSON Schema branches used by state migrations", () => {
+    const schema = {
+      $schema: "https://json-schema.org/draft/2020-12/schema",
+      $id: "https://milestone-loop.local/schemas/conditional-test.json",
+      type: "object",
+      required: ["phase", "result"],
+      properties: {
+        phase: { enum: ["active", "blocked"] },
+        result: { type: ["string", "null"] },
+      },
+      allOf: [
+        {
+          if: {
+            required: ["phase"],
+            properties: { phase: { const: "active" } },
+          },
+          then: { properties: { result: { type: "string" } } },
+        },
+      ],
+    };
+    expect(
+      validateJsonSchema202012(schema, { phase: "active", result: "exact" }),
+    ).toMatchObject({ valid: true });
+    expect(
+      validateJsonSchema202012(schema, { phase: "active", result: null }),
+    ).toMatchObject({ valid: false });
+    expect(
+      validateJsonSchema202012(schema, { phase: "blocked", result: null }),
+    ).toMatchObject({ valid: true });
+  });
+
   it("accepts a complete bounded milestone and rejects missing objective evidence", () => {
     expect(validateMilestoneProposal(validProposal())).toMatchObject({
       valid: true,
@@ -512,7 +544,7 @@ describe("versioned orchestrator schemas", () => {
       expect(schema.$schema).toContain("2020-12");
       expect(schema.$id).toContain(
         file === "state.schema.json"
-          ? "1.10.0"
+          ? "1.11.0"
           : file === "orchestrator-config.schema.json"
             ? "1.6.0"
             : file === "milestone.schema.json"
@@ -533,6 +565,7 @@ describe("versioned orchestrator schemas", () => {
               additionalProperties?: unknown;
               required?: unknown;
               properties?: Record<string, unknown>;
+              allOf?: unknown;
             }
           | undefined;
         expect(candidate).toMatchObject({
@@ -554,6 +587,8 @@ describe("versioned orchestrator schemas", () => {
             "diagnostic",
           ]),
         );
+        expect(candidate?.allOf).toEqual(expect.any(Array));
+        expect(JSON.stringify(candidate?.allOf)).toContain("finalResponse");
       }
     }
   });

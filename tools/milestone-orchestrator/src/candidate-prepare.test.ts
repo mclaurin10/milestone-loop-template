@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 
 import { describe, expect, it } from "vitest";
@@ -213,7 +214,20 @@ describe("candidate-prepare canonical reducers", () => {
     );
     const workerArtifact = {
       schemaVersion: "1.0.0",
+      attempt: 1,
       threadId: "candidate-thread",
+      role: "feature-worker-initial",
+      requestedModel: "gpt-5.6-sol",
+      requestedReasoningEffort: "xhigh",
+      escalationReason: null,
+      usage: {
+        inputTokens: 10,
+        cachedInputTokens: 2,
+        outputTokens: 3,
+        reasoningOutputTokens: 1,
+      },
+      itemCount: 1,
+      finalResponse: "Checkpoint the unit change.",
     };
     next = advanceCandidatePrepareOperation(
       next,
@@ -229,13 +243,39 @@ describe("candidate-prepare canonical reducers", () => {
             reasoningOutputTokens: 1,
           },
           itemCount: 1,
-          finalResponseSha256: "1".repeat(64),
+          finalResponse: "Checkpoint the unit change.",
+          finalResponseSha256: createHash("sha256")
+            .update("Checkpoint the unit change.")
+            .digest("hex"),
           workerTurnSha256: candidatePrepareArtifactSha256(workerArtifact),
           finishedAt: NOW,
         },
       },
       NOW,
     );
+    const workerCompleted = next;
+    expect(() =>
+      assertOrchestratorState({
+        ...workerCompleted,
+        pendingOperation: {
+          ...workerCompleted.pendingOperation!,
+          workerResult: {
+            ...(workerCompleted.pendingOperation as CandidatePrepareOperation)
+              .workerResult!,
+            finalResponse: "substituted response",
+          },
+        },
+      }),
+    ).toThrow(/pending operation is invalid/);
+    expect(() =>
+      assertOrchestratorState({
+        ...workerCompleted,
+        pendingOperation: {
+          ...workerCompleted.pendingOperation!,
+          unrecognizedCandidateField: true,
+        },
+      }),
+    ).toThrow(/pending operation is invalid/);
     next = advanceCandidatePrepareOperation(
       next,
       operation.id,
@@ -334,6 +374,25 @@ describe("candidate-prepare canonical reducers", () => {
       assertPendingOperationStateTransition(
         pending,
         { ...blocked, queue: [...blocked.queue, "unrelated"] },
+        GENERATION,
+      ),
+    ).toThrow(/canonical reducer/);
+    const blockedOperation = blocked.pendingOperation;
+    if (!blockedOperation || blockedOperation.kind !== "candidate-prepare")
+      throw new Error("Expected blocked candidate operation.");
+    expect(() =>
+      assertPendingOperationStateTransition(
+        pending,
+        {
+          ...blocked,
+          pendingOperation: {
+            ...blockedOperation,
+            workerAssignment: {
+              model: "gpt-5.6-terra",
+              reasoningEffort: "low",
+            },
+          },
+        },
         GENERATION,
       ),
     ).toThrow(/canonical reducer/);

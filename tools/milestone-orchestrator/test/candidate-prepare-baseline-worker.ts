@@ -2,6 +2,10 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 
 import type { CodexGateway } from "../src/codex-gateway.js";
+import {
+  CANDIDATE_PREPARE_FAULT_POINTS,
+  type CandidatePrepareFaultPoint,
+} from "../src/candidate-prepare.js";
 import { MilestoneOrchestrator } from "../src/orchestrator.js";
 
 interface CrashWorkerMetadata {
@@ -10,6 +14,7 @@ interface CrashWorkerMetadata {
   readonly milestoneId: string;
   readonly workspacePath: string;
   readonly crashMarkerPath: string;
+  readonly faultPoint?: CandidatePrepareFaultPoint;
 }
 
 const metadataPath = process.argv[2];
@@ -19,6 +24,14 @@ if (!metadataPath)
 const metadata = JSON.parse(
   await (await import("node:fs/promises")).readFile(metadataPath, "utf8"),
 ) as CrashWorkerMetadata;
+
+if (
+  metadata.faultPoint !== undefined &&
+  !CANDIDATE_PREPARE_FAULT_POINTS.includes(metadata.faultPoint)
+)
+  throw new Error(
+    `Unknown candidate-prepare fault point ${metadata.faultPoint}.`,
+  );
 
 process.env["CANDIDATE_PREPARE_CRASH_PID"] = String(process.pid);
 process.env["CANDIDATE_PREPARE_CRASH_MARKER"] = metadata.crashMarkerPath;
@@ -67,6 +80,24 @@ const orchestrator = await MilestoneOrchestrator.open(
     gateway,
     now: () => new Date("2026-08-23T20:00:00.000Z"),
     evidenceDiscovery: async () => [],
+    ...(metadata.faultPoint === undefined
+      ? {}
+      : {
+          candidatePrepareHooks: {
+            fault: async (point) => {
+              if (point !== metadata.faultPoint) return;
+              await mkdir(dirname(metadata.crashMarkerPath), {
+                recursive: true,
+              });
+              await writeFile(
+                metadata.crashMarkerPath,
+                `${JSON.stringify({ point, pid: process.pid })}\n`,
+                "utf8",
+              );
+              process.exit(86);
+            },
+          },
+        }),
   },
 );
 

@@ -3,6 +3,88 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-24 — Canonical candidate recovery and reproducible derived evidence (WP2 Session 2, verified)
+
+**Decision.** State schema `1.11.0` completes the intent-first
+`candidate-prepare` boundary. An exact unchanged `intent-persisted` operation
+may resume by publishing invocation-start before entering the Worker gateway.
+Invocation-start, thread-recorded, and gateway-return interruptions are
+deliberately non-replayable: they become a preserved
+`worker-outcome-ambiguous` block. Canonical Worker completion now retains the
+redacted final-response bytes and digest as well as the deterministic
+Worker-turn digest. Missing Worker-turn and checkpoint evidence can therefore
+be materialized from canonical state; conflicting bytes can never authorize
+progress. Every evidence ancestor and file is revalidated as a real,
+contained, non-linked canonical path before read or publication. Unowned
+pre-intent evidence blocks candidate preparation with a retained diagnostic.
+Legacy `1.10.0` candidate completion that lacks response bytes migrates to
+`legacy-worker-evidence-unrecoverable` rather than trusting an artifact or
+inventing content.
+
+Normal and recovered paths use the same candidate reducers. Recovery runs
+under the repository controller lease and state-generation CAS; synchronized
+contenders may produce only one advancing hook sequence, controller commit,
+artifact authority, verification transition, and intent completion. The
+state mirror remains diagnostic: failure after canonical ref publication does
+not roll back authority and is repaired only by a later mutation-capable open.
+Status, Doctor, and static inspection expose the same phase,
+classification/disposition, preserved paths, and next safe action without
+repair or recovery.
+
+An exact successor published by a mutation-capable state store after immutable-
+field transition validation and canonical compare-and-swap is treated as an
+inductively validated lineage step in that store. It is not re-read from the
+object database immediately after publication. Fresh and read-only/mutation
+opens still validate the complete pending-operation lineage from the current
+generation to its recorded input generation. This preserves the same Git-ref
+CAS authority and tamper checks while avoiding quadratic revalidation across
+the candidate operation's explicit durable phases.
+
+Verification owners remain substantive on every supported host. Process-tree
+tests exercise Windows `taskkill` tree termination as well as POSIX process-
+group SIGKILL rather than reporting platform skips. Expensive commissioning
+negative cases may share one disposable repository only when they execute
+sequentially and independently restore the exact base under test; both missing
+and unrelated-base rejections remain required. Neither portability nor fixture
+cost is a reason to increase timeouts, skip behavior, or weaken assertions.
+
+The fail-closed workspace identity boundary is expressed as facts, not as a
+required subprocess topology. Once a real contained standalone `.git`
+directory is proven, top-level/Git/common directory and branch may be queried
+together; the six exact local controller markers may be queried together only
+with missing/duplicate detection; remote absence remains explicit; and active
+operation markers are checked directly under that proven `.git` directory.
+This preserves every recovery classification while avoiding dozens of Windows
+process startups at each candidate phase.
+
+**Why.** Hash-only Worker completion could detect a missing derived artifact
+but could not reconstruct it, while replay after any possible gateway entry
+could duplicate unobservable Worker effects. Retaining the already-redacted
+canonical response closes the former gap; drawing the replay boundary before
+invocation-start closes the latter. Exact path, Git, protected-file,
+diff-policy, context, parent, tree, message, and artifact validation makes the
+operation intent—not ancestry or evidence files—the only authority for
+checkpoint adoption. Alternatives rejected: a generic workflow engine, a
+second journal, trusting Worker events or artifacts, relaunching after an
+ambiguous gateway boundary, silently adopting an existing candidate, resetting
+or recommitting a suspicious tree, following linked evidence, and migrating
+legacy hashes as if the missing response bytes were known. Also rejected:
+removing durable phases, weakening fresh-open lineage validation, increasing
+test timeouts, or treating a timed-out broad run as passing; the redundant
+same-store post-CAS rewalk was the performance defect.
+
+**Scope boundary.** The green Session 2 ledger and cohesive commit close only
+the previously omitted WP2 candidate recovery boundary. They do not
+change Planner/Worker/Reviewer roles, execution-provider eligibility,
+verification, target integration, cleanup, retention, readiness, CAL-1,
+hidden validation, product completion, or human-acceptance meaning, and it
+does not begin WP6.
+
+**Affected files.** Candidate contracts/runtime and shipped schemas, state
+migration/store, operation reducers, Worker orchestration and fault hooks,
+status/Doctor/static inspection projections, hard-loss/concurrency/path/Git/
+context tests, `README.md`, `CONTRACT.md`, and Session 2 plan/autonomy records.
+
 ## 2026-08-23 — Intent-first candidate checkpoint authority (WP2 Session 1)
 
 **Decision.** State schema `1.10.0` extends the one exclusive

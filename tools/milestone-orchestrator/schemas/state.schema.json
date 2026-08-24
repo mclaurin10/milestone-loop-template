@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://milestone-loop.local/schemas/orchestrator-state-1.10.0.json",
+  "$id": "https://milestone-loop.local/schemas/orchestrator-state-1.11.0.json",
   "title": "Example Project Orchestrator State",
   "type": "object",
   "additionalProperties": false,
@@ -23,7 +23,7 @@
     "updatedAt"
   ],
   "properties": {
-    "schemaVersion": { "const": "1.10.0" },
+    "schemaVersion": { "const": "1.11.0" },
     "revision": { "type": "integer", "minimum": 0 },
     "repository": { "type": "object" },
     "queue": {
@@ -561,6 +561,7 @@
                 "threadId",
                 "usage",
                 "itemCount",
+                "finalResponse",
                 "finalResponseSha256",
                 "workerTurnSha256",
                 "finishedAt"
@@ -574,6 +575,7 @@
                   ]
                 },
                 "itemCount": { "type": "integer", "minimum": 0 },
+                "finalResponse": { "type": ["string", "null"] },
                 "finalResponseSha256": {
                   "type": "string",
                   "pattern": "^[a-f0-9]{64}$"
@@ -715,6 +717,8 @@
                     "checkpoint-parent-drift",
                     "checkpoint-tree-drift",
                     "diff-policy-violation",
+                    "evidence-path-unsafe",
+                    "legacy-worker-evidence-unrecoverable",
                     "protected-file-drift",
                     "unexpected-commit",
                     "worker-context-drift",
@@ -743,7 +747,29 @@
             }
           ]
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": ["phase"],
+            "properties": { "phase": { "not": { "const": "blocked" } } }
+          },
+          "then": {
+            "properties": {
+              "workerResult": {
+                "oneOf": [
+                  { "type": "null" },
+                  {
+                    "type": "object",
+                    "required": ["finalResponse"],
+                    "properties": { "finalResponse": { "type": "string" } }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
     },
     "targetIntegrateOperation": {
       "type": "object",

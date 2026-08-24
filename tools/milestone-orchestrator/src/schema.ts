@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { isAbsolute, resolve } from "node:path";
 
 import {
@@ -485,6 +486,7 @@ function validCandidatePrepareOperation(value: unknown): boolean {
         "threadId",
         "usage",
         "itemCount",
+        "finalResponse",
         "finalResponseSha256",
         "workerTurnSha256",
         "finishedAt",
@@ -493,7 +495,13 @@ function validCandidatePrepareOperation(value: unknown): boolean {
       (workerResult["usage"] !== null &&
         !validUsageRecord(workerResult["usage"])) ||
       !nonnegativeInteger(workerResult["itemCount"]) ||
+      (workerResult["finalResponse"] !== null &&
+        typeof workerResult["finalResponse"] !== "string") ||
       !sha256(workerResult["finalResponseSha256"]) ||
+      (typeof workerResult["finalResponse"] === "string" &&
+        createHash("sha256")
+          .update(workerResult["finalResponse"])
+          .digest("hex") !== workerResult["finalResponseSha256"]) ||
       !sha256(workerResult["workerTurnSha256"]) ||
       !timestampOrNull(workerResult["finishedAt"]) ||
       workerResult["finishedAt"] === null)
@@ -598,6 +606,11 @@ function validCandidatePrepareOperation(value: unknown): boolean {
       (phase === "worker-thread-recorded" && invocationThread === null)
     )
       return false;
+    if (
+      workerResult !== null &&
+      (workerResult as Record<string, unknown>)["finalResponse"] === null
+    )
+      return false;
   }
   const diagnostic = value["diagnostic"];
   if ((phase === "blocked") !== (diagnostic !== null)) return false;
@@ -618,6 +631,8 @@ function validCandidatePrepareOperation(value: unknown): boolean {
       "checkpoint-parent-drift",
       "checkpoint-tree-drift",
       "diff-policy-violation",
+      "evidence-path-unsafe",
+      "legacy-worker-evidence-unrecoverable",
       "protected-file-drift",
       "unexpected-commit",
       "worker-context-drift",

@@ -575,7 +575,89 @@ export function migrateOrchestratorState(value: unknown): unknown {
     };
   }
   if (migrated["schemaVersion"] === "1.9.0")
-    migrated = { ...migrated, schemaVersion: STATE_SCHEMA_VERSION };
+    migrated = { ...migrated, schemaVersion: "1.10.0" };
+  if (migrated["schemaVersion"] === "1.10.0") {
+    const pending = migrated["pendingOperation"];
+    let pendingOperation = pending;
+    if (
+      typeof pending === "object" &&
+      pending !== null &&
+      !Array.isArray(pending) &&
+      (pending as Record<string, unknown>)["kind"] === "candidate-prepare"
+    ) {
+      const operation = pending as Record<string, unknown>;
+      const workerResult = operation["workerResult"];
+      if (
+        typeof workerResult === "object" &&
+        workerResult !== null &&
+        !Array.isArray(workerResult)
+      ) {
+        const observedAt =
+          typeof operation["updatedAt"] === "string"
+            ? operation["updatedAt"]
+            : typeof operation["createdAt"] === "string"
+              ? operation["createdAt"]
+              : "1970-01-01T00:00:00.000Z";
+        const checkpointResult = operation["checkpointResult"];
+        const checkpointCandidate =
+          typeof checkpointResult === "object" &&
+          checkpointResult !== null &&
+          !Array.isArray(checkpointResult)
+            ? (checkpointResult as Record<string, unknown>)["candidate"]
+            : null;
+        const startingCandidate = operation["startingCandidate"];
+        const observedHead =
+          typeof checkpointCandidate === "object" &&
+          checkpointCandidate !== null &&
+          !Array.isArray(checkpointCandidate) &&
+          typeof (checkpointCandidate as Record<string, unknown>)["commit"] ===
+            "string"
+            ? ((checkpointCandidate as Record<string, unknown>)[
+                "commit"
+              ] as string)
+            : typeof startingCandidate === "object" &&
+                startingCandidate !== null &&
+                !Array.isArray(startingCandidate) &&
+                typeof (startingCandidate as Record<string, unknown>)[
+                  "commit"
+                ] === "string"
+              ? ((startingCandidate as Record<string, unknown>)[
+                  "commit"
+                ] as string)
+              : null;
+        pendingOperation = {
+          ...operation,
+          workerResult: {
+            ...(workerResult as Record<string, unknown>),
+            finalResponse: null,
+          },
+          ...(operation["phase"] === "blocked"
+            ? {}
+            : {
+                phase: "blocked",
+                updatedAt: observedAt,
+                diagnostic: {
+                  classification: "legacy-worker-evidence-unrecoverable",
+                  message:
+                    "State 1.10 canonical Worker completion lacks response bytes required to reproduce derived evidence and is preserved for manual reconciliation.",
+                  observedAt,
+                  observedHead,
+                  preservedPaths:
+                    typeof operation["workspacePath"] === "string"
+                      ? [operation["workspacePath"]]
+                      : [],
+                  quarantinePath: null,
+                },
+              }),
+        };
+      }
+    }
+    migrated = {
+      ...migrated,
+      schemaVersion: STATE_SCHEMA_VERSION,
+      pendingOperation,
+    };
+  }
   return migrated;
 }
 
@@ -667,7 +749,7 @@ export class StateStore {
         throw new Error(
           `Pending operation ${operation.id} cannot reach its recorded input generation.`,
         );
-      const previous = this.generations.readGeneration(previousId);
+      const previous = this.generations.readGeneration(previousId, false);
       if (previous.objectId === operation.inputStateGeneration) {
         if (
           previous.state.revision !== operation.inputStateRevision ||
@@ -685,8 +767,12 @@ export class StateStore {
     );
   }
 
-  private rememberGeneration(generation: StateGeneration): OrchestratorState {
-    this.assertPendingOperationLineage(generation);
+  private rememberGeneration(
+    generation: StateGeneration,
+    lineageAlreadyValidated = false,
+  ): OrchestratorState {
+    if (!lineageAlreadyValidated)
+      this.assertPendingOperationLineage(generation);
     this.loadedGeneration = generation;
     this.legacySourceJson = null;
     this.loadedSource = "canonical";
@@ -1042,7 +1128,13 @@ export class StateStore {
     });
     if (!this.generations.publish(expected.objectId, candidate.objectId))
       throw this.staleError(state.revision, expected.objectId);
-    this.rememberGeneration(candidate);
+    // The loaded generation was fully validated, the transition fence binds
+    // this exact successor to it, and compare-and-swap published that exact
+    // parent/child pair. Rewalking the complete immutable lineage here would
+    // be redundant and makes multi-phase durable operations quadratic. A new
+    // store instance still validates the entire pending-operation lineage on
+    // load.
+    this.rememberGeneration(candidate, true);
     await hooks.afterReferenceUpdated?.({
       objectId: candidate.objectId,
       revision: saved.revision,

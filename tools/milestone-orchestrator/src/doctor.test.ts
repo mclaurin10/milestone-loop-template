@@ -1229,7 +1229,7 @@ describe("read-only orchestrator doctor", () => {
       pendingOperation: {
         kind: "candidate-prepare",
         phase: "intent-persisted",
-        classification: "workspace-identity-drift",
+        classification: "workspace-path-unsafe",
         disposition: "manual",
         workspacePath,
         nextSafeAction: "manual-reconciliation-required",

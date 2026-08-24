@@ -801,7 +801,7 @@ describe("controller-boundary reconciliation", { timeout: 60_000 }, () => {
 
     expect(repeatedStatus.active).toBeNull();
     expect(finalState).toMatchObject({
-      schemaVersion: "1.10.0",
+      schemaVersion: "1.11.0",
       repository: { verifiedCommit: fixture.candidateCommit },
       queue: ["complete-operations-base-utilities"],
       activeMilestoneId: null,

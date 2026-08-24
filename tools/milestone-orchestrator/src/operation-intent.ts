@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
 
 import type {
@@ -31,6 +32,7 @@ import {
   candidatePrepareProtectedFilesSha256,
   candidatePrepareRetryContextSha256,
   candidatePrepareThreadLineageSha256,
+  candidatePrepareWorkerTurnArtifact,
   candidatePrepareWorkerPolicySha256,
 } from "./candidate-prepare.js";
 import { requiredVerticalConsumerAfterCompletion } from "./milestone-state.js";
@@ -612,6 +614,27 @@ export function advanceCandidatePrepareOperation(
         finishedAt: result.finishedAt,
         error: null,
       };
+      if (
+        result.finalResponse === null ||
+        createHash("sha256").update(result.finalResponse).digest("hex") !==
+          result.finalResponseSha256
+      )
+        throw new Error(
+          "Candidate Worker completion lacks an exact canonical response.",
+        );
+      const resultOperation: CandidatePrepareOperation = {
+        ...operation,
+        workerInvocation: invocation,
+        workerResult: result,
+      };
+      if (
+        candidatePrepareArtifactSha256(
+          candidatePrepareWorkerTurnArtifact(resultOperation),
+        ) !== result.workerTurnSha256
+      )
+        throw new Error(
+          "Candidate Worker completion does not match its derived evidence hash.",
+        );
       const milestone = candidateMilestoneForOperation(state, operation);
       const updatedMilestone = recordWorkerThreadLineage({
         milestone,
