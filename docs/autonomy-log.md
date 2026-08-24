@@ -285,12 +285,41 @@ SHA-256 values
 `a92393f74448ab5af8f4bf30a674d182d5295856c510471ba2b5d2d331d2b53c`,
 and `239e8fcea2cca53dd3c05f314590bb64ceb24fc78600d452d1d2f669fb8b1dba`.
 
-**Remaining gates.** The next exact commit still requires the real local
-Windows cross-volume journey and applicable receipt-owning checks before one
-normal push. A hosted run must then finish all five jobs green, and all five
-artifacts must be downloaded and independently audited. No source no-argument
-verify, template proof, CAL-1, hidden validation, WP6, product expansion, or
-readiness claim occurred.
+**Final candidate and hosted closure.** Cleanup-repair commit
+`0c67ac062693369345bd1efa0435ec3d70d9b476` / tree
+`5fee03becf6a43024fb3de71fec0cf8c91d9c77a` passed the exact clean
+adopter-package owner 7/7 plus receipt-owning typecheck, lint, and format under
+Node `24.18.0` / pnpm `11.15.1`. Its real Windows cross-volume adopter journey
+passed the ordered six-command ledger, sole generated no-argument verify, all
+9 stages, 10 receipts, 18 declared artifacts, 4 tests, clean three-commit
+bootstrap history, substantive browser inspection, and independent inventory
+audit. Source no-argument verify count remained zero.
+
+The sole normal push created Exact runtime CI run `32676400762`, attempt 1.
+Controller Linux/Windows, fresh-adopter Linux/Windows, and trusted-container
+Linux all completed successfully on that exact SHA. Every required step and
+unconditional upload succeeded; all five check runs had zero annotations and
+no Node 20 warning. The five archives match their server SHA-256 values and
+were safely extracted under `artifacts/hosted/run-32676400762/`. Both
+controllers prove the complete invariant/controller/unit/typecheck/lint/format
+sequence with zero failures and only their declared platform skips. Both
+generated adopters prove the clean three-commit bootstrap journey, exact
+receipt/artifact inventories, substantive screenshots, and clean browser
+diagnostics. The trusted-container artifact proves a real Docker daemon, no
+host fallback or mock, the passing normal/boundary cases, and all four expected
+adversarial dispositions with zero managed residue.
+
+Independent audit
+`artifacts/manual/wp5-session3-final-audit/audit-result.json` is `PASS` and
+records `wp5HostedCiQuickstartClosed: true`. At audit time,
+`HEAD == origin/master == 0c67ac0`, tracked bytes were clean, the protected
+human plan was the only untracked entry at its expected SHA-256, readiness and
+CAL-1 state were unchanged, and every immutable baseline/active/actual hash
+matched. WP5 hosted CI and documented fresh-adopter quickstart validation are
+therefore closed. This is not autonomous readiness or product completion; no
+source no-argument verify, template proof, CAL-1, hidden validation, WP6, or
+product/readiness expansion occurred. The separately identified omitted
+`candidate-prepare` recovery boundary belongs to a new bounded increment.
 
 ## 2026-08-22 — WP5 Session 2 frozen-candidate isolation correction
 

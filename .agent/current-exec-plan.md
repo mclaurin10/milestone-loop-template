@@ -1,6 +1,6 @@
 # Current Execution Plan
 
-**Status:** WP5 recommended Session 3 hosted Linux fixture-cleanup repair pre-freeze
+**Status:** WP5 hosted CI/quickstart closed at `0c67ac0` / run `32676400762`
 **Updated:** 2026-08-23
 **Owner:** autonomous loop
 
@@ -191,10 +191,10 @@ strict path/receipt/evidence checks, or claim autonomous readiness.
         cleanup failure, then add a bounded retry only for the adopter-package
         test's owned temporary roots. Do not change package generation, Git
         semantics, production cleanup, or any verification timeout.
-15. [ ] Run the focused adopter-package owner and affected broader/static checks,
+15. [x] Run the focused adopter-package owner and affected broader/static checks,
         freeze and commit the cohesive cleanup repair, validate the exact clean
         candidate with one real Windows adopter journey, and push normally once.
-16. [ ] Monitor causal candidates until one five-job run is terminal green. On
+16. [x] Monitor causal candidates until one five-job run is terminal green. On
         the final green SHA, download and safely extract all five artifacts,
         independently audit controller, adopter, browser, and real-container
         receipts/manifests/artifacts/candidates/tests, verify zero actionable
@@ -400,9 +400,35 @@ redundant local Docker matrix.
   `4d838f11875a69cc73cbd612cc55c10ab3ea562c3276c5da904cf43cbc387c40`,
   `a92393f74448ab5af8f4bf30a674d182d5295856c510471ba2b5d2d331d2b53c`,
   and `239e8fcea2cca53dd3c05f314590bb64ceb24fc78600d452d1d2f669fb8b1dba`.
+- 2026-08-23: Cleanup-repair commit
+  `0c67ac062693369345bd1efa0435ec3d70d9b476` / tree
+  `5fee03becf6a43024fb3de71fec0cf8c91d9c77a` passed the exact clean
+  adopter-package owner 7/7, typecheck, lint, and format under pinned Node
+  `24.18.0` / pnpm `11.15.1`. A real cross-volume Windows adopter journey
+  passed its ordered six-command ledger, sole generated no-argument verify,
+  9 stages, 10 receipts, 18 artifacts, four tests, three-commit clean bootstrap
+  history, substantive browser inspection, and independent inventory audit.
+- 2026-08-23: The sole normal push of `0c67ac0` created Exact runtime CI run
+  `32676400762`, attempt 1. Controller Linux/Windows, fresh-adopter
+  Linux/Windows, and trusted-container Linux all completed successfully; every
+  required step and unconditional upload succeeded, all five check runs had
+  zero annotations, and all five exact-SHA archives matched their server
+  digests and extracted safely.
+- 2026-08-23: Independent audit
+  `artifacts/manual/wp5-session3-final-audit/audit-result.json` is `PASS` and
+  records `wp5HostedCiQuickstartClosed: true`. It verifies both controller
+  command suites and receipts, both generated-adopter histories/evidence and
+  screenshots, the real Docker normal/adversarial matrix, exact Node 24 action
+  pins, final candidate/origin identity, protected-file integrity, and absence
+  of prohibited source verify, template proof, CAL-1, hidden-validation, WP6,
+  or readiness activity. This closes WP5 only; it is not autonomous readiness.
 
 ## Next Action
 
-Freeze the repair records and test, commit the cohesive fixture-cleanup
-increment, then validate the exact clean candidate with one Windows adopter
-journey before the next normal push.
+WP5 is complete. Before further production mutation, replace this completed
+plan with one bounded plan for the next increment. The recommended next
+increment is the omitted `candidate-prepare` recovery boundary: reproduce the
+controller-checkpoint crash window and out-of-band clean-commit adoption, then
+plan the smallest intent-first correction and fault matrix. CAL-1, hidden
+validation, WP6, product completion, and autonomous readiness remain separate
+open work and must not be inferred from WP5 closure.
