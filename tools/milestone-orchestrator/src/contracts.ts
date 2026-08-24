@@ -1,7 +1,7 @@
 export const LEGACY_MILESTONE_SCHEMA_VERSION = "1.0.0" as const;
 export const PREVIOUS_MILESTONE_SCHEMA_VERSION = "1.1.0" as const;
 export const MILESTONE_SCHEMA_VERSION = "1.2.0" as const;
-export const STATE_SCHEMA_VERSION = "1.9.0" as const;
+export const STATE_SCHEMA_VERSION = "1.10.0" as const;
 export const CONFIG_SCHEMA_VERSION = "1.6.0" as const;
 export const REVIEW_LEGACY_SCHEMA_VERSION = "1.0.0" as const;
 export const REVIEW_SCHEMA_VERSION = "1.1.0" as const;
@@ -907,6 +907,118 @@ export interface TargetIntegrateOperation {
   readonly diagnostic: TargetIntegrateDiagnostic | null;
 }
 
+export const CANDIDATE_PREPARE_PHASES = [
+  "intent-persisted",
+  "worker-invocation-started",
+  "worker-thread-recorded",
+  "worker-completed",
+  "worker-evidence-recorded",
+  "checkpoint-prepared",
+  "checkpoint-committed",
+  "checkpoint-recorded",
+  "blocked",
+] as const;
+export type CandidatePreparePhase = (typeof CANDIDATE_PREPARE_PHASES)[number];
+
+export type CandidatePrepareBlockedClassification =
+  | "candidate-drift"
+  | "checkpoint-artifact-conflict"
+  | "checkpoint-parent-drift"
+  | "checkpoint-tree-drift"
+  | "diff-policy-violation"
+  | "protected-file-drift"
+  | "unexpected-commit"
+  | "worker-context-drift"
+  | "worker-evidence-conflict"
+  | "worker-outcome-ambiguous"
+  | "workspace-identity-drift"
+  | "workspace-path-unsafe";
+
+export interface CandidatePrepareDiagnostic {
+  readonly classification: CandidatePrepareBlockedClassification;
+  readonly message: string;
+  readonly observedAt: string;
+  readonly observedHead: string | null;
+  readonly preservedPaths: readonly string[];
+  readonly quarantinePath: null;
+}
+
+export interface CandidatePrepareWorkerResult {
+  readonly threadId: string;
+  readonly usage: UsageRecord | null;
+  readonly itemCount: number;
+  readonly finalResponseSha256: string;
+  readonly workerTurnSha256: string;
+  readonly finishedAt: string;
+}
+
+export interface CandidatePrepareCheckpointPlan {
+  readonly preCheckpointCommit: string;
+  readonly expectedTree: string;
+  readonly commitMessage: string | null;
+  readonly controllerCommitRequired: boolean;
+  readonly observedPaths: readonly string[];
+  readonly workingPaths: readonly string[];
+  readonly preparedAt: string;
+}
+
+export interface CandidatePrepareCheckpointResult {
+  readonly candidate: CandidateIdentity;
+  readonly commits: readonly string[];
+  readonly finalChangedPaths: readonly string[];
+  readonly controllerCommit: string | null;
+  readonly committedAt: string;
+}
+
+export interface CandidatePrepareOperation {
+  readonly schemaVersion: typeof OPERATION_INTENT_SCHEMA_VERSION;
+  readonly kind: "candidate-prepare";
+  readonly id: string;
+  readonly runId: string;
+  readonly milestoneId: string;
+  readonly attempt: number;
+  readonly inputStateGeneration: string;
+  readonly inputStateRevision: number;
+  readonly repositoryRoot: string;
+  readonly workspaceRoot: string;
+  readonly targetBranch: string;
+  readonly verifiedCommit: string;
+  readonly workspacePath: string;
+  readonly workspaceBranch: string;
+  readonly workspaceBaseCommit: string;
+  readonly workspaceCreatedAt: string;
+  readonly workspaceCreateOperationId: string;
+  readonly startingCandidate: CandidateIdentity;
+  readonly startingCommits: readonly string[];
+  readonly workerRole: "feature-worker-initial" | "feature-worker-escalated";
+  readonly workerAssignment: AgentAssignment;
+  readonly initialWorkerThreadId: string | null;
+  readonly initialWorkerThreadLineageSha256: string;
+  readonly workerPolicySha256: string;
+  readonly retryFeedbackSha256: string | null;
+  readonly retryContextSha256: string;
+  readonly proposalContractSha256: string;
+  readonly protectedFilesSha256: string;
+  readonly protectedPatternsSha256: string;
+  readonly promptSha256: string;
+  readonly workerEventsPath: string;
+  readonly workerTurnPath: string;
+  readonly checkpointArtifactPath: string;
+  readonly initialRunUsage: RunUsage;
+  readonly initialAgentInvocationCount: number;
+  readonly agentInvocationId: string;
+  readonly workerInvocation: AgentInvocationRecord | null;
+  readonly workerResult: CandidatePrepareWorkerResult | null;
+  readonly checkpointPlan: CandidatePrepareCheckpointPlan | null;
+  readonly checkpointResult: CandidatePrepareCheckpointResult | null;
+  readonly checkpointArtifactSha256: string | null;
+  readonly phase: CandidatePreparePhase;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+  readonly recoveryPolicy: "validate-resume-adopt-or-preserve";
+  readonly diagnostic: CandidatePrepareDiagnostic | null;
+}
+
 export const WORKSPACE_CLEANUP_PHASES = [
   "intent-persisted",
   "dependency-removal-started",
@@ -1062,6 +1174,7 @@ export interface RetentionApplyOperation {
 
 export type PendingOperation =
   | WorkspaceCreateOperation
+  | CandidatePrepareOperation
   | TargetIntegrateOperation
   | WorkspaceCleanupOperation
   | RetentionApplyOperation;

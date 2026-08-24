@@ -61,6 +61,7 @@ interface StatusPendingOperation {
   readonly id: string;
   readonly kind:
     | "workspace-create"
+    | "candidate-prepare"
     | "target-integrate"
     | "workspace-cleanup"
     | "retention-apply";

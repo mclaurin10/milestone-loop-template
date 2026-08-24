@@ -15,11 +15,21 @@ import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { doctorExitCode, runDoctorDiagnostic } from "./doctor.js";
+import {
+  candidatePrepareProposalContractSha256,
+  candidatePrepareProtectedFilesSha256,
+  candidatePrepareProtectedPatternsSha256,
+  candidatePrepareRetryContextSha256,
+  candidatePrepareThreadLineageSha256,
+  candidatePrepareWorkerPolicySha256,
+} from "./candidate-prepare.js";
 import type { CommissioningDoctorDiagnostic } from "./commissioning.js";
 import {
   READINESS_VERIFICATION_STAGE_IDS,
   VERIFICATION_SUMMARY_SCHEMA_VERSION,
   type AuthoritativeVerificationSummary,
+  type CandidatePrepareOperation,
+  type MilestoneRecord,
   type VerificationSummary,
 } from "./contracts.js";
 import {
@@ -28,7 +38,10 @@ import {
   type ExecutionProviderCapabilityProbe,
 } from "./execution-provider.js";
 import { executionProviderIdentity } from "./execution-provider-identity.js";
-import { buildCanonicalProtectedSet } from "./protected-roots.js";
+import {
+  buildCanonicalProtectedSet,
+  enforcementProtectedPatterns,
+} from "./protected-roots.js";
 import { createMilestoneRecord } from "./milestone-state.js";
 import {
   validConfig,
@@ -1042,6 +1055,188 @@ describe("read-only orchestrator doctor", () => {
       pendingOperation: null,
       outcome: "reconciliation-active",
     });
+  });
+
+  it("projects a candidate-prepare phase, disposition, and safe action read-only", async () => {
+    const fixture = await repositoryFixture();
+    const baseState = await validDoctorState(fixture.root);
+    const proposal = validProposal({
+      id: "doctor-candidate",
+      permittedPaths: ["change.txt"],
+    });
+    const initialMilestone = createMilestoneRecord(
+      proposal,
+      "2026-08-23T20:00:00.000Z",
+    );
+    const workspacePath = join(
+      fixture.root,
+      "artifacts",
+      "orchestrator",
+      "workspaces",
+      "doctor-candidate",
+    );
+    const milestone: MilestoneRecord = {
+      ...initialMilestone,
+      status: "running",
+      attempts: 1,
+      workspace: {
+        isolation: "standalone-local-clone-branch",
+        path: workspacePath,
+        branch: "milestone-loop/doctor/candidate",
+        baseCommit: baseState.repository.verifiedCommit,
+        headCommit: null,
+        createdAt: "2026-08-23T20:00:00.000Z",
+        preserved: true,
+        cleanup: {
+          schemaVersion: "1.0.0",
+          status: "active",
+          reason: null,
+          requestedAt: null,
+          completedAt: null,
+          nodeModulesRemovedAt: null,
+          diagnosticArchivePath: null,
+          error: null,
+        },
+      },
+      timestamps: {
+        ...initialMilestone.timestamps,
+        readyAt: "2026-08-23T20:00:00.000Z",
+        startedAt: "2026-08-23T20:00:00.000Z",
+        updatedAt: "2026-08-23T20:00:00.000Z",
+      },
+      nextAllowedAction: "resume-worker",
+    };
+    const runDirectory = join(
+      fixture.root,
+      "artifacts",
+      "orchestrator",
+      "runs",
+      "doctor-candidate-run",
+    );
+    const runningState = {
+      ...baseState,
+      queue: [proposal.id],
+      milestones: [milestone],
+      activeMilestoneId: proposal.id,
+      run: {
+        ...baseState.run,
+        id: "doctor-candidate-run",
+        status: "running" as const,
+        startedAt: "2026-08-23T20:00:00.000Z",
+        deadlineAt: "2026-08-24T20:00:00.000Z",
+        artifactDirectory: runDirectory,
+      },
+      nextAllowedAction: "resume-worker" as const,
+    };
+    const attemptDirectory = join(
+      runDirectory,
+      "milestones",
+      proposal.id,
+      "attempt-1",
+    );
+    const operation: CandidatePrepareOperation = {
+      schemaVersion: "1.0.0",
+      kind: "candidate-prepare",
+      id: "doctor-candidate-operation",
+      runId: "doctor-candidate-run",
+      milestoneId: proposal.id,
+      attempt: 1,
+      inputStateGeneration: "b".repeat(40),
+      inputStateRevision: 0,
+      repositoryRoot: fixture.root,
+      workspaceRoot: join(
+        fixture.root,
+        "artifacts",
+        "orchestrator",
+        "workspaces",
+      ),
+      targetBranch: "main",
+      verifiedCommit: baseState.repository.verifiedCommit,
+      workspacePath,
+      workspaceBranch: milestone.workspace!.branch,
+      workspaceBaseCommit: baseState.repository.verifiedCommit,
+      workspaceCreatedAt: milestone.workspace!.createdAt,
+      workspaceCreateOperationId: "workspace-create-doctor-candidate",
+      startingCandidate: {
+        baseCommit: baseState.repository.verifiedCommit,
+        commit: baseState.repository.verifiedCommit,
+        tree: "c".repeat(40),
+        clean: true,
+        changedEntriesDigest: "d".repeat(64),
+      },
+      startingCommits: [],
+      workerRole: "feature-worker-initial",
+      workerAssignment: {
+        model: "gpt-5.6-sol",
+        reasoningEffort: "xhigh",
+      },
+      initialWorkerThreadId: null,
+      initialWorkerThreadLineageSha256:
+        candidatePrepareThreadLineageSha256(milestone),
+      workerPolicySha256: candidatePrepareWorkerPolicySha256(milestone),
+      retryFeedbackSha256: null,
+      retryContextSha256: candidatePrepareRetryContextSha256(milestone),
+      proposalContractSha256: candidatePrepareProposalContractSha256(milestone),
+      protectedFilesSha256: candidatePrepareProtectedFilesSha256(
+        baseState.repository.protectedFiles,
+      ),
+      protectedPatternsSha256: candidatePrepareProtectedPatternsSha256(
+        enforcementProtectedPatterns(
+          doctorConfig(),
+          baseState.repository.protectedFiles,
+        ),
+      ),
+      promptSha256: "e".repeat(64),
+      workerEventsPath: join(attemptDirectory, "worker-events.jsonl"),
+      workerTurnPath: join(attemptDirectory, "worker-turn.json"),
+      checkpointArtifactPath: join(
+        attemptDirectory,
+        "controller-checkpoint.json",
+      ),
+      initialRunUsage: runningState.run.usage,
+      initialAgentInvocationCount: 0,
+      agentInvocationId: "doctor-candidate-run-agent-1",
+      workerInvocation: null,
+      workerResult: null,
+      checkpointPlan: null,
+      checkpointResult: null,
+      checkpointArtifactSha256: null,
+      phase: "intent-persisted",
+      createdAt: "2026-08-23T20:00:00.000Z",
+      updatedAt: "2026-08-23T20:00:00.000Z",
+      recoveryPolicy: "validate-resume-adopt-or-preserve",
+      diagnostic: null,
+    };
+    await writeJson(fixture.statePath, {
+      ...runningState,
+      pendingOperation: operation,
+    });
+    const stateBefore = await readFile(fixture.statePath);
+    const diagnostic = await runDoctorDiagnostic(
+      { repositoryRoot: fixture.root },
+      {
+        environment: {
+          ...pinnedEnvironment,
+          CODEX_API_KEY: "available-but-private",
+        },
+        nodeVersion: "24.18.0",
+        gitProbe: () => ({ clean: true }),
+        headProbe: () => storedHead,
+      },
+    );
+    expect(diagnostic.checks.state).toMatchObject({
+      status: "block",
+      pendingOperation: {
+        kind: "candidate-prepare",
+        phase: "intent-persisted",
+        classification: "workspace-identity-drift",
+        disposition: "manual",
+        workspacePath,
+        nextSafeAction: "manual-reconciliation-required",
+      },
+      outcome: "candidate-operation-pending",
+    });
+    expect(await readFile(fixture.statePath)).toEqual(stateBefore);
   });
 
   it("classifies retention apply without changing state, journal, or targets", async () => {

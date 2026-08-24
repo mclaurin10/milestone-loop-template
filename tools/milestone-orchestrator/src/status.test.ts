@@ -13,6 +13,7 @@ import {
   VERIFICATION_SUMMARY_SCHEMA_VERSION,
   WORKSPACE_CLEANUP_SCHEMA_VERSION,
   type AuthoritativeVerificationSummary,
+  type CandidatePrepareOperation,
   type OrchestratorState,
   type VerificationSummary,
 } from "./contracts.js";
@@ -714,6 +715,49 @@ describe("expanded status diagnostic", () => {
     expect(blocked.recovery).toMatchObject({
       disposition: "blocked",
       command: "pnpm loop:status -- --json",
+    });
+
+    const candidateOperation = {
+      id: "status-candidate-operation",
+      kind: "candidate-prepare",
+      phase: "checkpoint-prepared",
+    } as unknown as CandidatePrepareOperation;
+    const candidatePending: OrchestratorInspection["pendingOperation"] = {
+      operation: candidateOperation,
+      recovery: {
+        operationId: candidateOperation.id,
+        classification: "checkpoint-commit-adoptable",
+        disposition: "automatic",
+        nextSafeAction: "adopt-checkpoint-commit",
+        message: "Exact authorized checkpoint can be adopted.",
+        observedHead: head,
+        preservedPaths: [join(root, "artifacts", "workspaces", "candidate")],
+        checkpointResult: null,
+      },
+    };
+    const candidateStatus = await runStatusDiagnostic(
+      { repositoryRoot: root },
+      {
+        doctorProbe: async () => doctor,
+        inspectionProbe: async () =>
+          inspection(
+            { ...state, pendingOperation: candidateOperation },
+            head,
+            generation,
+            candidatePending,
+          ),
+        configuredTargetBranchProbe: async () => "main",
+      },
+    );
+    expect(candidateStatus.pendingOperation).toMatchObject({
+      id: candidateOperation.id,
+      kind: "candidate-prepare",
+      phase: "checkpoint-prepared",
+      recovery: {
+        disposition: "automatic",
+        classification: "checkpoint-commit-adoptable",
+        nextSafeAction: "adopt-checkpoint-commit",
+      },
     });
   });
 

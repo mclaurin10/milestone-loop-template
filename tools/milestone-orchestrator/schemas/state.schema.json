@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://milestone-loop.local/schemas/orchestrator-state-1.9.0.json",
+  "$id": "https://milestone-loop.local/schemas/orchestrator-state-1.10.0.json",
   "title": "Example Project Orchestrator State",
   "type": "object",
   "additionalProperties": false,
@@ -23,7 +23,7 @@
     "updatedAt"
   ],
   "properties": {
-    "schemaVersion": { "const": "1.9.0" },
+    "schemaVersion": { "const": "1.10.0" },
     "revision": { "type": "integer", "minimum": 0 },
     "repository": { "type": "object" },
     "queue": {
@@ -117,6 +117,7 @@
       "oneOf": [
         { "type": "null" },
         { "$ref": "#/$defs/workspaceCreateOperation" },
+        { "$ref": "#/$defs/candidatePrepareOperation" },
         { "$ref": "#/$defs/targetIntegrateOperation" },
         { "$ref": "#/$defs/workspaceCleanupOperation" },
         { "$ref": "#/$defs/retentionApplyOperation" }
@@ -283,6 +284,457 @@
                 "observedAt": { "type": "string", "format": "date-time" },
                 "preservedPaths": {
                   "type": "array",
+                  "uniqueItems": true,
+                  "items": { "type": "string", "minLength": 1 }
+                },
+                "quarantinePath": { "type": "null" }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "candidatePrepareCandidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "baseCommit",
+        "commit",
+        "tree",
+        "clean",
+        "changedEntriesDigest"
+      ],
+      "properties": {
+        "baseCommit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+        "commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+        "tree": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+        "clean": { "const": true },
+        "changedEntriesDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "candidatePrepareUsage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "inputTokens",
+        "cachedInputTokens",
+        "outputTokens",
+        "reasoningOutputTokens"
+      ],
+      "properties": {
+        "inputTokens": { "type": "integer", "minimum": 0 },
+        "cachedInputTokens": { "type": "integer", "minimum": 0 },
+        "outputTokens": { "type": "integer", "minimum": 0 },
+        "reasoningOutputTokens": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "candidatePrepareInvocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "id",
+        "role",
+        "requestedModel",
+        "requestedReasoningEffort",
+        "resolvedModel",
+        "resolvedReasoningEffort",
+        "resolutionEvidence",
+        "threadId",
+        "attempt",
+        "escalated",
+        "escalationReason",
+        "overrideApplied",
+        "overrideReason",
+        "status",
+        "startedAt",
+        "finishedAt",
+        "error"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "id": { "type": "string", "minLength": 1 },
+        "role": {
+          "enum": ["feature-worker-initial", "feature-worker-escalated"]
+        },
+        "requestedModel": { "enum": ["gpt-5.6-sol", "gpt-5.6-terra"] },
+        "requestedReasoningEffort": {
+          "enum": ["low", "medium", "high", "xhigh", "max"]
+        },
+        "resolvedModel": { "type": ["string", "null"] },
+        "resolvedReasoningEffort": { "type": ["string", "null"] },
+        "resolutionEvidence": {
+          "const": "sdk-events-do-not-expose-resolved-model-or-effort"
+        },
+        "threadId": { "type": ["string", "null"] },
+        "attempt": { "type": "integer", "minimum": 1 },
+        "escalated": { "type": "boolean" },
+        "escalationReason": { "type": ["string", "null"] },
+        "overrideApplied": { "type": "boolean" },
+        "overrideReason": { "type": ["string", "null"] },
+        "status": { "enum": ["starting", "completed", "failed"] },
+        "startedAt": { "type": "string", "format": "date-time" },
+        "finishedAt": { "type": ["string", "null"], "format": "date-time" },
+        "error": { "type": ["string", "null"] }
+      }
+    },
+    "candidatePrepareOperation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "kind",
+        "id",
+        "runId",
+        "milestoneId",
+        "attempt",
+        "inputStateGeneration",
+        "inputStateRevision",
+        "repositoryRoot",
+        "workspaceRoot",
+        "targetBranch",
+        "verifiedCommit",
+        "workspacePath",
+        "workspaceBranch",
+        "workspaceBaseCommit",
+        "workspaceCreatedAt",
+        "workspaceCreateOperationId",
+        "startingCandidate",
+        "startingCommits",
+        "workerRole",
+        "workerAssignment",
+        "initialWorkerThreadId",
+        "initialWorkerThreadLineageSha256",
+        "workerPolicySha256",
+        "retryFeedbackSha256",
+        "retryContextSha256",
+        "proposalContractSha256",
+        "protectedFilesSha256",
+        "protectedPatternsSha256",
+        "promptSha256",
+        "workerEventsPath",
+        "workerTurnPath",
+        "checkpointArtifactPath",
+        "initialRunUsage",
+        "initialAgentInvocationCount",
+        "agentInvocationId",
+        "workerInvocation",
+        "workerResult",
+        "checkpointPlan",
+        "checkpointResult",
+        "checkpointArtifactSha256",
+        "phase",
+        "createdAt",
+        "updatedAt",
+        "recoveryPolicy",
+        "diagnostic"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "kind": { "const": "candidate-prepare" },
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+        },
+        "runId": { "type": "string", "minLength": 1 },
+        "milestoneId": { "type": "string", "minLength": 1 },
+        "attempt": { "type": "integer", "minimum": 1 },
+        "inputStateGeneration": {
+          "type": "string",
+          "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$"
+        },
+        "inputStateRevision": { "type": "integer", "minimum": 0 },
+        "repositoryRoot": { "type": "string", "minLength": 1 },
+        "workspaceRoot": { "type": "string", "minLength": 1 },
+        "targetBranch": { "type": "string", "minLength": 1 },
+        "verifiedCommit": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "workspacePath": { "type": "string", "minLength": 1 },
+        "workspaceBranch": { "type": "string", "minLength": 1 },
+        "workspaceBaseCommit": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "workspaceCreatedAt": { "type": "string", "format": "date-time" },
+        "workspaceCreateOperationId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+        },
+        "startingCandidate": {
+          "$ref": "#/$defs/candidatePrepareCandidate"
+        },
+        "startingCommits": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[a-f0-9]{40}$" }
+        },
+        "workerRole": {
+          "enum": ["feature-worker-initial", "feature-worker-escalated"]
+        },
+        "workerAssignment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["model", "reasoningEffort"],
+          "properties": {
+            "model": { "enum": ["gpt-5.6-sol", "gpt-5.6-terra"] },
+            "reasoningEffort": {
+              "enum": ["low", "medium", "high", "xhigh", "max"]
+            }
+          }
+        },
+        "initialWorkerThreadId": { "type": ["string", "null"] },
+        "initialWorkerThreadLineageSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "workerPolicySha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "retryFeedbackSha256": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+          ]
+        },
+        "retryContextSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "proposalContractSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "protectedFilesSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "protectedPatternsSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "promptSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "workerEventsPath": { "type": "string", "minLength": 1 },
+        "workerTurnPath": { "type": "string", "minLength": 1 },
+        "checkpointArtifactPath": { "type": "string", "minLength": 1 },
+        "initialRunUsage": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "codexInvocations",
+            "inputTokens",
+            "cachedInputTokens",
+            "outputTokens",
+            "reasoningOutputTokens"
+          ],
+          "properties": {
+            "codexInvocations": { "type": "integer", "minimum": 0 },
+            "inputTokens": { "type": "integer", "minimum": 0 },
+            "cachedInputTokens": { "type": "integer", "minimum": 0 },
+            "outputTokens": { "type": "integer", "minimum": 0 },
+            "reasoningOutputTokens": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "initialAgentInvocationCount": { "type": "integer", "minimum": 0 },
+        "agentInvocationId": { "type": "string", "minLength": 1 },
+        "workerInvocation": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/candidatePrepareInvocation" }
+          ]
+        },
+        "workerResult": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "threadId",
+                "usage",
+                "itemCount",
+                "finalResponseSha256",
+                "workerTurnSha256",
+                "finishedAt"
+              ],
+              "properties": {
+                "threadId": { "type": "string", "minLength": 1 },
+                "usage": {
+                  "oneOf": [
+                    { "type": "null" },
+                    { "$ref": "#/$defs/candidatePrepareUsage" }
+                  ]
+                },
+                "itemCount": { "type": "integer", "minimum": 0 },
+                "finalResponseSha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "workerTurnSha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "finishedAt": { "type": "string", "format": "date-time" }
+              }
+            }
+          ]
+        },
+        "checkpointPlan": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "preCheckpointCommit",
+                "expectedTree",
+                "commitMessage",
+                "controllerCommitRequired",
+                "observedPaths",
+                "workingPaths",
+                "preparedAt"
+              ],
+              "properties": {
+                "preCheckpointCommit": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{40}$"
+                },
+                "expectedTree": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{40}$"
+                },
+                "commitMessage": { "type": ["string", "null"] },
+                "controllerCommitRequired": { "type": "boolean" },
+                "observedPaths": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": { "type": "string", "minLength": 1 }
+                },
+                "workingPaths": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": { "type": "string", "minLength": 1 }
+                },
+                "preparedAt": { "type": "string", "format": "date-time" }
+              }
+            }
+          ]
+        },
+        "checkpointResult": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "candidate",
+                "commits",
+                "finalChangedPaths",
+                "controllerCommit",
+                "committedAt"
+              ],
+              "properties": {
+                "candidate": {
+                  "$ref": "#/$defs/candidatePrepareCandidate"
+                },
+                "commits": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{40}$"
+                  }
+                },
+                "finalChangedPaths": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": { "type": "string", "minLength": 1 }
+                },
+                "controllerCommit": {
+                  "oneOf": [
+                    { "type": "null" },
+                    { "type": "string", "pattern": "^[a-f0-9]{40}$" }
+                  ]
+                },
+                "committedAt": { "type": "string", "format": "date-time" }
+              }
+            }
+          ]
+        },
+        "checkpointArtifactSha256": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+          ]
+        },
+        "phase": {
+          "enum": [
+            "intent-persisted",
+            "worker-invocation-started",
+            "worker-thread-recorded",
+            "worker-completed",
+            "worker-evidence-recorded",
+            "checkpoint-prepared",
+            "checkpoint-committed",
+            "checkpoint-recorded",
+            "blocked"
+          ]
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "recoveryPolicy": {
+          "const": "validate-resume-adopt-or-preserve"
+        },
+        "diagnostic": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "classification",
+                "message",
+                "observedAt",
+                "observedHead",
+                "preservedPaths",
+                "quarantinePath"
+              ],
+              "properties": {
+                "classification": {
+                  "enum": [
+                    "candidate-drift",
+                    "checkpoint-artifact-conflict",
+                    "checkpoint-parent-drift",
+                    "checkpoint-tree-drift",
+                    "diff-policy-violation",
+                    "protected-file-drift",
+                    "unexpected-commit",
+                    "worker-context-drift",
+                    "worker-evidence-conflict",
+                    "worker-outcome-ambiguous",
+                    "workspace-identity-drift",
+                    "workspace-path-unsafe"
+                  ]
+                },
+                "message": { "type": "string", "minLength": 1 },
+                "observedAt": { "type": "string", "format": "date-time" },
+                "observedHead": {
+                  "oneOf": [
+                    { "type": "null" },
+                    { "type": "string", "pattern": "^[a-f0-9]{40}$" }
+                  ]
+                },
+                "preservedPaths": {
+                  "type": "array",
+                  "minItems": 1,
                   "uniqueItems": true,
                   "items": { "type": "string", "minLength": 1 }
                 },

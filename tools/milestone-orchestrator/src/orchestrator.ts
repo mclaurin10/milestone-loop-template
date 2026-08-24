@@ -8,6 +8,7 @@ import { AGENT_INVOCATION_SCHEMA_VERSION, AGENT_ROLES } from "./contracts.js";
 import type {
   AgentInvocationRecord,
   BlockerRecord,
+  CandidatePrepareOperation,
   CandidateIdentity,
   CodexTurnResult,
   MilestoneProposal,
@@ -33,6 +34,15 @@ import {
   candidateIdentityFrom,
   differingIdentityFields,
 } from "./candidate-identity.js";
+import {
+  candidatePrepareArtifactSha256,
+  candidatePrepareCheckpointArtifact,
+  inspectCandidatePrepareOperation,
+  planCandidatePrepareOperation,
+  prepareCandidateCheckpointPlan,
+  type CandidatePrepareHooks,
+  type CandidatePrepareRecoveryInspection,
+} from "./candidate-prepare.js";
 import {
   ControllerLease,
   type ControllerLeaseInspection,
@@ -65,23 +75,26 @@ import {
 import {
   assertProtectedFiles,
   captureProtectedFiles,
-  commitWorkingChanges,
+  commitStagedChanges,
   currentVerificationProfile,
   inspectAttempt,
   inspectTarget,
   gitHead,
-  workingChangedPaths,
 } from "./git-isolation.js";
 import {
+  advanceCandidatePrepareOperation,
   advanceTargetIntegrateOperation,
   advanceWorkspaceCleanupOperation,
   advanceWorkspaceCreateOperation,
+  blockCandidatePrepareOperation,
   blockTargetIntegrateOperation,
   blockWorkspaceCleanupOperation,
   blockWorkspaceCreateOperation,
+  completeCandidatePrepareOperation,
   completeTargetIntegrateOperation,
   completeWorkspaceCleanupOperation,
   completeWorkspaceCreateOperation,
+  setCandidatePrepareOperation,
   setTargetIntegrateOperation,
   setWorkspaceCleanupOperation,
   setWorkspaceCreateOperation,
@@ -97,7 +110,7 @@ import {
   installedCodexSdkVersion,
   resolveAgentAssignment,
 } from "./model-policy.js";
-import { enforceDiffPolicy, evaluateProposal } from "./policy.js";
+import { evaluateProposal } from "./policy.js";
 import { strictlyContained } from "./path-safety.js";
 import { requestPlan } from "./planner.js";
 import { redactSensitiveText, redactSensitiveValue } from "./redaction.js";
@@ -115,7 +128,6 @@ import {
   decideWorkerEscalation,
   infrastructureFailureRecord,
   promoteWorkerPolicy,
-  recordWorkerThreadLineage,
   reviewerFailureRecord,
   verificationFailureRecord,
 } from "./reasoning-escalation.js";
@@ -169,9 +181,11 @@ export interface OrchestratorDependencies {
   readonly now?: () => Date;
   readonly createRunId?: () => string;
   readonly createWorkspaceOperationId?: () => string;
+  readonly createCandidatePrepareOperationId?: () => string;
   readonly createTargetIntegrationOperationId?: () => string;
   readonly createWorkspaceCleanupOperationId?: () => string;
   readonly workspaceCreateHooks?: WorkspaceCreateHooks;
+  readonly candidatePrepareHooks?: CandidatePrepareHooks;
   readonly targetIntegrationHooks?: TargetIntegrationHooks;
   readonly workspaceCleanupHooks?: WorkspaceCleanupHooks;
   readonly retentionApplyHooks?: RetentionApplyHooks;
@@ -193,11 +207,13 @@ export interface OrchestratorInspection {
   readonly pendingOperation: {
     readonly operation:
       | WorkspaceCreateOperation
+      | CandidatePrepareOperation
       | TargetIntegrateOperation
       | WorkspaceCleanupOperation
       | RetentionApplyOperation;
     readonly recovery:
       | WorkspaceCreateRecoveryInspection
+      | CandidatePrepareRecoveryInspection
       | TargetIntegrationRecoveryInspection
       | WorkspaceCleanupRecoveryInspection
       | RetentionApplyRecoveryInspection;
@@ -229,6 +245,33 @@ function safeRunId(now: Date): string {
     .slice(0, 14)}-${randomUUID().slice(0, 8)}`;
 }
 
+function candidateWorkerTurnArtifact(
+  operation: CandidatePrepareOperation,
+  result: CodexTurnResult,
+): unknown {
+  return {
+    schemaVersion: "1.0.0",
+    attempt: operation.attempt,
+    threadId: result.threadId,
+    role: operation.workerRole,
+    requestedModel: operation.workerAssignment.model,
+    requestedReasoningEffort: operation.workerAssignment.reasoningEffort,
+    escalationReason:
+      operation.workerRole === "feature-worker-escalated"
+        ? candidateMilestoneEscalationReason(operation)
+        : null,
+    usage: result.usage,
+    itemCount: result.itemCount,
+    finalResponse: redactSensitiveText(result.finalResponse),
+  };
+}
+
+function candidateMilestoneEscalationReason(
+  operation: CandidatePrepareOperation,
+): string | null {
+  return operation.workerInvocation?.escalationReason ?? null;
+}
+
 export class WorkspaceCreateInterruptedError extends Error {
   constructor(
     readonly point: string,
@@ -246,6 +289,26 @@ export class WorkspaceCreateBlockedError extends Error {
   ) {
     super(`Workspace-create operation ${operationId} is blocked: ${message}`);
     this.name = "WorkspaceCreateBlockedError";
+  }
+}
+
+export class CandidatePrepareInterruptedError extends Error {
+  constructor(
+    readonly point: string,
+    options: { readonly cause: unknown },
+  ) {
+    super(`Candidate-prepare operation was interrupted at ${point}.`, options);
+    this.name = "CandidatePrepareInterruptedError";
+  }
+}
+
+export class CandidatePrepareBlockedError extends Error {
+  constructor(
+    readonly operationId: string,
+    message: string,
+  ) {
+    super(`Candidate-prepare operation ${operationId} is blocked: ${message}`);
+    this.name = "CandidatePrepareBlockedError";
   }
 }
 
@@ -649,9 +712,11 @@ export class MilestoneOrchestrator {
   private readonly now: () => Date;
   private readonly createRunId: () => string;
   private readonly createWorkspaceOperationId: () => string;
+  private readonly createCandidatePrepareOperationId: () => string;
   private readonly createTargetIntegrationOperationId: () => string;
   private readonly createWorkspaceCleanupOperationId: () => string;
   private readonly workspaceCreateHooks: WorkspaceCreateHooks;
+  private readonly candidatePrepareHooks: CandidatePrepareHooks;
   private readonly targetIntegrationHooks: TargetIntegrationHooks;
   private readonly workspaceCleanupHooks: WorkspaceCleanupHooks;
   private readonly retentionApplyHooks: RetentionApplyHooks;
@@ -670,9 +735,11 @@ export class MilestoneOrchestrator {
     now: () => Date;
     createRunId: () => string;
     createWorkspaceOperationId: () => string;
+    createCandidatePrepareOperationId: () => string;
     createTargetIntegrationOperationId: () => string;
     createWorkspaceCleanupOperationId: () => string;
     workspaceCreateHooks: WorkspaceCreateHooks;
+    candidatePrepareHooks: CandidatePrepareHooks;
     targetIntegrationHooks: TargetIntegrationHooks;
     workspaceCleanupHooks: WorkspaceCleanupHooks;
     retentionApplyHooks: RetentionApplyHooks;
@@ -689,6 +756,8 @@ export class MilestoneOrchestrator {
     this.now = input.now;
     this.createRunId = input.createRunId;
     this.createWorkspaceOperationId = input.createWorkspaceOperationId;
+    this.createCandidatePrepareOperationId =
+      input.createCandidatePrepareOperationId;
     this.createTargetIntegrationOperationId =
       input.createTargetIntegrationOperationId;
     this.createWorkspaceCleanupOperationId =
@@ -700,6 +769,16 @@ export class MilestoneOrchestrator {
           await input.workspaceCreateHooks.fault(point, operation);
         } catch (error) {
           throw new WorkspaceCreateInterruptedError(point, { cause: error });
+        }
+      },
+    };
+    this.candidatePrepareHooks = {
+      fault: async (point, operation) => {
+        if (!input.candidatePrepareHooks.fault) return;
+        try {
+          await input.candidatePrepareHooks.fault(point, operation);
+        } catch (error) {
+          throw new CandidatePrepareInterruptedError(point, { cause: error });
         }
       },
     };
@@ -822,6 +901,9 @@ export class MilestoneOrchestrator {
       createWorkspaceOperationId:
         dependencies.createWorkspaceOperationId ??
         (() => `workspace-create-${randomUUID()}`),
+      createCandidatePrepareOperationId:
+        dependencies.createCandidatePrepareOperationId ??
+        (() => `candidate-prepare-${randomUUID()}`),
       createTargetIntegrationOperationId:
         dependencies.createTargetIntegrationOperationId ??
         (() => `target-integrate-${randomUUID()}`),
@@ -829,6 +911,7 @@ export class MilestoneOrchestrator {
         dependencies.createWorkspaceCleanupOperationId ??
         (() => `workspace-cleanup-${randomUUID()}`),
       workspaceCreateHooks: dependencies.workspaceCreateHooks ?? {},
+      candidatePrepareHooks: dependencies.candidatePrepareHooks ?? {},
       targetIntegrationHooks: dependencies.targetIntegrationHooks ?? {},
       workspaceCleanupHooks: dependencies.workspaceCleanupHooks ?? {},
       retentionApplyHooks: dependencies.retentionApplyHooks ?? {},
@@ -930,17 +1013,30 @@ export class MilestoneOrchestrator {
           recovery:
             state.pendingOperation.kind === "workspace-create"
               ? await inspectWorkspaceCreateOperation(state.pendingOperation)
-              : state.pendingOperation.kind === "target-integrate"
-                ? await inspectTargetIntegrationOperation(
-                    state.pendingOperation,
-                  )
-                : state.pendingOperation.kind === "workspace-cleanup"
-                  ? await inspectWorkspaceCleanupOperation(
+              : state.pendingOperation.kind === "candidate-prepare"
+                ? await inspectCandidatePrepareOperation({
+                    operation: state.pendingOperation,
+                    milestone: milestoneById(
+                      state,
+                      state.pendingOperation.milestoneId,
+                    ),
+                    protectedPatterns: enforcementProtectedPatterns(
+                      config,
+                      state.repository.protectedFiles,
+                    ),
+                    protectedFiles: state.repository.protectedFiles,
+                  })
+                : state.pendingOperation.kind === "target-integrate"
+                  ? await inspectTargetIntegrationOperation(
                       state.pendingOperation,
                     )
-                  : await inspectRetentionApplyOperation(
-                      state.pendingOperation,
-                    ),
+                  : state.pendingOperation.kind === "workspace-cleanup"
+                    ? await inspectWorkspaceCleanupOperation(
+                        state.pendingOperation,
+                      )
+                    : await inspectRetentionApplyOperation(
+                        state.pendingOperation,
+                      ),
         }
       : null;
     return {
@@ -1028,6 +1124,24 @@ export class MilestoneOrchestrator {
       )
         throw new Error(
           `Pending workspace-create operation ${operation.id} has non-canonical controller paths.`,
+        );
+    } else if (operation?.kind === "candidate-prepare") {
+      const milestone = milestoneById(this.stateValue, operation.milestoneId);
+      const attemptDirectory = this.attemptDirectory(milestone);
+      if (
+        operation.repositoryRoot !== this.repositoryRoot ||
+        operation.workspaceRoot !==
+          resolve(this.repositoryRoot, this.config.workspaceRoot) ||
+        operation.workspacePath !== milestone.workspace?.path ||
+        operation.workerEventsPath !==
+          resolve(attemptDirectory, "worker-events.jsonl") ||
+        operation.workerTurnPath !==
+          resolve(attemptDirectory, "worker-turn.json") ||
+        operation.checkpointArtifactPath !==
+          resolve(attemptDirectory, "controller-checkpoint.json")
+      )
+        throw new Error(
+          `Pending candidate-prepare operation ${operation.id} has non-canonical controller paths.`,
         );
     } else if (operation?.kind === "target-integrate") {
       if (!operation.executionProvider?.completionEligible)
@@ -1909,9 +2023,185 @@ export class MilestoneOrchestrator {
     }
   }
 
+  private async candidatePrepareFault(
+    point: Parameters<NonNullable<CandidatePrepareHooks["fault"]>>[0],
+    operation: CandidatePrepareOperation,
+  ): Promise<void> {
+    await this.candidatePrepareHooks.fault?.(point, operation);
+  }
+
+  private async blockCandidatePrepare(
+    inspection: CandidatePrepareRecoveryInspection,
+  ): Promise<never> {
+    const operation = this.stateValue.pendingOperation;
+    if (!operation || operation.kind !== "candidate-prepare")
+      throw new Error(
+        "Cannot block a candidate-prepare operation that is absent.",
+      );
+    if (operation.phase === "blocked")
+      throw new CandidatePrepareBlockedError(
+        operation.id,
+        operation.diagnostic?.message ?? inspection.message,
+      );
+    if (inspection.disposition !== "manual")
+      throw new Error(
+        `Cannot block automatic candidate recovery ${inspection.classification}.`,
+      );
+    const observedAt = iso(this.now);
+    await this.persist(
+      blockCandidatePrepareOperation(this.stateValue, operation.id, {
+        classification: inspection.classification as Exclude<
+          CandidatePrepareOperation["diagnostic"],
+          null
+        >["classification"],
+        message: inspection.message,
+        observedAt,
+        observedHead: inspection.observedHead,
+        preservedPaths: [operation.workspacePath],
+        quarantinePath: null,
+      }),
+    );
+    throw new CandidatePrepareBlockedError(operation.id, inspection.message);
+  }
+
+  private async recoverPendingCandidatePrepare(): Promise<void> {
+    while (this.stateValue.pendingOperation?.kind === "candidate-prepare") {
+      let operation = this.stateValue.pendingOperation;
+      const milestone = milestoneById(this.stateValue, operation.milestoneId);
+      const inspection = await inspectCandidatePrepareOperation({
+        operation,
+        milestone,
+        protectedPatterns: this.protectedPatterns(),
+        protectedFiles: this.stateValue.repository.protectedFiles,
+      });
+      if (inspection.disposition === "manual")
+        await this.blockCandidatePrepare(inspection);
+      switch (inspection.nextSafeAction) {
+        case "record-worker-evidence":
+          await this.persist(
+            advanceCandidatePrepareOperation(
+              this.stateValue,
+              operation.id,
+              { phase: "worker-evidence-recorded" },
+              iso(this.now),
+            ),
+          );
+          operation = this.stateValue
+            .pendingOperation as CandidatePrepareOperation;
+          await this.candidatePrepareFault(
+            "after-worker-evidence-recorded-state",
+            operation,
+          );
+          break;
+        case "prepare-checkpoint": {
+          const plan = await prepareCandidateCheckpointPlan({
+            operation,
+            milestone,
+            protectedPatterns: this.protectedPatterns(),
+            protectedFiles: this.stateValue.repository.protectedFiles,
+            now: iso(this.now),
+          });
+          await this.persist(
+            advanceCandidatePrepareOperation(
+              this.stateValue,
+              operation.id,
+              { phase: "checkpoint-prepared", plan },
+              plan.preparedAt,
+            ),
+          );
+          operation = this.stateValue
+            .pendingOperation as CandidatePrepareOperation;
+          await this.candidatePrepareFault(
+            "after-checkpoint-prepared-state",
+            operation,
+          );
+          break;
+        }
+        case "resume-checkpoint-commit": {
+          const plan = operation.checkpointPlan;
+          if (!plan?.commitMessage)
+            throw new Error("Authorized controller commit lacks a plan.");
+          commitStagedChanges(
+            operation.workspacePath,
+            plan.commitMessage,
+            plan.preCheckpointCommit,
+            plan.expectedTree,
+          );
+          await this.candidatePrepareFault(
+            "after-checkpoint-commit",
+            operation,
+          );
+          break;
+        }
+        case "adopt-checkpoint-commit": {
+          if (!inspection.checkpointResult)
+            throw new Error("Adoptable checkpoint result is missing.");
+          await this.persist(
+            advanceCandidatePrepareOperation(
+              this.stateValue,
+              operation.id,
+              {
+                phase: "checkpoint-committed",
+                result: inspection.checkpointResult,
+              },
+              inspection.checkpointResult.committedAt,
+            ),
+          );
+          operation = this.stateValue
+            .pendingOperation as CandidatePrepareOperation;
+          await this.candidatePrepareFault(
+            "after-checkpoint-committed-state",
+            operation,
+          );
+          break;
+        }
+        case "materialize-checkpoint-evidence":
+          await atomicWriteJson(
+            operation.checkpointArtifactPath,
+            candidatePrepareCheckpointArtifact(operation),
+          );
+          await this.candidatePrepareFault(
+            "after-checkpoint-artifact",
+            operation,
+          );
+          break;
+        case "record-checkpoint-evidence":
+          await this.persist(
+            advanceCandidatePrepareOperation(
+              this.stateValue,
+              operation.id,
+              { phase: "checkpoint-recorded" },
+              iso(this.now),
+            ),
+          );
+          operation = this.stateValue
+            .pendingOperation as CandidatePrepareOperation;
+          await this.candidatePrepareFault(
+            "after-checkpoint-recorded-state",
+            operation,
+          );
+          break;
+        case "complete-candidate":
+          await this.persist(
+            completeCandidatePrepareOperation(
+              this.stateValue,
+              operation.id,
+              operation.updatedAt,
+            ),
+          );
+          await this.candidatePrepareFault("after-completion-state", operation);
+          return;
+        case "manual-reconciliation-required":
+          await this.blockCandidatePrepare(inspection);
+      }
+    }
+  }
+
   private async recoverPendingOperation(): Promise<void> {
     if (this.stateValue.pendingOperation?.kind === "workspace-create")
       await this.recoverPendingWorkspaceCreate();
+    else if (this.stateValue.pendingOperation?.kind === "candidate-prepare")
+      await this.recoverPendingCandidatePrepare();
     else if (this.stateValue.pendingOperation?.kind === "target-integrate")
       await this.recoverPendingTargetIntegration();
     else if (this.stateValue.pendingOperation?.kind === "workspace-cleanup")
@@ -1974,7 +2264,10 @@ export class MilestoneOrchestrator {
     );
   }
 
-  private async cleanupTerminalWorkspace(id: string): Promise<{
+  private async cleanupTerminalWorkspace(
+    id: string,
+    forcedReason?: "failed-preserve-workspace",
+  ): Promise<{
     readonly ok: boolean;
     readonly error: string | null;
   }> {
@@ -1990,10 +2283,11 @@ export class MilestoneOrchestrator {
       return { ok: true, error: null };
 
     const reason =
-      workspace.cleanup.reason &&
+      forcedReason ??
+      (workspace.cleanup.reason &&
       workspace.cleanup.reason !== "legacy-pre-policy"
         ? workspace.cleanup.reason
-        : this.cleanupReason(milestone);
+        : this.cleanupReason(milestone));
     const runId = this.stateValue.run.id;
     if (!runId)
       throw new Error("Terminal workspace cleanup requires a durable run ID.");
@@ -2340,10 +2634,24 @@ export class MilestoneOrchestrator {
     );
   }
 
-  private accountingGateway(): CodexGateway {
+  private accountingGateway(
+    candidatePrepareOperationId?: string,
+  ): CodexGateway {
     return {
       run: async (invocation: CodexInvocation): Promise<CodexTurnResult> => {
         this.checkLimits();
+        const candidateOperation =
+          candidatePrepareOperationId === undefined
+            ? null
+            : this.stateValue.pendingOperation?.kind === "candidate-prepare" &&
+                this.stateValue.pendingOperation.id ===
+                  candidatePrepareOperationId
+              ? this.stateValue.pendingOperation
+              : null;
+        if (candidatePrepareOperationId !== undefined && !candidateOperation)
+          throw new Error(
+            `Candidate-prepare operation ${candidatePrepareOperationId} is not pending.`,
+          );
         const assignment = resolveAgentAssignment(
           this.config.agentPolicy,
           invocation.role,
@@ -2353,7 +2661,9 @@ export class MilestoneOrchestrator {
           throw new Error(
             "Controller invocation role and escalation reason are inconsistent.",
           );
-        const invocationId = `${this.stateValue.run.id ?? "run"}-agent-${this.stateValue.run.agentInvocations.length + 1}`;
+        const invocationId =
+          candidateOperation?.agentInvocationId ??
+          `${this.stateValue.run.id ?? "run"}-agent-${this.stateValue.run.agentInvocations.length + 1}`;
         const startedAt = iso(this.now);
         const record: AgentInvocationRecord = {
           schemaVersion: AGENT_INVOCATION_SCHEMA_VERSION,
@@ -2379,20 +2689,42 @@ export class MilestoneOrchestrator {
           finishedAt: null,
           error: null,
         };
-        await this.persist({
-          ...this.stateValue,
-          run: {
-            ...this.stateValue.run,
-            agentInvocations: [...this.stateValue.run.agentInvocations, record],
-            usage: {
-              ...this.stateValue.run.usage,
-              codexInvocations: this.stateValue.run.usage.codexInvocations + 1,
+        if (candidateOperation) {
+          await this.persist(
+            advanceCandidatePrepareOperation(
+              this.stateValue,
+              candidateOperation.id,
+              { phase: "worker-invocation-started", invocation: record },
+              startedAt,
+            ),
+          );
+          await this.candidatePrepareFault(
+            "after-worker-invocation-started-state",
+            this.stateValue.pendingOperation as CandidatePrepareOperation,
+          );
+        } else
+          await this.persist({
+            ...this.stateValue,
+            run: {
+              ...this.stateValue.run,
+              agentInvocations: [
+                ...this.stateValue.run.agentInvocations,
+                record,
+              ],
+              usage: {
+                ...this.stateValue.run.usage,
+                codexInvocations:
+                  this.stateValue.run.usage.codexInvocations + 1,
+              },
             },
-          },
-        });
+          });
         const updateRecord = async (
           update: Partial<AgentInvocationRecord>,
         ): Promise<void> => {
+          if (candidatePrepareOperationId !== undefined)
+            throw new Error(
+              "Candidate Worker accounting must use candidate-prepare reducers.",
+            );
           await this.persist({
             ...this.stateValue,
             run: {
@@ -2416,52 +2748,142 @@ export class MilestoneOrchestrator {
               this.stateValue.repository.verifiedCommit,
             ),
             onThreadStarted: async (threadId) => {
-              await updateRecord({ threadId });
+              if (candidatePrepareOperationId !== undefined) {
+                const pending = this.stateValue.pendingOperation;
+                if (
+                  !pending ||
+                  pending.kind !== "candidate-prepare" ||
+                  pending.id !== candidatePrepareOperationId
+                )
+                  throw new Error(
+                    "Candidate Worker thread started without matching intent.",
+                  );
+                if (pending.phase === "worker-invocation-started") {
+                  await this.persist(
+                    advanceCandidatePrepareOperation(
+                      this.stateValue,
+                      pending.id,
+                      { phase: "worker-thread-recorded", threadId },
+                      iso(this.now),
+                    ),
+                  );
+                  await this.candidatePrepareFault(
+                    "after-worker-thread-recorded-state",
+                    this.stateValue
+                      .pendingOperation as CandidatePrepareOperation,
+                  );
+                } else if (pending.workerInvocation?.threadId !== threadId)
+                  throw new Error(
+                    "Candidate Worker emitted an inconsistent thread identity.",
+                  );
+              } else await updateRecord({ threadId });
               await originalThreadStarted?.(threadId);
             },
           });
           const usage = result.usage;
-          await this.persist({
-            ...this.stateValue,
-            run: {
-              ...this.stateValue.run,
-              agentInvocations: this.stateValue.run.agentInvocations.map(
-                (entry) =>
-                  entry.id === invocationId
-                    ? {
-                        ...entry,
-                        threadId: result.threadId,
-                        status: "completed" as const,
-                        finishedAt: iso(this.now),
-                      }
-                    : entry,
+          if (candidatePrepareOperationId !== undefined) {
+            const pending = this.stateValue.pendingOperation;
+            if (
+              !pending ||
+              pending.kind !== "candidate-prepare" ||
+              pending.id !== candidatePrepareOperationId
+            )
+              throw new Error(
+                "Candidate Worker completed without matching intent.",
+              );
+            const finishedAt = iso(this.now);
+            const artifact = candidateWorkerTurnArtifact(pending, result);
+            await this.persist(
+              advanceCandidatePrepareOperation(
+                this.stateValue,
+                pending.id,
+                {
+                  phase: "worker-completed",
+                  result: {
+                    threadId: result.threadId,
+                    usage: result.usage,
+                    itemCount: result.itemCount,
+                    finalResponseSha256: createHash("sha256")
+                      .update(redactSensitiveText(result.finalResponse))
+                      .digest("hex"),
+                    workerTurnSha256: candidatePrepareArtifactSha256(artifact),
+                    finishedAt,
+                  },
+                },
+                finishedAt,
               ),
-              usage: {
-                codexInvocations: this.stateValue.run.usage.codexInvocations,
-                inputTokens:
-                  this.stateValue.run.usage.inputTokens +
-                  (usage?.inputTokens ?? 0),
-                cachedInputTokens:
-                  this.stateValue.run.usage.cachedInputTokens +
-                  (usage?.cachedInputTokens ?? 0),
-                outputTokens:
-                  this.stateValue.run.usage.outputTokens +
-                  (usage?.outputTokens ?? 0),
-                reasoningOutputTokens:
-                  this.stateValue.run.usage.reasoningOutputTokens +
-                  (usage?.reasoningOutputTokens ?? 0),
+            );
+            await this.candidatePrepareFault(
+              "after-worker-completed-state",
+              this.stateValue.pendingOperation as CandidatePrepareOperation,
+            );
+          } else
+            await this.persist({
+              ...this.stateValue,
+              run: {
+                ...this.stateValue.run,
+                agentInvocations: this.stateValue.run.agentInvocations.map(
+                  (entry) =>
+                    entry.id === invocationId
+                      ? {
+                          ...entry,
+                          threadId: result.threadId,
+                          status: "completed" as const,
+                          finishedAt: iso(this.now),
+                        }
+                      : entry,
+                ),
+                usage: {
+                  codexInvocations: this.stateValue.run.usage.codexInvocations,
+                  inputTokens:
+                    this.stateValue.run.usage.inputTokens +
+                    (usage?.inputTokens ?? 0),
+                  cachedInputTokens:
+                    this.stateValue.run.usage.cachedInputTokens +
+                    (usage?.cachedInputTokens ?? 0),
+                  outputTokens:
+                    this.stateValue.run.usage.outputTokens +
+                    (usage?.outputTokens ?? 0),
+                  reasoningOutputTokens:
+                    this.stateValue.run.usage.reasoningOutputTokens +
+                    (usage?.reasoningOutputTokens ?? 0),
+                },
               },
-            },
-          });
+            });
           return result;
         } catch (error) {
-          await updateRecord({
-            status: "failed",
-            finishedAt: iso(this.now),
-            error: redactSensitiveText(
-              error instanceof Error ? error.message : String(error),
-            ),
-          });
+          if (error instanceof CandidatePrepareInterruptedError) throw error;
+          if (candidatePrepareOperationId !== undefined) {
+            const pending = this.stateValue.pendingOperation;
+            if (
+              pending?.kind === "candidate-prepare" &&
+              pending.id === candidatePrepareOperationId &&
+              pending.phase !== "blocked"
+            ) {
+              const observedAt = iso(this.now);
+              await this.persist(
+                blockCandidatePrepareOperation(this.stateValue, pending.id, {
+                  classification: "worker-outcome-ambiguous",
+                  message: redactSensitiveText(
+                    `Worker invocation ended without an adoptable result: ${
+                      error instanceof Error ? error.message : String(error)
+                    }`,
+                  ),
+                  observedAt,
+                  observedHead: gitHead(pending.workspacePath),
+                  preservedPaths: [pending.workspacePath],
+                  quarantinePath: null,
+                }),
+              );
+            }
+          } else
+            await updateRecord({
+              status: "failed",
+              finishedAt: iso(this.now),
+              error: redactSensitiveText(
+                error instanceof Error ? error.message : String(error),
+              ),
+            });
           throw error;
         }
       },
@@ -2650,26 +3072,6 @@ export class MilestoneOrchestrator {
     return this.outcome();
   }
 
-  private async setWorkerThread(
-    milestoneId: string,
-    threadId: string,
-    role: "feature-worker-initial" | "feature-worker-escalated",
-  ): Promise<void> {
-    const current = milestoneById(this.stateValue, milestoneId);
-    const assignment = resolveAgentAssignment(this.config.agentPolicy, role);
-    const updated = recordWorkerThreadLineage({
-      milestone: current,
-      threadId,
-      role,
-      assignment,
-      now: iso(this.now),
-    });
-    if (updated === current) return;
-    await this.persist(
-      replaceMilestone(this.stateValue, milestoneId, () => updated),
-    );
-  }
-
   private async setReviewerThread(
     milestoneId: string,
     threadId: string,
@@ -2751,149 +3153,6 @@ export class MilestoneOrchestrator {
     );
   }
 
-  private async finalizeWorkerAttempt(id: string): Promise<boolean> {
-    const milestone = milestoneById(this.stateValue, id);
-    if (!milestone.workspace)
-      throw new Error("Cannot checkpoint a missing worker workspace.");
-    const artifactPath = resolve(
-      this.attemptDirectory(milestone),
-      "controller-checkpoint.json",
-    );
-    const before = inspectAttempt(
-      milestone.workspace.path,
-      milestone.workspace.baseCommit,
-    );
-    const workingPaths = workingChangedPaths(milestone.workspace.path);
-    const observedPaths = [
-      ...new Set([...before.changedPaths, ...workingPaths]),
-    ].sort();
-    const initialPolicy = enforceDiffPolicy(
-      observedPaths,
-      milestone.proposal,
-      this.protectedPatterns(),
-    );
-    if (!initialPolicy.allowed) {
-      await atomicWriteJson(artifactPath, {
-        schemaVersion: "1.0.0",
-        status: "rejected",
-        reason: "diff-policy",
-        observedPaths,
-        workingPaths,
-        policy: initialPolicy,
-        controllerCommit: null,
-      });
-      await this.escalate(
-        "DIFF_POLICY_VIOLATION",
-        `Worker checkpoint rejected protected=[${initialPolicy.protectedChanges.join(", ")}] out-of-scope=[${initialPolicy.outOfScopeChanges.join(", ")}].`,
-        [artifactPath],
-        id,
-      );
-      return false;
-    }
-
-    try {
-      await assertProtectedFiles(
-        milestone.workspace.path,
-        this.stateValue.repository.protectedFiles,
-      );
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      await atomicWriteJson(artifactPath, {
-        schemaVersion: "1.0.0",
-        status: "rejected",
-        reason: "protected-file-hash",
-        observedPaths,
-        workingPaths,
-        message,
-        controllerCommit: null,
-      });
-      await this.escalate(
-        "PROTECTED_FILE_MODIFICATION",
-        message,
-        [artifactPath],
-        id,
-      );
-      return false;
-    }
-
-    const controllerCommit =
-      workingPaths.length === 0
-        ? null
-        : commitWorkingChanges(
-            milestone.workspace.path,
-            `Controller checkpoint: ${milestone.proposal.title}`,
-          );
-    const after = inspectAttempt(
-      milestone.workspace.path,
-      milestone.workspace.baseCommit,
-    );
-    const finalPolicy = enforceDiffPolicy(
-      after.changedPaths,
-      milestone.proposal,
-      this.protectedPatterns(),
-    );
-    if (!after.clean || !finalPolicy.allowed) {
-      await atomicWriteJson(artifactPath, {
-        schemaVersion: "1.0.0",
-        status: "rejected",
-        reason: !after.clean ? "checkpoint-not-clean" : "diff-policy",
-        observedPaths,
-        workingPaths,
-        finalChangedPaths: after.changedPaths,
-        policy: finalPolicy,
-        controllerCommit,
-      });
-      await this.escalate(
-        "DIFF_POLICY_VIOLATION",
-        !after.clean
-          ? "Controller checkpoint did not leave the isolated attempt clean."
-          : `Checkpoint rejected protected=[${finalPolicy.protectedChanges.join(", ")}] out-of-scope=[${finalPolicy.outOfScopeChanges.join(", ")}].`,
-        [artifactPath],
-        id,
-      );
-      return false;
-    }
-    try {
-      await assertProtectedFiles(
-        milestone.workspace.path,
-        this.stateValue.repository.protectedFiles,
-      );
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      await atomicWriteJson(artifactPath, {
-        schemaVersion: "1.0.0",
-        status: "rejected",
-        reason: "protected-file-hash-after-checkpoint",
-        observedPaths,
-        workingPaths,
-        finalChangedPaths: after.changedPaths,
-        message,
-        controllerCommit,
-      });
-      await this.escalate(
-        "PROTECTED_FILE_MODIFICATION",
-        message,
-        [artifactPath],
-        id,
-      );
-      return false;
-    }
-    await atomicWriteJson(artifactPath, {
-      schemaVersion: "1.0.0",
-      status: "accepted",
-      reason:
-        controllerCommit === null
-          ? "worker-tree-already-clean"
-          : "sdk-sandbox-protected-git-metadata",
-      observedPaths,
-      workingPaths,
-      finalChangedPaths: after.changedPaths,
-      commits: after.commits,
-      controllerCommit,
-    });
-    return true;
-  }
-
   private async beginAttempt(id: string): Promise<void> {
     const transitioned = transitionMilestone(
       this.stateValue,
@@ -2947,37 +3206,84 @@ export class MilestoneOrchestrator {
       milestone.workspace.baseCommit,
     );
     if (
-      existingAttempt.clean &&
-      existingAttempt.commits.length > 0 &&
-      !milestone.retryFeedback
+      !existingAttempt.clean ||
+      (existingAttempt.commits.length > 0 && milestone.retryFeedback === null)
     ) {
-      const next = transitionMilestone(
-        this.stateValue,
-        id,
-        "verifying",
-        iso(this.now),
+      const artifactPath = resolve(
+        this.attemptDirectory(milestone),
+        "candidate-prepare-external-change.json",
       );
-      await this.persist({ ...next, nextAllowedAction: "verify" });
+      await atomicWriteJson(artifactPath, {
+        schemaVersion: "1.0.0",
+        classification: "external-or-ambiguous-candidate",
+        milestoneId: id,
+        attempt: milestone.attempts,
+        candidate: candidateIdentityFrom(
+          milestone.workspace.baseCommit,
+          existingAttempt,
+        ),
+        commits: existingAttempt.commits,
+        clean: existingAttempt.clean,
+        retryFeedbackPresent: milestone.retryFeedback !== null,
+        pendingOperation: null,
+        disposition: "preserve-and-block",
+        recordedAt: iso(this.now),
+      });
+      await this.escalate(
+        "CANDIDATE_PREPARE_EXTERNAL_CHANGE",
+        "Candidate workspace contains clean or dirty changes without a matching durable candidate-prepare intent. The workspace was preserved and verification was not authorized.",
+        [artifactPath],
+        id,
+        { preserveWorkspace: true },
+      );
       return;
     }
+    this.checkLimits();
     const role = milestone.workerPolicy.activeRole;
     const assignment = resolveAgentAssignment(this.config.agentPolicy, role);
     if (milestone.workerThreadId) {
       assertWorkerThreadPolicy({ milestone, role, assignment });
     }
-    const turn = await this.accountingGateway().run({
-      role,
-      prompt: workerPrompt(
-        this.config.project,
-        milestone,
-        replacementDiff(milestone),
+    const prompt = workerPrompt(
+      this.config.project,
+      milestone,
+      replacementDiff(milestone),
+    );
+    const attemptDirectory = this.attemptDirectory(milestone);
+    const generation = this.store.mutationGeneration();
+    const operation = planCandidatePrepareOperation({
+      operationId: this.createCandidatePrepareOperationId(),
+      inputStateGeneration: generation.objectId,
+      inputStateRevision: generation.revision,
+      state: this.stateValue,
+      milestone,
+      configuredWorkspaceRoot: this.config.workspaceRoot,
+      protectedPatterns: this.protectedPatterns(),
+      workerPrompt: prompt,
+      workerEventsPath: resolve(attemptDirectory, "worker-events.jsonl"),
+      workerTurnPath: resolve(attemptDirectory, "worker-turn.json"),
+      checkpointArtifactPath: resolve(
+        attemptDirectory,
+        "controller-checkpoint.json",
       ),
+      startingCandidate: candidateIdentityFrom(
+        milestone.workspace.baseCommit,
+        existingAttempt,
+      ),
+      startingCommits: existingAttempt.commits,
+      workerAssignment: assignment,
+      now: iso(this.now),
+    });
+    await this.persist(
+      setCandidatePrepareOperation(this.stateValue, operation),
+    );
+    await this.candidatePrepareFault("after-intent-persisted", operation);
+    const turn = await this.accountingGateway(operation.id).run({
+      role,
+      prompt,
       workingDirectory: milestone.workspace.path,
       threadId: milestone.workerThreadId,
-      eventLogPath: resolve(
-        this.attemptDirectory(milestone),
-        "worker-events.jsonl",
-      ),
+      eventLogPath: operation.workerEventsPath,
       timeoutMs: this.phaseTimeout(this.config.limits.codexTurnMs),
       attempt: milestone.attempts,
       escalationReason:
@@ -2985,38 +3291,27 @@ export class MilestoneOrchestrator {
           ? milestone.workerPolicy.escalationReason
           : null,
       telemetryPhase: "implementation",
-      onThreadStarted: async (threadId) =>
-        this.setWorkerThread(id, threadId, role),
     });
-    await atomicWriteJson(
-      resolve(this.attemptDirectory(milestone), "worker-turn.json"),
-      {
-        schemaVersion: "1.0.0",
-        attempt: milestone.attempts,
-        threadId: turn.threadId,
-        role,
-        requestedModel: assignment.model,
-        requestedReasoningEffort: assignment.reasoningEffort,
-        escalationReason: milestone.workerPolicy.escalationReason,
-        usage: turn.usage,
-        itemCount: turn.itemCount,
-        finalResponse: redactSensitiveText(turn.finalResponse),
-      },
-    );
-    if (!(await this.finalizeWorkerAttempt(id))) return;
-    await this.persist(
-      replaceMilestone(this.stateValue, id, (record) => ({
-        ...record,
-        retryFeedback: null,
-      })),
-    );
-    const next = transitionMilestone(
-      this.stateValue,
-      id,
-      "verifying",
-      iso(this.now),
-    );
-    await this.persist({ ...next, nextAllowedAction: "verify" });
+    const pending = this.stateValue.pendingOperation;
+    if (
+      !pending ||
+      pending.kind !== "candidate-prepare" ||
+      pending.id !== operation.id ||
+      pending.phase !== "worker-completed" ||
+      !pending.workerResult
+    )
+      throw new Error(
+        "Worker completed without canonical candidate-prepare result state.",
+      );
+    const workerArtifact = candidateWorkerTurnArtifact(pending, turn);
+    if (
+      candidatePrepareArtifactSha256(workerArtifact) !==
+      pending.workerResult.workerTurnSha256
+    )
+      throw new Error("Worker turn evidence changed after durable completion.");
+    await atomicWriteJson(pending.workerTurnPath, workerArtifact);
+    await this.candidatePrepareFault("after-worker-evidence-artifact", pending);
+    await this.recoverPendingCandidatePrepare();
   }
 
   private async verify(id: string): Promise<void> {
@@ -3516,6 +3811,7 @@ export class MilestoneOrchestrator {
           try {
             await this.runWorker(id);
           } catch (error) {
+            if (this.stateValue.pendingOperation) throw error;
             await this.retryOrEscalate(
               id,
               "infrastructure",
@@ -3618,6 +3914,7 @@ export class MilestoneOrchestrator {
     message: string,
     evidence: readonly string[],
     requestedMilestoneId?: string,
+    options: { readonly preserveWorkspace?: boolean } = {},
   ): Promise<void> {
     const createdAt = iso(this.now);
     const blocker: BlockerRecord = {
@@ -3669,7 +3966,10 @@ export class MilestoneOrchestrator {
         },
       );
     if (milestoneId) {
-      const cleanup = await this.cleanupTerminalWorkspace(milestoneId);
+      const cleanup = await this.cleanupTerminalWorkspace(
+        milestoneId,
+        options.preserveWorkspace ? "failed-preserve-workspace" : undefined,
+      );
       if (!cleanup.ok && cleanup.error) {
         await this.recordCleanupControllerFailure(milestoneId, cleanup.error);
         return;

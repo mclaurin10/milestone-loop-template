@@ -1,6 +1,13 @@
 import { isDeepStrictEqual } from "node:util";
 
 import type {
+  AgentInvocationRecord,
+  CandidatePrepareCheckpointPlan,
+  CandidatePrepareCheckpointResult,
+  CandidatePrepareDiagnostic,
+  CandidatePrepareOperation,
+  CandidatePreparePhase,
+  CandidatePrepareWorkerResult,
   IsolatedWorkspaceRecord,
   OrchestratorState,
   PendingOperation,
@@ -17,6 +24,15 @@ import type {
   WorkspaceCleanupOperation,
   WorkspaceCleanupPhase,
 } from "./contracts.js";
+import {
+  candidatePrepareArtifactSha256,
+  candidatePrepareCheckpointArtifact,
+  candidatePrepareProposalContractSha256,
+  candidatePrepareProtectedFilesSha256,
+  candidatePrepareRetryContextSha256,
+  candidatePrepareThreadLineageSha256,
+  candidatePrepareWorkerPolicySha256,
+} from "./candidate-prepare.js";
 import { requiredVerticalConsumerAfterCompletion } from "./milestone-state.js";
 import { humanPlaytestStopReason } from "./readiness-completion.js";
 import { reviewerApproves } from "./reviewer.js";
@@ -24,6 +40,7 @@ import {
   executionProviderIdentitiesEqual,
   isExecutionProviderIdentity,
 } from "./execution-provider-identity.js";
+import { recordWorkerThreadLineage } from "./reasoning-escalation.js";
 
 const WORKSPACE_PHASE_TRANSITIONS: Readonly<
   Record<WorkspaceCreatePhase, readonly WorkspaceCreatePhase[]>
@@ -44,6 +61,28 @@ const TARGET_PHASE_TRANSITIONS: Readonly<
   "target-update-started": ["target-updated", "blocked"],
   "target-updated": ["outcome-integrated", "blocked"],
   "outcome-integrated": ["blocked"],
+  blocked: [],
+};
+
+const CANDIDATE_PHASE_TRANSITIONS: Readonly<
+  Record<CandidatePreparePhase, readonly CandidatePreparePhase[]>
+> = {
+  "intent-persisted": ["worker-invocation-started", "blocked"],
+  "worker-invocation-started": [
+    "worker-thread-recorded",
+    "worker-completed",
+    "blocked",
+  ],
+  "worker-thread-recorded": ["worker-completed", "blocked"],
+  "worker-completed": [
+    "worker-evidence-recorded",
+    "checkpoint-prepared",
+    "blocked",
+  ],
+  "worker-evidence-recorded": ["checkpoint-prepared", "blocked"],
+  "checkpoint-prepared": ["checkpoint-committed", "blocked"],
+  "checkpoint-committed": ["checkpoint-recorded", "blocked"],
+  "checkpoint-recorded": ["blocked"],
   blocked: [],
 };
 
@@ -279,6 +318,453 @@ export function completeWorkspaceCreateOperation(
         : milestone,
     ),
     pendingOperation: null,
+  };
+}
+
+function candidateMilestoneForOperation(
+  state: OrchestratorState,
+  operation: CandidatePrepareOperation,
+) {
+  const milestone = state.milestones.find(
+    (entry) => entry.proposal.id === operation.milestoneId,
+  );
+  if (!milestone)
+    throw new Error(
+      `Candidate-prepare operation ${operation.id} names an unknown milestone.`,
+    );
+  return milestone;
+}
+
+function usageAfterCandidateWorker(operation: CandidatePrepareOperation) {
+  const usage = operation.workerResult?.usage;
+  return {
+    codexInvocations: operation.initialRunUsage.codexInvocations + 1,
+    inputTokens:
+      operation.initialRunUsage.inputTokens + (usage?.inputTokens ?? 0),
+    cachedInputTokens:
+      operation.initialRunUsage.cachedInputTokens +
+      (usage?.cachedInputTokens ?? 0),
+    outputTokens:
+      operation.initialRunUsage.outputTokens + (usage?.outputTokens ?? 0),
+    reasoningOutputTokens:
+      operation.initialRunUsage.reasoningOutputTokens +
+      (usage?.reasoningOutputTokens ?? 0),
+  };
+}
+
+export function assertCandidatePrepareContext(
+  state: OrchestratorState,
+  operation: CandidatePrepareOperation,
+): void {
+  const milestone = candidateMilestoneForOperation(state, operation);
+  const workspace = milestone.workspace;
+  if (
+    state.activeMilestoneId !== operation.milestoneId ||
+    state.run.id !== operation.runId ||
+    state.run.status !== "running" ||
+    milestone.status !== "running" ||
+    milestone.attempts !== operation.attempt ||
+    state.nextAllowedAction !== "resume-worker" ||
+    milestone.nextAllowedAction !== "resume-worker" ||
+    !workspace
+  )
+    throw new Error(
+      `Candidate-prepare operation ${operation.id} does not match the active Worker attempt.`,
+    );
+  if (
+    state.repository.root !== operation.repositoryRoot ||
+    state.repository.targetBranch !== operation.targetBranch ||
+    state.repository.verifiedCommit !== operation.verifiedCommit ||
+    workspace.path !== operation.workspacePath ||
+    workspace.branch !== operation.workspaceBranch ||
+    workspace.baseCommit !== operation.workspaceBaseCommit ||
+    workspace.createdAt !== operation.workspaceCreatedAt ||
+    operation.workspaceBaseCommit !== operation.verifiedCommit
+  )
+    throw new Error(
+      `Candidate-prepare operation ${operation.id} does not match repository and workspace identity.`,
+    );
+  if (
+    milestone.workerPolicy.activeRole !== operation.workerRole ||
+    candidatePrepareWorkerPolicySha256(milestone) !==
+      operation.workerPolicySha256 ||
+    candidatePrepareRetryContextSha256(milestone) !==
+      operation.retryContextSha256 ||
+    candidatePrepareProposalContractSha256(milestone) !==
+      operation.proposalContractSha256 ||
+    candidatePrepareProtectedFilesSha256(state.repository.protectedFiles) !==
+      operation.protectedFilesSha256
+  )
+    throw new Error(
+      `Candidate-prepare operation ${operation.id} has stale Worker or policy context.`,
+    );
+  if (operation.inputStateRevision > state.revision)
+    throw new Error(
+      `Candidate-prepare operation ${operation.id} names a future input revision.`,
+    );
+  if (operation.workerInvocation === null) {
+    if (
+      state.run.agentInvocations.length !==
+        operation.initialAgentInvocationCount ||
+      !isDeepStrictEqual(state.run.usage, operation.initialRunUsage) ||
+      milestone.workerThreadId !== operation.initialWorkerThreadId ||
+      candidatePrepareThreadLineageSha256(milestone) !==
+        operation.initialWorkerThreadLineageSha256
+    )
+      throw new Error(
+        `Candidate-prepare operation ${operation.id} has pre-invocation accounting drift.`,
+      );
+    return;
+  }
+  if (
+    state.run.agentInvocations.length !==
+      operation.initialAgentInvocationCount + 1 ||
+    !isDeepStrictEqual(
+      state.run.agentInvocations.at(-1),
+      operation.workerInvocation,
+    ) ||
+    !isDeepStrictEqual(state.run.usage, usageAfterCandidateWorker(operation))
+  )
+    throw new Error(
+      `Candidate-prepare operation ${operation.id} has invocation accounting drift.`,
+    );
+  const threadId = operation.workerInvocation.threadId;
+  if (threadId !== null) {
+    const lineage = milestone.workerThreadLineage.at(-1);
+    if (
+      milestone.workerThreadId !== threadId ||
+      !lineage ||
+      lineage.threadId !== threadId ||
+      lineage.role !== operation.workerRole ||
+      lineage.model !== operation.workerAssignment.model ||
+      lineage.reasoningEffort !== operation.workerAssignment.reasoningEffort
+    )
+      throw new Error(
+        `Candidate-prepare operation ${operation.id} has Worker thread-lineage drift.`,
+      );
+  }
+}
+
+export function setCandidatePrepareOperation(
+  state: OrchestratorState,
+  operation: CandidatePrepareOperation,
+): OrchestratorState {
+  if (state.pendingOperation !== null)
+    throw new Error(
+      `Cannot start candidate-prepare operation ${operation.id}; operation ${state.pendingOperation.id} is already pending.`,
+    );
+  if (
+    operation.phase !== "intent-persisted" ||
+    operation.workerInvocation !== null ||
+    operation.workerResult !== null ||
+    operation.checkpointPlan !== null ||
+    operation.checkpointResult !== null ||
+    operation.checkpointArtifactSha256 !== null ||
+    operation.diagnostic !== null
+  )
+    throw new Error(
+      "A new candidate-prepare operation must begin at intent-persisted.",
+    );
+  if (operation.inputStateRevision !== state.revision)
+    throw new Error(
+      `Candidate-prepare operation ${operation.id} is not bound to input revision ${state.revision}.`,
+    );
+  assertCandidatePrepareContext(state, operation);
+  return { ...state, pendingOperation: operation };
+}
+
+export type CandidatePrepareAdvancement =
+  | {
+      readonly phase: "worker-invocation-started";
+      readonly invocation: AgentInvocationRecord;
+    }
+  | { readonly phase: "worker-thread-recorded"; readonly threadId: string }
+  | {
+      readonly phase: "worker-completed";
+      readonly result: CandidatePrepareWorkerResult;
+    }
+  | { readonly phase: "worker-evidence-recorded" }
+  | {
+      readonly phase: "checkpoint-prepared";
+      readonly plan: CandidatePrepareCheckpointPlan;
+    }
+  | {
+      readonly phase: "checkpoint-committed";
+      readonly result: CandidatePrepareCheckpointResult;
+    }
+  | { readonly phase: "checkpoint-recorded" };
+
+export function advanceCandidatePrepareOperation(
+  state: OrchestratorState,
+  operationId: string,
+  advancement: CandidatePrepareAdvancement,
+  updatedAt: string,
+): OrchestratorState {
+  const operation = state.pendingOperation;
+  if (
+    !operation ||
+    operation.kind !== "candidate-prepare" ||
+    operation.id !== operationId
+  )
+    throw new Error(
+      `Candidate-prepare operation ${operationId} is not pending.`,
+    );
+  if (!CANDIDATE_PHASE_TRANSITIONS[operation.phase].includes(advancement.phase))
+    throw new Error(
+      `Candidate-prepare operation ${operationId} cannot advance from ${operation.phase} to ${advancement.phase}.`,
+    );
+  assertCandidatePrepareContext(state, operation);
+  let next = state;
+  let advanced: CandidatePrepareOperation;
+  switch (advancement.phase) {
+    case "worker-invocation-started": {
+      const invocation = advancement.invocation;
+      if (
+        invocation.id !== operation.agentInvocationId ||
+        invocation.role !== operation.workerRole ||
+        invocation.requestedModel !== operation.workerAssignment.model ||
+        invocation.requestedReasoningEffort !==
+          operation.workerAssignment.reasoningEffort ||
+        invocation.threadId !== operation.initialWorkerThreadId ||
+        invocation.attempt !== operation.attempt ||
+        invocation.status !== "starting" ||
+        invocation.finishedAt !== null ||
+        invocation.error !== null
+      )
+        throw new Error(
+          `Candidate-prepare operation ${operationId} received an inconsistent Worker invocation.`,
+        );
+      advanced = {
+        ...operation,
+        workerInvocation: invocation,
+        phase: advancement.phase,
+        updatedAt,
+        diagnostic: null,
+      };
+      next = {
+        ...state,
+        run: {
+          ...state.run,
+          agentInvocations: [...state.run.agentInvocations, invocation],
+          usage: usageAfterCandidateWorker(advanced),
+        },
+      };
+      break;
+    }
+    case "worker-thread-recorded": {
+      if (!operation.workerInvocation)
+        throw new Error("Worker invocation is missing before thread start.");
+      if (
+        operation.workerInvocation.threadId !== null &&
+        operation.workerInvocation.threadId !== advancement.threadId
+      )
+        throw new Error("Worker thread identity changed during invocation.");
+      const invocation = {
+        ...operation.workerInvocation,
+        threadId: advancement.threadId,
+      };
+      const milestone = candidateMilestoneForOperation(state, operation);
+      const updatedMilestone = recordWorkerThreadLineage({
+        milestone,
+        threadId: advancement.threadId,
+        role: operation.workerRole,
+        assignment: operation.workerAssignment,
+        now: updatedAt,
+      });
+      advanced = {
+        ...operation,
+        workerInvocation: invocation,
+        phase: advancement.phase,
+        updatedAt,
+        diagnostic: null,
+      };
+      next = {
+        ...state,
+        milestones: state.milestones.map((entry) =>
+          entry.proposal.id === operation.milestoneId
+            ? updatedMilestone
+            : entry,
+        ),
+        run: {
+          ...state.run,
+          agentInvocations: state.run.agentInvocations.map((entry) =>
+            entry.id === invocation.id ? invocation : entry,
+          ),
+        },
+      };
+      break;
+    }
+    case "worker-completed": {
+      if (!operation.workerInvocation)
+        throw new Error("Worker invocation is missing before completion.");
+      const result = advancement.result;
+      const existingThreadId = operation.workerInvocation.threadId;
+      if (
+        (existingThreadId !== null && existingThreadId !== result.threadId) ||
+        (operation.initialWorkerThreadId !== null &&
+          operation.initialWorkerThreadId !== result.threadId)
+      )
+        throw new Error("Worker completion thread does not match intent.");
+      const invocation: AgentInvocationRecord = {
+        ...operation.workerInvocation,
+        threadId: result.threadId,
+        status: "completed",
+        finishedAt: result.finishedAt,
+        error: null,
+      };
+      const milestone = candidateMilestoneForOperation(state, operation);
+      const updatedMilestone = recordWorkerThreadLineage({
+        milestone,
+        threadId: result.threadId,
+        role: operation.workerRole,
+        assignment: operation.workerAssignment,
+        now: result.finishedAt,
+      });
+      advanced = {
+        ...operation,
+        workerInvocation: invocation,
+        workerResult: result,
+        phase: advancement.phase,
+        updatedAt,
+        diagnostic: null,
+      };
+      next = {
+        ...state,
+        milestones: state.milestones.map((entry) =>
+          entry.proposal.id === operation.milestoneId
+            ? updatedMilestone
+            : entry,
+        ),
+        run: {
+          ...state.run,
+          agentInvocations: state.run.agentInvocations.map((entry) =>
+            entry.id === invocation.id ? invocation : entry,
+          ),
+          usage: usageAfterCandidateWorker(advanced),
+        },
+      };
+      break;
+    }
+    case "worker-evidence-recorded":
+      advanced = {
+        ...operation,
+        phase: advancement.phase,
+        updatedAt,
+        diagnostic: null,
+      };
+      break;
+    case "checkpoint-prepared":
+      advanced = {
+        ...operation,
+        checkpointPlan: advancement.plan,
+        phase: advancement.phase,
+        updatedAt,
+        diagnostic: null,
+      };
+      break;
+    case "checkpoint-committed": {
+      const withResult: CandidatePrepareOperation = {
+        ...operation,
+        checkpointResult: advancement.result,
+        phase: advancement.phase,
+        updatedAt,
+        diagnostic: null,
+      };
+      advanced = {
+        ...withResult,
+        checkpointArtifactSha256: candidatePrepareArtifactSha256(
+          candidatePrepareCheckpointArtifact(withResult),
+        ),
+      };
+      break;
+    }
+    case "checkpoint-recorded":
+      advanced = {
+        ...operation,
+        phase: advancement.phase,
+        updatedAt,
+        diagnostic: null,
+      };
+      break;
+  }
+  next = { ...next, pendingOperation: advanced };
+  assertCandidatePrepareContext(next, advanced);
+  return next;
+}
+
+export function blockCandidatePrepareOperation(
+  state: OrchestratorState,
+  operationId: string,
+  diagnostic: CandidatePrepareDiagnostic,
+): OrchestratorState {
+  const operation = state.pendingOperation;
+  if (
+    !operation ||
+    operation.kind !== "candidate-prepare" ||
+    operation.id !== operationId
+  )
+    throw new Error(
+      `Candidate-prepare operation ${operationId} is not pending.`,
+    );
+  if (operation.phase === "blocked")
+    throw new Error(
+      `Candidate-prepare operation ${operationId} is already blocked.`,
+    );
+  assertCandidatePrepareContext(state, operation);
+  return {
+    ...state,
+    pendingOperation: {
+      ...operation,
+      phase: "blocked",
+      updatedAt: diagnostic.observedAt,
+      diagnostic,
+    },
+  };
+}
+
+export function completeCandidatePrepareOperation(
+  state: OrchestratorState,
+  operationId: string,
+  completedAt: string,
+): OrchestratorState {
+  const operation = state.pendingOperation;
+  if (
+    !operation ||
+    operation.kind !== "candidate-prepare" ||
+    operation.id !== operationId
+  )
+    throw new Error(
+      `Candidate-prepare operation ${operationId} is not pending.`,
+    );
+  if (
+    operation.phase !== "checkpoint-recorded" ||
+    !operation.checkpointResult ||
+    !operation.checkpointArtifactSha256
+  )
+    throw new Error(
+      `Candidate-prepare operation ${operationId} cannot complete from ${operation.phase}.`,
+    );
+  assertCandidatePrepareContext(state, operation);
+  const milestones = state.milestones.map((milestone) => {
+    if (milestone.proposal.id !== operation.milestoneId) return milestone;
+    if (milestone.status !== "running")
+      throw new Error("Candidate completion requires a running milestone.");
+    return {
+      ...milestone,
+      status: "verifying" as const,
+      retryFeedback: null,
+      nextAllowedAction: "verify" as const,
+      timestamps: {
+        ...milestone.timestamps,
+        updatedAt: completedAt,
+      },
+    };
+  });
+  return {
+    ...state,
+    milestones,
+    pendingOperation: null,
+    nextAllowedAction: "verify",
   };
 }
 
@@ -928,6 +1414,8 @@ function setPendingOperation(
   switch (operation.kind) {
     case "workspace-create":
       return setWorkspaceCreateOperation(state, operation);
+    case "candidate-prepare":
+      return setCandidatePrepareOperation(state, operation);
     case "target-integrate":
       return setTargetIntegrateOperation(state, operation);
     case "workspace-cleanup":
@@ -944,6 +1432,12 @@ function completePendingOperation(
   switch (operation.kind) {
     case "workspace-create":
       return completeWorkspaceCreateOperation(state, operation.id);
+    case "candidate-prepare":
+      return completeCandidatePrepareOperation(
+        state,
+        operation.id,
+        operation.updatedAt,
+      );
     case "target-integrate":
       return completeTargetIntegrateOperation(state, operation.id);
     case "workspace-cleanup":
@@ -963,6 +1457,11 @@ function phaseTransitionAllowed(
       return (
         after.kind === "workspace-create" &&
         WORKSPACE_PHASE_TRANSITIONS[before.phase].includes(after.phase)
+      );
+    case "candidate-prepare":
+      return (
+        after.kind === "candidate-prepare" &&
+        CANDIDATE_PHASE_TRANSITIONS[before.phase].includes(after.phase)
       );
     case "target-integrate":
       return (
@@ -990,6 +1489,9 @@ function assertPendingOperationContext(
     case "workspace-create":
       assertWorkspaceCreateContext(state, operation);
       return;
+    case "candidate-prepare":
+      assertCandidatePrepareContext(state, operation);
+      return;
     case "target-integrate":
       assertTargetIntegrateContext(state, operation);
       return;
@@ -1013,6 +1515,80 @@ function withoutMutableOperationFields(operation: PendingOperation) {
         ].includes(key),
     ),
   );
+}
+
+function expectedCandidatePrepareTransition(
+  state: OrchestratorState,
+  before: CandidatePrepareOperation,
+  after: CandidatePrepareOperation,
+): OrchestratorState {
+  if (after.phase === "blocked") {
+    if (!after.diagnostic)
+      throw new Error(
+        "A blocked candidate-prepare operation needs a diagnostic.",
+      );
+    return blockCandidatePrepareOperation(state, before.id, after.diagnostic);
+  }
+  switch (after.phase) {
+    case "worker-invocation-started":
+      if (!after.workerInvocation)
+        throw new Error("Candidate Worker invocation evidence is missing.");
+      return advanceCandidatePrepareOperation(
+        state,
+        before.id,
+        {
+          phase: after.phase,
+          invocation: after.workerInvocation,
+        },
+        after.updatedAt,
+      );
+    case "worker-thread-recorded":
+      if (!after.workerInvocation?.threadId)
+        throw new Error("Candidate Worker thread identity is missing.");
+      return advanceCandidatePrepareOperation(
+        state,
+        before.id,
+        { phase: after.phase, threadId: after.workerInvocation.threadId },
+        after.updatedAt,
+      );
+    case "worker-completed":
+      if (!after.workerResult)
+        throw new Error("Candidate Worker result is missing.");
+      return advanceCandidatePrepareOperation(
+        state,
+        before.id,
+        { phase: after.phase, result: after.workerResult },
+        after.updatedAt,
+      );
+    case "worker-evidence-recorded":
+    case "checkpoint-recorded":
+      return advanceCandidatePrepareOperation(
+        state,
+        before.id,
+        { phase: after.phase },
+        after.updatedAt,
+      );
+    case "checkpoint-prepared":
+      if (!after.checkpointPlan)
+        throw new Error("Candidate checkpoint plan is missing.");
+      return advanceCandidatePrepareOperation(
+        state,
+        before.id,
+        { phase: after.phase, plan: after.checkpointPlan },
+        after.updatedAt,
+      );
+    case "checkpoint-committed":
+      if (!after.checkpointResult)
+        throw new Error("Candidate checkpoint result is missing.");
+      return advanceCandidatePrepareOperation(
+        state,
+        before.id,
+        { phase: after.phase, result: after.checkpointResult },
+        after.updatedAt,
+      );
+    case "intent-persisted":
+      throw new Error("Candidate-prepare intent cannot be republished.");
+  }
 }
 
 export function assertPendingOperationStateTransition(
@@ -1050,6 +1626,20 @@ export function assertPendingOperationStateTransition(
     throw new Error(
       "A pending operation cannot be replaced by another operation.",
     );
+  if (before.kind === "candidate-prepare") {
+    if (after.kind !== "candidate-prepare")
+      throw new Error("A candidate-prepare operation cannot change kind.");
+    const expected = expectedCandidatePrepareTransition(
+      previous,
+      before,
+      after,
+    );
+    if (!isDeepStrictEqual(expected, next))
+      throw new Error(
+        `candidate-prepare operation ${before.id} must use its canonical reducer.`,
+      );
+    return;
+  }
   const phaseAllowed = phaseTransitionAllowed(before, after);
   if (
     !isDeepStrictEqual(

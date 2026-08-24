@@ -300,7 +300,7 @@ report and produces no PASS receipt.
    pushes do not include either private ref.
 
    Isolated clone creation is a durable state operation, not a direct
-   filesystem call. State schema `1.9.0` records one exclusive pending
+   filesystem call. State schema `1.10.0` records one exclusive pending
    operation; a `workspace-create` intent is bound to the exact input state
    generation before any directory or clone side effect. The clone is built
    under a unique controller-derived `.create-<hash>` path, made standalone and
@@ -317,6 +317,21 @@ report and produces no PASS receipt.
    report the classification and next safe action without taking the lease or
    recovering the operation.
 
+   Worker candidate preparation is protected by a strict `candidate-prepare`
+   intent published before gateway invocation. It binds the exact state
+   generation, run/milestone/attempt, standalone workspace and starting
+   candidate, Worker role/model/thread/retry context, protected/diff policy,
+   and deterministic evidence paths. The controller stages only after Worker
+   completion is durable, records the exact parent/tree/message authorization
+   before committing, and adopts a post-commit restart only when every bound
+   identity matches. A clean or dirty candidate without matching intent is
+   preserved and blocked as external/ambiguous even when ordinary failed-
+   workspace cleanup requests deletion; it never enters verification. Worker-
+   turn and checkpoint JSON remain derived evidence, while one canonical
+   reducer clears the intent and enters verification for both normal and
+   recovered completion. Status and Doctor expose phase, disposition, and the
+   exact next safe action read-only.
+
    Approved target integration uses the same exclusive operation authority.
    A strict `target-integrate` intent pins the run, milestone, attempt, exact
    input generation, target base and branch, standalone workspace, approved
@@ -332,8 +347,8 @@ report and produces no PASS receipt.
    or unexpected state is preserved with a durable blocked diagnostic. A
    reviewer approval without the operation never authorizes implicit target
    adoption. `loop:status` and `loop:doctor` classify recovery read-only.
-   Canonical `1.4.0`/`1.5.0`/`1.6.0`/`1.7.0`/`1.8.0` state is migrated
-   virtually on read and becomes `1.9.0` on its next successful CAS
+   Canonical `1.4.0`/`1.5.0`/`1.6.0`/`1.7.0`/`1.8.0`/`1.9.0` state is migrated
+   virtually on read and becomes `1.10.0` on its next successful CAS
    publication. A legacy pending target integration is preserved as an
    explicit non-adoptable block when it predates provider attestation.
 

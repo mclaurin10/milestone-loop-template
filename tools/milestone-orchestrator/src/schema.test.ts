@@ -512,7 +512,7 @@ describe("versioned orchestrator schemas", () => {
       expect(schema.$schema).toContain("2020-12");
       expect(schema.$id).toContain(
         file === "state.schema.json"
-          ? "1.9.0"
+          ? "1.10.0"
           : file === "orchestrator-config.schema.json"
             ? "1.6.0"
             : file === "milestone.schema.json"
@@ -527,6 +527,34 @@ describe("versioned orchestrator schemas", () => {
         expect(JSON.stringify(schema.$defs?.["manifest"])).not.toMatch(
           /d031|d032|loop-recommissioning/i,
         );
+      if (file === "state.schema.json") {
+        const candidate = schema.$defs?.["candidatePrepareOperation"] as
+          | {
+              additionalProperties?: unknown;
+              required?: unknown;
+              properties?: Record<string, unknown>;
+            }
+          | undefined;
+        expect(candidate).toMatchObject({
+          additionalProperties: false,
+          properties: {
+            kind: { const: "candidate-prepare" },
+            recoveryPolicy: {
+              const: "validate-resume-adopt-or-preserve",
+            },
+          },
+        });
+        expect(candidate?.required).toEqual(
+          expect.arrayContaining([
+            "inputStateGeneration",
+            "startingCandidate",
+            "workerInvocation",
+            "checkpointPlan",
+            "checkpointResult",
+            "diagnostic",
+          ]),
+        );
+      }
     }
   });
 });

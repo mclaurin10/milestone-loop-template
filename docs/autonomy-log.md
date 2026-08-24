@@ -3,6 +3,73 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-23 — WP2 candidate-prepare Session 1 core authority
+
+**Objective.** Establish executable red evidence for the omitted candidate
+checkpoint authority gap, publish durable intent before Worker mutation, and
+implement the uninterrupted path plus exact post-checkpoint recovery and the
+no-intent out-of-band block. This increment is explicitly smaller than the full
+`candidate-prepare` fault matrix and does not close WP2.
+
+**Red baseline.** Exact Node `24.18.0` / pnpm `11.15.1` evidence is retained at
+`artifacts/manual/candidate-prepare-session1-red-v5/`. A real child controller
+was terminated immediately after the checkpoint commit advanced the workspace
+but before checkpoint artifact/state completion; restart entered `verifying`
+with no pending intent or Worker call. A separately created valid clean
+descendant received the same automatic treatment. The causal observations have
+SHA-256
+`e7e56ba987b90d02cd86bc36a7f4fd8626f76d4ee2d3657d10b9fa8459ff49ed`
+and `1280fdd8eb5282787abafc5ddd7b09a7957a1c0629e709ad1cbaf878b28926d0`.
+The intentionally failing 0/2 report has SHA-256
+`ef073e2e444d06399c33f5dd7c26974ca6c7325e602783d3e187c303837f504d`
+and remains red; earlier setup-defect attempts are retained but not cited as
+causal evidence.
+
+**Outcome.** State `1.10.0` adds the fifth strict pending operation, virtual
+`1.9.0` migration, phase topology, diagnostics, pure canonical reducers, and
+closed-union/schema/status/Doctor coverage. The Worker path persists intent
+before gateway invocation, accounts invocation/thread/result inside that
+operation, and authorizes a controller checkpoint by exact parent/tree/message
+only after Worker completion is durable and policy validation passes. Leased
+startup validates and adopts the exact authorized post-commit result through
+the same completion reducer as the uninterrupted path. Candidate output with
+no intent is preserved as external/ambiguous and cannot reach verification;
+this preservation overrides ordinary delete-on-failure policy through the
+existing recoverable cleanup reducer. Worker/checkpoint artifacts remain
+derived evidence.
+
+**Verification.** The pinned command-owned existing-kind/migration matrix at
+`artifacts/manual/invariant-vitest-3240/` passed 30/30 suites and 110/110 tests
+with zero failures or skips; its report SHA-256 is
+`771031ebc3a00f59677222db459bbcc4ffef09b3b45da77c0823603da3e4d499`.
+After strengthening policy-independent preservation, the fresh candidate and
+ordinary/crash cleanup matrix at `artifacts/manual/invariant-vitest-16196/`
+passed 10/10 suites and 18/18 tests with zero failures or skips; its report
+SHA-256 is
+`7eb0091f1d03b002b52bd24a22d44c99f6aca02ea020889bade220f0bb082686`.
+Final formatted-tree typecheck, lint, and format-check passed with matching
+command receipts and declared artifact hashes under
+`artifacts/manual/typecheck-9636/`, `artifacts/manual/lint-15348/`, and
+`artifacts/manual/format-check-21424/`; `git diff --check` passed. The protected
+human plan still has SHA-256
+`53ea98fb1cb880163a02d3b1d9365963e3fe891025ae3630f00bd4c9232293b1`.
+All four immutable files match both lock hashes, HEAD equals `origin/master` at
+`96c3eb2da170da5eed4cf99dc0becf5eb256d138`, readiness remains active, and
+CAL-1 remains `open_not_started`. Source no-argument `pnpm verify`, template
+proof, hidden validation, CAL-1, and WP6 were not invoked.
+
+**Commit.** Not committed at record time; the final Session 1 handoff must name
+the resulting cohesive commit if all remaining static/hash checks stay green.
+
+**Known gaps.** `candidate-prepare` and WP2 remain incomplete. Session 2 starts
+with deterministic loss immediately after `after-intent-persisted`, then owns
+the remaining Worker/evidence/checkpoint/completion fault boundaries,
+concurrent and repeated resume, dirty and Worker-self-commit cases, retry with
+prior commits, exact Git/path/protected/policy/artifact/thread adversaries, and
+broader orchestrator/unit evidence. WP6, CAL-1, hidden validation, product
+implementation, product completion, autonomous readiness, and human acceptance
+were not started or claimed.
+
 ## 2026-08-23 — WP5 Session 3 hosted CI repair loop
 
 **Failed hosted run retained.** Exact runtime CI run `32638898310`, attempt 1,

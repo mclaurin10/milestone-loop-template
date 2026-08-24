@@ -5,6 +5,7 @@ import {
   AGENT_MODELS,
   AGENT_REASONING_EFFORTS,
   AGENT_ROLES,
+  CANDIDATE_PREPARE_PHASES,
   CONFIG_SCHEMA_VERSION,
   EVIDENCE_RETENTION_SCHEMA_VERSION,
   GENERIC_RECONCILIATION_REVIEW_CHECK_IDS,
@@ -296,6 +297,349 @@ function validWorkspaceCreateOperation(value: unknown): boolean {
   )
     return false;
   return value["updatedAt"] === diagnostic["observedAt"];
+}
+
+function validUsageRecord(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    hasOnlyKeys(value, [
+      "inputTokens",
+      "cachedInputTokens",
+      "outputTokens",
+      "reasoningOutputTokens",
+    ]) &&
+    nonnegativeInteger(value["inputTokens"]) &&
+    nonnegativeInteger(value["cachedInputTokens"]) &&
+    nonnegativeInteger(value["outputTokens"]) &&
+    nonnegativeInteger(value["reasoningOutputTokens"])
+  );
+}
+
+function validRunUsage(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    hasOnlyKeys(value, [
+      "codexInvocations",
+      "inputTokens",
+      "cachedInputTokens",
+      "outputTokens",
+      "reasoningOutputTokens",
+    ]) &&
+    nonnegativeInteger(value["codexInvocations"]) &&
+    validUsageRecord({
+      inputTokens: value["inputTokens"],
+      cachedInputTokens: value["cachedInputTokens"],
+      outputTokens: value["outputTokens"],
+      reasoningOutputTokens: value["reasoningOutputTokens"],
+    })
+  );
+}
+
+function validCandidatePrepareOperation(value: unknown): boolean {
+  if (
+    !isRecord(value) ||
+    !hasOnlyKeys(value, [
+      "schemaVersion",
+      "kind",
+      "id",
+      "runId",
+      "milestoneId",
+      "attempt",
+      "inputStateGeneration",
+      "inputStateRevision",
+      "repositoryRoot",
+      "workspaceRoot",
+      "targetBranch",
+      "verifiedCommit",
+      "workspacePath",
+      "workspaceBranch",
+      "workspaceBaseCommit",
+      "workspaceCreatedAt",
+      "workspaceCreateOperationId",
+      "startingCandidate",
+      "startingCommits",
+      "workerRole",
+      "workerAssignment",
+      "initialWorkerThreadId",
+      "initialWorkerThreadLineageSha256",
+      "workerPolicySha256",
+      "retryFeedbackSha256",
+      "retryContextSha256",
+      "proposalContractSha256",
+      "protectedFilesSha256",
+      "protectedPatternsSha256",
+      "promptSha256",
+      "workerEventsPath",
+      "workerTurnPath",
+      "checkpointArtifactPath",
+      "initialRunUsage",
+      "initialAgentInvocationCount",
+      "agentInvocationId",
+      "workerInvocation",
+      "workerResult",
+      "checkpointPlan",
+      "checkpointResult",
+      "checkpointArtifactSha256",
+      "phase",
+      "createdAt",
+      "updatedAt",
+      "recoveryPolicy",
+      "diagnostic",
+    ]) ||
+    value["schemaVersion"] !== OPERATION_INTENT_SCHEMA_VERSION ||
+    value["kind"] !== "candidate-prepare" ||
+    !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(String(value["id"])) ||
+    !nonEmptyString(value["runId"]) ||
+    !nonEmptyString(value["milestoneId"]) ||
+    !positiveInteger(value["attempt"]) ||
+    !/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(
+      String(value["inputStateGeneration"]),
+    ) ||
+    !nonnegativeInteger(value["inputStateRevision"]) ||
+    !nonEmptyString(value["repositoryRoot"]) ||
+    !isAbsolute(value["repositoryRoot"]) ||
+    !nonEmptyString(value["workspaceRoot"]) ||
+    !isAbsolute(value["workspaceRoot"]) ||
+    !strictlyContained(value["repositoryRoot"], value["workspaceRoot"]) ||
+    !nonEmptyString(value["targetBranch"]) ||
+    !commitId(value["verifiedCommit"]) ||
+    !nonEmptyString(value["workspacePath"]) ||
+    !isAbsolute(value["workspacePath"]) ||
+    !strictlyContained(value["workspaceRoot"], value["workspacePath"]) ||
+    !nonEmptyString(value["workspaceBranch"]) ||
+    !commitId(value["workspaceBaseCommit"]) ||
+    value["workspaceBaseCommit"] !== value["verifiedCommit"] ||
+    !timestampOrNull(value["workspaceCreatedAt"]) ||
+    value["workspaceCreatedAt"] === null ||
+    !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(
+      String(value["workspaceCreateOperationId"]),
+    ) ||
+    !validCandidateIdentity(value["startingCandidate"]) ||
+    (value["startingCandidate"] as Record<string, unknown>)["baseCommit"] !==
+      value["workspaceBaseCommit"] ||
+    (value["startingCandidate"] as Record<string, unknown>)["clean"] !== true ||
+    !stringArray(value["startingCommits"]) ||
+    value["startingCommits"].some((commit) => !commitId(commit)) ||
+    (value["startingCommits"].length === 0
+      ? (value["startingCandidate"] as Record<string, unknown>)["commit"] !==
+        value["workspaceBaseCommit"]
+      : value["startingCommits"].at(-1) !==
+        (value["startingCandidate"] as Record<string, unknown>)["commit"]) ||
+    !["feature-worker-initial", "feature-worker-escalated"].includes(
+      String(value["workerRole"]),
+    ) ||
+    !isRecord(value["workerAssignment"]) ||
+    !hasOnlyKeys(value["workerAssignment"], ["model", "reasoningEffort"]) ||
+    !AGENT_MODELS.includes(value["workerAssignment"]["model"] as never) ||
+    !AGENT_REASONING_EFFORTS.includes(
+      value["workerAssignment"]["reasoningEffort"] as never,
+    ) ||
+    (value["initialWorkerThreadId"] !== null &&
+      !nonEmptyString(value["initialWorkerThreadId"])) ||
+    !sha256(value["initialWorkerThreadLineageSha256"]) ||
+    !sha256(value["workerPolicySha256"]) ||
+    (value["retryFeedbackSha256"] !== null &&
+      !sha256(value["retryFeedbackSha256"])) ||
+    !sha256(value["retryContextSha256"]) ||
+    !sha256(value["proposalContractSha256"]) ||
+    !sha256(value["protectedFilesSha256"]) ||
+    !sha256(value["protectedPatternsSha256"]) ||
+    !sha256(value["promptSha256"]) ||
+    !nonEmptyString(value["workerEventsPath"]) ||
+    !isAbsolute(value["workerEventsPath"]) ||
+    !strictlyContained(value["repositoryRoot"], value["workerEventsPath"]) ||
+    !nonEmptyString(value["workerTurnPath"]) ||
+    !isAbsolute(value["workerTurnPath"]) ||
+    !strictlyContained(value["repositoryRoot"], value["workerTurnPath"]) ||
+    !nonEmptyString(value["checkpointArtifactPath"]) ||
+    !isAbsolute(value["checkpointArtifactPath"]) ||
+    !strictlyContained(
+      value["repositoryRoot"],
+      value["checkpointArtifactPath"],
+    ) ||
+    resolve(value["workerEventsPath"]) !==
+      resolve(value["workerTurnPath"], "..", "worker-events.jsonl") ||
+    resolve(value["checkpointArtifactPath"]) !==
+      resolve(value["workerTurnPath"], "..", "controller-checkpoint.json") ||
+    !validRunUsage(value["initialRunUsage"]) ||
+    !nonnegativeInteger(value["initialAgentInvocationCount"]) ||
+    value["agentInvocationId"] !==
+      `${String(value["runId"])}-agent-${Number(value["initialAgentInvocationCount"]) + 1}` ||
+    (value["workerInvocation"] !== null &&
+      !validAgentInvocation(value["workerInvocation"])) ||
+    !CANDIDATE_PREPARE_PHASES.includes(value["phase"] as never) ||
+    !timestampOrNull(value["createdAt"]) ||
+    value["createdAt"] === null ||
+    !timestampOrNull(value["updatedAt"]) ||
+    value["updatedAt"] === null ||
+    String(value["updatedAt"]) < String(value["createdAt"]) ||
+    value["recoveryPolicy"] !== "validate-resume-adopt-or-preserve"
+  )
+    return false;
+
+  const workerResult = value["workerResult"];
+  if (
+    workerResult !== null &&
+    (!isRecord(workerResult) ||
+      !hasOnlyKeys(workerResult, [
+        "threadId",
+        "usage",
+        "itemCount",
+        "finalResponseSha256",
+        "workerTurnSha256",
+        "finishedAt",
+      ]) ||
+      !nonEmptyString(workerResult["threadId"]) ||
+      (workerResult["usage"] !== null &&
+        !validUsageRecord(workerResult["usage"])) ||
+      !nonnegativeInteger(workerResult["itemCount"]) ||
+      !sha256(workerResult["finalResponseSha256"]) ||
+      !sha256(workerResult["workerTurnSha256"]) ||
+      !timestampOrNull(workerResult["finishedAt"]) ||
+      workerResult["finishedAt"] === null)
+  )
+    return false;
+  const checkpointPlan = value["checkpointPlan"];
+  if (
+    checkpointPlan !== null &&
+    (!isRecord(checkpointPlan) ||
+      !hasOnlyKeys(checkpointPlan, [
+        "preCheckpointCommit",
+        "expectedTree",
+        "commitMessage",
+        "controllerCommitRequired",
+        "observedPaths",
+        "workingPaths",
+        "preparedAt",
+      ]) ||
+      !commitId(checkpointPlan["preCheckpointCommit"]) ||
+      !commitId(checkpointPlan["expectedTree"]) ||
+      (checkpointPlan["commitMessage"] !== null &&
+        !nonEmptyString(checkpointPlan["commitMessage"])) ||
+      typeof checkpointPlan["controllerCommitRequired"] !== "boolean" ||
+      !stringArray(checkpointPlan["observedPaths"]) ||
+      !stringArray(checkpointPlan["workingPaths"]) ||
+      checkpointPlan["observedPaths"].some((path) => isAbsolute(path)) ||
+      checkpointPlan["workingPaths"].some((path) => isAbsolute(path)) ||
+      (checkpointPlan["controllerCommitRequired"] === true) !==
+        (checkpointPlan["commitMessage"] !== null) ||
+      (checkpointPlan["controllerCommitRequired"] === true) !==
+        checkpointPlan["workingPaths"].length > 0 ||
+      !timestampOrNull(checkpointPlan["preparedAt"]) ||
+      checkpointPlan["preparedAt"] === null)
+  )
+    return false;
+  const checkpointResult = value["checkpointResult"];
+  if (
+    checkpointResult !== null &&
+    (!isRecord(checkpointResult) ||
+      !hasOnlyKeys(checkpointResult, [
+        "candidate",
+        "commits",
+        "finalChangedPaths",
+        "controllerCommit",
+        "committedAt",
+      ]) ||
+      !validCandidateIdentity(checkpointResult["candidate"]) ||
+      (checkpointResult["candidate"] as Record<string, unknown>)[
+        "baseCommit"
+      ] !== value["workspaceBaseCommit"] ||
+      (checkpointResult["candidate"] as Record<string, unknown>)["clean"] !==
+        true ||
+      !stringArray(checkpointResult["commits"]) ||
+      checkpointResult["commits"].some((commit) => !commitId(commit)) ||
+      (checkpointResult["commits"].length === 0
+        ? (checkpointResult["candidate"] as Record<string, unknown>)[
+            "commit"
+          ] !== value["workspaceBaseCommit"]
+        : checkpointResult["commits"].at(-1) !==
+          (checkpointResult["candidate"] as Record<string, unknown>)[
+            "commit"
+          ]) ||
+      !stringArray(checkpointResult["finalChangedPaths"]) ||
+      checkpointResult["finalChangedPaths"].some((path) => isAbsolute(path)) ||
+      (checkpointResult["controllerCommit"] !== null &&
+        !commitId(checkpointResult["controllerCommit"])) ||
+      !timestampOrNull(checkpointResult["committedAt"]) ||
+      checkpointResult["committedAt"] === null)
+  )
+    return false;
+  if (
+    (value["checkpointArtifactSha256"] !== null &&
+      !sha256(value["checkpointArtifactSha256"])) ||
+    (checkpointResult === null) !== (value["checkpointArtifactSha256"] === null)
+  )
+    return false;
+
+  const phase = String(value["phase"]);
+  const invocation = value["workerInvocation"];
+  const invocationStatus = isRecord(invocation) ? invocation["status"] : null;
+  const invocationThread = isRecord(invocation) ? invocation["threadId"] : null;
+  const phaseIndex = CANDIDATE_PREPARE_PHASES.indexOf(phase as never);
+  const workerCompletedIndex =
+    CANDIDATE_PREPARE_PHASES.indexOf("worker-completed");
+  const checkpointPreparedIndex = CANDIDATE_PREPARE_PHASES.indexOf(
+    "checkpoint-prepared",
+  );
+  const checkpointCommittedIndex = CANDIDATE_PREPARE_PHASES.indexOf(
+    "checkpoint-committed",
+  );
+  if (phase !== "blocked") {
+    if (
+      (phase === "intent-persisted") !== (invocation === null) ||
+      phaseIndex >= workerCompletedIndex !== (workerResult !== null) ||
+      phaseIndex >= checkpointPreparedIndex !== (checkpointPlan !== null) ||
+      phaseIndex >= checkpointCommittedIndex !== (checkpointResult !== null) ||
+      (["worker-invocation-started", "worker-thread-recorded"].includes(phase)
+        ? invocationStatus !== "starting"
+        : phaseIndex >= workerCompletedIndex
+          ? invocationStatus !== "completed"
+          : false) ||
+      (phase === "worker-thread-recorded" && invocationThread === null)
+    )
+      return false;
+  }
+  const diagnostic = value["diagnostic"];
+  if ((phase === "blocked") !== (diagnostic !== null)) return false;
+  if (diagnostic === null) return true;
+  if (
+    !isRecord(diagnostic) ||
+    !hasOnlyKeys(diagnostic, [
+      "classification",
+      "message",
+      "observedAt",
+      "observedHead",
+      "preservedPaths",
+      "quarantinePath",
+    ]) ||
+    ![
+      "candidate-drift",
+      "checkpoint-artifact-conflict",
+      "checkpoint-parent-drift",
+      "checkpoint-tree-drift",
+      "diff-policy-violation",
+      "protected-file-drift",
+      "unexpected-commit",
+      "worker-context-drift",
+      "worker-evidence-conflict",
+      "worker-outcome-ambiguous",
+      "workspace-identity-drift",
+      "workspace-path-unsafe",
+    ].includes(String(diagnostic["classification"])) ||
+    !nonEmptyString(diagnostic["message"]) ||
+    !timestampOrNull(diagnostic["observedAt"]) ||
+    diagnostic["observedAt"] === null ||
+    (diagnostic["observedHead"] !== null &&
+      !commitId(diagnostic["observedHead"])) ||
+    !stringArray(diagnostic["preservedPaths"], 1) ||
+    diagnostic["preservedPaths"].some(
+      (path) => path !== value["workspacePath"],
+    ) ||
+    diagnostic["quarantinePath"] !== null ||
+    value["updatedAt"] !== diagnostic["observedAt"]
+  )
+    return false;
+  return true;
 }
 
 function validTargetIntegrateOperation(value: unknown): boolean {
@@ -2457,6 +2801,7 @@ export function validateOrchestratorState(
   if (
     pendingOperation !== null &&
     !validWorkspaceCreateOperation(pendingOperation) &&
+    !validCandidatePrepareOperation(pendingOperation) &&
     !validTargetIntegrateOperation(pendingOperation) &&
     !validWorkspaceCleanupOperation(pendingOperation) &&
     !validRetentionApplyOperation(pendingOperation)
@@ -2526,6 +2871,34 @@ export function validateOrchestratorState(
       )
         errors.push(
           "State workspace-create operation does not match its active attempt.",
+        );
+    } else if (pendingOperation["kind"] === "candidate-prepare") {
+      const workspace = milestone["workspace"];
+      const invocation = pendingOperation["workerInvocation"];
+      const initialInvocationCount = Number(
+        pendingOperation["initialAgentInvocationCount"],
+      );
+      const invocations = run["agentInvocations"];
+      if (
+        value["activeMilestoneId"] !== pendingOperation["milestoneId"] ||
+        milestone["status"] !== "running" ||
+        milestone["nextAllowedAction"] !== "resume-worker" ||
+        value["nextAllowedAction"] !== "resume-worker" ||
+        run["status"] !== "running" ||
+        repository["verifiedCommit"] !== pendingOperation["verifiedCommit"] ||
+        !isRecord(workspace) ||
+        workspace["path"] !== pendingOperation["workspacePath"] ||
+        workspace["branch"] !== pendingOperation["workspaceBranch"] ||
+        workspace["baseCommit"] !== pendingOperation["workspaceBaseCommit"] ||
+        workspace["createdAt"] !== pendingOperation["workspaceCreatedAt"] ||
+        !Array.isArray(invocations) ||
+        invocations.length !==
+          initialInvocationCount + (invocation === null ? 0 : 1) ||
+        (invocation !== null &&
+          JSON.stringify(invocations.at(-1)) !== JSON.stringify(invocation))
+      )
+        errors.push(
+          "State candidate-prepare operation does not match its active Worker attempt.",
         );
     } else if (pendingOperation["kind"] === "target-integrate") {
       const workspace = milestone["workspace"];

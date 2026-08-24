@@ -253,11 +253,26 @@ export function commitWorkingChanges(
   workspacePath: string,
   requestedMessage: string,
 ): string {
+  const staged = stageWorkingChanges(workspacePath);
+  return commitStagedChanges(
+    workspacePath,
+    requestedMessage,
+    gitHead(workspacePath),
+    staged.tree,
+  );
+}
+
+export interface StagedWorkerChanges {
+  readonly paths: readonly string[];
+  readonly tree: string;
+}
+
+export function stageWorkingChanges(
+  workspacePath: string,
+): StagedWorkerChanges {
   const paths = workingChangedPaths(workspacePath);
   if (paths.length === 0)
     throw new Error("Cannot checkpoint an empty worker tree.");
-  const message = requestedMessage.replaceAll(/[\r\n\t]+/g, " ").trim();
-  if (!message) throw new Error("Controller commit message cannot be empty.");
   runGit(workspacePath, ["add", "--all"]);
   const staged = runGitPathList(workspacePath, [
     "diff",
@@ -267,6 +282,26 @@ export function commitWorkingChanges(
   ]);
   if (staged.length === 0)
     throw new Error("Worker changes produced no staged Git content.");
+  return {
+    paths: staged,
+    tree: runGit(workspacePath, ["write-tree"]).stdout,
+  };
+}
+
+export function commitStagedChanges(
+  workspacePath: string,
+  requestedMessage: string,
+  expectedParent: string,
+  expectedTree: string,
+): string {
+  const message = requestedMessage.replaceAll(/[\r\n\t]+/g, " ").trim();
+  if (!message) throw new Error("Controller commit message cannot be empty.");
+  const parent = runGit(workspacePath, ["rev-parse", "HEAD"]).stdout;
+  const tree = runGit(workspacePath, ["write-tree"]).stdout;
+  if (parent !== expectedParent || tree !== expectedTree)
+    throw new Error(
+      "Staged worker checkpoint no longer matches its authorized parent and tree.",
+    );
   runGit(workspacePath, ["commit", "-m", message]);
   return runGit(workspacePath, ["rev-parse", "HEAD"]).stdout;
 }

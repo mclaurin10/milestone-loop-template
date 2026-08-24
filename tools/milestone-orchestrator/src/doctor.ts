@@ -17,6 +17,10 @@ import {
   type CommissioningDoctorDiagnostic,
 } from "./commissioning.js";
 import {
+  inspectCandidatePrepareOperation,
+  type CandidatePrepareRecoveryClassification,
+} from "./candidate-prepare.js";
+import {
   ControllerLease,
   type ControllerLeaseInspection,
 } from "./controller-lease.js";
@@ -44,6 +48,7 @@ import { strictlyContained } from "./path-safety.js";
 import {
   assertManifestProtectedPathsCovered,
   buildCanonicalProtectedSet,
+  enforcementProtectedPatterns,
 } from "./protected-roots.js";
 import { STATE_REF } from "./private-ref-store.js";
 import { StateStore, type StateStoreInspection } from "./state-store.js";
@@ -102,6 +107,17 @@ export interface DoctorDependencies {
 }
 
 type DoctorPendingOperation =
+  | {
+      readonly id: string;
+      readonly kind: "candidate-prepare";
+      readonly phase: string;
+      readonly classification: CandidatePrepareRecoveryClassification;
+      readonly disposition: "automatic" | "manual";
+      readonly workspacePath: string;
+      readonly checkpointArtifactPath: string;
+      readonly preservedPaths: readonly string[];
+      readonly nextSafeAction: string;
+    }
   | {
       readonly id: string;
       readonly kind: "workspace-create";
@@ -241,6 +257,7 @@ interface DoctorChecks {
       | "reconciliation-required"
       | "reconciliation-active"
       | "workspace-operation-pending"
+      | "candidate-operation-pending"
       | "target-operation-pending"
       | "cleanup-operation-pending"
       | "retention-operation-pending"
@@ -907,6 +924,49 @@ async function stateOutcome(
           nextSafeAction: recovery.nextSafeAction,
         },
         outcome: "workspace-operation-pending",
+      };
+    }
+    if (state.pendingOperation.kind === "candidate-prepare") {
+      const operation = state.pendingOperation;
+      const milestone = state.milestones.find(
+        (entry) => entry.proposal.id === operation.milestoneId,
+      );
+      if (!milestone)
+        throw new Error(
+          "Candidate-prepare operation names an unknown milestone.",
+        );
+      const recovery = await inspectCandidatePrepareOperation({
+        operation,
+        milestone,
+        protectedPatterns: enforcementProtectedPatterns(
+          config,
+          state.repository.protectedFiles,
+        ),
+        protectedFiles: state.repository.protectedFiles,
+      });
+      return {
+        ...checkBase(
+          "block",
+          "candidate-operation-pending",
+          "A candidate-prepare operation requires recovery.",
+          recovery.nextSafeAction,
+          recovery.disposition === "automatic"
+            ? "pnpm loop:resume -- --one"
+            : "pnpm loop:status -- --json",
+        ),
+        ...details,
+        pendingOperation: {
+          id: operation.id,
+          kind: operation.kind,
+          phase: operation.phase,
+          classification: recovery.classification,
+          disposition: recovery.disposition,
+          workspacePath: operation.workspacePath,
+          checkpointArtifactPath: operation.checkpointArtifactPath,
+          preservedPaths: recovery.preservedPaths,
+          nextSafeAction: recovery.nextSafeAction,
+        },
+        outcome: "candidate-operation-pending",
       };
     }
     if (state.pendingOperation.kind === "workspace-cleanup") {

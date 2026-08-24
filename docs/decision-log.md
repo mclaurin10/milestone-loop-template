@@ -3,6 +3,56 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-23 — Intent-first candidate checkpoint authority (WP2 Session 1)
+
+**Decision.** State schema `1.10.0` extends the one exclusive
+`pendingOperation` union with a strict `candidate-prepare` intent. The
+controller publishes it by canonical state CAS before the Worker gateway can
+mutate the isolated candidate. It pins the exact input generation/revision,
+run/milestone/attempt, repository and standalone workspace identity, starting
+candidate, Worker assignment/policy/thread lineage, retry/proposal/protected
+context, prompt, accounting baseline, evidence paths, phases, and recovery
+policy. Invocation, thread, completion, checkpoint plan/result/evidence, block,
+and completion transitions are pure bounded reducers guarded by the global
+unrelated-mutation fence.
+
+After durable Worker completion, the controller validates protected bytes and
+diff policy, stages the exact worktree, and records the authorized parent,
+tree, message, and path set before creating a checkpoint commit. Leased restart
+adopts only the exact clean commit matching that authorization and completes
+through the same reducer as the uninterrupted path. Worker events,
+`worker-turn.json`, and `controller-checkpoint.json` are derived evidence, not
+authority. A clean or dirty candidate without matching intent never enters
+verification; it is classified external/ambiguous and the existing cleanup
+operation is explicitly directed to preserve it even when ordinary failed-
+workspace policy would delete it. Status and Doctor inspect the same operation
+read-only.
+
+**Why.** The previous controller committed candidate output before recording
+checkpoint state and then treated any clean descendant with no retry feedback
+as interrupted controller work. A crash and an otherwise valid out-of-band
+commit were therefore observationally identical and both advanced directly to
+verification. Intent-first ordering makes ownership durable before mutation,
+while exact parent/tree/message and context validation distinguishes the one
+authorized post-commit result without resetting or rewriting suspicious work.
+Alternatives rejected: descendant ancestry as ownership, Worker/checkpoint
+artifacts as authority, a second journal, publishing intent only immediately
+before the Git commit, replaying the Worker after an ambiguous result,
+recommitting an observed tree, deleting or quarantining unowned output, and
+separate normal/recovery completion mutations.
+
+**Scope boundary.** This decision establishes only the Session 1 central path
+and two critical authority cases. The remaining crash/adversarial matrix starts
+with loss immediately after intent publication and remains required before
+`candidate-prepare` or WP2 can close. It does not begin WP6 or change
+verification, integration, readiness, CAL-1, or human-acceptance meaning.
+
+**Affected files.** State contracts/runtime and shipped schemas/store
+migration, `operation-intent.ts`, `candidate-prepare.ts`, Git-isolation commit
+helpers, orchestrator Worker/startup/cleanup routing, status and Doctor
+projections, candidate and existing-operation recovery tests, `README.md`,
+`CONTRACT.md`, and Session 1 plan/autonomy records.
+
 ## 2026-08-23 — Production-build unit fixtures own exact pnpm stores
 
 **Decision.** Every production-build unit fixture creates an empty real

@@ -568,12 +568,14 @@ export function migrateOrchestratorState(value: unknown): unknown {
         : migrated["reconciliation"];
     migrated = {
       ...migrated,
-      schemaVersion: STATE_SCHEMA_VERSION,
+      schemaVersion: "1.9.0",
       milestones,
       pendingOperation,
       reconciliation,
     };
   }
+  if (migrated["schemaVersion"] === "1.9.0")
+    migrated = { ...migrated, schemaVersion: STATE_SCHEMA_VERSION };
   return migrated;
 }
 

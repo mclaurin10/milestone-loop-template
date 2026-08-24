@@ -459,17 +459,19 @@ verifier, container, or Codex turn.
   `loop:status`/`loop:dry-run` are read-only and lease-free; their state load
   cannot authorize publication or repair the mirror. Normal branch pushes do
   not include either private ref.
-- Recoverable workspace creation: state schema `1.9.0` permits exactly one
+- Recoverable workspace creation: state schema `1.10.0` permits exactly one
   exclusive pending operation. A `workspace-create` intent is published by
-  state CAS before any directory creation or `git clone` and binds the operation ID,
-  run/milestone/attempt, exact input generation and revision, target base,
-  controller-derived branch, temporary/final paths, timestamps, phase, and
-  fixed recovery policy. Canonical `1.4.0`/`1.5.0`/`1.6.0`/`1.7.0`/`1.8.0`
-  generations migrate virtually for read-only compatibility and are written
-  as `1.9.0` by the next successful CAS save. Legacy target-integration intent
-  without provider attestation becomes an explicit non-adoptable blocked
-  operation with its diagnostic paths preserved. While an intent is pending,
-  unrelated state mutations fail closed.
+  state CAS before any directory creation or `git clone` and binds the
+  operation ID, run/milestone/attempt, exact input generation and revision,
+  target base, controller-derived branch, temporary/final paths, timestamps,
+  phase, and fixed recovery policy. Canonical
+  `1.4.0`/`1.5.0`/`1.6.0`/`1.7.0`/`1.8.0` generations migrate virtually for
+  read-only compatibility and are written as `1.10.0` by the next successful
+  CAS save. Canonical `1.9.0` state likewise migrates virtually without changing
+  controller facts. Legacy target-integration intent without provider
+  attestation becomes an explicit non-adoptable blocked operation with its
+  diagnostic paths preserved. While an intent is pending, unrelated state
+  mutations fail closed.
   The clone is created with no hardlinks under a unique contained temporary
   path, converted to a clean standalone remote-free repository, and published
   to the stable final path without replacing an existing entry. Leased startup
@@ -482,6 +484,26 @@ verifier, container, or Codex turn.
   automatically deletes them. Status and doctor perform the same
   classification read-only (including Git optional-lock suppression) and
   report the exact next safe action without acquiring the lease or recovering.
+- Recoverable candidate preparation: before a Worker gateway invocation can
+  mutate its isolated workspace, the controller publishes an exclusive
+  `candidate-prepare` intent bound to the exact input generation/revision,
+  run/milestone/attempt, repository/workspace/base/branch and starting
+  candidate, Worker role/model/thread lineage and retry context, protected and
+  proposal policy hashes, and canonical evidence paths. Invocation accounting,
+  thread publication, Worker completion, checkpoint preparation, checkpoint
+  commit, and checkpoint evidence use canonical bounded reducers. Before a
+  controller commit, the intent records its exact parent, staged tree, message,
+  and policy-approved paths. Leased restart adopts only that exact clean commit
+  after standalone Git, ancestry, protected-file, diff-policy, Worker-context,
+  artifact, parent, tree, and message validation. Worker event, turn, and
+  checkpoint files are derived evidence and never substitute for intent.
+  Clean or dirty candidate changes without matching intent are preserved and
+  blocked as external/ambiguous, never automatically advanced to verification;
+  this preservation applies even when ordinary failed-workspace policy requests
+  deletion. One completion reducer clears retry feedback and the intent exactly
+  once for normal and recovered paths. Status and Doctor expose kind, phase,
+  disposition/classification, preserved paths, and exact next safe action
+  read-only.
 - Recoverable target integration: after final candidate, reviewer, verification,
   commit-list, and protected-path validation, the controller publishes a strict
   `target-integrate` intent before writing the outcome artifact, fetching the
