@@ -155,6 +155,20 @@ other `pnpm verify -- --stage …` argvs are routed through
 `invariant-vitest-report`; `focused-verify` retains the stage's authoritative
 `result.json` as `focused-verify-result`).
 
+## test-ownership.json (`milestone-loop-test-ownership.v1`)
+
+The canonical source-repository ownership catalogue for WP6. Its four
+allowlisted owners correspond to the current controller runtime, repository
+tooling, generated-adopter template, and trusted-container fixture boundaries.
+Every file list and owner block is canonical and ordered. The catalogue does
+not define discovery: the receipt-owning `test-ownership` invariant invokes
+Vitest listing twice for every tracked or unignored config, reconciles current
+package/candidate/invariant/CI entry points, and then requires the discovered
+union to equal the catalogue with exactly one valid owner per file. Missing,
+overlapping, stale, invalid, duplicate, case-ambiguous, or nondeterministic
+classification fails closed. WP6a does not use the owners to select or suppress
+execution.
+
 ## slow-suite-registry.json (`SlowSuiteRegistry`)
 
 The explicit list of slow/migration test files. Vitest discovery minus this

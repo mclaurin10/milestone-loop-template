@@ -29,6 +29,35 @@
       "expectedArtifactKinds": ["contract-integrity-report"]
     },
     {
+      "id": "test-ownership",
+      "ownerPaths": [
+        "package.json",
+        "vitest.config.ts",
+        ".github/workflows/exact-runtime-ci.yml",
+        ".agent/verification-manifest.json",
+        "fixtures/oci-candidate/package.json",
+        "fixtures/oci-candidate/vitest.config.ts",
+        "tools/milestone-orchestrator/config/test-ownership.json",
+        "tools/milestone-orchestrator/src/test-ownership.ts",
+        "tools/milestone-orchestrator/src/test-ownership-cli.ts",
+        "tools/milestone-orchestrator/template/bootstrap-adopter/scaffold/vitest.config.ts"
+      ],
+      "triggerPaths": [
+        ".agent/verification-manifest.json",
+        ".github/workflows/exact-runtime-ci.yml",
+        "fixtures/oci-candidate/",
+        "package.json",
+        "tools/",
+        "vitest.config.ts"
+      ],
+      "argv": [
+        "node",
+        "node_modules/tsx/dist/cli.mjs",
+        "tools/milestone-orchestrator/src/test-ownership-cli.ts"
+      ],
+      "expectedArtifactKinds": ["test-ownership-report"]
+    },
+    {
       "id": "orchestrator-schema-integrity",
       "ownerPaths": ["tools/milestone-orchestrator/src/schema.ts"],
       "triggerPaths": ["tools/milestone-orchestrator/"],

@@ -27,6 +27,7 @@ describe("always-run invariant registry", () => {
     expect(tracked.value.warmRuntimeTargetMs).toBe(60_000);
     expect(tracked.value.entries.map((entry) => entry.id)).toEqual([
       "protected-integrity",
+      "test-ownership",
       "orchestrator-schema-integrity",
       "orchestrator-policy-integrity",
       "fail-closed-evidence",

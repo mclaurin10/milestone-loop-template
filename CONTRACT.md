@@ -147,6 +147,17 @@ tsconfig the `typecheck` evidence covers.
   shared check must pass before the adapter writes a PASS receipt; corruption
   retains a failing report and no receipt. This fast signal cannot authorize
   integration or replace exact no-argument verification.
+- **Canonical test ownership invariant**: `config/test-ownership.json`
+  explicitly assigns every source test reached by the repository's Vitest
+  configs to one allowlisted production owner. The `test-ownership` invariant
+  derives discovery without reading that catalogue, repeats every Vitest list
+  operation, normalizes repository-relative paths and ordering, and reconciles
+  package, commissioned candidate, invariant, generated-adopter, OCI, and
+  exact-runtime CI entry points. Unclassified, overlapping, stale,
+  invalid-owner, duplicate, case-ambiguous, or nondeterministic results retain
+  a failing `test-ownership-report` and no receipt. A pass produces its own
+  command receipt but does not change or replace any test executor, tier,
+  commissioned manifest, or exact closure.
 
 ## 4. Command-owned evidence receipts
 
@@ -319,8 +330,9 @@ D-032 identity from the example.
 
 ## 7. Orchestrator configuration
 
-All five config files under `tools/milestone-orchestrator/config/` must
-validate at load time; see
+All five runtime config files under `tools/milestone-orchestrator/config/`
+must validate at load time; the source repository's additional
+`test-ownership.json` is validated by the independent invariant gate. See
 [`config/README.md`](tools/milestone-orchestrator/config/README.md) and the
 `*.template.json` skeletons. `protectedPaths` must include the authority
 file, the `evals/` contract files, and the mandatory controller trust

@@ -3,6 +3,74 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-24 — WP6a canonical test ownership closed
+
+**Outcome.** WP6a now has one tracked canonical ownership catalogue for the
+complete independently discovered source-test universe. Vitest discovery is
+run twice for every tracked or unignored config and twice for the orchestrator
+filter, with real-path containment, forward-slash normalization, sorted output,
+duplicate/case ambiguity detection, and repeated-set comparison. The gate also
+reconciles package scripts, current commissioned candidate commands, the
+existing fast/migration discovery, direct invariant selections, the OCI
+fixture, and the executable exact-runtime workflow contract. The final
+universe is 80 files owned exactly once: 76 `controller-runtime`, one
+`repository-tooling`, two `adopter-template`, and one
+`trusted-container-fixture`.
+
+The code allowlists owner identifiers independently from the catalogue. Stable
+fail-closed diagnostics cover unclassified, multiply owned, stale,
+invalid-owner, malformed/noncanonical path, duplicate/case-ambiguous, and
+nondeterministic discovery states. Seven focused regressions cover the required
+failure fixtures and stable rendering. The first intentional red run at
+`artifacts/manual/wp6a-ownership-gate-1/` proved that adding the gate test
+without classifying it produces exactly one `UNCLASSIFIED_TEST`, no PASS
+receipt, and report SHA-256
+`72eb9f8a89cabd32efe9b8c0ce1c73c4a10efb0763edaf03655ad3810c3e3bb8`.
+
+**Integration and verification.** The receipt-owning gate is the fifth
+substantive child of `pnpm test:invariants`; PASS owns a validated
+`test-ownership-report`, while classification failure retains its report but
+cannot issue a receipt. Exact clean-candidate gate, focused, integrated
+invariant, typecheck, lint, and format evidence is retained respectively at
+`artifacts/manual/wp6a-clean-ownership-gate-1/`,
+`artifacts/manual/wp6a-clean-focused-1/`,
+`artifacts/manual/wp6a-clean-invariants-1/`,
+`artifacts/manual/wp6a-clean-typecheck-1/`,
+`artifacts/manual/wp6a-clean-lint-1/`, and
+`artifacts/manual/wp6a-clean-format-1/`. Their manifests identify the exact
+WP6a commit with `workingTreeDirty: false`; all expected receipts and artifacts
+were independently inspected.
+
+Pinned clean-candidate `pnpm test:orchestrator` at
+`artifacts/manual/wp6a-clean-orchestrator-1/` passes 186/186 suites and 626/626
+tests. Pinned clean-candidate `pnpm test:unit` at
+`artifacts/manual/wp6a-clean-unit-1/` passes 188/188 suites and 642/642 tests.
+Both have zero failures, skips, pending tests, or todos and valid command-owned
+receipts. `pnpm loop:demo-safety` passes all 6/6 scenarios, and
+`git diff --check` passes. Earlier dirty-tree broad receipts show the same
+counts but are corroboration only, not the clean-candidate qualification.
+
+**Integrity and boundary.** The successful hosted exact-runtime run
+`32785374927` binds the starting commit `b01467b4d14cb842da7645c6aba00dfabfb9ab37`
+and is recorded only as a correctness baseline; it predates WP6 instrumentation
+and supplies no timing evidence. Package scripts, active commissioned manifest,
+commissioning identity, exact-runtime commands, slow-suite executor registry,
+and `benchmark.ts` are unchanged. Immutable hashes still equal their baselines,
+CAL-1 remains `open_not_started`, and the human roadmap remains byte-identical
+at SHA-256
+`53ea98fb1cb880163a02d3b1d9365963e3fe891025ae3630f00bd4c9232293b1`.
+No executor cutover, tier recomposition, recommissioning, timing matrix,
+product/readiness work, or success-definition change occurred. Commit: the
+cohesive local commit containing this entry; the final handoff names its exact
+identity.
+
+**Known gap / next action.** Candidate execution still intentionally overlaps.
+WP6b1 starts by consuming the catalogue in disjoint owner-based executors with
+command-owned receipts, running them in shadow beside the current commands,
+and comparing normalized file/test inventories and outcome semantics. The
+commissioned manifest stays authoritative and unchanged until that shadow
+equivalence is proven; timing and cutover remain later work.
+
 ## 2026-08-24 — WP2 candidate-prepare Session 2 closed
 
 **Outcome.** The omitted `candidate-prepare` boundary is behaviorally complete

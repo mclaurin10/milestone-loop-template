@@ -24,7 +24,7 @@ configuration ships as an explicitly validated, legacy-only worked example in
 | ---------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Orchestrator           | `tools/milestone-orchestrator/`                                                      | Planner/Worker/Reviewer loop over the Codex SDK, ref-rooted CAS state generations with schema migrations, recoverable intent-first git isolation, retry/escalation policy, protected-path diff policy, safety demonstration, canary milestone, doctor diagnostics |
 | Verification tiers     | `src/verification-tier.ts`, `src/verification-cli.ts`                                | `iteration`, `candidate`, `milestone`, and `periodic` tiers planned from the verification manifest                                                                                                                                                                |
-| Invariant suite        | `src/contract-integrity.ts`, `src/invariant-suite.ts`, `config/invariant-suite.json` | Always-run, serial, completion-ineligible invariants with pinned owner files; shared contract-integrity evaluation; fast/migration unit partition                                                                                                                 |
+| Invariant suite        | `src/contract-integrity.ts`, `src/invariant-suite.ts`, `config/invariant-suite.json` | Always-run, serial, completion-ineligible invariants with pinned owner files; shared contract-integrity evaluation; fail-closed test ownership; fast/migration unit partition                                                                                     |
 | Evidence               | `scripts/verify.mjs`, `tools/evidence.mjs`, `tools/run-tool-evidence.mjs`            | The authoritative `pnpm verify` aggregate, command-owned receipts with hashed artifacts, fail-closed receipt validation                                                                                                                                           |
 | Shadow scope selection | `src/affected-scope.ts`, `config/verification-scope-policy.json`                     | Observational affected-scope recommendation (never suppresses closure) with graduation criteria                                                                                                                                                                   |
 | Paired benchmark       | `src/benchmark.ts`, `config/benchmark-matrix.json`                                   | Commissioned before/after benchmark of the scope selector against the historical check workload                                                                                                                                                                   |
@@ -66,6 +66,15 @@ report and the outer invariant-suite report both state
 `completionEligible:false`; only the exact no-argument `pnpm verify` can
 produce completion evidence. A failed contract check retains its diagnostic
 report and produces no PASS receipt.
+
+The `test-ownership` invariant independently runs Vitest file discovery twice
+for every repository config, reconciles the root, orchestrator, candidate,
+commissioned, invariant, generated-adopter, OCI, and exact-runtime CI entry
+points, then compares their normalized union with
+`config/test-ownership.json`. A new, removed, multiply owned, ambiguously
+discovered, or invalid-owner test fails without a receipt. WP6a records
+ownership only; existing executors and the commissioned manifest are
+unchanged.
 
 ## Adopting the loop
 

@@ -3,6 +3,52 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-24 — Four-boundary canonical test ownership (WP6a)
+
+**Decision.** The source test universe has four allowlisted ownership ids:
+`controller-runtime`, `repository-tooling`, `adopter-template`, and
+`trusted-container-fixture`. The tracked
+`tools/milestone-orchestrator/config/test-ownership.json` catalogue lists every
+test path explicitly under exactly one owner. Owner ids remain code-allowlisted
+rather than self-declared by the catalogue, so a typo or invented partition
+cannot become valid metadata.
+
+Discovery is independently executable. The ownership gate enumerates every
+tracked or unignored `vitest.config.*`, runs Vitest's own file-list operation
+twice for each config, separately repeats the orchestrator command filter, and
+normalizes absolute results to sorted forward-slash repository paths. It also
+reconciles the root package scripts, active commissioned test commands,
+existing fast/migration candidate discovery, direct invariant test selection,
+the OCI fixture command, and the executable exact-runtime workflow contract.
+Exact overlap between root and nested adopter-template discovery is retained as
+provenance; duplicate entries, case-fold collisions, changed repeated sets, or
+entry-point drift are ambiguous and fail closed.
+
+The gate is a fifth receipt-owning child of the existing invariant suite. A
+PASS owns `test-ownership-report`; a classification failure retains the report
+and emits no receipt. WP6a does not feed the catalogue into fast, migration,
+orchestrator, unit, OCI, generated-adopter, tier, or exact-closure execution.
+Disjoint executors and shadow equivalence remain WP6b1 work, and a later
+commissioned-manifest cutover remains separate.
+
+**Why.** The prior slow-suite registry explicitly named one migration file but
+assigned every other discovered file to fast by subtraction. A new test was
+therefore automatically classified and could not fail closed. Four owners are
+the smallest defensible current taxonomy: controller tests share one source
+runtime; the production-build owner is the root-unit remainder excluded by the
+orchestrator command; adopter tests are source templates also executed after
+generation; and the OCI case runs under a separate config and trusted-container
+boundary. Merging any of the latter three into the controller majority would
+hide a current execution responsibility. Splitting controller tests by
+speculative timing or future executor shape was rejected until WP6
+measurements exist.
+
+**Affected files.** The ownership catalogue and gate/CLI/tests, invariant
+registry and owner expectation, `README.md`, `CONTRACT.md`, config guidance,
+and WP6a plan/log records. Package scripts, exact-runtime workflow, active
+verification manifest, commissioning identity, slow-suite executor registry,
+and benchmark implementation are unchanged.
+
 ## 2026-08-24 — Canonical candidate recovery and reproducible derived evidence (WP2 Session 2, verified)
 
 **Decision.** State schema `1.11.0` completes the intent-first
