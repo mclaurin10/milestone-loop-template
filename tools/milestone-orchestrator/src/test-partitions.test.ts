@@ -1,0 +1,247 @@
+import { join, resolve } from "node:path";
+import { readFile } from "node:fs/promises";
+
+import { describe, expect, it } from "vitest";
+
+import type { TestOwnershipReport } from "./test-ownership.js";
+import { TEST_OWNER_IDS } from "./test-ownership.js";
+import {
+  assignFilesToDiscoveredConfigs,
+  compareShadowSemantics,
+  executeAggregateChildren,
+  normalizeReportedTestFile,
+  normalizeRepositoryPath,
+  provePartitionMembership,
+  type SemanticTestObservation,
+} from "./test-partitions.js";
+
+function observation(input: {
+  readonly source: string;
+  readonly file?: string;
+  readonly identity?: string;
+  readonly disposition?: string;
+  readonly failureOutcome?: readonly string[];
+}): SemanticTestObservation {
+  const file = input.file ?? "tools/example.test.ts";
+  const identity = input.identity ?? "example passes";
+  return {
+    source: input.source,
+    file,
+    identity,
+    testId: `${file}::${identity}`,
+    disposition: input.disposition ?? "passed",
+    failureOutcome: input.failureOutcome ?? [],
+  };
+}
+
+describe("WP6 executable partition membership proof", () => {
+  it("exposes one exact public command per canonical owner plus the shadow aggregate", async () => {
+    const packageJson = JSON.parse(
+      await readFile(resolve("package.json"), "utf8"),
+    ) as { scripts: Record<string, string> };
+    for (const owner of TEST_OWNER_IDS)
+      expect(packageJson.scripts[`test:partition:${owner}`]).toBe(
+        `tsx tools/milestone-orchestrator/src/test-partition-cli.ts run ${owner}`,
+      );
+    expect(packageJson.scripts["test:partitions:shadow"]).toBe(
+      "tsx tools/milestone-orchestrator/src/test-partition-cli.ts shadow",
+    );
+  });
+
+  it("renders a stable exact disjoint union", () => {
+    const left = provePartitionMembership(
+      ["z.test.ts", "a.test.ts"],
+      [
+        { owner: "z-owner", files: ["z.test.ts"] },
+        { owner: "a-owner", files: ["a.test.ts"] },
+      ],
+    );
+    const right = provePartitionMembership(
+      ["a.test.ts", "z.test.ts"],
+      [
+        { owner: "a-owner", files: ["a.test.ts"] },
+        { owner: "z-owner", files: ["z.test.ts"] },
+      ],
+    );
+
+    expect(left).toEqual(right);
+    expect(left.status).toBe("PASS");
+    expect(left.union.equalsUniverse).toBe(true);
+    expect(left.pairwiseIntersections).toEqual([
+      {
+        leftOwner: "a-owner",
+        rightOwner: "z-owner",
+        count: 0,
+        files: [],
+      },
+    ]);
+  });
+
+  it("fails a pairwise disjointness fixture", () => {
+    const proof = provePartitionMembership(
+      ["a.test.ts"],
+      [
+        { owner: "left", files: ["a.test.ts"] },
+        { owner: "right", files: ["a.test.ts"] },
+      ],
+    );
+
+    expect(proof.status).toBe("FAIL");
+    expect(proof.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "MULTIPLY_SELECTED_FILE",
+        path: "a.test.ts",
+      }),
+    );
+    expect(proof.pairwiseIntersections[0]?.files).toEqual(["a.test.ts"]);
+  });
+
+  it("fails an incomplete union fixture", () => {
+    const proof = provePartitionMembership(
+      ["a.test.ts", "missing.test.ts"],
+      [{ owner: "only", files: ["a.test.ts"] }],
+    );
+
+    expect(proof.status).toBe("FAIL");
+    expect(proof.union.missing).toEqual(["missing.test.ts"]);
+    expect(proof.diagnostics).toContainEqual(
+      expect.objectContaining({ code: "MISSING_DISCOVERED_FILE" }),
+    );
+  });
+
+  it("fails an unexpected membership fixture", () => {
+    const proof = provePartitionMembership(
+      ["a.test.ts"],
+      [{ owner: "only", files: ["a.test.ts", "unexpected.test.ts"] }],
+    );
+
+    expect(proof.status).toBe("FAIL");
+    expect(proof.union.unexpected).toEqual(["unexpected.test.ts"]);
+    expect(proof.diagnostics).toContainEqual(
+      expect.objectContaining({ code: "UNEXPECTED_PARTITION_FILE" }),
+    );
+  });
+
+  it("normalizes Windows separators and derives the most-specific discovered config", () => {
+    expect(normalizeRepositoryPath("tools\\example.test.ts")).toBe(
+      "tools/example.test.ts",
+    );
+    const report = {
+      discovery: {
+        sources: [
+          {
+            configPath: "vitest.config.ts",
+            files: ["tools/nested/example.test.ts"],
+          },
+          {
+            configPath: "tools/nested/vitest.config.ts",
+            files: ["tools/nested/example.test.ts"],
+          },
+        ],
+      },
+    } as unknown as Pick<TestOwnershipReport, "discovery">;
+    expect(
+      assignFilesToDiscoveredConfigs(report, ["tools/nested/example.test.ts"]),
+    ).toEqual([
+      {
+        configPath: "tools/nested/vitest.config.ts",
+        files: ["tools/nested/example.test.ts"],
+      },
+    ]);
+    const repositoryRoot = resolve("repository-root");
+    expect(
+      normalizeReportedTestFile(
+        repositoryRoot,
+        join(repositoryRoot, "tools", "nested", "example.test.ts"),
+      ),
+    ).toBe("tools/nested/example.test.ts");
+  });
+});
+
+describe("WP6 normalized semantic shadow comparison", () => {
+  it("deduplicates equivalent legacy overlap by stable test identity", () => {
+    const result = compareShadowSemantics(
+      [
+        observation({ source: "fast" }),
+        observation({ source: "orchestrator" }),
+      ],
+      [observation({ source: "controller-runtime" })],
+    );
+
+    expect(result.status).toBe("PASS");
+    expect(result.legacy).toMatchObject({
+      observationCount: 2,
+      uniqueTestCount: 1,
+      duplicateObservationCount: 1,
+    });
+    expect(result.partitions.uniqueTestCount).toBe(1);
+  });
+
+  it("fails a semantic mismatch fixture", () => {
+    const result = compareShadowSemantics(
+      [observation({ source: "legacy", disposition: "passed" })],
+      [
+        observation({
+          source: "partition",
+          disposition: "failed",
+          failureOutcome: ["expected true to be false"],
+        }),
+      ],
+    );
+
+    expect(result.status).toBe("FAIL");
+    expect(result.outcomeMismatches).toHaveLength(1);
+    expect(result.missingTests).toEqual([]);
+    expect(result.unexpectedTests).toEqual([]);
+  });
+
+  it("fails multiply selected tests in new partitions", () => {
+    const result = compareShadowSemantics(
+      [observation({ source: "legacy" })],
+      [
+        observation({ source: "partition-a" }),
+        observation({ source: "partition-b" }),
+      ],
+    );
+
+    expect(result.status).toBe("FAIL");
+    expect(result.multiplySelectedTests).toEqual([
+      expect.objectContaining({ count: 2 }),
+    ]);
+  });
+});
+
+describe("WP6 aggregate child failure propagation", () => {
+  it("propagates the exact child nonzero and does not start later children", async () => {
+    const invoked: string[] = [];
+    const execution = executeAggregateChildren(
+      [{ id: "first" }, { id: "failing" }, { id: "never" }],
+      async (child) => {
+        invoked.push(child.id);
+        return child.id === "failing"
+          ? {
+              status: "FAIL" as const,
+              exitCode: 7,
+              message: "fixture failure",
+            }
+          : { status: "PASS" as const, exitCode: 0, message: "passed" };
+      },
+    );
+
+    await expect(execution).rejects.toMatchObject({
+      childId: "failing",
+      exitCode: 7,
+    });
+    expect(invoked).toEqual(["first", "failing"]);
+  });
+
+  it("maps a missing child exit code to one", async () => {
+    await expect(
+      executeAggregateChildren([{ id: "broken" }], async () => ({
+        status: "ERROR" as const,
+        exitCode: null,
+        message: "no process code",
+      })),
+    ).rejects.toMatchObject({ exitCode: 1 });
+  });
+});

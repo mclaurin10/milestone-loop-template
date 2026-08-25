@@ -72,9 +72,18 @@ for every repository config, reconciles the root, orchestrator, candidate,
 commissioned, invariant, generated-adopter, OCI, and exact-runtime CI entry
 points, then compares their normalized union with
 `config/test-ownership.json`. A new, removed, multiply owned, ambiguously
-discovered, or invalid-owner test fails without a receipt. WP6a records
-ownership only; existing executors and the commissioned manifest are
-unchanged.
+discovered, or invalid-owner test fails without a receipt. The WP6b shadow
+commands consume that passing declaration directly:
+`test:partition:controller-runtime`, `test:partition:repository-tooling`,
+`test:partition:adopter-template`, and
+`test:partition:trusted-container-fixture` each own a selection report and raw
+Vitest report(s). `pnpm test:partitions:shadow` requires a clean immutable
+candidate, validates the child receipts, proves the owner partitions are an
+exact disjoint discovery union, deduplicates the intentionally overlapping
+legacy results by normalized file/test identity, and compares disposition and
+failure outcome. This remains a shadow-only candidate surface; the existing
+executors, commissioned tiers, no-argument verifier, and exact-runtime closure
+schedule are unchanged.
 
 ## Adopting the loop
 

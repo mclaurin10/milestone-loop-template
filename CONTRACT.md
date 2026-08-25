@@ -158,6 +158,22 @@ tsconfig the `typecheck` evidence covers.
   a failing `test-ownership-report` and no receipt. A pass produces its own
   command receipt but does not change or replace any test executor, tier,
   commissioned manifest, or exact closure.
+- **Executable ownership shadow partitions**: the four
+  `test:partition:<owner>` scripts consume only the passing canonical ownership
+  report. They select normalized files from that declaration and derive each
+  file's Vitest root/config from repeated independent discovery provenance,
+  preferring the most-specific containing config with a lexical tie-breaker.
+  Every successful partition owns a `test-partition-report` plus its raw
+  `test-partition-vitest-report` artifact(s). `test:partitions:shadow` is a
+  clean-candidate-only aggregate: it runs the existing fast, migration, and
+  orchestrator commands plus the independently discovered remainder, validates
+  every child receipt, runs all owner partitions, and hash-binds a deterministic
+  proof of empty intersections, exact union, and normalized per-test semantic
+  equivalence after legacy deduplication. Child nonzero exits propagate and no
+  aggregate PASS receipt is issued on missing/invalid evidence or any delta.
+  These commands are shadow candidates only; they do not alter the active
+  commissioned manifest, tier composition, no-argument verifier, or exact
+  runtime closure schedule.
 
 ## 4. Command-owned evidence receipts
 
@@ -231,8 +247,10 @@ plus pnpm `11.15.1`; runs the existing receipt-owning invariant, orchestrator,
 unit, and static commands on Linux and Windows with distinct uploaded evidence
 roots; and never invokes source no-argument `pnpm verify`. The controller matrix
 retains a 60-minute Linux outer job bound and gives Windows 120 minutes for that
-unchanged complete command sequence; command and per-test timeouts remain
-unchanged. The separate generated-adopter smoke executes the documented
+unchanged complete command sequence. The receipt-owning full unit and
+orchestrator child commands retain finite 90-minute supervision; workflow argv,
+selection, serialism, and per-test timeouts remain unchanged. The separate
+generated-adopter smoke executes the documented
 quickstart through the public
 creator, offline frozen copy-mode install, one-shot commissioning, exact
 manifest add/commit, and one literal generated-repository no-argument

@@ -35,10 +35,55 @@ import { legacyProposal, validProposal, validState } from "../test/fixtures.js";
 const temporaryDirectories: string[] = [];
 const STATE_REF = "refs/milestone-loop/state";
 const repositoryRoot = resolve(import.meta.dirname, "../../..");
+const fixtureCleanupOptions = { recursive: true, force: true } as const;
+const fixtureCleanupRetryCodes = new Set([
+  "EACCES",
+  "EBUSY",
+  "EMFILE",
+  "ENFILE",
+  "ENOTEMPTY",
+  "EPERM",
+]);
+const fixtureCleanupMaxRetries = 8;
+const fixtureCleanupRetryDelayMs = 25;
+type DirectoryRemover = (
+  directory: string,
+  options: typeof fixtureCleanupOptions,
+) => Promise<void>;
+type CleanupRetryWaiter = (delayMs: number) => Promise<void>;
+
+async function waitForFixtureCleanupRetry(delayMs: number): Promise<void> {
+  await delay(delayMs);
+}
+
+async function removeTemporaryDirectory(
+  directory: string,
+  removeDirectory: DirectoryRemover = rm,
+  waitForRetry: CleanupRetryWaiter = waitForFixtureCleanupRetry,
+): Promise<void> {
+  for (let retry = 0; ; retry += 1) {
+    try {
+      await removeDirectory(directory, fixtureCleanupOptions);
+      return;
+    } catch (error) {
+      const code =
+        error instanceof Error && "code" in error
+          ? (error as NodeJS.ErrnoException).code
+          : undefined;
+      if (
+        retry >= fixtureCleanupMaxRetries ||
+        !code ||
+        !fixtureCleanupRetryCodes.has(code)
+      )
+        throw error;
+      await waitForRetry(fixtureCleanupRetryDelayMs * (retry + 1));
+    }
+  }
+}
 
 afterEach(async () => {
   for (const directory of temporaryDirectories.splice(0))
-    await rm(directory, { recursive: true, force: true });
+    await removeTemporaryDirectory(directory);
 });
 
 async function temporaryDirectory(): Promise<string> {
@@ -95,6 +140,65 @@ async function waitForPath(path: string): Promise<void> {
   }
   throw new Error(`Timed out waiting for ${path}.`);
 }
+
+describe("state fixture cleanup", () => {
+  it("retries transient owned-directory cleanup failures", async () => {
+    let attempts = 0;
+    const transientFailure = Object.assign(
+      new Error("fixture directory is temporarily non-empty"),
+      { code: "ENOTEMPTY" },
+    );
+
+    await removeTemporaryDirectory(
+      "fixture",
+      async () => {
+        attempts += 1;
+        if (attempts === 1) throw transientFailure;
+      },
+      async () => undefined,
+    );
+
+    expect(attempts).toBe(2);
+  });
+
+  it("does not suppress permanent owned-directory cleanup failures", async () => {
+    let attempts = 0;
+    const permanentFailure = Object.assign(
+      new Error("fixture directory cannot be removed"),
+      { code: "EINVAL" },
+    );
+
+    await expect(
+      removeTemporaryDirectory("fixture", async () => {
+        attempts += 1;
+        throw permanentFailure;
+      }),
+    ).rejects.toBe(permanentFailure);
+
+    expect(attempts).toBe(1);
+  });
+
+  it("bounds persistent transient owned-directory cleanup failures", async () => {
+    let attempts = 0;
+    const transientFailure = Object.assign(
+      new Error("fixture directory remains temporarily non-empty"),
+      { code: "ENOTEMPTY" },
+    );
+
+    await expect(
+      removeTemporaryDirectory(
+        "fixture",
+        async () => {
+          attempts += 1;
+          throw transientFailure;
+        },
+        async () => undefined,
+      ),
+    ).rejects.toBe(transientFailure);
+
+    expect(attempts).toBe(fixtureCleanupMaxRetries + 1);
+  });
+});
 
 describe("atomic state persistence", () => {
   it("validates and round trips versioned state with monotonic revision", async () => {

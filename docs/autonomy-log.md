@@ -3,6 +3,129 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-25 — WP6b executable partition candidate; qualification pending
+
+**Outcome.** WP6a's canonical catalogue now drives four independently
+invokable shadow partitions: `controller-runtime`, `repository-tooling`,
+`adopter-template`, and `trusted-container-fixture`. Selection reads only the
+passing ownership report. Each normalized file is assigned to the deepest
+containing Vitest config seen by repeated independent discovery, with lexical
+tie-breaking; the invocation uses that discovered root/config boundary. Every
+successful owner command issues a genuine receipt for its deterministic
+selection report and raw Vitest report(s).
+
+The clean-only `test:partitions:shadow` aggregate runs the legacy fast,
+migration, and orchestrator commands under their existing evidence
+identities, adds the independently discovered remainder, validates all legacy
+and partition child receipts, and stops with the exact child nonzero when a
+child fails. Its authenticated proof records the ownership/catalogue identity,
+81-file discovery identity, normalized 77/1/2/1 memberships, all six empty
+pairwise intersections, exact union equality, candidate commit/tree/runtime,
+child-receipt hashes, and the normalized semantic comparison. Legacy results
+are deduplicated by repository file plus full test name; disposition and
+normalized failure output must match, while timestamps, absolute roots,
+ordering, and durations are excluded.
+
+**Regression and diagnostic evidence.** The receipt-owning focused run at
+`artifacts/manual/wp6b-focused-partitions-3/` passes 8/8 suites and 23/23 tests,
+including exact-runtime workflow ownership. Eleven partition regressions cover
+stable proof rendering/public commands, cross-platform paths/config
+provenance, disjointness, incomplete union, unexpected membership, legacy
+deduplication, semantic mismatch, multiply selected tests, and exact/missing
+aggregate exit propagation; the seven WP6a ownership regressions remain green.
+The integrated invariant suite at `artifacts/manual/wp6b-invariants-1/` passes
+all five receipt-owning commands. Dirty-tree diagnostic executions passed the
+four owner commands at
+`artifacts/manual/wp6b-partition-controller-runtime-1/`,
+`wp6b-partition-repository-tooling-1/`,
+`wp6b-partition-adopter-template-3/`, and
+`wp6b-partition-trusted-container-fixture-1/`. The first adopter attempt
+retained a real non-passing manifest/report when its nested config root was not
+supplied; the root cause was fixed by deriving the same root and config basename
+used by independent discovery.
+
+**Clean candidate qualification.** The first exact clean-candidate aggregate at
+`artifacts/manual/wp6b-clean-shadow-1/` failed closed before later children:
+the legacy fast selector was still actively executing when its stale 20-minute
+supervisor expired. The aggregate propagated exit 1, emitted no PASS receipt,
+and retained the child timeout logs and authenticated failure manifest. This was
+a small directly blocking entry-surface defect: the same serial suite takes
+roughly 49–51 minutes under the pinned runtime. Its bound now matches the
+existing one-hour full-suite command bound without changing selection,
+file/test timeouts, or exact-runtime workflow argv. A regression pins that
+limit.
+
+The second exact clean-candidate aggregate at
+`artifacts/manual/wp6b-clean-shadow-2/` also failed closed before later
+children and issued no PASS receipt. The legacy-fast raw report reached all 625
+selected tests, but 33 failed because nested Git fixtures exceeded the Windows
+path limit under the long evidence/runtime root. The failures are uniformly
+`Filename too long`; they do not establish semantic equivalence. This retained
+diagnostic requires no product-code relaxation: final qualification must run
+the same committed commands from short clean-clone and evidence roots, then
+inspect every receipt, declared artifact hash/size, raw test disposition,
+proof delta, and candidate identity. The increment remains incomplete until
+that aggregate and the clean focused/broad closure pass.
+
+The first short-path complete aggregate at `C:\\w\\e3` then passed on clean
+commit `c4a1f0380cd2d3d38df449f0912453f87541b5a2` (tree
+`69fa43ab8d98bf45bc5c7dd921313ee9fa7b3780`). Its eight PASS manifests and
+receipts bind 12 aggregate artifacts with independently rechecked byte counts
+and SHA-256 values. The proof records 81 files split 77/1/2/1, all six empty
+intersections, an exact union, and 655 partition observations. It deduplicates
+1,293 legacy observations to the same 655 semantic identities (638 duplicate
+observations removed), with empty conflict, multiply-selected, missing,
+unexpected, and outcome-mismatch lists. Partition test counts are 634
+controller, 16 repository tooling, 4 adopter, and 1 OCI fixture.
+
+Clean candidate checks at `C:\\w\\q1` passed focused 33/33, ownership discovery
+for 81 files with zero diagnostics, all five invariants, typecheck, lint,
+format, and the 6/6 safety demonstration. The standalone full-unit run at
+`C:\\w\\q1\\unit` failed closed exactly at its 3,600,000 ms evidence-wrapper
+limit, emitted no PASS receipt or raw report, and was still producing fresh
+runtime state. Because the same commit's split fast/migration children had
+already passed 625 plus 29 tests, only the full unit/orchestrator receipt
+wrapper bound advances to a finite 90 minutes; a focused regression passes
+34/34 after the change. Selection, serialism, per-test limits, package/workflow
+argv, and receipt semantics are unchanged. Final qualification must bind the
+amended commit, so these `c4a1f038` results are implementation-candidate
+evidence rather than the final handoff identity.
+
+The next exact clean shadow at `C:\\w\\e4` retained another genuine failure on
+commit `3a600203ea70f15cadaf393b0df96edc09330153`. All legacy children passed,
+but the `controller-runtime` owner reported 634/635 tests: the crash-boundary
+state-store case completed its assertions, then Windows recursive fixture
+cleanup raised `ENOTEMPTY`. The surviving `state.json` was last written several
+minutes before teardown, excluding an unawaited state write and identifying a
+transient owned-directory removal race. State fixture teardown now retries only
+bounded transient filesystem codes with linear backoff, rejects permanent
+errors immediately, and still fails after the retry ceiling. Three deterministic
+regressions pin those outcomes. The dirty-tree focused state-store run at
+`C:\\w\\d3\\state-store` passes 32/32; typecheck, lint, and format receipts at
+`C:\\w\\d3` also pass. Preserve `C:\\w\\e4` and completely rerun same-commit
+qualification after amending the candidate.
+
+**Preservation and boundary.** The active commissioned manifest and its source
+input, `scripts/verify.mjs`, exact-runtime workflow, slow registry, benchmark,
+immutable lock, default `readiness` profile, and all legacy package argv retain
+their entry identities. The sole legacy implementation adjustment is the
+directly blocking fast/migration wrapper bound above. The added commands are not commissioned tiers and do
+not change no-argument or exact-runtime closure selection. No recommissioning,
+tier cutover, 5x platform matrix, timing aggregator, benchmark change, or
+performance claim occurred. The protected human roadmap remains byte-identical
+at SHA-256
+`53ea98fb1cb880163a02d3b1d9365963e3fe891025ae3630f00bd4c9232293b1`.
+Commit: the cohesive local commit containing this entry; the final handoff names
+its exact identity.
+
+**Known gap / next action.** First complete WP6b qualification from short paths
+on one clean immutable commit. After that succeeds, the commissioned legacy
+schedule remains active and WP6c begins with normalized per-run timing
+summaries and measurement-protocol instrumentation, then the required
+cold/warm Windows/Linux matrix. Only material improvement beyond noise may
+justify a separately commissioned cutover; exact closure remains fresh
+regardless.
+
 ## 2026-08-24 — WP6a canonical test ownership closed
 
 **Outcome.** WP6a now has one tracked canonical ownership catalogue for the

@@ -11,6 +11,7 @@ import {
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
 const DEFAULT_EVIDENCE_COMMAND_TIMEOUT_MS = 3_600_000;
+export const FULL_SUITE_EVIDENCE_TIMEOUT_MS = 90 * 60 * 1_000;
 const IDENTITY_COMMAND_TIMEOUT_MS = 30_000;
 const CITATION_COMMAND_TIMEOUT_MS = 60_000;
 const CITATION_OUTPUT_LIMIT_BYTES = 16 * 1024 * 1024;

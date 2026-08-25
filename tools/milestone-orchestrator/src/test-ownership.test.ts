@@ -66,12 +66,12 @@ describe("test ownership classification", () => {
     expect(result.status).toBe("PASS");
     expect(result.diagnostics).toEqual([]);
     expect(result.owners.map((owner) => [owner.id, owner.count])).toEqual([
-      ["controller-runtime", 76],
+      ["controller-runtime", 77],
       ["repository-tooling", 1],
       ["adopter-template", 2],
       ["trusted-container-fixture", 1],
     ]);
-    expect(result.discoveredFiles).toHaveLength(80);
+    expect(result.discoveredFiles).toHaveLength(81);
   });
 
   it("rejects a discovered but unclassified test with a stable action", () => {

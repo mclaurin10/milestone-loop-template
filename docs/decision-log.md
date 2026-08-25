@@ -3,6 +3,86 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-25 — Owner-derived executable shadow partitions (WP6b)
+
+**Decision.** The four allowlisted WP6a ownership boundaries are also the four
+WP6b executable shadow partitions. Each `test:partition:<owner>` command first
+runs the complete independent ownership evaluation, selects files directly
+from the validated canonical declaration, and assigns each selected file to a
+Vitest config from repeated discovery provenance. Config selection prefers the
+deepest containing config directory, then normalized lexical order. This keeps
+controller/repository files under the root config while exercising adopter and
+OCI files through their own config roots without a second owner-to-glob or
+owner-to-config registry.
+
+Every owner command writes its own `test-partition-report`, raw
+`test-partition-vitest-report` artifact(s), and PASS receipt. The clean-only
+`test:partitions:shadow` aggregate invokes the unchanged fast, migration, and
+orchestrator commands with their existing evidence identities; it adds only the
+independently discovered files outside their deduplicated union, validates all
+child receipts, then invokes each owner command independently. Legacy overlap
+is deduplicated by normalized repository file plus Vitest full test name. The
+comparison retains only disposition and normalized failure output, excluding
+absolute roots, ordering, timestamps, and durations. A child nonzero is
+propagated exactly (or mapped to one when absent), later children do not start,
+and no aggregate PASS receipt exists on failure.
+
+**Why.** The owner taxonomy already records real execution responsibility and
+passed WP6a's independent completeness gate; inventing timing-oriented groups
+before measurement would add drift and prejudge WP6c. Discovery provenance is
+the only current machine-verified config authority, so deriving config roots
+from it preserves nested adopter/OCI semantics without owner special cases.
+Keeping the aggregate shadow-only proves correctness before modifying the
+commissioned schedule and leaves exact closure fresh and unchanged.
+
+The first exact clean shadow exposed one directly blocking legacy defect before
+any comparison ran: `runUnitPartition` still capped the serial fast selector at
+20 minutes although the pinned-runtime suite requires roughly 49–51 minutes.
+The fast/migration wrapper now uses the same one-hour bound as the existing full
+unit/orchestrator commands. This changes no membership, test timeout,
+parallelism, receipt, commissioned argv, or exact-runtime workflow command; a
+regression pins the bound so it cannot silently contract again.
+
+A second clean shadow exposed an evidence-environment constraint: placing the
+aggregate beneath the repository's long `artifacts/manual/...` path left
+insufficient Windows path headroom for the nested Git repositories created by
+the legacy suite. The aggregate retained the failing report and issued no PASS
+receipt. Final qualification therefore uses short external clean-clone and
+evidence roots while retaining the same committed commands, runtime, config,
+selection, and receipt rules. No Git behavior or test expectation is weakened
+to accommodate the host path limit.
+
+The first short-path shadow then passed completely, but the subsequent
+standalone clean `test:unit` qualification was still producing fresh fixture
+state when the generic one-hour receipt-wrapper supervisor terminated it. The
+same commit's disjoint fast and migration children had already passed all 625
+plus 29 unit tests with valid receipts. Full unit and orchestrator evidence
+wrappers therefore share a finite 90-minute bound, giving measured host
+headroom while remaining fail-closed. A regression pins the bound. Package
+argv, Vitest selection, serial execution, per-test limits, workflow commands,
+and receipt requirements remain unchanged. Alternatives rejected: treating the
+timeout as passing, omitting the applicable broad check, removing supervision,
+or weakening/parallelizing tests to fit the stale wrapper.
+
+The next clean shadow exposed a separate Windows fixture-teardown race after
+634/635 controller-partition tests passed: recursive removal of an owned
+state-store Git fixture returned transient `ENOTEMPTY`. The state file left in
+the directory predated teardown, so no product write was still active. That
+test file now uses bounded linear-backoff cleanup for the transient filesystem
+codes that recursive removal and Windows handle release can produce; permanent
+errors fail on the first attempt and persistent transient failures remain
+non-passing at the ceiling. Deterministic injected-remover tests pin all three
+dispositions. Alternatives rejected: suppressing cleanup failures, globally
+weakening teardown, deleting the failed result, or treating the otherwise-green
+partition as passing.
+
+**Affected files.** `test-partitions.ts`, its CLI/regressions, the new package
+scripts, `evidence.mjs`, the full-suite evidence wrapper, the canonical
+catalogue entry for the new regression owner, `state-store.test.ts`, and contract/operator
+documentation. The active manifest and commissioning source, slow registry,
+benchmark, default profile, legacy package argv, and exact-runtime workflow
+remain unchanged.
+
 ## 2026-08-24 — Four-boundary canonical test ownership (WP6a)
 
 **Decision.** The source test universe has four allowlisted ownership ids:

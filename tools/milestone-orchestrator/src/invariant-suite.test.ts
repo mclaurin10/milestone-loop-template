@@ -7,11 +7,13 @@ import { join, resolve } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
+import { FULL_SUITE_EVIDENCE_TIMEOUT_MS } from "../../evidence.mjs";
 import { loadInvariantSuiteRegistry, loadSlowSuiteRegistry } from "./config.js";
 import {
   buildUnitTestPartition,
   commandFromArgv,
   invariantEntryReceipt,
+  UNIT_PARTITION_TIMEOUT_MS,
   validateInvariantRegistryOwnership,
 } from "./invariant-suite.js";
 import { validateInvariantSuiteRegistry } from "./schema.js";
@@ -19,6 +21,10 @@ import { validateInvariantSuiteRegistry } from "./schema.js";
 const repositoryRoot = resolve(import.meta.dirname, "../../..");
 
 describe("always-run invariant registry", () => {
+  it("keeps bounded headroom for the receipt-owning full suites", () => {
+    expect(FULL_SUITE_EVIDENCE_TIMEOUT_MS).toBe(90 * 60 * 1_000);
+  });
+
   it("pins every commissioned invariant identity and its exact owner", async () => {
     const tracked = await loadInvariantSuiteRegistry(repositoryRoot);
     await validateInvariantRegistryOwnership(repositoryRoot, tracked.value);
@@ -303,6 +309,10 @@ describe("invariant receipt classification", () => {
 });
 
 describe("unit-suite partition", () => {
+  it("uses the full-suite one-hour bound for the fixture-heavy legacy selector", () => {
+    expect(UNIT_PARTITION_TIMEOUT_MS).toBe(60 * 60 * 1000);
+  });
+
   it("is a complete disjoint partition of full Vitest discovery", async () => {
     const [partition, registry] = await Promise.all([
       buildUnitTestPartition(repositoryRoot),

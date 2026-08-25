@@ -166,8 +166,13 @@ Vitest listing twice for every tracked or unignored config, reconciles current
 package/candidate/invariant/CI entry points, and then requires the discovered
 union to equal the catalogue with exactly one valid owner per file. Missing,
 overlapping, stale, invalid, duplicate, case-ambiguous, or nondeterministic
-classification fails closed. WP6a does not use the owners to select or suppress
-execution.
+classification fails closed. The WP6b `test:partition:<owner>` commands consume
+only this passing declaration; config assignment is derived from the repeated
+discovery provenance and every successful owner command binds its selection and
+raw Vitest reports through a command-owned receipt. The clean-only
+`test:partitions:shadow` aggregate authenticates the exact-union/intersection
+proof and normalized legacy-equivalence result. These commands are not part of
+the commissioned tier schedule yet and do not suppress existing execution.
 
 ## slow-suite-registry.json (`SlowSuiteRegistry`)
 

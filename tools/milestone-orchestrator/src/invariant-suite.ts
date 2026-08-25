@@ -28,6 +28,7 @@ function slash(path: string): string {
 export class VerificationCheckFailure extends Error {}
 
 export const INVARIANT_SUITE_REPORT_SCHEMA_VERSION = "1.1.0" as const;
+export const UNIT_PARTITION_TIMEOUT_MS = 60 * 60 * 1000;
 
 export interface ContractIntegrityInvariantRunResult {
   readonly reportPath: string;
@@ -518,7 +519,7 @@ export async function runUnitPartition(
     {
       workingDirectory: repositoryRoot,
       artifactDirectory: resolve(context.artifactDirectory, "logs"),
-      timeoutMs: 20 * 60 * 1000,
+      timeoutMs: UNIT_PARTITION_TIMEOUT_MS,
       trustedControllerCommand: true,
     },
   );
