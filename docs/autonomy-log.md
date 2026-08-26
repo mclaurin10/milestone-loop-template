@@ -3,6 +3,34 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-25 — WP6b evidence hardening candidate; qualification pending
+
+**Outcome.** The closeout candidate removes basename-only durable-citation
+matching and accepts only boundary-exact manifest IDs or normalized artifact
+paths (absolute, plus repository-relative forms for contained evidence). The
+shared shadow raw-report normalizer now fails closed unless Vitest reports
+`success:true`, internally consistent suite/test totals, zero failed or
+pending/skipped suites/tests, zero todo tests, and only passing normalized test
+dispositions. This covers every raw legacy and partition report consumed by the
+shadow aggregate and prevents a rejected partition report from reaching its PASS
+receipt.
+
+**Focused evidence.** Pinned Node `24.18.0` / pnpm `11.15.1` evidence at
+`C:/w/d6/focused` passes 8/8 suites and 23/23 tests. Regressions prove incidental
+short basename rejection, exact manifest-ID/path acceptance, uncited external
+evidence when no exact reference exists, `success:false`, failed,
+pending/skipped, todo, contradictory/malformed counters, and a valid all-pass
+report. Typecheck, lint, format, and the unchanged 81-file ownership gate pass at
+the sibling `C:/w/d6` evidence directories. These are dirty-tree implementation
+checks, not final qualification; their manifests truthfully remain uncited.
+
+**Boundary / next action.** Create the executable candidate commit X, clone that
+exact identity to reserved short root `C:/w/w6x`, and rerun the complete serial
+qualification into reserved evidence root `C:/w/w6e`. No commissioning, product,
+timing, performance, readiness, or WP6c work has started. Commit: the cohesive
+candidate commit containing this entry; exact post-commit identity and clean
+qualification remain pending.
+
 ## 2026-08-25 — WP6b executable partition candidate; qualification pending
 
 **Outcome.** WP6a's canonical catalogue now drives four independently

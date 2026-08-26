@@ -199,7 +199,7 @@ function citationClass(citations) {
 }
 
 async function trackedCitationPaths(repositoryRoot, needles) {
-  const citations = new Set();
+  const candidates = new Set();
   for (let offset = 0; offset < needles.length; offset += 20) {
     const batch = needles.slice(offset, offset + 20);
     if (batch.length === 0) continue;
@@ -228,22 +228,97 @@ async function trackedCitationPaths(repositoryRoot, needles) {
       );
     for (const path of result.stdout.split(/\r?\n/u))
       if (path.length > 0)
-        citations.add(slash(path.startsWith("HEAD:") ? path.slice(5) : path));
+        candidates.add(slash(path.startsWith("HEAD:") ? path.slice(5) : path));
   }
-  return [...citations].sort();
+  const citations = [];
+  for (const path of [...candidates].sort()) {
+    const result = await superviseEvidenceCommand(
+      "git",
+      ["-C", repositoryRoot, "show", `HEAD:${path}`],
+      {
+        cwd: repositoryRoot,
+        timeoutMs: CITATION_COMMAND_TIMEOUT_MS,
+        outputLimitBytes: CITATION_OUTPUT_LIMIT_BYTES,
+      },
+    );
+    if (result.error || result.status !== 0)
+      throw new Error(
+        `Cannot inspect tracked evidence citation ${path}: ${result.error?.message ?? (result.stderr.trim() || `git show exited ${String(result.status)}`)}.`,
+      );
+    if (needles.some((needle) => hasExactCitation(result.stdout, needle)))
+      citations.push(path);
+  }
+  return citations;
 }
 
-async function durableCitations(context, manifestId) {
-  const relativeDirectory = slash(
-    relative(context.repositoryRoot, context.artifactDirectory),
-  );
-  const needles = [manifestId, basename(context.artifactDirectory)];
-  if (relativeDirectory.length > 0) {
-    needles.push(relativeDirectory, `${relativeDirectory}/result.json`);
+function hasExactCitation(text, needle) {
+  const continuesReference = (index, direction) => {
+    const character = text[index];
+    if (character === undefined) return false;
+    if (/[A-Za-z0-9_~:/\\]/u.test(character)) return true;
+    if (character !== "." && character !== "-") return false;
+    const neighbor = text[index + direction];
+    return neighbor !== undefined && /[A-Za-z0-9_]/u.test(neighbor);
+  };
+  let offset = text.indexOf(needle);
+  while (offset >= 0) {
+    if (
+      !continuesReference(offset - 1, -1) &&
+      !continuesReference(offset + needle.length, 1)
+    )
+      return true;
+    offset = text.indexOf(needle, offset + 1);
   }
-  const trackedPaths = await trackedCitationPaths(context.repositoryRoot, [
-    ...new Set(needles),
-  ]);
+  return false;
+}
+
+function citationNeedles(repositoryRoot, artifactDirectory, manifestId) {
+  const repository = resolve(repositoryRoot);
+  const directory = resolve(artifactDirectory);
+  const needles = [manifestId, slash(directory), directory];
+  const relativeDirectory = relative(repository, directory);
+  if (
+    relativeDirectory.length > 0 &&
+    !relativeDirectory.startsWith("..") &&
+    !isAbsolute(relativeDirectory)
+  ) {
+    const normalizedRelative = slash(relativeDirectory);
+    needles.push(normalizedRelative, `${normalizedRelative}/result.json`);
+  }
+  return [...new Set(needles.filter((needle) => needle.length > 0))];
+}
+
+function citationText(value) {
+  const strings = [];
+  const visit = (candidate) => {
+    if (typeof candidate === "string") {
+      strings.push(candidate, slash(candidate));
+      return;
+    }
+    if (Array.isArray(candidate)) {
+      for (const item of candidate) visit(item);
+      return;
+    }
+    if (candidate && typeof candidate === "object")
+      for (const [key, item] of Object.entries(candidate)) {
+        strings.push(key);
+        visit(item);
+      }
+  };
+  visit(value);
+  return strings.join("\n");
+}
+
+export async function durableCitations(context, manifestId) {
+  const needles = citationNeedles(
+    context.repositoryRoot,
+    context.artifactDirectory,
+    manifestId,
+  );
+  const trackedPaths = await trackedCitationPaths(
+    context.repositoryRoot,
+    needles,
+  );
   const statePath = resolve(
     context.repositoryRoot,
     "artifacts",
@@ -255,15 +330,18 @@ async function durableCitations(context, manifestId) {
   let activeReconciliationReference = null;
   try {
     const stateText = await readFile(statePath, "utf8");
-    if (needles.some((needle) => stateText.includes(needle)))
-      controllerStateReferences = ["artifacts/orchestrator/state/state.json"];
     const state = JSON.parse(stateText);
+    const normalizedStateText = `${stateText}\n${citationText(state)}`;
+    if (needles.some((needle) => hasExactCitation(normalizedStateText, needle)))
+      controllerStateReferences = ["artifacts/orchestrator/state/state.json"];
     const reconciliation =
       state.activeReconciliation ?? state.reconciliation?.active ?? null;
     if (
       reconciliation &&
       typeof reconciliation === "object" &&
-      needles.some((needle) => JSON.stringify(reconciliation).includes(needle))
+      needles.some((needle) =>
+        hasExactCitation(citationText(reconciliation), needle),
+      )
     )
       activeReconciliationReference =
         "artifacts/orchestrator/state/state.json#/activeReconciliation";

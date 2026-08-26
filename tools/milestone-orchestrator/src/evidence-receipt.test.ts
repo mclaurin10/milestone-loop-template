@@ -1,11 +1,17 @@
 import { existsSync } from "node:fs";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { spawnSync } from "node:child_process";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { evidenceContext, writeReceipt } from "../../evidence.mjs";
+import {
+  durableCitations,
+  evidenceContext,
+  writeManualEvidenceFailure,
+  writeReceipt,
+} from "../../evidence.mjs";
 
 const temporaryDirectories: string[] = [];
 afterEach(async () => {
@@ -20,6 +26,58 @@ async function temporaryDirectory(): Promise<string> {
   const directory = await mkdtemp(join(tmpdir(), "receipt-hardening-"));
   temporaryDirectories.push(directory);
   return directory;
+}
+
+function git(repository: string, ...args: string[]): string {
+  const result = spawnSync("git", ["-C", repository, ...args], {
+    encoding: "utf8",
+    windowsHide: true,
+  });
+  if (result.error || result.status !== 0)
+    throw new Error(result.error?.message ?? result.stderr);
+  return result.stdout.trim();
+}
+
+async function citationFixture(
+  trackedText: (input: {
+    readonly manifestId: string;
+    readonly normalizedArtifactDirectory: string;
+  }) => string,
+): Promise<{
+  readonly repositoryRoot: string;
+  readonly artifactDirectory: string;
+  readonly manifestId: string;
+  readonly commit: string;
+  readonly tree: string;
+}> {
+  const parent = await temporaryDirectory();
+  const repositoryRoot = join(parent, "repository");
+  const artifactDirectory = join(parent, "e5");
+  const manifestId = "manual-exact-citation-fixture-123456";
+  await Promise.all([
+    mkdir(repositoryRoot, { recursive: true }),
+    mkdir(artifactDirectory, { recursive: true }),
+  ]);
+  git(repositoryRoot, "init", "-b", "main");
+  git(repositoryRoot, "config", "user.name", "Citation Test");
+  git(repositoryRoot, "config", "user.email", "citation@example.invalid");
+  await writeFile(
+    join(repositoryRoot, "citations.md"),
+    trackedText({
+      manifestId,
+      normalizedArtifactDirectory: artifactDirectory.replaceAll("\\", "/"),
+    }),
+    "utf8",
+  );
+  git(repositoryRoot, "add", "citations.md");
+  git(repositoryRoot, "commit", "-m", "citation fixture");
+  return {
+    repositoryRoot,
+    artifactDirectory,
+    manifestId,
+    commit: git(repositoryRoot, "rev-parse", "HEAD"),
+    tree: git(repositoryRoot, "rev-parse", "HEAD^{tree}"),
+  };
 }
 
 const check = { id: "check-1", summary: "Fixture check passed." };
@@ -111,6 +169,80 @@ describe("writeReceipt hardening", () => {
       status: "PASS",
       checks: [{ id: "check-1", status: "PASS" }],
       artifacts: [{ path: "report.json", kind: "fixture-report" }],
+    });
+  });
+});
+
+describe("durable evidence citation matching", () => {
+  it("does not treat an incidental short artifact basename as a citation", async () => {
+    const fixture = await citationFixture(
+      () => "Incidental prose contains e5 and a hash fragment deadbe5 only.\n",
+    );
+
+    await expect(
+      durableCitations(fixture, fixture.manifestId),
+    ).resolves.toEqual({
+      trackedPaths: [],
+      controllerStateReferences: [],
+      activeReconciliationReference: null,
+    });
+  });
+
+  it("accepts an exact unique manifest id in tracked text", async () => {
+    const fixture = await citationFixture(
+      ({ manifestId }) => `Exact evidence manifest: ${manifestId}.\n`,
+    );
+
+    await expect(
+      durableCitations(fixture, fixture.manifestId),
+    ).resolves.toMatchObject({ trackedPaths: ["citations.md"] });
+  });
+
+  it("accepts an exact normalized artifact path in tracked text", async () => {
+    const fixture = await citationFixture(
+      ({ normalizedArtifactDirectory }) =>
+        `Exact evidence directory: ${normalizedArtifactDirectory}.\n`,
+    );
+
+    await expect(
+      durableCitations(fixture, fixture.manifestId),
+    ).resolves.toMatchObject({ trackedPaths: ["citations.md"] });
+  });
+
+  it("keeps external evidence uncited when no exact reference exists", async () => {
+    const fixture = await citationFixture(
+      () => "Only unrelated evidence identifiers and paths are cited here.\n",
+    );
+    const manifest = await writeManualEvidenceFailure(
+      {
+        repositoryRoot: fixture.repositoryRoot,
+        artifactDirectory: fixture.artifactDirectory,
+        stageId: "citation-fixture",
+        commandId: "citation-fixture",
+        manualEvidence: {
+          manifestId: fixture.manifestId,
+          createdAt: "2026-08-25T00:00:00.000Z",
+          displayCommand: "citation fixture",
+          candidate: {
+            gitCommit: fixture.commit,
+            gitTree: fixture.tree,
+            workingTreeDirty: false,
+          },
+          telemetry: { runId: null, manifestPath: null },
+          finalized: false,
+          lastManifest: null,
+        },
+      },
+      { kind: "infrastructure", message: "fixture outcome" },
+    );
+
+    expect(manifest).toMatchObject({
+      citationClass: "uncited-at-creation",
+      durableCitations: {
+        trackedPaths: [],
+        controllerStateReferences: [],
+        activeReconciliationReference: null,
+      },
     });
   });
 });

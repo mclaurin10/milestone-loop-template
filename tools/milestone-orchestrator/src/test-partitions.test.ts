@@ -11,6 +11,7 @@ import {
   executeAggregateChildren,
   normalizeReportedTestFile,
   normalizeRepositoryPath,
+  normalizeVitestReport,
   provePartitionMembership,
   type SemanticTestObservation,
 } from "./test-partitions.js";
@@ -31,6 +32,38 @@ function observation(input: {
     testId: `${file}::${identity}`,
     disposition: input.disposition ?? "passed",
     failureOutcome: input.failureOutcome ?? [],
+  };
+}
+
+function rawVitestReport(
+  overrides: Record<string, unknown> = {},
+): Record<string, unknown> {
+  const repositoryRoot = resolve("repository-root");
+  return {
+    success: true,
+    numTotalTestSuites: 1,
+    numPassedTestSuites: 1,
+    numFailedTestSuites: 0,
+    numPendingTestSuites: 0,
+    numTotalTests: 1,
+    numPassedTests: 1,
+    numFailedTests: 0,
+    numPendingTests: 0,
+    numTodoTests: 0,
+    testResults: [
+      {
+        name: join(repositoryRoot, "tools", "example.test.ts"),
+        status: "passed",
+        assertionResults: [
+          {
+            fullName: "example passes",
+            status: "passed",
+            failureMessages: [],
+          },
+        ],
+      },
+    ],
+    ...overrides,
   };
 }
 
@@ -208,6 +241,129 @@ describe("WP6 normalized semantic shadow comparison", () => {
     expect(result.multiplySelectedTests).toEqual([
       expect.objectContaining({ count: 2 }),
     ]);
+  });
+});
+
+describe("WP6 raw Vitest disposition validation", () => {
+  const repositoryRoot = resolve("repository-root");
+
+  it("rejects success false even when counters otherwise claim a pass", () => {
+    expect(() =>
+      normalizeVitestReport(
+        repositoryRoot,
+        "success-false",
+        rawVitestReport({ success: false }),
+      ),
+    ).toThrow(/success: true/);
+  });
+
+  it("rejects failed suites and tests", () => {
+    expect(() =>
+      normalizeVitestReport(
+        repositoryRoot,
+        "failed",
+        rawVitestReport({
+          numPassedTestSuites: 0,
+          numFailedTestSuites: 1,
+          numPassedTests: 0,
+          numFailedTests: 1,
+          testResults: [
+            {
+              name: join(repositoryRoot, "tools", "example.test.ts"),
+              status: "failed",
+              assertionResults: [
+                {
+                  fullName: "example fails",
+                  status: "failed",
+                  failureMessages: ["fixture failure"],
+                },
+              ],
+            },
+          ],
+        }),
+      ),
+    ).toThrow(/failedSuites=1.*failedTests=1/);
+  });
+
+  it("rejects pending or skipped suites and tests", () => {
+    expect(() =>
+      normalizeVitestReport(
+        repositoryRoot,
+        "pending",
+        rawVitestReport({
+          numPassedTestSuites: 0,
+          numPendingTestSuites: 1,
+          numPassedTests: 0,
+          numPendingTests: 1,
+          testResults: [
+            {
+              name: join(repositoryRoot, "tools", "example.test.ts"),
+              status: "passed",
+              assertionResults: [
+                {
+                  fullName: "example is skipped",
+                  status: "skipped",
+                  failureMessages: [],
+                },
+              ],
+            },
+          ],
+        }),
+      ),
+    ).toThrow(/pendingSuites=1.*pendingTests=1/);
+  });
+
+  it("rejects todo tests", () => {
+    expect(() =>
+      normalizeVitestReport(
+        repositoryRoot,
+        "todo",
+        rawVitestReport({
+          numPassedTests: 0,
+          numTodoTests: 1,
+          testResults: [
+            {
+              name: join(repositoryRoot, "tools", "example.test.ts"),
+              status: "passed",
+              assertionResults: [
+                {
+                  fullName: "example is todo",
+                  status: "todo",
+                  failureMessages: [],
+                },
+              ],
+            },
+          ],
+        }),
+      ),
+    ).toThrow(/todoTests=1/);
+  });
+
+  it("rejects contradictory or malformed counters", () => {
+    expect(() =>
+      normalizeVitestReport(
+        repositoryRoot,
+        "contradictory",
+        rawVitestReport({ numPassedTests: 2 }),
+      ),
+    ).toThrow(/contradictory test totals/);
+    expect(() =>
+      normalizeVitestReport(
+        repositoryRoot,
+        "malformed",
+        rawVitestReport({ numTodoTests: "0" }),
+      ),
+    ).toThrow(/invalid numTodoTests/);
+  });
+
+  it("accepts a valid internally consistent all-passing report", () => {
+    expect(
+      normalizeVitestReport(repositoryRoot, "all-passing", rawVitestReport()),
+    ).toMatchObject({
+      files: ["tools/example.test.ts"],
+      counts: { files: 1, tests: 1, passed: 1, failed: 0, skipped: 0 },
+      observations: [{ disposition: "passed" }],
+    });
   });
 });
 

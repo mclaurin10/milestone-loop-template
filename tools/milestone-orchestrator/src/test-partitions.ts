@@ -507,6 +507,42 @@ export function normalizeVitestReport(
       throw new Error(`${source} has invalid ${key}.`);
     return Number(candidate);
   };
+  if (value["success"] !== true)
+    throw new Error(`${source} does not report success: true.`);
+  const totalSuites = count("numTotalTestSuites");
+  const passedSuites = count("numPassedTestSuites");
+  const failedSuites = count("numFailedTestSuites");
+  const pendingSuites = count("numPendingTestSuites");
+  const totalTests = count("numTotalTests");
+  const passedTests = count("numPassedTests");
+  const failedTests = count("numFailedTests");
+  const pendingTests = count("numPendingTests");
+  const todoTests = count("numTodoTests");
+  if (totalSuites !== passedSuites + failedSuites + pendingSuites)
+    throw new Error(
+      `${source} has contradictory suite totals: total=${totalSuites}, passed=${passedSuites}, failed=${failedSuites}, pending=${pendingSuites}.`,
+    );
+  if (totalTests !== passedTests + failedTests + pendingTests + todoTests)
+    throw new Error(
+      `${source} has contradictory test totals: total=${totalTests}, passed=${passedTests}, failed=${failedTests}, pending=${pendingTests}, todo=${todoTests}.`,
+    );
+  if (
+    failedSuites !== 0 ||
+    pendingSuites !== 0 ||
+    failedTests !== 0 ||
+    pendingTests !== 0 ||
+    todoTests !== 0
+  )
+    throw new Error(
+      `${source} is not all-passing: failedSuites=${failedSuites}, pendingSuites=${pendingSuites}, failedTests=${failedTests}, pendingTests=${pendingTests}, todoTests=${todoTests}.`,
+    );
+  const nonPassingObservations = observations.filter(
+    (observation) => observation.disposition !== "passed",
+  );
+  if (nonPassingObservations.length > 0)
+    throw new Error(
+      `${source} contains ${nonPassingObservations.length} non-passing normalized test disposition(s).`,
+    );
   return {
     source,
     files: sortedUnique(files),
@@ -514,9 +550,9 @@ export function normalizeVitestReport(
     counts: {
       files: sortedUnique(files).length,
       tests: observations.length,
-      passed: count("numPassedTests"),
-      failed: count("numFailedTests"),
-      skipped: count("numPendingTests"),
+      passed: passedTests,
+      failed: failedTests,
+      skipped: pendingTests,
     },
     semanticSha256: sha256(
       `${observations.map((item) => semanticKey(item)).join("\n")}\n`,
