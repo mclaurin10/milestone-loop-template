@@ -18,10 +18,43 @@ import {
   DEFAULT_COMMAND_KILL_GRACE_MS,
   DEFAULT_COMMAND_OUTPUT_LIMIT_BYTES,
 } from "./process-supervisor.js";
+import {
+  spawnBoundedSync,
+  SYNCHRONOUS_COMMAND_TIMEOUT_MS,
+} from "./bounded-spawn-sync.js";
 
 const repositoryRoot = resolve(import.meta.dirname, "../../..");
 
 describe("evidence command supervision", () => {
+  it("fails closed when a synchronous command blocks the candidate recovery path", () => {
+    const startedAt = Date.now();
+    expect(() =>
+      spawnBoundedSync(
+        process.execPath,
+        ["-e", "setInterval(() => {}, 1000);"],
+        { timeoutMs: 100, maxBuffer: 4_096 },
+      ),
+    ).toThrow(
+      `Synchronous command timed out after 100 ms: ${process.execPath}`,
+    );
+    expect(Date.now() - startedAt).toBeLessThan(5_000);
+    expect(SYNCHRONOUS_COMMAND_TIMEOUT_MS).toBe(30_000);
+  });
+
+  it("routes every synchronous Git boundary in the failed recovery path through the bound", async () => {
+    for (const path of [
+      "tools/milestone-orchestrator/src/candidate-prepare-baseline.test.ts",
+      "tools/milestone-orchestrator/src/git-isolation.ts",
+      "tools/milestone-orchestrator/src/private-ref-store.ts",
+      "tools/milestone-orchestrator/src/workspace-cleanup-operation.ts",
+      "tools/milestone-orchestrator/src/workspace-create.ts",
+    ]) {
+      const source = await readFile(resolve(repositoryRoot, path), "utf8");
+      expect(source, path).toContain("spawnBoundedSync");
+      expect(source, path).not.toMatch(/spawnSync\(\s*"git"/u);
+    }
+  });
+
   it("gives the readiness full-unit command the established finite full-suite bound", async () => {
     const source = await readFile(
       resolve(repositoryRoot, "scripts/verify.mjs"),

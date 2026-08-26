@@ -46,6 +46,42 @@ product, timing, performance, readiness, or WP6c work has started. The
 replacement X, clean qualification, and documentation-only closeout Y remain
 pending.
 
+**Second retained qualification failure.** Replacement candidate
+`c616777bdc2dc7e42f6224c8a9998fa31353da7a` (tree
+`a954876b3817dc7e893b3edb9ff751ad48d0e1b6`) passed clean focused 41/41,
+ownership for 81 files, exact shadow for 670 tests with zero semantic deltas,
+and standalone unit 669/669 from `C:/w/x7` into `C:/w/e7`. Its standalone
+orchestrator run then failed closed at `C:/w/e7/orchestrator`: one
+candidate-prepare baseline assertion blocked for about 35 minutes despite its
+30-second Vitest bound and surfaced only `STACK_TRACE_ERROR`; the raw report is
+652/653 and no PASS receipt exists. That same assertion passed twice inside
+shadow, in full unit, and in an immediate isolated 15.4-second diagnostic on
+the same commit. The path uses synchronous Git subprocesses without subprocess
+timeouts, which can block Vitest's event loop and prevent its timer from firing.
+This is a harness defect, not a semantic expectation failure; the candidate is
+rejected and `C:/w/x7` plus `C:/w/e7` remain diagnostic only.
+
+**Second replacement boundary.** Bound the synchronous Git subprocesses used
+by candidate inspection, workspace creation, and preserve-cleanup so a recurrence
+fails promptly with the responsible command instead of an opaque long timeout;
+pin the fail-closed bound in focused coverage. Create a new executable X, then
+rerun every qualification command from the beginning in fresh clone `C:/w/x8`
+with evidence under `C:/w/e8` (exact shadow `C:/w/e8/shadow`). No commissioning,
+product, timing, performance, readiness, or WP6c work has started.
+
+**Second replacement implementation evidence.** A shared synchronous-command
+wrapper now kills each Git subprocess on the failed recovery path after 30
+seconds and identifies the timed-out command. Candidate inspection,
+workspace-create, private state refs, preserved-workspace cleanup, and the
+baseline fixture all use that boundary; the affected assertion has a 60-second
+outer envelope so the inner fail-closed command error can surface. The bounded
+timeout/scope regression passes 8/8 at
+`C:/w/d8/sync-git-supervision-2`; the complete candidate-prepare baseline passes
+9/9 at `C:/w/d8/candidate-prepare`. Receipt-owning typecheck, lint, and format
+checks pass at `C:/w/d8/{typecheck-2,lint-2,format-2}`. These are dirty-tree
+implementation checks, not qualification. The executable commit containing
+this entry and all clean evidence remain pending.
+
 ## 2026-08-25 — WP6b executable partition candidate; qualification pending
 
 **Outcome.** WP6a's canonical catalogue now drives four independently

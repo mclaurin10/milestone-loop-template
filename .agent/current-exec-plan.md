@@ -1,6 +1,6 @@
 # Current Execution Plan
 
-**Status:** In progress — WP6b replacement-candidate qualification after verifier timeout
+**Status:** In progress — WP6b second replacement after bounded-Git qualification defect
 **Updated:** 2026-08-26
 **Owner:** autonomous loop
 
@@ -21,9 +21,10 @@ external paths, then commit a documentation-only durable closeout record (Y).
   never stage, edit, move, delete, or commit it.
 - Use repository-pinned Node `24.18.0` and pnpm `11.15.1`. Run resource-heavy
   qualification serially. Do not reuse or remove `C:/w/e5` or `C:/w/q3`.
-- Preserve failed-candidate roots `C:/w/w6x` and `C:/w/w6e`. Reserve the absent
-  replacement clean-clone root `C:/w/x7` and evidence root `C:/w/e7`; the exact
-  replacement shadow artifact directory is `C:/w/e7/shadow`.
+- Preserve failed-candidate roots `C:/w/w6x`, `C:/w/w6e`, `C:/w/x7`, and
+  `C:/w/e7`. Reserve the absent second-replacement clean-clone root `C:/w/x8`
+  and evidence root `C:/w/e8`; its exact shadow artifact directory is
+  `C:/w/e8/shadow`.
 - Do not recommission, change tiers, measure performance, build the timing
   aggregator, run the 5x2 timing matrix, push, claim readiness, or start WP6c.
 
@@ -61,22 +62,31 @@ external paths, then commit a documentation-only durable closeout record (Y).
        requested standalone checks and the exact shadow passed, but exact
        no-argument `pnpm verify` exposed a genuine 900,000 ms unit-stage harness
        timeout, so this candidate is rejected and its evidence is diagnostic only.
-6. [ ] Align only the readiness `unit-domain` supervisor bound with the existing
+6. [x] Align only the readiness `unit-domain` supervisor bound with the existing
        finite 90-minute full-suite evidence bound; add a regression pinning the
-       aggregate-verifier contract; run focused checks and create a new X.
-7. [ ] Clone the new X to `C:/w/x7`, prove exact commit/tree/clean identity, and
-       rerun the entire serial qualification from the beginning into `C:/w/e7`,
+       aggregate-verifier contract; create replacement candidate
+       `c616777bdc2dc7e42f6224c8a9998fa31353da7a`.
+7. [x] Start its qualification from `C:/w/x7` into `C:/w/e7`. Focused 41/41,
+       ownership for 81 files, exact shadow for 670 tests, and standalone unit
+       669/669 passed. The standalone orchestrator then failed closed on an
+       intermittent 35-minute synchronous-Git stall in one 30-second recovery
+       test; preserve all evidence and reject this candidate.
+8. [x] Bound every synchronous Git subprocess on that exact candidate-preparation,
+       workspace-create, and preserve-cleanup path; retain useful timeout command
+       diagnostics, add a focused supervision regression, and create a new X.
+9. [ ] Clone the new X to `C:/w/x8`, prove exact commit/tree/clean identity, and
+       rerun the entire serial qualification from the beginning into `C:/w/e8`,
        including exact shadow, ownership, focused regressions, invariants, unit,
        orchestrator, typecheck, lint, format, exact-workflow contract, safety, and
        exact no-argument `pnpm verify`.
-8. [ ] Independently inspect receipts/artifacts, candidate identities, partition
-       ownership/union/intersections, semantic counts/dispositions, protected hashes,
-       and the expected honest readiness disposition. Any code defect creates a new
-       X and restarts clean qualification from the beginning.
-9. [ ] Replace the pending handoff with a compact WP6b closeout record, create
-       documentation-only commit Y, prove `git diff X..Y` is documentation/evidence
-       only, run Y formatting/contract-integrity checks, and leave only the protected
-       roadmap untracked. WP6c remains unstarted.
+10. [ ] Independently inspect receipts/artifacts, candidate identities, partition
+        ownership/union/intersections, semantic counts/dispositions, protected hashes,
+        and the expected honest readiness disposition. Any code defect creates a new
+        X and restarts clean qualification from the beginning.
+11. [ ] Replace the pending handoff with a compact WP6b closeout record, create
+        documentation-only commit Y, prove `git diff X..Y` is documentation/evidence
+        only, run Y formatting/contract-integrity checks, and leave only the protected
+        roadmap untracked. WP6c remains unstarted.
 
 ## Acceptance Criteria
 
@@ -144,10 +154,30 @@ external paths, then commit a documentation-only durable closeout record (Y).
   not an acceptable readiness disposition. Preserve `C:/w/w6x` and `C:/w/w6e`;
   none of their results qualify the replacement candidate.
 - A replacement X, complete clean qualification from `C:/w/x7` into `C:/w/e7`,
-  honest no-argument disposition without harness failure, and commit Y are pending.
+  honest no-argument disposition without harness failure, and commit Y were pending.
+- Replacement candidate `c616777bdc2dc7e42f6224c8a9998fa31353da7a`
+  passed clean focused 41/41, ownership for 81 files, exact shadow for 670
+  semantic tests with zero deltas, and standalone unit 669/669. Its standalone
+  orchestrator evidence at `C:/w/e7/orchestrator` failed closed after one
+  candidate-prepare baseline assertion blocked synchronously for about 35
+  minutes and surfaced only Vitest `STACK_TRACE_ERROR`; no PASS receipt exists.
+  The same assertion passed in both shadow executions, full unit, and an
+  immediate isolated 15.4-second diagnostic. The recovery path's synchronous
+  Git subprocesses have no subprocess timeout, so they can block the event loop
+  beyond the test timeout. Reject this candidate and preserve `C:/w/x7` plus
+  `C:/w/e7` as diagnostic evidence only.
+- A second replacement X, complete clean qualification from `C:/w/x8` into
+  `C:/w/e8`, honest no-argument disposition, and commit Y are pending.
+- The shared fail-closed synchronous-command wrapper now terminates each Git
+  subprocess on the failed path after 30 seconds and names the timed-out command.
+  A behavioral timeout regression passes 8/8 with the existing supervision
+  cases; the complete candidate-prepare baseline passes 9/9. Receipt-owning
+  typecheck, lint, and format checks pass at the second `C:/w/d8` attempts.
+  The second replacement executable commit and its clean qualification remain
+  pending.
 
 ## Next Action
 
-Pin the aggregate verifier's readiness unit-stage bound to the existing finite
-full-suite bound, run its focused regression and static checks, then create the
-replacement executable candidate X with all prior qualification invalidated.
+Recheck the exact staged scope and protected identities, create the second
+replacement X with qualification pending, then clone it to `C:/w/x8` and rerun
+every clean qualification command from the beginning into `C:/w/e8`.

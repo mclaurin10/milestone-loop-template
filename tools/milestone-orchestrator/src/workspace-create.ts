@@ -7,6 +7,7 @@ import type {
   WorkspaceCreateBlockedClassification,
   WorkspaceCreateOperation,
 } from "./contracts.js";
+import { spawnBoundedSync } from "./bounded-spawn-sync.js";
 import { inspectTarget } from "./git-isolation.js";
 import { strictlyContained } from "./path-safety.js";
 
@@ -81,15 +82,15 @@ function git(
   } = {},
 ): GitResult {
   const prefix = options.readOnly ? ["--no-optional-locks"] : [];
-  const result = spawnSync("git", [...prefix, "-C", repository, ...args], {
-    encoding: "utf8",
-    maxBuffer: 64 * 1024 * 1024,
-    windowsHide: true,
-    env: options.readOnly
-      ? { ...process.env, GIT_OPTIONAL_LOCKS: "0" }
-      : process.env,
-  });
-  if (result.error) throw result.error;
+  const result = spawnBoundedSync(
+    "git",
+    [...prefix, "-C", repository, ...args],
+    {
+      env: options.readOnly
+        ? { ...process.env, GIT_OPTIONAL_LOCKS: "0" }
+        : process.env,
+    },
+  );
   const output = {
     status: result.status ?? 1,
     stdout: result.stdout.trim(),
@@ -707,32 +708,24 @@ export async function cloneWorkspaceCreateTemporary(
     (await pathExists(operation.finalPath))
   )
     throw new Error("A recorded workspace path appeared before clone start.");
-  const clone = spawnSync(
-    "git",
-    [
-      "clone",
-      "-c",
-      "core.autocrlf=false",
-      "-c",
-      "core.eol=lf",
-      "--local",
-      "--no-hardlinks",
-      "--no-tags",
-      "--single-branch",
-      "--branch",
-      operation.targetBranch,
-      operation.repositoryRoot,
-      operation.temporaryPath,
-    ],
-    {
-      encoding: "utf8",
-      maxBuffer: 64 * 1024 * 1024,
-      windowsHide: true,
-    },
-  );
-  if (clone.error || clone.status !== 0)
+  const clone = spawnBoundedSync("git", [
+    "clone",
+    "-c",
+    "core.autocrlf=false",
+    "-c",
+    "core.eol=lf",
+    "--local",
+    "--no-hardlinks",
+    "--no-tags",
+    "--single-branch",
+    "--branch",
+    operation.targetBranch,
+    operation.repositoryRoot,
+    operation.temporaryPath,
+  ]);
+  if (clone.status !== 0)
     throw new Error(
-      `Could not create temporary isolated clone: ${clone.error?.message ?? clone.stderr}`,
+      `Could not create temporary isolated clone: ${clone.stderr}`,
     );
   await hooks.fault?.("after-clone-command", operation);
   await finishWorkspaceCreateTemporary(operation);

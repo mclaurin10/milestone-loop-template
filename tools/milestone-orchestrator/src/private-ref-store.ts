@@ -1,5 +1,6 @@
-import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
+
+import { spawnBoundedSync } from "./bounded-spawn-sync.js";
 
 export const CONTROLLER_LEASE_REF =
   "refs/milestone-loop/controller-lease" as const;
@@ -47,20 +48,13 @@ function runGit(
     readonly environment?: NodeJS.ProcessEnv;
   } = {},
 ): GitResult {
-  const result = spawnSync("git", ["-C", repositoryRoot, ...args], {
-    encoding: "utf8",
+  const result = spawnBoundedSync("git", ["-C", repositoryRoot, ...args], {
     env: options.environment
       ? { ...process.env, ...options.environment }
       : process.env,
-    input: options.input,
     maxBuffer: MAX_GIT_OUTPUT_BYTES,
-    windowsHide: true,
+    ...(options.input === undefined ? {} : { input: options.input }),
   });
-  if (result.error)
-    throw new Error(
-      `Could not execute ${commandDescription(args)} in ${repositoryRoot}: ${result.error.message}`,
-      { cause: result.error },
-    );
   const status = result.status ?? 1;
   const stdout = result.stdout ?? "";
   const stderr = result.stderr ?? "";

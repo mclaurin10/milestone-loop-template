@@ -1,4 +1,4 @@
-import { spawn, spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
 import {
@@ -20,6 +20,10 @@ import { setTimeout as delay } from "node:timers/promises";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { CodexGateway } from "./codex-gateway.js";
+import {
+  spawnBoundedSync,
+  SYNCHRONOUS_COMMAND_TIMEOUT_MS,
+} from "./bounded-spawn-sync.js";
 import {
   CANDIDATE_PREPARE_FAULT_POINTS,
   inspectCandidatePrepareOperation,
@@ -55,17 +59,14 @@ afterEach(async () => {
 });
 
 function git(repository: string, ...args: string[]): string {
-  const result = spawnSync("git", ["-C", repository, ...args], {
-    encoding: "utf8",
-    windowsHide: true,
+  const result = spawnBoundedSync("git", ["-C", repository, ...args], {
     env: {
       ...process.env,
       GIT_AUTHOR_DATE: NOW,
       GIT_COMMITTER_DATE: NOW,
     },
   });
-  if (result.error || result.status !== 0)
-    throw new Error(result.error?.message ?? result.stderr);
+  if (result.status !== 0) throw new Error(result.stderr);
   return result.stdout.trim();
 }
 
@@ -640,7 +641,7 @@ describe("candidate-prepare current-semantics recovery baseline", () => {
 
   it(
     "preserves and blocks an otherwise valid clean out-of-band descendant with no intent",
-    { timeout: 30_000 },
+    { timeout: SYNCHRONOUS_COMMAND_TIMEOUT_MS + 30_000 },
     async () => {
       const fixture = await runningFixture({ preserveFailedWorkspaces: false });
       await writeFile(

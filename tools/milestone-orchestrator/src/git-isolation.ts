@@ -1,10 +1,10 @@
-import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, lstatSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 import type { ProtectedFileRecord } from "./contracts.js";
+import { spawnBoundedSync } from "./bounded-spawn-sync.js";
 
 interface GitResult {
   readonly status: number;
@@ -17,12 +17,7 @@ function runGit(
   args: readonly string[],
   allowFailure = false,
 ): GitResult {
-  const result = spawnSync("git", ["-C", repository, ...args], {
-    encoding: "utf8",
-    maxBuffer: 64 * 1024 * 1024,
-    windowsHide: true,
-  });
-  if (result.error) throw result.error;
+  const result = spawnBoundedSync("git", ["-C", repository, ...args]);
   const status = result.status ?? 1;
   const output = {
     status,
@@ -40,12 +35,7 @@ function runGitPathList(
   repository: string,
   args: readonly string[],
 ): readonly string[] {
-  const result = spawnSync("git", ["-C", repository, ...args, "-z"], {
-    encoding: "utf8",
-    maxBuffer: 64 * 1024 * 1024,
-    windowsHide: true,
-  });
-  if (result.error) throw result.error;
+  const result = spawnBoundedSync("git", ["-C", repository, ...args, "-z"]);
   if ((result.status ?? 1) !== 0)
     throw new Error(
       `Git command failed (${args.join(" ")}): ${result.stderr || result.stdout}`,
@@ -164,21 +154,16 @@ export function rawDiffRecords(
   repository: string,
   rangeArgs: readonly string[],
 ): readonly RawDiffRecord[] {
-  const result = spawnSync(
-    "git",
-    [
-      "-C",
-      repository,
-      "diff",
-      "--raw",
-      "-z",
-      "--no-renames",
-      "--diff-filter=ACDMRTUXB",
-      ...rangeArgs,
-    ],
-    { encoding: "utf8", maxBuffer: 64 * 1024 * 1024, windowsHide: true },
-  );
-  if (result.error) throw result.error;
+  const result = spawnBoundedSync("git", [
+    "-C",
+    repository,
+    "diff",
+    "--raw",
+    "-z",
+    "--no-renames",
+    "--diff-filter=ACDMRTUXB",
+    ...rangeArgs,
+  ]);
   if ((result.status ?? 1) !== 0)
     throw new Error(
       `Git command failed (diff --raw): ${result.stderr || result.stdout}`,

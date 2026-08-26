@@ -1,4 +1,3 @@
-import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
   lstat,
@@ -16,6 +15,7 @@ import type {
   WorkspaceCleanupOperation,
   WorkspaceCleanupReason,
 } from "./contracts.js";
+import { spawnBoundedSync } from "./bounded-spawn-sync.js";
 import { removeContainedPath, strictlyContained } from "./path-safety.js";
 import { redactSensitiveText } from "./redaction.js";
 
@@ -136,17 +136,13 @@ function git(
   args: readonly string[],
   allowFailure = false,
 ): GitResult {
-  const result = spawnSync(
+  const result = spawnBoundedSync(
     "git",
     ["--no-optional-locks", "-C", repository, ...args],
     {
-      encoding: "utf8",
-      maxBuffer: 64 * 1024 * 1024,
-      windowsHide: true,
       env: { ...process.env, GIT_OPTIONAL_LOCKS: "0" },
     },
   );
-  if (result.error) throw result.error;
   const output = {
     status: result.status ?? 1,
     stdout: result.stdout,
