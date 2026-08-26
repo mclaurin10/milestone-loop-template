@@ -3,7 +3,7 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
-## 2026-08-25 — WP6b evidence hardening candidate; qualification pending
+## 2026-08-26 — WP6b replacement candidate required by no-argument timeout
 
 **Outcome.** The closeout candidate removes basename-only durable-citation
 matching and accepts only boundary-exact manifest IDs or normalized artifact
@@ -24,12 +24,27 @@ report. Typecheck, lint, format, and the unchanged 81-file ownership gate pass a
 the sibling `C:/w/d6` evidence directories. These are dirty-tree implementation
 checks, not final qualification; their manifests truthfully remain uncited.
 
-**Boundary / next action.** Create the executable candidate commit X, clone that
-exact identity to reserved short root `C:/w/w6x`, and rerun the complete serial
-qualification into reserved evidence root `C:/w/w6e`. No commissioning, product,
-timing, performance, readiness, or WP6c work has started. Commit: the cohesive
-candidate commit containing this entry; exact post-commit identity and clean
-qualification remain pending.
+**First candidate and retained failure.** Executable candidate
+`668c9d9c6366579aeb4e9c56817def0c2ecfb696` passed the clean focused run
+(35/35), ownership gate (81 files), exact shadow (669 normalized observations,
+zero semantic deltas), standalone unit (668/668), orchestrator (652/652), all
+five invariants, typecheck, lint, format, and safety. Exact no-argument
+`pnpm verify` at
+`C:/w/w6x/artifacts/verify-2026-08-26T072822-615Z-6016` then failed because its
+`unit-domain` supervisor killed `test:unit` at exactly 900,000 ms. The same
+commit's standalone full-unit command passed under the established finite
+90-minute evidence bound. This is a verification-harness timeout defect, not
+the expected disposition of an incomplete readiness gate, so the first
+candidate is rejected and `C:/w/w6x` plus `C:/w/w6e` remain diagnostic only.
+
+**Boundary / next action.** Change only the readiness `unit-domain` supervisor
+bound to match the 90-minute full-suite evidence bound and pin that contract in
+a focused regression. Create a replacement executable X, then rerun every
+qualification command from the beginning in fresh clean clone `C:/w/x7` with
+evidence under `C:/w/e7` (exact shadow `C:/w/e7/shadow`). No commissioning,
+product, timing, performance, readiness, or WP6c work has started. The
+replacement X, clean qualification, and documentation-only closeout Y remain
+pending.
 
 ## 2026-08-25 — WP6b executable partition candidate; qualification pending
 

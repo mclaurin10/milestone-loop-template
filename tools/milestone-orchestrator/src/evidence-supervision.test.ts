@@ -5,7 +5,11 @@ import { pathToFileURL } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { describeResult, runPnpm } from "../../evidence.mjs";
+import {
+  describeResult,
+  FULL_SUITE_EVIDENCE_TIMEOUT_MS,
+  runPnpm,
+} from "../../evidence.mjs";
 import {
   DEFAULT_COMMAND_KILL_GRACE_MS as CONTRACT_KILL_GRACE_MS,
   DEFAULT_COMMAND_OUTPUT_LIMIT_BYTES as CONTRACT_OUTPUT_LIMIT_BYTES,
@@ -18,6 +22,24 @@ import {
 const repositoryRoot = resolve(import.meta.dirname, "../../..");
 
 describe("evidence command supervision", () => {
+  it("gives the readiness full-unit command the established finite full-suite bound", async () => {
+    const source = await readFile(
+      resolve(repositoryRoot, "scripts/verify.mjs"),
+      "utf8",
+    );
+    const unitDomainStage = source.match(
+      /\{\s*id: "unit-domain",[\s\S]*?\n\s*\},/u,
+    )?.[0];
+
+    expect(FULL_SUITE_EVIDENCE_TIMEOUT_MS).toBe(90 * 60 * 1_000);
+    expect(source).toContain(
+      "const READINESS_FULL_SUITE_TIMEOUT_MS = 90 * 60 * 1_000;",
+    );
+    expect(unitDomainStage).toContain(
+      "timeoutMs: READINESS_FULL_SUITE_TIMEOUT_MS",
+    );
+  });
+
   it("keeps one plain-Node-loadable owner for the supervisor defaults", async () => {
     expect(DEFAULT_COMMAND_OUTPUT_LIMIT_BYTES).toBe(67_108_864);
     expect(DEFAULT_COMMAND_KILL_GRACE_MS).toBe(5_000);

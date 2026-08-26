@@ -32,6 +32,7 @@ const REQUIRED_NODE_MAJOR = 24;
 const REQUIRED_PNPM_MAJOR = 11;
 const IDENTITY_COMMAND_TIMEOUT_MS = 30_000;
 const IDENTITY_OUTPUT_LIMIT_BYTES = 16 * 1024 * 1024;
+const READINESS_FULL_SUITE_TIMEOUT_MS = 90 * 60 * 1_000;
 const STATUS = Object.freeze({
   PASS: "PASS",
   FAIL: "FAIL",
@@ -200,7 +201,7 @@ const readinessStages = Object.freeze([
     acceptanceIds: ["AUTO-01"],
     scripts: ["test:unit", "test:domain"],
     requiredArtifactKinds: ["vitest-report", "domain-test-report"],
-    timeoutMs: 900_000,
+    timeoutMs: READINESS_FULL_SUITE_TIMEOUT_MS,
   },
   {
     id: "determinism-replay",

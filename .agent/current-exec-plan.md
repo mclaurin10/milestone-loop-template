@@ -1,7 +1,7 @@
 # Current Execution Plan
 
-**Status:** In progress — WP6b evidence hardening and exact-candidate closeout
-**Updated:** 2026-08-25
+**Status:** In progress — WP6b replacement-candidate qualification after verifier timeout
+**Updated:** 2026-08-26
 **Owner:** autonomous loop
 
 ## Objective
@@ -21,8 +21,9 @@ external paths, then commit a documentation-only durable closeout record (Y).
   never stage, edit, move, delete, or commit it.
 - Use repository-pinned Node `24.18.0` and pnpm `11.15.1`. Run resource-heavy
   qualification serially. Do not reuse or remove `C:/w/e5` or `C:/w/q3`.
-- Reserve the absent short clean-clone root `C:/w/w6x` and evidence root
-  `C:/w/w6e`; the exact shadow artifact directory is `C:/w/w6e/shadow`.
+- Preserve failed-candidate roots `C:/w/w6x` and `C:/w/w6e`. Reserve the absent
+  replacement clean-clone root `C:/w/x7` and evidence root `C:/w/e7`; the exact
+  replacement shadow artifact directory is `C:/w/e7/shadow`.
 - Do not recommission, change tiers, measure performance, build the timing
   aggregator, run the 5x2 timing matrix, push, claim readiness, or start WP6c.
 
@@ -54,17 +55,25 @@ external paths, then commit a documentation-only durable closeout record (Y).
        partition and legacy report normalized for shadow evidence. Reject malformed
        or contradictory counters, `success:false`, failed, pending/skipped, or todo
        suites/tests; cover each synthetic disposition plus a valid all-pass report.
-4. [ ] Run focused checks, record truthful interim evidence, and create clean
-       executable commit X with qualification explicitly pending.
-5. [ ] Clone X to `C:/w/w6x`, prove exact commit/tree/clean identity, and run the
-       full serial qualification into `C:/w/w6e`, including exact shadow, ownership,
-       focused regressions, invariants, unit, orchestrator, typecheck, lint, format,
-       exact-workflow contract, safety, and no-argument `pnpm verify`.
-6. [ ] Independently inspect receipts/artifacts, candidate identities, partition
+4. [x] Run focused checks, record truthful interim evidence, and create the first
+       executable candidate `668c9d9c6366579aeb4e9c56817def0c2ecfb696`.
+5. [x] Qualify that candidate serially from `C:/w/w6x` into `C:/w/w6e`. All
+       requested standalone checks and the exact shadow passed, but exact
+       no-argument `pnpm verify` exposed a genuine 900,000 ms unit-stage harness
+       timeout, so this candidate is rejected and its evidence is diagnostic only.
+6. [ ] Align only the readiness `unit-domain` supervisor bound with the existing
+       finite 90-minute full-suite evidence bound; add a regression pinning the
+       aggregate-verifier contract; run focused checks and create a new X.
+7. [ ] Clone the new X to `C:/w/x7`, prove exact commit/tree/clean identity, and
+       rerun the entire serial qualification from the beginning into `C:/w/e7`,
+       including exact shadow, ownership, focused regressions, invariants, unit,
+       orchestrator, typecheck, lint, format, exact-workflow contract, safety, and
+       exact no-argument `pnpm verify`.
+8. [ ] Independently inspect receipts/artifacts, candidate identities, partition
        ownership/union/intersections, semantic counts/dispositions, protected hashes,
        and the expected honest readiness disposition. Any code defect creates a new
        X and restarts clean qualification from the beginning.
-7. [ ] Replace the pending handoff with a compact WP6b closeout record, create
+9. [ ] Replace the pending handoff with a compact WP6b closeout record, create
        documentation-only commit Y, prove `git diff X..Y` is documentation/evidence
        only, run Y formatting/contract-integrity checks, and leave only the protected
        roadmap untracked. WP6c remains unstarted.
@@ -123,10 +132,22 @@ external paths, then commit a documentation-only durable closeout record (Y).
   `C:/w/d6/ownership` for the unchanged 81-file universe.
 - The two narrow implementations and requested regressions are complete. No
   product, commissioning, workflow, tier, timing, or WP6c work has begun.
-- Commit X, its tree, clean qualification, no-argument disposition, and commit Y
-  are pending.
+- The first candidate `668c9d9c6366579aeb4e9c56817def0c2ecfb696`
+  passed focused 35/35, ownership for 81 files, exact shadow with 669 normalized
+  partition observations and zero semantic deltas, standalone unit 668/668,
+  orchestrator 652/652, invariants, static checks, and safety from clean short
+  paths. Exact no-argument `pnpm verify` at
+  `C:/w/w6x/artifacts/verify-2026-08-26T072822-615Z-6016` then failed its
+  `test:unit` command at the hard 900,000 ms aggregate-verifier timeout. That
+  same exact candidate's standalone unit receipt passed under the established
+  90-minute full-suite bound, so the no-argument result is a harness defect,
+  not an acceptable readiness disposition. Preserve `C:/w/w6x` and `C:/w/w6e`;
+  none of their results qualify the replacement candidate.
+- A replacement X, complete clean qualification from `C:/w/x7` into `C:/w/e7`,
+  honest no-argument disposition without harness failure, and commit Y are pending.
 
 ## Next Action
 
-Record the compact interim autonomy entry, recheck protected identities and the
-diff, then create executable candidate commit X with qualification pending.
+Pin the aggregate verifier's readiness unit-stage bound to the existing finite
+full-suite bound, run its focused regression and static checks, then create the
+replacement executable candidate X with all prior qualification invalidated.
