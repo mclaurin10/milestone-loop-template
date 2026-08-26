@@ -3,84 +3,58 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
-## 2026-08-26 — WP6b replacement candidate required by no-argument timeout
+## 2026-08-26 — WP6b closed on exact executable candidate X
 
-**Outcome.** The closeout candidate removes basename-only durable-citation
-matching and accepts only boundary-exact manifest IDs or normalized artifact
-paths (absolute, plus repository-relative forms for contained evidence). The
-shared shadow raw-report normalizer now fails closed unless Vitest reports
-`success:true`, internally consistent suite/test totals, zero failed or
-pending/skipped suites/tests, zero todo tests, and only passing normalized test
-dispositions. This covers every raw legacy and partition report consumed by the
-shadow aggregate and prevents a rejected partition report from reaching its PASS
-receipt.
+**Outcome.** WP6b is closed on executable commit
+`0400c32f93ebf0b7d8e6be165e880dd9aff2ebbe`, tree
+`8723d791f7a1bbd30eb15d57d674fa092188b433`. Basename-only incidental text no
+longer establishes a durable citation; exact manifest-ID and normalized-path
+references retain legitimate behavior, and uncited external evidence remains
+truthfully uncited at creation. Every legacy and partition Vitest report used
+by shadow evidence now requires `success:true`, coherent suite/test counters,
+zero failed/pending/todo outcomes, and passing normalized dispositions before a
+PASS receipt is possible. The qualification-discovered aggregate unit timeout
+and synchronous-Git event-loop stall were also fixed with finite fail-closed
+bounds and regressions. Product behavior, frozen contracts, commissioning,
+tiers, exact-workflow commands, and WP6c scope are unchanged.
 
-**Focused evidence.** Pinned Node `24.18.0` / pnpm `11.15.1` evidence at
-`C:/w/d6/focused` passes 8/8 suites and 23/23 tests. Regressions prove incidental
-short basename rejection, exact manifest-ID/path acceptance, uncited external
-evidence when no exact reference exists, `success:false`, failed,
-pending/skipped, todo, contradictory/malformed counters, and a valid all-pass
-report. Typecheck, lint, format, and the unchanged 81-file ownership gate pass at
-the sibling `C:/w/d6` evidence directories. These are dirty-tree implementation
-checks, not final qualification; their manifests truthfully remain uncited.
+**Exact qualification.** Pinned Node `24.18.0` / pnpm `11.15.1` qualification
+from a fresh clean short-path clone passed focused 43/43, ownership over all 81
+files, shadow equivalence over 672 unique tests, standalone unit 671/671,
+orchestrator 655/655, serial invariants 5/5, protected contract integrity
+13/13, typecheck, lint, format, exact-workflow coverage, `git diff --check`, and
+safety 6/6. All command receipts and declared sizes/hashes validate at exact X;
+the ownership split is 77/1/2/1 with six empty intersections and exact union.
+Legacy shadow observations are 1,327, deduplicating to the same 672 IDs and
+outcomes as the partitions, with no conflicts, multiple selection, missing,
+unexpected, or mismatched results. The compact authoritative path/hash ledger
+is `.agent/current-exec-plan.md`; raw reports remain external.
 
-**First candidate and retained failure.** Executable candidate
-`668c9d9c6366579aeb4e9c56817def0c2ecfb696` passed the clean focused run
-(35/35), ownership gate (81 files), exact shadow (669 normalized observations,
-zero semantic deltas), standalone unit (668/668), orchestrator (652/652), all
-five invariants, typecheck, lint, format, and safety. Exact no-argument
-`pnpm verify` at
-`C:/w/w6x/artifacts/verify-2026-08-26T072822-615Z-6016` then failed because its
-`unit-domain` supervisor killed `test:unit` at exactly 900,000 ms. The same
-commit's standalone full-unit command passed under the established finite
-90-minute evidence bound. This is a verification-harness timeout defect, not
-the expected disposition of an incomplete readiness gate, so the first
-candidate is rejected and `C:/w/w6x` plus `C:/w/w6e` remain diagnostic only.
+**Honest no-argument result.** Exact `pnpm verify` ran for 59.5 minutes under
+the package-default readiness profile and ended FAIL/exit 1: 2 PASS, 2 FAIL,
+11 NOT_READY, 0 ERROR. Candidate start/final identity is exact X, clean, with
+no drift; all seven supervised commands have zero timeout/output/drain defects.
+The nested unit command passed 195/195 suites and 671/671 tests, after which
+`unit-domain` became NOT_READY solely because `test:domain` is undefined. The
+remaining causes are explicit project-owned placeholders, undeclared/absent
+product-readiness scripts, and an unattested provider. Completion is therefore
+ineligible and no autonomous-readiness claim is made.
 
-**Boundary / next action.** Change only the readiness `unit-domain` supervisor
-bound to match the 90-minute full-suite evidence bound and pin that contract in
-a focused regression. Create a replacement executable X, then rerun every
-qualification command from the beginning in fresh clean clone `C:/w/x7` with
-evidence under `C:/w/e7` (exact shadow `C:/w/e7/shadow`). No commissioning,
-product, timing, performance, readiness, or WP6c work has started. The
-replacement X, clean qualification, and documentation-only closeout Y remain
-pending.
+**Retained failures and history.** Candidate `668c9d9c...` remains rejected for
+the genuine 900,000 ms aggregate unit timeout it exposed. Candidate
+`c616777b...` remains rejected for the genuine synchronous-Git stall it
+exposed. Their retained diagnostics are not evidence for X. Historical `q3`
+also remains accurately classified: two state-store failures/timeouts during a
+concurrently launched focused run, followed by a serial 66/66 PASS; it is
+neither a proven product regression nor a clean first attempt.
 
-**Second retained qualification failure.** Replacement candidate
-`c616777bdc2dc7e42f6224c8a9998fa31353da7a` (tree
-`a954876b3817dc7e893b3edb9ff751ad48d0e1b6`) passed clean focused 41/41,
-ownership for 81 files, exact shadow for 670 tests with zero semantic deltas,
-and standalone unit 669/669 from `C:/w/x7` into `C:/w/e7`. Its standalone
-orchestrator run then failed closed at `C:/w/e7/orchestrator`: one
-candidate-prepare baseline assertion blocked for about 35 minutes despite its
-30-second Vitest bound and surfaced only `STACK_TRACE_ERROR`; the raw report is
-652/653 and no PASS receipt exists. That same assertion passed twice inside
-shadow, in full unit, and in an immediate isolated 15.4-second diagnostic on
-the same commit. The path uses synchronous Git subprocesses without subprocess
-timeouts, which can block Vitest's event loop and prevent its timer from firing.
-This is a harness defect, not a semantic expectation failure; the candidate is
-rejected and `C:/w/x7` plus `C:/w/e7` remain diagnostic only.
-
-**Second replacement boundary.** Bound the synchronous Git subprocesses used
-by candidate inspection, workspace creation, and preserve-cleanup so a recurrence
-fails promptly with the responsible command instead of an opaque long timeout;
-pin the fail-closed bound in focused coverage. Create a new executable X, then
-rerun every qualification command from the beginning in fresh clone `C:/w/x8`
-with evidence under `C:/w/e8` (exact shadow `C:/w/e8/shadow`). No commissioning,
-product, timing, performance, readiness, or WP6c work has started.
-
-**Second replacement implementation evidence.** A shared synchronous-command
-wrapper now kills each Git subprocess on the failed recovery path after 30
-seconds and identifies the timed-out command. Candidate inspection,
-workspace-create, private state refs, preserved-workspace cleanup, and the
-baseline fixture all use that boundary; the affected assertion has a 60-second
-outer envelope so the inner fail-closed command error can surface. The bounded
-timeout/scope regression passes 8/8 at
-`C:/w/d8/sync-git-supervision-2`; the complete candidate-prepare baseline passes
-9/9 at `C:/w/d8/candidate-prepare`. Receipt-owning typecheck, lint, and format
-checks pass at `C:/w/d8/{typecheck-2,lint-2,format-2}`. These are dirty-tree
-implementation checks, not qualification. The executable commit containing
-this entry and all clean evidence remain pending.
+**Handoff.** The protected human roadmap remains the only worktree entry and is
+byte-identical at SHA-256
+`53ea98fb1cb880163a02d3b1d9365963e3fe891025ae3630f00bd4c9232293b1`.
+The successor commit containing this entry is documentation-only Y and was not
+represented as the shadow-tested identity. WP6c is next but unstarted; it may
+begin only after the final X-to-Y documentation-only diff and Y integrity gates
+are proven.
 
 ## 2026-08-25 — WP6b executable partition candidate; qualification pending
 

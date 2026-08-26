@@ -3,6 +3,36 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-26 — Exact durable citations and two-identity closeout evidence
+
+**Decision.** A tracked durable citation exists only when tracked bytes contain
+the exact unique evidence manifest ID or an exact normalized artifact path at a
+token boundary. An external directory basename is never a citation needle.
+Repository-relative variants are eligible only for evidence actually contained
+by the repository. Citation class is fixed when the manifest is created;
+documentation added later records provenance but never rewrites old evidence.
+
+WP6b also establishes a transparent two-identity closeout convention. The
+executable candidate X is committed first and all clean qualification binds its
+commit/tree. A later Y may record those results only when its diff from X is
+documentation/evidence-record-only. Y is never described as shadow-tested, and
+the final handoff reports both identities. An exact path committed in X may
+legitimately make the aggregate manifest `tracked`; dynamically created child
+directories remain `uncited-at-creation` absent their own exact reference.
+
+**Why.** Basename matching allowed incidental short strings in prose or hashes
+to overstate evidence durability. Boundary-exact identities preserve real
+citations without false positives. Separating executable and documentary
+commits avoids the impossible self-reference of recording final evidence in
+the already-tested commit while keeping the evidence identity unambiguous.
+Alternatives rejected: basename heuristics, substring matching, retroactive
+manifest rewrites, amending a qualified candidate, or claiming Y inherited X's
+qualification.
+
+**Affected files.** Durable-citation classification/regressions and the WP6b
+plan, autonomy, and decision records. Frozen contracts, product behavior,
+commissioning, verification tiers, and WP6c scope are unaffected.
+
 ## 2026-08-25 — Owner-derived executable shadow partitions (WP6b)
 
 **Decision.** The four allowlisted WP6a ownership boundaries are also the four
