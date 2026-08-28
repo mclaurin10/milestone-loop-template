@@ -2,7 +2,12 @@ import { existsSync } from "node:fs";
 import { lstat, readFile, readdir } from "node:fs/promises";
 import { relative, resolve } from "node:path";
 
-import { evidenceContext, writeJson, writeReceipt } from "../../evidence.mjs";
+import {
+  commandIdentity,
+  evidenceContext,
+  writeJson,
+  writeReceipt,
+} from "../../evidence.mjs";
 import type {
   CommandExecutionSummary,
   InvariantSuiteRegistry,
@@ -20,6 +25,12 @@ import {
   evaluateContractIntegrity,
 } from "./contract-integrity.js";
 import { validateCommandReceiptDirectory } from "./verifier.js";
+import {
+  beginTestRunMeasurement,
+  describeVitestReport,
+  TEST_RUN_SUMMARY_KIND,
+  TEST_RUN_SUMMARY_NAME,
+} from "./test-run-summary.js";
 
 function slash(path: string): string {
   return path.replaceAll("\\", "/");
@@ -479,11 +490,28 @@ export async function runUnitPartition(
   readonly reportPath: string;
   readonly counts: VerificationTestCounts;
 }> {
-  const partition = await buildUnitTestPartition(repositoryRoot);
   const context = await evidenceContext(
     kind === "fast" ? "candidate-unit" : "migration-unit",
     kind === "fast" ? "test:unit:fast" : "test:unit:migrations",
   );
+  const identity = await commandIdentity(repositoryRoot);
+  const measurement = await beginTestRunMeasurement({
+    artifactDirectory: context.artifactDirectory,
+    runId:
+      process.env["LOOP_VERIFY_RUN_ID"] ?? context.manualEvidence.manifestId,
+    stageId: context.stageId,
+    commandId: context.commandId,
+    role: "legacy",
+    owner: null,
+    identity: {
+      gitCommit: identity.gitCommit,
+      gitTree: identity.gitTree,
+      workingTreeDirty: identity.gitStatus !== "",
+      nodeVersion: identity.nodeVersion,
+      pnpmVersion: identity.pnpmVersion,
+    },
+  });
+  const partition = await buildUnitTestPartition(repositoryRoot);
   const files =
     kind === "fast" ? partition.fastFiles : partition.migrationFiles;
   const reportName = `${kind === "fast" ? "fast-unit" : "migration-unit"}-vitest-report.json`;
@@ -499,6 +527,7 @@ export async function runUnitPartition(
     selectedPartition: kind,
     selectedFiles: files,
   });
+  measurement.markSetupFinished();
   const command = await runCommand(
     {
       id: `${kind}-unit-vitest`,
@@ -521,6 +550,9 @@ export async function runUnitPartition(
       artifactDirectory: resolve(context.artifactDirectory, "logs"),
       timeoutMs: UNIT_PARTITION_TIMEOUT_MS,
       trustedControllerCommand: true,
+      extraEnvironment: measurement.probeEnvironment,
+      processStartupObserver: (nanoseconds) =>
+        measurement.observeProcessStartup(nanoseconds),
     },
   );
   if (command.status !== "PASS")
@@ -534,6 +566,12 @@ export async function runUnitPartition(
     throw new Error(
       `${kind} unit Vitest report does not contain valid test counts.`,
     );
+  await measurement.finish([
+    await describeVitestReport({
+      artifactDirectory: context.artifactDirectory,
+      reportPath,
+    }),
+  ]);
   await writeReceipt(
     context,
     [
@@ -555,6 +593,7 @@ export async function runUnitPartition(
             : "migration-unit-vitest-report",
       },
       { path: "unit-partition-report.json", kind: "unit-partition-report" },
+      { path: TEST_RUN_SUMMARY_NAME, kind: TEST_RUN_SUMMARY_KIND },
     ],
   );
   return { reportPath, counts };

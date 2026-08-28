@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
-import { mkdir, readFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { basename, dirname, isAbsolute, relative, resolve } from "node:path";
 
 import {
@@ -23,6 +23,23 @@ import {
   validateCommandReceiptDirectory,
   type ValidatedCommandReceipt,
 } from "./verifier.js";
+import {
+  beginTestRunMeasurement,
+  describeVitestReport,
+  loadValidatedTestRunSummary,
+  reduceTestRunSummaries,
+  TEST_RUN_REDUCTION_KIND,
+  TEST_RUN_REDUCTION_NAME,
+  TEST_RUN_SUMMARY_KIND,
+  TEST_RUN_SUMMARY_NAME,
+  writeTestRunReduction,
+  type TestRunCandidate,
+  type TestRunCommandIdentity,
+  type TestRunMeasurementSession,
+  type TestRunRole,
+  type TestRunSummaryExpectation,
+  type ValidatedTestRunSummarySource,
+} from "./test-run-summary.js";
 
 export const TEST_PARTITION_REPORT_SCHEMA_VERSION = "1.0.0" as const;
 export const TEST_PARTITION_PROOF_SCHEMA_VERSION = "1.0.0" as const;
@@ -36,6 +53,7 @@ const PARTITION_REPORT_KIND = "test-partition-report";
 const SHADOW_PROOF_KIND = "test-partition-shadow-proof";
 const CHILD_RECEIPT_KIND = "test-partition-child-receipt";
 const LEGACY_RAW_KIND = "test-partition-shadow-legacy-vitest-report";
+const OMISSION_MUTATION_PROOF_KIND = "test-partition-omission-mutation-proof";
 const COMMAND_TIMEOUT_MS = 60 * 60 * 1000;
 const AGGREGATE_CHILD_TIMEOUT_MS = 75 * 60 * 1000;
 
@@ -830,6 +848,7 @@ async function runVitestAssignments(input: {
   readonly artifactPrefix: string;
   readonly sourcePrefix: string;
   readonly assignments: readonly PartitionConfigAssignment[];
+  readonly measurement?: TestRunMeasurementSession;
 }): Promise<readonly VitestExecution[]> {
   const executions: VitestExecution[] = [];
   await mkdir(resolve(input.artifactDirectory, "logs"), { recursive: true });
@@ -868,6 +887,13 @@ async function runVitestAssignments(input: {
         artifactDirectory: resolve(input.artifactDirectory, "logs"),
         timeoutMs: COMMAND_TIMEOUT_MS,
         trustedControllerCommand: true,
+        ...(input.measurement
+          ? {
+              extraEnvironment: input.measurement.probeEnvironment,
+              processStartupObserver: (nanoseconds: bigint) =>
+                input.measurement?.observeProcessStartup(nanoseconds),
+            }
+          : {}),
       },
     );
     if (command.status !== "PASS")
@@ -933,6 +959,40 @@ function sameCandidate(
   );
 }
 
+function requiredMeasurementIdentity(
+  value: ReturnType<typeof candidateFromIdentity>,
+): TestRunCommandIdentity {
+  if (
+    !value.gitCommit ||
+    !/^[a-f0-9]{40}$/u.test(value.gitCommit) ||
+    !value.gitTree ||
+    !/^[a-f0-9]{40}$/u.test(value.gitTree) ||
+    !value.nodeVersion ||
+    !value.pnpmVersion
+  )
+    throw new Error(
+      "Test-run measurement requires exact Git, Node, and pnpm identity.",
+    );
+  return {
+    gitCommit: value.gitCommit,
+    gitTree: value.gitTree,
+    workingTreeDirty: value.workingTreeDirty,
+    nodeVersion: value.nodeVersion,
+    pnpmVersion: value.pnpmVersion,
+  };
+}
+
+function measurementCandidate(
+  value: ReturnType<typeof candidateFromIdentity>,
+): TestRunCandidate {
+  const identity = requiredMeasurementIdentity(value);
+  return {
+    gitCommit: identity.gitCommit,
+    gitTree: identity.gitTree,
+    workingTreeDirty: identity.workingTreeDirty,
+  };
+}
+
 async function failureManifest(
   context: Awaited<ReturnType<typeof evidenceContext>>,
   fileName: string,
@@ -969,6 +1029,22 @@ export async function runOwnedPartitionCli(
   );
   const reportName = "test-partition-report.json";
   try {
+    const initialCandidate = candidateFromIdentity(
+      (await commandIdentity(context.repositoryRoot)) as Record<
+        string,
+        unknown
+      >,
+    );
+    const measurement = await beginTestRunMeasurement({
+      artifactDirectory: context.artifactDirectory,
+      runId:
+        process.env["LOOP_VERIFY_RUN_ID"] ?? context.manualEvidence.manifestId,
+      stageId: context.stageId,
+      commandId: context.commandId,
+      role: "partition",
+      owner,
+      identity: requiredMeasurementIdentity(initialCandidate),
+    });
     const ownership = await evaluateRepositoryTestOwnership({
       repositoryRoot: context.repositoryRoot,
       artifactDirectory: resolve(context.artifactDirectory, "discovery-logs"),
@@ -984,12 +1060,14 @@ export async function runOwnedPartitionCli(
       ownership,
       selected.files,
     );
+    measurement.markSetupFinished();
     const executions = await runVitestAssignments({
       repositoryRoot: context.repositoryRoot,
       artifactDirectory: context.artifactDirectory,
       artifactPrefix: safeName(owner),
       sourcePrefix: `partition:${owner}`,
       assignments,
+      measurement,
     });
     const executedFiles = sortedUnique(
       executions.flatMap((execution) => execution.normalized.files),
@@ -1006,6 +1084,20 @@ export async function runOwnedPartitionCli(
         string,
         unknown
       >,
+    );
+    if (!sameCandidate(initialCandidate, candidate))
+      throw new Error(
+        "Partition candidate commit, tree, cleanliness, or runtime changed during execution.",
+      );
+    await measurement.finish(
+      await Promise.all(
+        executions.map((execution) =>
+          describeVitestReport({
+            artifactDirectory: context.artifactDirectory,
+            reportPath: execution.rawReportPath,
+          }),
+        ),
+      ),
     );
     await writeJson(resolve(context.artifactDirectory, reportName), {
       schemaVersion: TEST_PARTITION_REPORT_SCHEMA_VERSION,
@@ -1058,6 +1150,7 @@ export async function runOwnedPartitionCli(
           ).replaceAll("\\", "/"),
           kind: PARTITION_RAW_KIND,
         })),
+        { path: TEST_RUN_SUMMARY_NAME, kind: TEST_RUN_SUMMARY_KIND },
       ],
     );
     process.stdout.write(
@@ -1080,12 +1173,32 @@ interface EvidenceChildDefinition extends AggregateChildDefinition {
   readonly directory: string;
   readonly requiredKinds: readonly string[];
   readonly rawKinds: readonly string[];
+  readonly summaryRole: Exclude<TestRunRole, "legacy-extra">;
+  readonly summaryOwner: string | null;
 }
 
 interface EvidenceChildResult extends AggregateChildResult {
   readonly definition: EvidenceChildDefinition;
   readonly directory: string;
   readonly receipt: ValidatedCommandReceipt | null;
+}
+
+function childRunId(definition: EvidenceChildDefinition): string {
+  return `wp6-shadow-${safeName(definition.id)}`;
+}
+
+function childSummaryExpectation(
+  definition: EvidenceChildDefinition,
+  candidate: TestRunCandidate,
+): TestRunSummaryExpectation {
+  return {
+    runId: childRunId(definition),
+    stageId: definition.stageId,
+    commandId: definition.commandId,
+    role: definition.summaryRole,
+    owner: definition.summaryOwner,
+    candidate,
+  };
 }
 
 async function runEvidenceChild(input: {
@@ -1124,9 +1237,9 @@ async function runEvidenceChild(input: {
         LOOP_VERIFY_STAGE_ID: definition.stageId,
         LOOP_VERIFY_COMMAND_ID: definition.commandId,
         LOOP_VERIFY_COMMAND_ARTIFACT_DIR: directory,
-        LOOP_VERIFY_RUN_ID: `wp6-shadow-${safeName(definition.id)}`,
+        LOOP_VERIFY_RUN_ID: childRunId(definition),
         LOOP_TELEMETRY_PARENT_MANAGED: "1",
-        MILESTONE_LOOP_TELEMETRY_RUN_ID: `wp6-shadow-${safeName(definition.id)}`,
+        MILESTONE_LOOP_TELEMETRY_RUN_ID: childRunId(definition),
         TEMP: runtimeDirectory,
         TMP: runtimeDirectory,
       },
@@ -1172,6 +1285,16 @@ function requiredReceipt(result: EvidenceChildResult): ValidatedCommandReceipt {
   if (!result.receipt)
     throw new Error(`${result.definition.id} has no validated receipt.`);
   return result.receipt;
+}
+
+async function validatedChildSummary(
+  result: EvidenceChildResult,
+  candidate: TestRunCandidate,
+): Promise<ValidatedTestRunSummarySource> {
+  return loadValidatedTestRunSummary({
+    receipt: requiredReceipt(result),
+    expected: childSummaryExpectation(result.definition, candidate),
+  });
 }
 
 async function normalizedChildRawReports(
@@ -1315,24 +1438,38 @@ const LEGACY_CHILDREN: readonly Omit<EvidenceChildDefinition, "directory">[] = [
     script: "test:unit:fast",
     stageId: "candidate-unit",
     commandId: "test:unit:fast",
-    requiredKinds: ["fast-unit-vitest-report", "unit-partition-report"],
+    requiredKinds: [
+      "fast-unit-vitest-report",
+      "unit-partition-report",
+      TEST_RUN_SUMMARY_KIND,
+    ],
     rawKinds: ["fast-unit-vitest-report"],
+    summaryRole: "legacy",
+    summaryOwner: null,
   },
   {
     id: "legacy-migration",
     script: "test:unit:migrations",
     stageId: "migration-unit",
     commandId: "test:unit:migrations",
-    requiredKinds: ["migration-unit-vitest-report", "unit-partition-report"],
+    requiredKinds: [
+      "migration-unit-vitest-report",
+      "unit-partition-report",
+      TEST_RUN_SUMMARY_KIND,
+    ],
     rawKinds: ["migration-unit-vitest-report"],
+    summaryRole: "legacy",
+    summaryOwner: null,
   },
   {
     id: "legacy-orchestrator",
     script: "test:orchestrator",
     stageId: "verification-tier-milestone",
     commandId: "test-orchestrator",
-    requiredKinds: ["orchestrator-vitest-report"],
+    requiredKinds: ["orchestrator-vitest-report", TEST_RUN_SUMMARY_KIND],
     rawKinds: ["orchestrator-vitest-report"],
+    summaryRole: "legacy",
+    summaryOwner: null,
   },
 ];
 
@@ -1348,6 +1485,7 @@ export async function runPartitionShadowCli(): Promise<number> {
       >,
     );
     assertPinnedCleanCandidate(initialCandidate);
+    const exactMeasurementCandidate = measurementCandidate(initialCandidate);
     const ownership = await evaluateRepositoryTestOwnership({
       repositoryRoot: context.repositoryRoot,
       artifactDirectory: resolve(context.artifactDirectory, "discovery-logs"),
@@ -1385,17 +1523,70 @@ export async function runPartitionShadowCli(): Promise<number> {
     const extraLegacyFiles = membership.universe.files.filter(
       (file) => !candidateFileSet.has(file),
     );
+    const extraArtifactDirectory = resolve(
+      context.artifactDirectory,
+      "legacy",
+      "extra",
+    );
+    const extraExpectation: TestRunSummaryExpectation | null =
+      extraLegacyFiles.length > 0
+        ? {
+            runId: "wp6-shadow-legacy-extra",
+            stageId: SHADOW_STAGE_ID,
+            commandId: "test:partitions:shadow:legacy-extra",
+            role: "legacy-extra",
+            owner: null,
+            candidate: exactMeasurementCandidate,
+          }
+        : null;
+    const extraMeasurement = extraExpectation
+      ? await beginTestRunMeasurement({
+          artifactDirectory: extraArtifactDirectory,
+          runId: extraExpectation.runId,
+          stageId: extraExpectation.stageId,
+          commandId: extraExpectation.commandId,
+          role: extraExpectation.role,
+          owner: extraExpectation.owner,
+          identity: requiredMeasurementIdentity(initialCandidate),
+        })
+      : null;
     const extraLegacyAssignments = assignFilesToDiscoveredConfigs(
       ownership,
       extraLegacyFiles,
     );
+    extraMeasurement?.markSetupFinished();
     const extraLegacyExecutions = await runVitestAssignments({
       repositoryRoot: context.repositoryRoot,
-      artifactDirectory: resolve(context.artifactDirectory, "legacy", "extra"),
+      artifactDirectory: extraArtifactDirectory,
       artifactPrefix: "legacy-extra",
       sourcePrefix: "legacy-extra",
       assignments: extraLegacyAssignments,
+      ...(extraMeasurement ? { measurement: extraMeasurement } : {}),
     });
+    let extraSummarySource: ValidatedTestRunSummarySource | null = null;
+    if (extraMeasurement && extraExpectation) {
+      const finished = await extraMeasurement.finish(
+        await Promise.all(
+          extraLegacyExecutions.map((execution) =>
+            describeVitestReport({
+              artifactDirectory: extraArtifactDirectory,
+              reportPath: execution.rawReportPath,
+            }),
+          ),
+        ),
+      );
+      const declaration = await artifactDeclaration(
+        extraArtifactDirectory,
+        finished.path,
+        TEST_RUN_SUMMARY_KIND,
+      );
+      extraSummarySource = {
+        path: finished.path,
+        bytes: declaration.bytes,
+        sha256: declaration.sha256,
+        summary: finished.summary,
+      };
+    }
     const allLegacyReports = [
       ...legacyReports,
       ...extraLegacyExecutions.map((execution) => execution.normalized),
@@ -1415,8 +1606,14 @@ export async function runPartitionShadowCli(): Promise<number> {
         stageId: PARTITION_STAGE_ID,
         commandId: `test:partition:${partition.owner}`,
         directory: `partitions/${partition.owner}`,
-        requiredKinds: [PARTITION_REPORT_KIND, PARTITION_RAW_KIND],
+        requiredKinds: [
+          PARTITION_REPORT_KIND,
+          PARTITION_RAW_KIND,
+          TEST_RUN_SUMMARY_KIND,
+        ],
         rawKinds: [PARTITION_RAW_KIND],
+        summaryRole: "partition",
+        summaryOwner: partition.owner,
       }));
     const partitionChildren = await executeAggregateChildren(
       partitionDefinitions,
@@ -1471,6 +1668,40 @@ export async function runPartitionShadowCli(): Promise<number> {
         "Candidate commit, tree, cleanliness, or runtime changed during shadow execution.",
       );
 
+    const allChildResults = [...legacyChildren, ...partitionChildren];
+    const childSummarySources = await Promise.all(
+      allChildResults.map((child) =>
+        validatedChildSummary(child, exactMeasurementCandidate),
+      ),
+    );
+    const summarySources = [
+      ...childSummarySources,
+      ...(extraSummarySource ? [extraSummarySource] : []),
+    ];
+    const summaryExpectations = [
+      ...allChildResults.map((child) =>
+        childSummaryExpectation(child.definition, exactMeasurementCandidate),
+      ),
+      ...(extraExpectation ? [extraExpectation] : []),
+    ];
+    const reduction = reduceTestRunSummaries({
+      sources: summarySources,
+      expected: summaryExpectations,
+      candidate: exactMeasurementCandidate,
+      relativePath: (path) =>
+        relative(context.artifactDirectory, path).replaceAll("\\", "/"),
+    });
+    const reductionPath = resolve(
+      context.artifactDirectory,
+      TEST_RUN_REDUCTION_NAME,
+    );
+    await writeTestRunReduction(reductionPath, reduction);
+    const reductionDeclaration = await artifactDeclaration(
+      context.artifactDirectory,
+      reductionPath,
+      TEST_RUN_REDUCTION_KIND,
+    );
+
     const status = semanticComparison.status;
     await writeJson(proofPath, {
       schemaVersion: TEST_PARTITION_SHADOW_SCHEMA_VERSION,
@@ -1500,6 +1731,14 @@ export async function runPartitionShadowCli(): Promise<number> {
           filesSha256: inventorySha256(partitionFiles),
         },
       },
+      measurementReduction: {
+        path: reductionDeclaration.path,
+        bytes: reductionDeclaration.bytes,
+        sha256: reductionDeclaration.sha256,
+        contentSha256: reduction.contentSha256,
+        inputCount: reduction.inputCount,
+        nonSemantic: reduction.nonSemantic,
+      },
       shadowComparison: semanticComparison,
     });
     if (status !== "PASS")
@@ -1507,7 +1746,6 @@ export async function runPartitionShadowCli(): Promise<number> {
         `Shadow semantic equivalence failed: missing=${semanticComparison.missingTests.length}, unexpected=${semanticComparison.unexpectedTests.length}, multiplySelected=${semanticComparison.multiplySelectedTests.length}, mismatched=${semanticComparison.outcomeMismatches.length}, legacyConflicts=${semanticComparison.legacyConflicts.length}.`,
       );
 
-    const allChildResults = [...legacyChildren, ...partitionChildren];
     const legacyRawPaths = [
       ...legacyChildren.flatMap((child) =>
         requiredReceipt(child)
@@ -1533,9 +1771,28 @@ export async function runPartitionShadowCli(): Promise<number> {
           id: "same-commit-shadow-equivalence",
           summary: `Deduplicated ${semanticComparison.legacy.observationCount} legacy observations to ${semanticComparison.legacy.uniqueTestCount} stable tests and matched every normalized partition outcome on commit ${initialCandidate.gitCommit}.`,
         },
+        {
+          id: "compact-measurement-summaries-reduced",
+          summary: `Validated and deterministically reduced ${reduction.inputCount} command-owned compact summaries without changing test success or authorizing cutover.`,
+        },
       ],
       [
         { path: proofName, kind: SHADOW_PROOF_KIND },
+        {
+          path: TEST_RUN_REDUCTION_NAME,
+          kind: TEST_RUN_REDUCTION_KIND,
+        },
+        ...(extraSummarySource
+          ? [
+              {
+                path: relative(
+                  context.artifactDirectory,
+                  extraSummarySource.path,
+                ).replaceAll("\\", "/"),
+                kind: TEST_RUN_SUMMARY_KIND,
+              },
+            ]
+          : []),
         ...allChildResults.map((child) => ({
           path: relative(
             context.artifactDirectory,
@@ -1559,5 +1816,216 @@ export async function runPartitionShadowCli(): Promise<number> {
       `WP6 partition shadow failed: ${error instanceof Error ? error.message : String(error)}\n`,
     );
     return error instanceof AggregateChildFailure ? error.exitCode : 1;
+  }
+}
+
+export async function runPartitionOmissionMutationCli(): Promise<number> {
+  const context = await evidenceContext(
+    "wp6-shadow-omission-mutation",
+    "test:partitions:shadow:omission-mutation",
+  );
+  const proofName = "test-partition-omission-mutation-proof.json";
+  const proofPath = resolve(context.artifactDirectory, proofName);
+  try {
+    if (process.env["MILESTONE_LOOP_TEST_OMISSION_MUTATION"] !== "1")
+      throw new Error(
+        "The omission-mutation command is a test-only fail-closed integration surface.",
+      );
+    const fixtureDirectory = resolve(
+      context.artifactDirectory,
+      "omission-fixture",
+    );
+    await mkdir(fixtureDirectory, { recursive: true });
+    const configPath = resolve(fixtureDirectory, "vitest.config.mjs");
+    const testPath = resolve(fixtureDirectory, "representative.test.js");
+    await writeFile(
+      configPath,
+      [
+        "export default {",
+        "  test: {",
+        '    environment: "node",',
+        "    globals: true,",
+        '    include: ["representative.test.js"],',
+        "    passWithNoTests: false,",
+        "  },",
+        "};",
+        "",
+      ].join("\n"),
+      "utf8",
+    );
+    await writeFile(
+      testPath,
+      [
+        'describe("omission integration fixture", () => {',
+        '  it("representative kept", () => expect(true).toBe(true));',
+        '  it("representative omitted by mutation", () => expect(true).toBe(true));',
+        "});",
+        "",
+      ].join("\n"),
+      "utf8",
+    );
+    const legacyReportPath = resolve(
+      context.artifactDirectory,
+      "legacy-vitest-report.json",
+    );
+    const command = await runCommand(
+      {
+        id: "omission-mutation-vitest",
+        executable: "pnpm",
+        args: [
+          "exec",
+          "vitest",
+          "run",
+          "--root",
+          fixtureDirectory,
+          "--config",
+          "vitest.config.mjs",
+          "representative.test.js",
+          "--fileParallelism=false",
+          "--reporter=json",
+          `--outputFile=${legacyReportPath}`,
+        ],
+        parser: "exit-code",
+      },
+      {
+        workingDirectory: context.repositoryRoot,
+        artifactDirectory: resolve(context.artifactDirectory, "logs"),
+        timeoutMs: 60_000,
+        trustedControllerCommand: true,
+      },
+    );
+    if (command.status !== "PASS")
+      throw new AggregateChildFailure(
+        command.id,
+        command.exitCode,
+        `${command.message} Logs: ${command.stdoutPath}, ${command.stderrPath}.`,
+      );
+    const legacyValue = JSON.parse(
+      await readFile(legacyReportPath, "utf8"),
+    ) as Record<string, unknown>;
+    const legacy = normalizeVitestReport(
+      fixtureDirectory,
+      "omission-mutation:legacy",
+      legacyValue,
+    );
+    const mutatedValue = structuredClone(legacyValue);
+    const results = mutatedValue["testResults"];
+    if (!Array.isArray(results) || !isRecord(results[0]))
+      throw new Error("Omission fixture report has no mutable test result.");
+    const assertions = results[0]["assertionResults"];
+    if (!Array.isArray(assertions))
+      throw new Error("Omission fixture report has no assertion surface.");
+    const omittedIndex = assertions.findIndex(
+      (assertion) =>
+        isRecord(assertion) &&
+        typeof assertion["fullName"] === "string" &&
+        assertion["fullName"].includes("representative omitted by mutation"),
+    );
+    if (omittedIndex < 0)
+      throw new Error("Representative omission identity was not executed.");
+    const omittedAssertion = assertions[omittedIndex];
+    assertions.splice(omittedIndex, 1);
+    for (const key of ["numTotalTests", "numPassedTests"] as const) {
+      const value = mutatedValue[key];
+      if (!Number.isSafeInteger(value) || Number(value) < 1)
+        throw new Error(`Omission fixture ${key} cannot be decremented.`);
+      mutatedValue[key] = Number(value) - 1;
+    }
+    const partitionReportPath = resolve(
+      context.artifactDirectory,
+      "partition-omitted-vitest-report.json",
+    );
+    await writeJson(partitionReportPath, mutatedValue);
+    const partition = normalizeVitestReport(
+      fixtureDirectory,
+      "omission-mutation:partition",
+      mutatedValue,
+    );
+    const comparison = compareShadowSemantics(
+      legacy.observations,
+      partition.observations,
+    );
+    const omittedTestId = isRecord(omittedAssertion)
+      ? legacy.observations.find(
+          (observation) =>
+            observation.identity === omittedAssertion["fullName"],
+        )?.testId
+      : undefined;
+    if (
+      !omittedTestId ||
+      comparison.status !== "FAIL" ||
+      !sameStrings(comparison.missingTests, [omittedTestId]) ||
+      comparison.unexpectedTests.length !== 0
+    )
+      throw new Error(
+        "Integration omission mutation did not produce exactly one missing semantic identity.",
+      );
+    await writeJson(proofPath, {
+      schemaVersion: "1.0.0",
+      status: "FAIL",
+      expectedFailure: "missing-semantic-test-identity",
+      mutation: {
+        kind: "remove-executed-assertion-from-partition-report",
+        omittedTestId,
+        legacyTestCount: legacy.counts.tests,
+        partitionTestCount: partition.counts.tests,
+      },
+      reports: {
+        legacy: rawReportProof(context.artifactDirectory, {
+          source: legacy.source,
+          configPath: relative(
+            context.artifactDirectory,
+            configPath,
+          ).replaceAll("\\", "/"),
+          selectedFiles: legacy.files,
+          rawReportPath: legacyReportPath,
+          normalized: legacy,
+        }),
+        partition: rawReportProof(context.artifactDirectory, {
+          source: partition.source,
+          configPath: relative(
+            context.artifactDirectory,
+            configPath,
+          ).replaceAll("\\", "/"),
+          selectedFiles: partition.files,
+          rawReportPath: partitionReportPath,
+          normalized: partition,
+        }),
+      },
+      shadowComparison: comparison,
+    });
+    const artifactInputs = [
+      [proofPath, OMISSION_MUTATION_PROOF_KIND],
+      [legacyReportPath, LEGACY_RAW_KIND],
+      [partitionReportPath, PARTITION_RAW_KIND],
+      [configPath, "test-partition-omission-fixture-config"],
+      [testPath, "test-partition-omission-fixture-source"],
+    ] as const;
+    const artifacts = await Promise.all(
+      artifactInputs.map(([path, kind]) =>
+        artifactDeclaration(context.artifactDirectory, path, kind),
+      ),
+    );
+    await writeManualEvidenceFailure(context, {
+      status: "FAIL",
+      kind: "product",
+      message: `Expected omission mutation removed ${omittedTestId}; the aggregate rejected the missing semantic identity and issued no PASS receipt.`,
+      artifacts,
+    });
+    process.stderr.write(
+      `WP6 omission mutation failed closed on missing semantic identity ${omittedTestId}.\n`,
+    );
+    return 1;
+  } catch (error) {
+    await failureManifest(
+      context,
+      proofName,
+      OMISSION_MUTATION_PROOF_KIND,
+      error,
+    );
+    process.stderr.write(
+      `WP6 omission mutation fixture failed unexpectedly: ${error instanceof Error ? error.message : String(error)}\n`,
+    );
+    return 1;
   }
 }

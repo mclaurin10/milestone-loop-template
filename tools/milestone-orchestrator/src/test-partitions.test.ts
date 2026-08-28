@@ -1,7 +1,10 @@
+import { spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { readFile } from "node:fs/promises";
 
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 
 import type { TestOwnershipReport } from "./test-ownership.js";
 import { TEST_OWNER_IDS } from "./test-ownership.js";
@@ -15,6 +18,13 @@ import {
   provePartitionMembership,
   type SemanticTestObservation,
 } from "./test-partitions.js";
+
+const integrationRoots: string[] = [];
+
+afterAll(async () => {
+  for (const root of integrationRoots)
+    await rm(root, { recursive: true, force: true });
+});
 
 function observation(input: {
   readonly source: string;
@@ -228,6 +238,38 @@ describe("WP6 normalized semantic shadow comparison", () => {
     expect(result.unexpectedTests).toEqual([]);
   });
 
+  it("fails when one legacy semantic test identity is missing from partitions", () => {
+    const result = compareShadowSemantics(
+      [
+        observation({ source: "legacy", identity: "kept" }),
+        observation({ source: "legacy", identity: "representative omitted" }),
+      ],
+      [observation({ source: "partition", identity: "kept" })],
+    );
+
+    expect(result.status).toBe("FAIL");
+    expect(result.missingTests).toEqual([
+      "tools/example.test.ts::representative omitted",
+    ]);
+    expect(result.unexpectedTests).toEqual([]);
+  });
+
+  it("fails when partitions introduce an unexpected semantic test identity", () => {
+    const result = compareShadowSemantics(
+      [observation({ source: "legacy", identity: "kept" })],
+      [
+        observation({ source: "partition", identity: "kept" }),
+        observation({ source: "partition", identity: "unexpected" }),
+      ],
+    );
+
+    expect(result.status).toBe("FAIL");
+    expect(result.missingTests).toEqual([]);
+    expect(result.unexpectedTests).toEqual([
+      "tools/example.test.ts::unexpected",
+    ]);
+  });
+
   it("fails multiply selected tests in new partitions", () => {
     const result = compareShadowSemantics(
       [observation({ source: "legacy" })],
@@ -400,4 +442,78 @@ describe("WP6 aggregate child failure propagation", () => {
       })),
     ).rejects.toMatchObject({ exitCode: 1 });
   });
+});
+
+describe("WP6 integration-level omission mutation", () => {
+  it("fails the aggregate, emits no PASS receipt, and retains the omitted semantic identity", async () => {
+    const root = await mkdtemp(join(tmpdir(), "wp6-omission-"));
+    integrationRoots.push(root);
+    const artifactDirectory = resolve(root, "evidence");
+    const command = spawnSync(
+      process.execPath,
+      [
+        resolve("node_modules/tsx/dist/cli.mjs"),
+        resolve("tools/milestone-orchestrator/src/test-partition-cli.ts"),
+        "omission-mutation",
+      ],
+      {
+        cwd: resolve("."),
+        env: {
+          ...process.env,
+          LOOP_VERIFY_STAGE_ID: "wp6-shadow-omission-mutation",
+          LOOP_VERIFY_COMMAND_ID: "test:partitions:shadow:omission-mutation",
+          LOOP_VERIFY_COMMAND_ARTIFACT_DIR: artifactDirectory,
+          LOOP_VERIFY_RUN_ID: "wp6-omission-integration",
+          MILESTONE_LOOP_TEST_OMISSION_MUTATION: "1",
+        },
+        encoding: "utf8",
+        windowsHide: true,
+        timeout: 60_000,
+        maxBuffer: 16 * 1024 * 1024,
+      },
+    );
+
+    expect(command.error).toBeUndefined();
+    expect(command.status).toBe(1);
+    expect(existsSync(resolve(artifactDirectory, "result.json"))).toBe(false);
+    const manifest = JSON.parse(
+      await readFile(resolve(artifactDirectory, "manifest.json"), "utf8"),
+    ) as {
+      status: string;
+      receipt: unknown;
+      declaredArtifacts: {
+        declarations: readonly { kind: string; path: string }[];
+      };
+    };
+    const proof = JSON.parse(
+      await readFile(
+        resolve(
+          artifactDirectory,
+          "test-partition-omission-mutation-proof.json",
+        ),
+        "utf8",
+      ),
+    ) as {
+      status: string;
+      mutation: { omittedTestId: string };
+      shadowComparison: { missingTests: readonly string[] };
+    };
+    expect(manifest).toMatchObject({ status: "FAIL", receipt: null });
+    expect(
+      manifest.declaredArtifacts.declarations.map((item) => item.kind),
+    ).toEqual(
+      expect.arrayContaining([
+        "test-partition-omission-mutation-proof",
+        "test-partition-shadow-legacy-vitest-report",
+        "test-partition-vitest-report",
+      ]),
+    );
+    expect(proof.status).toBe("FAIL");
+    expect(proof.mutation.omittedTestId).toContain(
+      "representative omitted by mutation",
+    );
+    expect(proof.shadowComparison.missingTests).toEqual([
+      proof.mutation.omittedTestId,
+    ]);
+  }, 30_000);
 });

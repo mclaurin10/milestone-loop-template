@@ -52,6 +52,12 @@ export interface SuperviseOptions {
   readonly killGraceMs: number;
   readonly outputLimitBytes: number;
   /**
+   * Optional non-semantic observer for the synchronous spawn-call boundary.
+   * The value covers the monotonic interval from immediately before invoking
+   * node:child_process.spawn until a ChildProcess handle is returned.
+   */
+  readonly processStartupObserver?: (nanoseconds: bigint) => void;
+  /**
    * Test seam mirroring the verifier's `executeCommand` injection: real runs
    * always use `node:child_process.spawn`; deterministic state-machine tests
    * (drain, abandonment, event races that real processes cannot reproduce on
@@ -203,6 +209,7 @@ export function superviseCommand(
           detached: spawnOptions.detached,
         }));
     let child: SupervisedChildLike;
+    const spawnStarted = process.hrtime.bigint();
     try {
       child = spawnChild(options.executable, options.args, {
         cwd: options.cwd,
@@ -211,6 +218,13 @@ export function superviseCommand(
         windowsHide: true,
         detached: process.platform !== "win32",
       });
+      try {
+        options.processStartupObserver?.(
+          process.hrtime.bigint() - spawnStarted,
+        );
+      } catch {
+        // Measurement is non-semantic and cannot change command supervision.
+      }
     } catch (error) {
       // A synchronous spawn throw must resolve like every other failure -
       // this promise never rejects.

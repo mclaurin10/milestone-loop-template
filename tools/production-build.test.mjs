@@ -91,6 +91,8 @@ async function createFixture(options = {}) {
       "tools/production-build.mjs",
       "tools/run-tool-evidence.mjs",
       "tools/milestone-orchestrator/src/process-supervisor.ts",
+      "tools/milestone-orchestrator/src/test-run-probe.cjs",
+      "tools/milestone-orchestrator/src/test-run-summary.ts",
     ]) {
       const destination = join(repository, path);
       await mkdir(dirname(destination), { recursive: true });

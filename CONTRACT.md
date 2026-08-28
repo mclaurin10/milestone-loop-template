@@ -158,7 +158,29 @@ tsconfig the `typecheck` evidence covers.
   a failing `test-ownership-report` and no receipt. A pass produces its own
   command receipt but does not change or replace any test executor, tier,
   commissioned manifest, or exact closure.
-- **Executable ownership shadow partitions**: the four
+- **Compact command-owned test-run measurements (intended WP6b)**: the legacy
+  fast-unit, migration-unit, and orchestrator evidence wrappers and all four
+  owner partitions emit exactly one strict `test-run-summary` artifact when
+  they pass. Its candidate, run, stage, command, role/owner, platform, runtime,
+  report hashes/counts, timestamps, units, and measurement boundaries are
+  explicit. Wall/setup/Git-fixture/process-startup/test-body durations, CPU,
+  and peak RSS each carry a `measured`, `unavailable`, or `not-applicable`
+  disposition with contradiction checks; RSS is the maximum individual
+  instrumented-process peak, not a concurrent process-tree total. The producer
+  receipt binds the summary's exact size and SHA-256. The shadow reducer accepts
+  only those receipt-validated summaries, rejects missing, malformed, stale,
+  duplicate, or identity-mismatched input, sorts independently of arrival
+  order, and emits a strict `test-run-summary-reduction` artifact. The schemas
+  are `schemas/test-run-summary.schema.json` and
+  `schemas/test-run-reduction.schema.json`. Both artifacts explicitly state
+  that they cannot change test success, authorize cutover, or make a benchmark
+  claim. Probe publication waits through one bounded atomic-rename quiescence
+  window. A persistent incomplete process record makes all affected
+  Git/startup/CPU/RSS measurements explicitly `unavailable`; it does not
+  convert an otherwise passing test report into a test failure or permit a
+  partial-resource claim.
+- **Executable ownership shadow partitions (intended WP6c; called WP6b in
+  repository history)**: the four
   `test:partition:<owner>` scripts consume only the passing canonical ownership
   report. They select normalized files from that declaration and derive each
   file's Vitest root/config from repeated independent discovery provenance,

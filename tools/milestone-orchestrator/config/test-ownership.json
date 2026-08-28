@@ -71,6 +71,7 @@
         "tools/milestone-orchestrator/src/telemetry-store.test.ts",
         "tools/milestone-orchestrator/src/test-ownership.test.ts",
         "tools/milestone-orchestrator/src/test-partitions.test.ts",
+        "tools/milestone-orchestrator/src/test-run-summary.test.ts",
         "tools/milestone-orchestrator/src/transitions.test.ts",
         "tools/milestone-orchestrator/src/verification-cli.test.ts",
         "tools/milestone-orchestrator/src/verification-clone.test.ts",

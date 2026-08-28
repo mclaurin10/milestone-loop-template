@@ -1,0 +1,238 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://milestone-loop.local/schemas/test-run-reduction-1.0.0.json",
+  "title": "Milestone Loop deterministic test-run summary reduction",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "protocolId",
+    "status",
+    "candidate",
+    "inputCount",
+    "inputSetSha256",
+    "inputs",
+    "platforms",
+    "observedTestCounts",
+    "measurements",
+    "nonSemantic",
+    "contentSha256"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "protocolId": { "const": "milestone-loop-test-run-measurement.v1" },
+    "status": { "const": "PASS" },
+    "candidate": { "$ref": "#/$defs/candidate" },
+    "inputCount": { "type": "integer", "minimum": 1 },
+    "inputSetSha256": { "$ref": "#/$defs/hash" },
+    "inputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/input" }
+    },
+    "platforms": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/platform" }
+    },
+    "observedTestCounts": { "$ref": "#/$defs/testCounts" },
+    "measurements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "wallTime",
+        "setupTime",
+        "gitFixtureTime",
+        "processStartupTime",
+        "testBodyTime",
+        "cpuTime",
+        "peakRss"
+      ],
+      "properties": {
+        "wallTime": { "$ref": "#/$defs/reducedDuration" },
+        "setupTime": { "$ref": "#/$defs/reducedDuration" },
+        "gitFixtureTime": { "$ref": "#/$defs/reducedDuration" },
+        "processStartupTime": { "$ref": "#/$defs/reducedDuration" },
+        "testBodyTime": { "$ref": "#/$defs/reducedDuration" },
+        "cpuTime": { "$ref": "#/$defs/reducedCpu" },
+        "peakRss": { "$ref": "#/$defs/reducedRss" }
+      }
+    },
+    "nonSemantic": { "$ref": "#/$defs/nonSemantic" },
+    "contentSha256": { "$ref": "#/$defs/hash" }
+  },
+  "$defs": {
+    "nonempty": { "type": "string", "minLength": 1 },
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "gitId": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "decimal": { "type": "string", "pattern": "^(?:0|[1-9][0-9]*)$" },
+    "count": { "type": "integer", "minimum": 0 },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gitCommit", "gitTree", "workingTreeDirty"],
+      "properties": {
+        "gitCommit": { "$ref": "#/$defs/gitId" },
+        "gitTree": { "$ref": "#/$defs/gitId" },
+        "workingTreeDirty": { "type": "boolean" }
+      }
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runId",
+        "stageId",
+        "commandId",
+        "role",
+        "owner",
+        "path",
+        "bytes",
+        "sha256",
+        "contentSha256"
+      ],
+      "properties": {
+        "runId": { "$ref": "#/$defs/nonempty" },
+        "stageId": { "$ref": "#/$defs/nonempty" },
+        "commandId": { "$ref": "#/$defs/nonempty" },
+        "role": { "enum": ["legacy", "partition", "legacy-extra"] },
+        "owner": { "type": ["string", "null"] },
+        "path": { "$ref": "#/$defs/nonempty" },
+        "bytes": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/hash" },
+        "contentSha256": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "platform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "os",
+        "release",
+        "arch",
+        "endianness",
+        "nodeVersion",
+        "pnpmVersion"
+      ],
+      "properties": {
+        "os": { "$ref": "#/$defs/nonempty" },
+        "release": { "$ref": "#/$defs/nonempty" },
+        "arch": { "$ref": "#/$defs/nonempty" },
+        "endianness": { "enum": ["BE", "LE"] },
+        "nodeVersion": { "$ref": "#/$defs/nonempty" },
+        "pnpmVersion": { "$ref": "#/$defs/nonempty" }
+      }
+    },
+    "testCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["files", "tests", "passed", "failed", "skipped"],
+      "properties": {
+        "files": { "$ref": "#/$defs/count" },
+        "tests": { "$ref": "#/$defs/count" },
+        "passed": { "$ref": "#/$defs/count" },
+        "failed": { "$ref": "#/$defs/count" },
+        "skipped": { "$ref": "#/$defs/count" }
+      }
+    },
+    "disposition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["availability", "reason", "count"],
+      "properties": {
+        "availability": {
+          "enum": ["measured", "unavailable", "not-applicable"]
+        },
+        "reason": { "type": ["string", "null"] },
+        "count": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "reducedDuration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "measuredCount",
+        "unavailableCount",
+        "notApplicableCount",
+        "totalNanoseconds",
+        "sampleCount",
+        "dispositions"
+      ],
+      "properties": {
+        "measuredCount": { "$ref": "#/$defs/count" },
+        "unavailableCount": { "$ref": "#/$defs/count" },
+        "notApplicableCount": { "$ref": "#/$defs/count" },
+        "totalNanoseconds": { "$ref": "#/$defs/decimal" },
+        "sampleCount": { "$ref": "#/$defs/count" },
+        "dispositions": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/disposition" }
+        }
+      }
+    },
+    "reducedCpu": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "measuredCount",
+        "unavailableCount",
+        "notApplicableCount",
+        "userMicroseconds",
+        "systemMicroseconds",
+        "totalMicroseconds",
+        "dispositions"
+      ],
+      "properties": {
+        "measuredCount": { "$ref": "#/$defs/count" },
+        "unavailableCount": { "$ref": "#/$defs/count" },
+        "notApplicableCount": { "$ref": "#/$defs/count" },
+        "userMicroseconds": { "$ref": "#/$defs/decimal" },
+        "systemMicroseconds": { "$ref": "#/$defs/decimal" },
+        "totalMicroseconds": { "$ref": "#/$defs/decimal" },
+        "dispositions": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/disposition" }
+        }
+      }
+    },
+    "reducedRss": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "measuredCount",
+        "unavailableCount",
+        "notApplicableCount",
+        "maximumBytes",
+        "aggregation",
+        "dispositions"
+      ],
+      "properties": {
+        "measuredCount": { "$ref": "#/$defs/count" },
+        "unavailableCount": { "$ref": "#/$defs/count" },
+        "notApplicableCount": { "$ref": "#/$defs/count" },
+        "maximumBytes": {
+          "type": ["string", "null"],
+          "pattern": "^(?:0|[1-9][0-9]*)$"
+        },
+        "aggregation": { "const": "maximum-of-summary-process-peaks" },
+        "dispositions": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/disposition" }
+        }
+      }
+    },
+    "nonSemantic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["changesTestSuccess", "authorizesCutover", "benchmarkClaim"],
+      "properties": {
+        "changesTestSuccess": { "const": false },
+        "authorizesCutover": { "const": false },
+        "benchmarkClaim": { "const": false }
+      }
+    }
+  }
+}

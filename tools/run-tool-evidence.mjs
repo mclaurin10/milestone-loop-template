@@ -20,6 +20,12 @@ import {
   runProductionBuild,
 } from "./production-build.mjs";
 import { runWorkspaceTypecheck } from "./workspace-typecheck.mjs";
+import {
+  beginTestRunMeasurement,
+  describeVitestReport,
+  TEST_RUN_SUMMARY_KIND,
+  TEST_RUN_SUMMARY_NAME,
+} from "./milestone-orchestrator/src/test-run-summary.ts";
 
 const mode = process.argv[2];
 const modeArguments = process.argv.slice(3);
@@ -285,6 +291,7 @@ if (mode === "invariant-vitest" || mode === "focused-verify") {
 } else {
   let telemetry = null;
   let context = null;
+  let measurement = null;
   try {
     context = await evidenceContext(definition.stageId, definition.commandId);
     telemetry = await beginDirectTelemetry(context, {
@@ -299,6 +306,23 @@ if (mode === "invariant-vitest" || mode === "focused-verify") {
     );
     const vitestMode = mode === "test" || mode === "orchestrator";
     if (vitestMode) {
+      const identity = await commandIdentity(context.repositoryRoot);
+      measurement = await beginTestRunMeasurement({
+        artifactDirectory: context.artifactDirectory,
+        runId:
+          process.env.LOOP_VERIFY_RUN_ID ?? context.manualEvidence.manifestId,
+        stageId: context.stageId,
+        commandId: context.commandId,
+        role: "legacy",
+        owner: null,
+        identity: {
+          gitCommit: identity.gitCommit,
+          gitTree: identity.gitTree,
+          workingTreeDirty: identity.gitStatus !== "",
+          nodeVersion: identity.nodeVersion,
+          pnpmVersion: identity.pnpmVersion,
+        },
+      });
       definition.commands.push([
         "exec",
         "vitest",
@@ -321,9 +345,17 @@ if (mode === "invariant-vitest" || mode === "focused-verify") {
       if (mode === "typecheck") {
         results.push(runWorkspaceTypecheck(context.repositoryRoot));
       }
+      measurement?.markSetupFinished();
       for (const args of definition.commands) {
         const result = await runPnpm(args, {
           timeoutMs: definition.timeoutMs,
+          ...(measurement
+            ? {
+                env: measurement.probeEnvironment,
+                processStartupObserver: (nanoseconds) =>
+                  measurement.observeProcessStartup(nanoseconds),
+              }
+            : {}),
         });
         results.push(describeResult(result));
         assertCommandPassed(result, `${mode} command`);
@@ -339,6 +371,14 @@ if (mode === "invariant-vitest" || mode === "focused-verify") {
         await writeJson(reportPath, report);
       }
     }
+    if (measurement) {
+      await measurement.finish([
+        await describeVitestReport({
+          artifactDirectory: context.artifactDirectory,
+          reportPath,
+        }),
+      ]);
+    }
     await writeReceipt(
       context,
       [
@@ -347,12 +387,22 @@ if (mode === "invariant-vitest" || mode === "focused-verify") {
           summary: `${mode} completed through the pinned production tool boundary.`,
         },
       ],
-      [{ path: `${mode}-report.json`, kind: definition.kind }],
+      [
+        { path: `${mode}-report.json`, kind: definition.kind },
+        ...(measurement
+          ? [{ path: TEST_RUN_SUMMARY_NAME, kind: TEST_RUN_SUMMARY_KIND }]
+          : []),
+      ],
     );
     const reportContents = await readFile(reportPath);
     const receiptContents = await readFile(
       resolve(context.artifactDirectory, "result.json"),
     );
+    const summaryContents = measurement
+      ? await readFile(
+          resolve(context.artifactDirectory, TEST_RUN_SUMMARY_NAME),
+        )
+      : null;
     let tests = null;
     if (vitestMode) {
       const parsed = JSON.parse(reportContents.toString("utf8"));
@@ -377,10 +427,21 @@ if (mode === "invariant-vitest" || mode === "focused-verify") {
         exitCode: 0,
         tests,
         artifacts: {
-          fileCount: 2,
-          totalBytes: reportContents.byteLength + receiptContents.byteLength,
+          fileCount: summaryContents ? 3 : 2,
+          totalBytes:
+            reportContents.byteLength +
+            receiptContents.byteLength +
+            (summaryContents?.byteLength ?? 0),
           manifestReferences: [
             relative(context.repositoryRoot, reportPath).replaceAll("\\", "/"),
+            ...(summaryContents
+              ? [
+                  relative(
+                    context.repositoryRoot,
+                    resolve(context.artifactDirectory, TEST_RUN_SUMMARY_NAME),
+                  ).replaceAll("\\", "/"),
+                ]
+              : []),
           ],
           receiptReferences: [
             relative(

@@ -120,6 +120,7 @@ async function superviseEvidenceCommand(command, args, options = {}) {
     timeoutMs,
     killGraceMs,
     outputLimitBytes,
+    processStartupObserver: options.processStartupObserver,
   });
   const stdout = renderSupervisedStream(
     supervised.stdout,
@@ -754,6 +755,7 @@ export async function runPnpm(args, options = {}) {
     timeoutMs: options.timeoutMs,
     killGraceMs: options.killGraceMs,
     outputLimitBytes: options.outputLimitBytes,
+    processStartupObserver: options.processStartupObserver,
   });
 }
 

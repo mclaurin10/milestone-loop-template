@@ -71,6 +71,7 @@ export interface CommandRunnerOptions {
   readonly killGraceMs?: number;
   readonly extraEnvironment?: Readonly<Record<string, string>>;
   readonly trustedControllerCommand?: boolean;
+  readonly processStartupObserver?: (nanoseconds: bigint) => void;
   readonly telemetry?: {
     readonly store: Pick<TelemetryStore, "recordCommand">;
     readonly phase?: TelemetryPhase;
@@ -201,6 +202,9 @@ export async function runCommand(
     timeoutMs,
     killGraceMs: options.killGraceMs ?? DEFAULT_COMMAND_KILL_GRACE_MS,
     outputLimitBytes,
+    ...(options.processStartupObserver
+      ? { processStartupObserver: options.processStartupObserver }
+      : {}),
   });
   const { supervision, spawnError, exitCode, signal } = supervised;
   try {

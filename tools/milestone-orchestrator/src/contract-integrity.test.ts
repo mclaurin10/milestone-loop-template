@@ -116,6 +116,8 @@ async function installCurrentInvariantAdapter(root: string): Promise<void> {
   await installCurrentPaths(root, [
     "tools/milestone-orchestrator/src/contract-integrity.ts",
     "tools/milestone-orchestrator/src/invariant-suite.ts",
+    "tools/milestone-orchestrator/src/test-run-probe.cjs",
+    "tools/milestone-orchestrator/src/test-run-summary.ts",
     "tools/milestone-orchestrator/src/verification-cli.ts",
   ]);
 }

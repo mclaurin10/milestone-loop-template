@@ -72,7 +72,8 @@ for every repository config, reconciles the root, orchestrator, candidate,
 commissioned, invariant, generated-adopter, OCI, and exact-runtime CI entry
 points, then compares their normalized union with
 `config/test-ownership.json`. A new, removed, multiply owned, ambiguously
-discovered, or invalid-owner test fails without a receipt. The WP6b shadow
+discovered, or invalid-owner test fails without a receipt. The owner-partition
+work called WP6b in repository history corresponds to intended WP6c. Its shadow
 commands consume that passing declaration directly:
 `test:partition:controller-runtime`, `test:partition:repository-tooling`,
 `test:partition:adopter-template`, and
@@ -84,6 +85,23 @@ legacy results by normalized file/test identity, and compares disposition and
 failure outcome. This remains a shadow-only candidate surface; the existing
 executors, commissioned tiers, no-argument verifier, and exact-runtime closure
 schedule are unchanged.
+
+Intended WP6b adds compact, non-semantic measurements to the legacy unit and
+orchestrator commands and those owner partitions. Each measured command writes
+a strict `test-run-summary.json`, hash-binds it as a `test-run-summary` artifact
+in its own receipt, and records exact run/candidate/platform identity, report
+hashes and counts, wall/setup/Git/startup/test-body timing, CPU, and peak RSS.
+Every metric defines its boundary and unit and uses an explicit
+`measured`/`unavailable`/`not-applicable` disposition; the peak-RSS value is the
+maximum instrumented-process peak, not concurrent tree memory. The clean shadow
+validates those receipt declarations and deterministically reduces summaries
+only into `test-run-summary-reduction.json`. Neither artifact changes test
+success, authorizes a tier cutover, or makes a benchmark claim. The JSON
+contracts live in `tools/milestone-orchestrator/schemas/`.
+An instrumented process that is force-terminated while publishing its atomic
+probe record leaves the affected Git/startup/CPU/RSS metrics explicitly
+`unavailable`; it cannot turn a passing test report into a failure or a partial
+measurement claim.
 
 ## Adopting the loop
 
