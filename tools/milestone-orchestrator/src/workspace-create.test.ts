@@ -212,15 +212,19 @@ describe("recoverable workspace creation", () => {
     },
   );
 
-  it.runIf(process.platform === "win32")(
-    "rejects a junction workspace root without following it",
+  it(
+    "rejects a linked workspace root without following it",
     { timeout: 30_000 },
     async () => {
       const { parent, operation } = await fixture();
       const outside = join(parent, "outside-workspaces");
       await mkdir(outside);
       await mkdir(dirname(operation.workspaceRoot), { recursive: true });
-      await symlink(outside, operation.workspaceRoot, "junction");
+      await symlink(
+        outside,
+        operation.workspaceRoot,
+        process.platform === "win32" ? "junction" : "dir",
+      );
       await expect(
         inspectWorkspaceCreateOperation(operation),
       ).resolves.toMatchObject({

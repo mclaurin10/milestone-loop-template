@@ -128,7 +128,7 @@ CAL-1; frozen authorities; immutable acceptance; rewriting historical records.
    on a red head.
    - **0a — ownership discovery must not parse a shared stdout stream.**
      Have Vitest write discovery JSON to a declared file (`vitest list
-     --json=<path>` into the discovery artifact directory) and parse that
+--json=<path>` into the discovery artifact directory) and parse that
      file, so wrapper stdout (pnpm banners, warnings) cannot corrupt the
      input; keep the fail-closed behavior for a missing/invalid file.
      Regression: discovery succeeds with polluted stdout, still fails on
@@ -160,10 +160,10 @@ CAL-1; frozen authorities; immutable acceptance; rewriting historical records.
    - measured `cpuTime.processCount`/`peakRss.processCount` reconciled with
      `probe.processCount` using the exact producer relation (`===` or `≤`,
      as derived).
-   Regressions must drive every reviewer-demonstrated contradiction class
-   through the production path (`loadValidatedTestRunSummary` with matching
-   bytes/SHA-256, then `reduceTestRunSummaries`) and must also pin one
-   legitimate boundary emission per new rule as still accepted.
+     Regressions must drive every reviewer-demonstrated contradiction class
+     through the production path (`loadValidatedTestRunSummary` with matching
+     bytes/SHA-256, then `reduceTestRunSummaries`) and must also pin one
+     legitimate boundary emission per new rule as still accepted.
 2. **Tighten reduction semantic validation (review finding 2).** In
    `assertTestRunReduction`: reconcile disposition rows summed by
    availability against the per-metric counters and require the rows to total
@@ -299,12 +299,12 @@ CAL-1; frozen authorities; immutable acceptance; rewriting historical records.
   Controller lanes (invariant suite → `test-ownership`,
   `OWNERSHIP_GATE_ERROR`: pnpm banner ahead of Vitest JSON on stdout;
   retained log `invariants/entries/test-ownership/discovery-logs/
-  ownership-discovery-01-1.stdout.log` contains the valid JSON after the
+ownership-discovery-01-1.stdout.log` contains the valid JSON after the
   banner) and both Fresh-adopter lanes (generated-adopter strict typecheck).
   Root cause B reproduced locally: `pnpm run typecheck` in a freshly
   generated adopter package fails exit 2 with
   `test-ownership.ts(9,8): error TS2307: Cannot find module
-  '../ci/exact-runtime-workflow-contract.js'`. Hosted CI red since
+'../ci/exact-runtime-workflow-contract.js'`. Hosted CI red since
   `18324be` (2026-08-26); last green `b01467b` (2026-08-24). Fixes 0a/0b
   not yet implemented.
 - 2026-08-29 — Steps 0a/0b implemented and locally qualified under exact Node
@@ -328,8 +328,52 @@ CAL-1; frozen authorities; immutable acceptance; rewriting historical records.
   `681baeee640da7304a5c9480fff7d765e4332315fc3d4d1d82c274f5527d0d3f`),
   and `git diff --check` passed. Step 0c remains open until the fix-forward
   commit is pushed and both hosted platforms are green.
+- 2026-08-29 — Hosted exact-runtime run
+  `https://github.com/mclaurin10/milestone-loop-template/actions/runs/33275334325`
+  on fix-forward commit `4b4bc77415365cb08a5e8d3170c469eb1515befa`
+  failed and is retained; trusted-container passed, while the other four jobs
+  exposed three causal gaps. Windows controller failed in `test-ownership`
+  because `command-runner.resolvePnpmScript` recognizes `npm_execpath` and a
+  global pnpm layout but not the pinned Node Corepack
+  `node_modules/corepack/dist/pnpm.js` entry used by Actions. Both generated
+  adopters passed strict typecheck and every other bootstrap stage but failed
+  lint solely because the newly shipped `test-run-probe.cjs` lacked the
+  source repository's CommonJS ESLint treatment in the scaffold config.
+  Linux controller passed invariants and executed all 198 orchestrator suites,
+  but the otherwise-passing report contained one skipped Windows-only
+  workspace-root junction assertion; strict measurement correctly rejected
+  its 669 passed / 1 pending counters. Authenticated retained artifacts were
+  independently downloaded to `C:/w/wp6d-ci-33275334325`; controller
+  Windows/Linux and adopter Windows/Linux ZIP SHA-256 values are respectively
+  `bfe03da7f4e76b8573a629cd88d23cf2d0733a5432ca3b85cbbb0aa1a5f01a8a`,
+  `6b95d5743ff62465651407ee9f4adc08d00da72c3c301e397b203bceef3f0b63`,
+  `c4c5dcc520f844e0eacdc59ceef4f23dfbdfb6c267ac9823c30c4e614c795f9d`,
+  and `1df75ef70a747b41170d9a2f07393b0ff33ac6d6d134ec89f81ef79b8840287a`.
+  Step 0 remains in progress: add Corepack resolution, generated-probe lint
+  coverage, and a platform-neutral linked-root assertion; qualify and push a
+  second fix-forward commit.
+- 2026-08-29 — The three run-33275334325 repairs are implemented and locally
+  qualified under exact Node `24.18.0` / pnpm `11.15.1`. Safe pnpm resolution
+  now recognizes the pinned Node Corepack entry, with a 10/10 command-runner
+  suite and a real minimal-PATH ownership gate over all 82 files at
+  `C:/w/wp6d-step0b-ownership`. Generated adopters now lint the shipped
+  CommonJS probe under their own scaffold config; the 8/8 adopter-package
+  suite strictly typechecked and linted generated output. The linked-root
+  rejection is platform-neutral (`junction` on Windows, directory symlink on
+  POSIX) and its focused workspace-create suite passed 5/5. Receipt-owning
+  typecheck, lint, format, and the five-command invariants suite passed at
+  `C:/w/wp6d-step0b-{typecheck,lint,format,invariants}`. Exact broad
+  orchestrator passed 198/198 suites and 671/671 tests at
+  `C:/w/wp6d-step0b-orchestrator` (report SHA-256
+  `cc8fb8444d0c58cdfd11d6f2353d1dfcebd182940d8e777ac4847a29e4a3d2ac`);
+  exact unit passed 200/200 suites and 687/687 tests at
+  `C:/w/wp6d-step0b-unit` (report SHA-256
+  `ae66f9ba77aac251caf88d2b36210a2326054ff8b9d57e73132403d6be923890`).
+  Neither aggregate has a failed or pending suite/test; `git diff --check`
+  passed. Step 0 remains open only for the clean commit/push and a fully green
+  hosted rerun on both platforms.
 
 ## Next Action
 
-Commit the locally qualified step 0a/0b fix-forward, push it, and confirm the
+Commit and push the qualified run-33275334325 fixes, then confirm the
 exact-runtime matrix is green on both platforms before starting step 1.

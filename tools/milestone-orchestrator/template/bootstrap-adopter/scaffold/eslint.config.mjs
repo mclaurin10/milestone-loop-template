@@ -8,7 +8,7 @@ export default tseslint.config(
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    files: ["**/*.{js,mjs,ts,tsx}"],
+    files: ["**/*.{cjs,js,mjs,ts,tsx}"],
     languageOptions: {
       parserOptions: { tsconfigRootDir: import.meta.dirname },
     },
@@ -19,6 +19,12 @@ export default tseslint.config(
         "error",
         { argsIgnorePattern: "^_", caughtErrorsIgnorePattern: "^_" },
       ],
+    },
+  },
+  {
+    files: ["tools/milestone-orchestrator/src/test-run-probe.cjs"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
     },
   },
 );

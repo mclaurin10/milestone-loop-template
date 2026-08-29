@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
-import { delimiter, resolve } from "node:path";
+import { delimiter, dirname, resolve } from "node:path";
 
 import type {
   CommandExecutionSummary,
@@ -26,10 +26,19 @@ import type {
 
 export function resolvePnpmScript(
   environment: NodeJS.ProcessEnv = process.env,
+  executablePath: string = process.execPath,
 ): string | null {
   const explicit = environment["npm_execpath"];
   if (explicit && /pnpm(?:\.[cm]?js)?$/i.test(explicit) && existsSync(explicit))
     return explicit;
+  const corepackPnpmPath = resolve(
+    dirname(executablePath),
+    "node_modules",
+    "corepack",
+    "dist",
+    "pnpm.js",
+  );
+  if (existsSync(corepackPnpmPath)) return corepackPnpmPath;
   for (const entry of (environment["PATH"] ?? "").split(delimiter)) {
     if (!entry) continue;
     const candidate = resolve(entry, "node_modules", "pnpm", "bin", "pnpm.cjs");
@@ -51,7 +60,7 @@ function invocation(command: VerificationCommand): {
     return { executable: process.execPath, args: [pnpmPath, ...command.args] };
   if (process.platform === "win32")
     throw new Error(
-      "Safe pnpm argv execution on Windows could not resolve a pnpm JavaScript entry from npm_execpath or PATH.",
+      "Safe pnpm argv execution on Windows could not resolve a pnpm JavaScript entry from npm_execpath, the pinned Node Corepack installation, or PATH.",
     );
   return { executable: "pnpm", args: command.args };
 }

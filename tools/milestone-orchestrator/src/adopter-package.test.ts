@@ -471,6 +471,10 @@ describe("fresh adopter package creation", () => {
       "--pretty",
       "false",
     ]);
+    command(outputRoot, process.execPath, [
+      resolve("node_modules/eslint/bin/eslint.js"),
+      ".",
+    ]);
   }, 120_000);
 
   it("is deterministic for equal input and refuses every existing output", async () => {

@@ -70,9 +70,33 @@ describe("safe pnpm launcher resolution", () => {
       recursive: true,
     });
     await writeFile(script, "process.exit(0);\n", "utf8");
-    expect(resolvePnpmScript({ PATH: `${directory}${delimiter}unused` })).toBe(
-      script,
+    expect(
+      resolvePnpmScript(
+        { PATH: `${directory}${delimiter}unused` },
+        join(directory, "node.exe"),
+      ),
+    ).toBe(script);
+  });
+
+  it("finds the pinned Node Corepack pnpm entry before scanning PATH", async () => {
+    const directory = await mkdtemp(
+      join(tmpdir(), "milestone-loop-node-corepack-pnpm-"),
     );
+    temporaryDirectories.push(directory);
+    const executable = join(directory, "node.exe");
+    const script = join(
+      directory,
+      "node_modules",
+      "corepack",
+      "dist",
+      "pnpm.js",
+    );
+    await mkdir(join(directory, "node_modules", "corepack", "dist"), {
+      recursive: true,
+    });
+    await writeFile(script, "process.exit(0);\n", "utf8");
+
+    expect(resolvePnpmScript({ PATH: "" }, executable)).toBe(script);
   });
 });
 
