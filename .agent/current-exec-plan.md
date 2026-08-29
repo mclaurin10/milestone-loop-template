@@ -1,6 +1,6 @@
 # Current Execution Plan
 
-**Status:** Active — step 0 (hosted CI validation of the pushed head) in progress
+**Status:** Active — step 0c (hosted CI validation of the fix-forward commit) in progress
 **Updated:** 2026-08-29
 **Owner:** autonomous loop
 **Predecessor:** intended WP6b/WP6c closed at commit
@@ -307,11 +307,29 @@ CAL-1; frozen authorities; immutable acceptance; rewriting historical records.
   '../ci/exact-runtime-workflow-contract.js'`. Hosted CI red since
   `18324be` (2026-08-26); last green `b01467b` (2026-08-24). Fixes 0a/0b
   not yet implemented.
+- 2026-08-29 — Steps 0a/0b implemented and locally qualified under exact Node
+  `24.18.0` / pnpm `11.15.1`. Ownership discovery now removes any stale
+  command-owned output, directs `vitest list` to an explicit JSON file, and
+  parses only that file; injected regressions pass for polluted stdout and
+  valid JSON and fail closed for missing/malformed file output. The adopter
+  packager explicitly ships `ci/exact-runtime-workflow-contract.ts` and
+  `src/test-run-probe.cjs`; a generated package strictly typechecks against
+  its generated `tsconfig.tools.json`. Focused suites passed 17/17. The real
+  ownership gate passed for 82 files at `C:/w/wp6d-step0-ownership-3` and the
+  five-command invariant aggregate passed at `C:/w/wp6d-step0-invariants`.
+  Receipt-owning typecheck, lint, and format passed at
+  `C:/w/wp6d-step0-typecheck`, `C:/w/wp6d-step0-lint`, and
+  `C:/w/wp6d-step0-format`. Exact broad aggregates passed: orchestrator
+  198/198 suites and 670/670 tests at `C:/w/wp6d-step0-orchestrator`
+  (report SHA-256
+  `fff8a1a638e6294aef6af52384bff35d04bce9ef05377ec006a029ee57ca7934`),
+  unit 200/200 suites and 686/686 tests at `C:/w/wp6d-step0-unit` (report
+  SHA-256
+  `681baeee640da7304a5c9480fff7d765e4332315fc3d4d1d82c274f5527d0d3f`),
+  and `git diff --check` passed. Step 0c remains open until the fix-forward
+  commit is pushed and both hosted platforms are green.
 
 ## Next Action
 
-Implement step 0a (file-based ownership discovery JSON) and step 0b (package
-the `ci/` workflow-contract module; decide probe packaging) with their
-regressions, run the focused and broad suites, commit fix-forward, push, and
-confirm the exact-runtime matrix is green on both platforms before starting
-step 1.
+Commit the locally qualified step 0a/0b fix-forward, push it, and confirm the
+exact-runtime matrix is green on both platforms before starting step 1.

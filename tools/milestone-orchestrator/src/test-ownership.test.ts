@@ -1,15 +1,19 @@
-import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
 import {
   DEFAULT_TEST_OWNERSHIP_PATH,
   formatTestOwnershipFailure,
+  runVitestDiscoveryPass,
   TEST_OWNER_IDS,
   validateRepeatedDiscovery,
   validateTestOwnership,
 } from "./test-ownership.js";
+
+import type { CommandExecutionSummary } from "./contracts.js";
 
 const fixtureFiles = [
   "fixtures/oci-candidate/candidate.case.ts",
@@ -50,7 +54,99 @@ function codes(value: ReturnType<typeof validateTestOwnership>): string[] {
   return value.diagnostics.map((item) => item.code);
 }
 
+function passingDiscoveryCommand(
+  id: string,
+  stdoutPath: string,
+  stderrPath: string,
+): CommandExecutionSummary {
+  return {
+    id,
+    displayCommand: "pnpm exec vitest list",
+    status: "PASS",
+    exitCode: 0,
+    signal: null,
+    startedAt: "2026-08-29T00:00:00.000Z",
+    finishedAt: "2026-08-29T00:00:00.001Z",
+    durationMs: 1,
+    stdoutPath,
+    stderrPath,
+    stdoutSha256: "0".repeat(64),
+    stderrSha256: "0".repeat(64),
+    parser: "exit-code",
+    parsedArtifactPath: null,
+    message: "Command passed.",
+    receipt: null,
+    receiptAbsenceReason: "Discovery does not own a receipt.",
+  };
+}
+
+async function withDiscoveryFixture(
+  output: string | null,
+): Promise<readonly string[]> {
+  const artifactDirectory = await mkdtemp(
+    join(tmpdir(), "test-ownership-discovery-"),
+  );
+  try {
+    return await runVitestDiscoveryPass(
+      {
+        repositoryRoot: process.cwd(),
+        artifactDirectory,
+        commandId: "fixture-discovery",
+        surfaceId: "fixture",
+        configPath: "vitest.config.ts",
+        filters: [],
+      },
+      async (command, options) => {
+        const declaredOutput = command.args
+          .find((argument) => argument.startsWith("--json="))
+          ?.slice("--json=".length);
+        if (!declaredOutput)
+          throw new Error("Discovery command omitted its JSON output path.");
+        if (output !== null) await writeFile(declaredOutput, output, "utf8");
+        const stdoutPath = resolve(
+          options.artifactDirectory,
+          `${command.id}.stdout.log`,
+        );
+        const stderrPath = resolve(
+          options.artifactDirectory,
+          `${command.id}.stderr.log`,
+        );
+        await writeFile(
+          stdoutPath,
+          "Scope: all 2 workspace projects\nAlready up to date\n",
+          "utf8",
+        );
+        await writeFile(stderrPath, "", "utf8");
+        return passingDiscoveryCommand(command.id, stdoutPath, stderrPath);
+      },
+    );
+  } finally {
+    await rm(artifactDirectory, { recursive: true, force: true });
+  }
+}
+
 describe("test ownership classification", () => {
+  it("reads declared discovery JSON instead of polluted command stdout", async () => {
+    const file = resolve(
+      "tools/milestone-orchestrator/src/test-ownership.test.ts",
+    );
+
+    await expect(
+      withDiscoveryFixture(JSON.stringify([{ file }])),
+    ).resolves.toEqual([
+      "tools/milestone-orchestrator/src/test-ownership.test.ts",
+    ]);
+  });
+
+  it("fails closed when declared discovery JSON is missing or malformed", async () => {
+    await expect(withDiscoveryFixture(null)).rejects.toThrow(
+      /did not write its declared JSON file/,
+    );
+    await expect(withDiscoveryFixture("not json")).rejects.toThrow(
+      /did not emit JSON/,
+    );
+  });
+
   it("accepts the canonical tracked catalogue with all current ownership classes", async () => {
     const catalogue = JSON.parse(
       await readFile(resolve(DEFAULT_TEST_OWNERSHIP_PATH), "utf8"),

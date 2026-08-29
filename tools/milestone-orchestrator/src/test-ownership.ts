@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
-import { lstat, readFile, realpath } from "node:fs/promises";
+import { lstat, readFile, realpath, rm } from "node:fs/promises";
 import { basename, dirname, isAbsolute, relative, resolve } from "node:path";
 
 import {
@@ -726,17 +726,25 @@ async function normalizeVitestListOutput(
   return files;
 }
 
-async function runVitestDiscoveryPass(input: {
-  readonly repositoryRoot: string;
-  readonly artifactDirectory: string;
-  readonly commandId: string;
-  readonly surfaceId: string;
-  readonly configPath: string;
-  readonly filters: readonly string[];
-}): Promise<readonly string[]> {
+export async function runVitestDiscoveryPass(
+  input: {
+    readonly repositoryRoot: string;
+    readonly artifactDirectory: string;
+    readonly commandId: string;
+    readonly surfaceId: string;
+    readonly configPath: string;
+    readonly filters: readonly string[];
+  },
+  commandRunner: typeof runCommand = runCommand,
+): Promise<readonly string[]> {
   const configRoot = dirname(input.configPath).replaceAll("\\", "/");
   const root = configRoot === "." ? "." : configRoot;
-  const command = await runCommand(
+  const discoveryOutputPath = resolve(
+    input.artifactDirectory,
+    `${input.commandId}.vitest-list.json`,
+  );
+  await rm(discoveryOutputPath, { force: true });
+  const command = await commandRunner(
     {
       id: input.commandId,
       executable: "pnpm",
@@ -750,7 +758,7 @@ async function runVitestDiscoveryPass(input: {
         "--config",
         basename(input.configPath),
         "--filesOnly",
-        "--json",
+        `--json=${discoveryOutputPath}`,
         "--no-color",
       ],
       parser: "exit-code",
@@ -766,9 +774,18 @@ async function runVitestDiscoveryPass(input: {
     throw new Error(
       `Vitest discovery ${input.surfaceId} failed (${command.status}); inspect ${command.stderrPath}.`,
     );
+  let output: string;
+  try {
+    output = await readFile(discoveryOutputPath, "utf8");
+  } catch (error) {
+    throw new Error(
+      `Vitest discovery ${input.surfaceId} did not write its declared JSON file: ${error instanceof Error ? error.message : String(error)}.`,
+      { cause: error },
+    );
+  }
   return normalizeVitestListOutput(
     input.repositoryRoot,
-    await readFile(command.stdoutPath, "utf8"),
+    output,
     input.surfaceId,
   );
 }

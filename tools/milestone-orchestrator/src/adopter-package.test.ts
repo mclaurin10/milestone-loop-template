@@ -1,8 +1,8 @@
 import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -83,6 +83,22 @@ function git(root: string, ...args: readonly string[]): string {
       `Fixture git ${args.join(" ")} failed: ${result.error?.message ?? result.stderr.trim()}.`,
     );
   return result.stdout.trim();
+}
+
+function command(
+  root: string,
+  executable: string,
+  args: readonly string[],
+): void {
+  const result = spawnSync(executable, args, {
+    cwd: root,
+    encoding: "utf8",
+    windowsHide: true,
+  });
+  if (result.error || result.status !== 0)
+    throw new Error(
+      `Fixture command ${executable} ${args.join(" ")} failed: ${(result.error?.message ?? result.stderr.trim()) || result.stdout.trim()}.`,
+    );
 }
 
 describe("adopter package definition", () => {
@@ -414,6 +430,48 @@ describe("fresh adopter package creation", () => {
       git(outputRoot, "status", "--porcelain=v1", "--untracked-files=all"),
     ).toBe("");
   }, 30_000);
+
+  it("ships every non-TypeScript runtime dependency and strictly typechecks", async () => {
+    const parent = await temporaryParent();
+    const outputRoot = join(parent, "repository");
+    await createAdopterPackage({
+      definitionPath,
+      outputPath: outputRoot,
+    });
+
+    expect(
+      existsSync(
+        join(
+          outputRoot,
+          "tools/milestone-orchestrator/ci/exact-runtime-workflow-contract.ts",
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      existsSync(
+        join(outputRoot, "tools/milestone-orchestrator/src/test-run-probe.cjs"),
+      ),
+    ).toBe(true);
+
+    await symlink(
+      resolve("node_modules"),
+      join(outputRoot, "node_modules"),
+      process.platform === "win32" ? "junction" : "dir",
+    );
+    await symlink(
+      resolve("tools/milestone-orchestrator/node_modules"),
+      join(outputRoot, "tools/milestone-orchestrator/node_modules"),
+      process.platform === "win32" ? "junction" : "dir",
+    );
+    command(outputRoot, process.execPath, [
+      resolve("node_modules/typescript/bin/tsc"),
+      "--project",
+      "tsconfig.tools.json",
+      "--noEmit",
+      "--pretty",
+      "false",
+    ]);
+  }, 120_000);
 
   it("is deterministic for equal input and refuses every existing output", async () => {
     const parent = await temporaryParent();
