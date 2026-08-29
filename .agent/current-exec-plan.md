@@ -1,7 +1,7 @@
 # Current Execution Plan
 
-**Status:** Active — intended WP6b instrumentation and WP6c omission coverage
-**Updated:** 2026-08-28
+**Status:** Complete — intended WP6b instrumentation and WP6c omission coverage
+**Updated:** 2026-08-29
 **Owner:** autonomous loop
 
 ## Objective
@@ -91,14 +91,14 @@ and any frozen authority or immutable acceptance change.
    checks with pinned Node/pnpm, inspect schemas, receipts, hashes,
    dispositions, identities, and resource summaries, and correct every harness
    defect without changing commissioned semantics.
-5. **In progress — commit executable candidate and run clean short-path shadow.**
+5. **Complete — commit executable candidate and run clean short-path shadow.**
    Commit the cohesive implementation, clone that exact commit to short paths,
    run ownership/owners/shadow, and independently validate all declared
    evidence. Preserve failed attempts accurately. The first clean-candidate
    shadow exposed a pre-existing controller-lease PID-incarnation race during
    hard-loss recovery; fix that fail-closed liveness defect with focused
    regression coverage before repeating the complete clean shadow.
-6. **Pending — record closeout and commit documentation successor.** Update
+6. **Complete — record closeout and commit documentation successor.** Update
    this plan, autonomy log, and decision log with the crosswalk, exact evidence,
    executable/documentation identities, limitations, and intended WP6d handoff;
    verify the successor is documentation-only and leave the tracked tree clean.
@@ -261,9 +261,75 @@ not a synthetic substitute.
   in 401.7 seconds and wrote its complete matrix at
   `C:/w/e9/pid-fix-focused/candidate-prepare-matrix.json`. Typecheck, lint,
   formatting, and diff hygiene also pass after the fix.
+- Fix-forward executable candidate Q is
+  `b1d43a2abaf46ad16a79e32b08b3a9b9a548eace`, tree
+  `acdf9100b96ce17ec5fd2a1df10aba75362b3ce9`. A fresh offline frozen install
+  in clean short clone `C:/w/za` used pinned Node `24.18.0` and pnpm `11.15.1`;
+  the corresponding external evidence root is `C:/w/ea`.
+- Final focused and owner evidence on Q passed: 103/103 focused tests in 29
+  suites (`focused/focused-report.json`, SHA-256
+  `4178930b76d181a41875eafcbe60a495dc92a53a9845357b44c3f4c4e1055320`),
+  ownership over 82 files, and standalone owner partitions of 663
+  controller-runtime, 16 repository-tooling, 4 adopter-template, and 1
+  trusted-container-fixture test. Every owner receipt/artifact hash was
+  independently rechecked; all summaries bind exact clean Q, use the pinned
+  runtime, expose valid measurement dispositions, and retain false semantic,
+  cutover, and benchmark flags.
+- The final clean shadow at `C:/w/ea/shadow` passed 684 unique tests over the
+  exact 82-file disjoint union. It deduplicated 1,351 legacy observations to
+  the same 684 semantic identities as the partitions, with no conflicts,
+  multiply selected tests, missing tests, unexpected tests, or outcome
+  mismatches. The aggregate receipt, proof, and summary-only reduction hashes
+  are respectively
+  `74cd01dffdeb7073eebd331600a8473778a2e636d09ec57e86944cf26841cc55`,
+  `5e356ebc80013dd2cde2962da8f2dbebe20749c108969b609326b92a7f9ace42`,
+  and
+  `5b2fbfa886fbd386d1a1d44360b9c848a0ee0f3fd0411dba4e135510c701eca5`.
+  Runtime validation independently accepted all eight input summaries and the
+  reduction (`inputSetSha256`
+  `5d9569fc64b2fba18fd6fee23f26a024a98308cb0f6317f0103357f540662f5c`,
+  `contentSha256`
+  `c16a8f80bca8646afb1dbfcf4d2c520ed4ed766920196d808527b7ec8fa89234`).
+  All seven metrics are measured for all eight inputs; the reduction observes
+  2,035 passing executions and carries no semantic/cutover/benchmark claim.
+- Final broad/static qualification on Q passed: the five-command invariant
+  suite (`C:/w/ea/invariants`), `pnpm test:unit` at 683/683 in 200 suites
+  (`C:/w/ea/unit`), `pnpm test:orchestrator` at 667/667 in 198 suites
+  (`C:/w/ea/orchestrator`), typecheck, lint, format, the standalone exact
+  workflow contract at 5/5, demo safety at 6/6, and `git diff --check`.
+  Receipt/artifact hashes and exact clean candidate identity were rechecked for
+  every receipt-owning command. The unit report SHA-256 is
+  `dea8dedd15d76b674615b1733b2f66aca0bfb48cf6fa45864172f3136a959498`;
+  the orchestrator report SHA-256 is
+  `bda9826af15a4dc264708292f9027b3328501b8bd6ac4da4928a4d2da808b624`.
+- Exact no-argument `pnpm verify` ran for 59.8 minutes at
+  `C:/w/za/artifacts/verify-2026-08-29T060015-721Z-1184`. It ended honestly
+  FAIL/exit 1 with 2 PASS, 2 FAIL, 11 NOT_READY, and 0 ERROR stages. The nested
+  full unit command passed 683/683 with valid receipt/summary, all supervised
+  commands had no timeout, output-limit, stream-drain, or duplicate-settle
+  defect, contract integrity passed, and initial/final candidate identity was
+  exact clean Q with no drift. Only the existing dependency and architecture
+  placeholders, undeclared production build/domain/readiness commands, and
+  unattested execution provider keep completion ineligible. The result and
+  run-manifest SHA-256 values are
+  `82a062381ed983fdae49d99a96b387a65a09907b88e905f2d7ebeac2ea24e7eb`
+  and
+  `3b1e9dcfd1a05597ea2b2345b5108d108338b0bedc02c3a1e1b68283f35e369a`.
+- The final implementation diff from documentation-only Y changes 24 tracked
+  files and does not touch the active verification manifest, commissioning
+  source, exact-runtime workflow, slow-suite registry, `benchmark.ts`,
+  package/verify entry points, frozen authority, or acceptance files. The
+  immutable lock remains
+  `d1166088b00c54af65e8654188adc58a3cabd9d7908820809fe66af28c933050`;
+  the protected roadmap remains
+  `53ea98fb1cb880163a02d3b1d9365963e3fe891025ae3630f00bd4c9232293b1`.
 
 ## Next Action
 
-Commit the focused PID-incarnation fix-forward candidate, clone its exact
-commit to a fresh short path, and repeat owner/shadow qualification before the
-remaining broad and no-argument checks.
+Begin intended WP6d only under a new active plan. WP6d owns the benchmark CI
+lane and the prescribed repeated cold/warm Windows/Linux matrix, consuming the
+strict compact summaries without redefining test success. It must preserve the
+legacy commissioned schedule and must not recompose the active manifest or
+candidate tiers; that belongs to intended WP6e. Performance interpretation and
+the go/no-go decision remain intended WP6f. This closeout makes no Linux,
+cross-platform performance, benchmark-improvement, or cutover claim.

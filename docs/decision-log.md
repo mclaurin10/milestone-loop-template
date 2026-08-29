@@ -3,6 +3,94 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-29 — Same-host controller liveness is PID plus incarnation
+
+**Decision.** A live PID is the recorded controller only when its observed
+process start time matches the lease's `processStartedAt` within the existing
+tolerance. This comparison applies to every same-host owner, not only a stale
+owner whose PID happens to equal the acquiring process PID. Windows uses a
+bounded, noninteractive Windows PowerShell `Get-Process` query; other supported
+hosts use bounded `ps` under the C locale. If the occupant disappeared, the
+lease is stale. If the start times differ, the PID was reused and the lease is
+stale. If start-time observation is unavailable, ownership remains live and
+acquisition fails closed. Git expected-old ref publication and exact-token
+release remain the ownership authority.
+
+**Why.** A hard-loss process leaves its owner blob by design. `kill(pid, 0)`
+proves only that some current process has the number, and the clean WP6 shadow
+captured frequent Windows PID reuse while exercising thousands of Git
+processes. Treating a replacement process as the controller produced a false
+live-owner block. The prior special case already recorded start time to handle
+the acquiring process's own reused PID but failed to apply the discriminator
+to every other PID. Alternatives rejected: retrying or sleeping around the
+race, weakening live-owner exclusion, deleting a lease because it is old,
+test-only serialization, or treating the failed shadow as flaky/pass. The
+regression first refuses a genuine external live owner with a matching start
+time, then reuses that still-live PID with an old recorded incarnation and
+requires safe expected-old recovery.
+
+**Affected files.** `controller-lease.ts`, its focused regression, and the
+active plan. Lease schema, Git ref protocol, host-instance boundary, status/
+doctor contracts, product scope, and immutable acceptance are unchanged.
+
+## 2026-08-29 — Non-semantic compact summaries and summary-only reduction (intended WP6b)
+
+**Decision.** Protocol `milestone-loop-test-run-measurement.v1` defines strict
+version `1.0.0` per-run summaries and deterministic reductions. Each measured
+legacy or owner command emits exactly one receipt-owned summary binding its
+run/stage/command/role/owner, exact candidate identity, platform/runtime,
+timestamps, report set, counts, units, boundary descriptions, and explicit
+availability for wall, setup, Git-fixture, process-startup, test-body, CPU, and
+peak-RSS measurements. A command-scoped preload probe observes Node processes;
+Git time is summed child-call elapsed time, startup is measured through
+`spawn` handle return (with synchronous launches counted separately), CPU is
+summed over published process records, and peak RSS is the maximum individual
+instrumented-process peak. None of these intervals is assumed additive.
+
+The shadow reducer reads only validated receipt-bound summaries, never raw
+reports or logs. It requires the exact expected identity set and candidate,
+sorts by stage/command/run identity, rejects missing/unexpected/duplicate,
+malformed, contradictory, stale, or mismatched inputs, and hash-binds both the
+input set and canonical output. Missing observation is represented only by an
+explicit `unavailable` or `not-applicable` disposition and reason; it is never
+zero-filled. A persistent incomplete probe record makes the affected process
+metrics unavailable after a bounded atomic-rename quiescence window but does
+not rewrite a passing/failing test disposition. Summary and reduction flags
+permanently state that the evidence changes no test success, authorizes no
+cutover, and makes no benchmark claim.
+
+The semantic shadow proof remains independently raw-report based. It now has
+separate missing and unexpected semantic-ID mutations plus a real executed
+fixture omission that must fail without a PASS receipt and retain the omitted
+identity. Summary evidence supplements but cannot replace ownership,
+disjoint-union, raw-disposition, or semantic-equivalence proof.
+
+**Crosswalk and sequencing.** Historical repository “WP6b” is the
+owner-derived partition/shadow package and maps to intended **WP6c**. Intended
+WP6a is inventory, WP6b is this compact-summary/instrumentation package, WP6c
+is ownership/shadow, WP6d is benchmark CI, WP6e is manifest/tier
+recomposition, and WP6f is measurement go/no-go. Historical records and
+evidence identities are not renamed. The commissioned legacy schedule remains
+authoritative through WP6d; this decision does not edit the active manifest,
+workflow commands, slow registry, tiers, or `benchmark.ts` semantics.
+
+**Why.** Existing receipts proved execution but could not support comparable
+phase/resource analysis, and consuming raw reports in a later benchmark lane
+would couple measurement to large format-specific evidence. Strict compact
+artifacts provide a small independently validated input while retaining raw
+evidence for semantic truth. Alternatives rejected: wall-time-only records,
+inferring setup/body/resource fields, process-tree RSS sums mislabeled as a
+peak, silently dropping incomplete probes, reading raw reports in the reducer,
+allowing summary absence to pass, changing test success from metrics, running
+the Windows/Linux matrix in this increment, or recomposing tiers before WP6d
+evidence exists.
+
+**Affected files.** New summary/reduction runtime, preload probe, JSON schemas,
+and regressions; evidence, invariant, process-supervision, owner/shadow, and
+fixture-dependency integration; ownership catalogue; operator/contract docs;
+and active plan/log records. Frozen authority and product behavior are
+unchanged.
+
 ## 2026-08-26 — Exact durable citations and two-identity closeout evidence
 
 **Decision.** A tracked durable citation exists only when tracked bytes contain

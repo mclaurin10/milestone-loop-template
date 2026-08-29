@@ -3,6 +3,109 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-29 — Intended WP6b summaries and intended WP6c acceptance closeout
+
+**Objective and crosswalk.** Complete intended WP6b's compact non-semantic
+measurement summaries and repair intended WP6c's omission acceptance surface.
+Repository history used “WP6b” for owner-derived partition/shadow execution;
+that historical package corresponds to intended **WP6c**. The forward sequence
+is WP6a inventory, WP6b summaries/instrumentation, WP6c ownership/shadow, WP6d
+benchmark CI, WP6e manifest/tier recomposition, and WP6f measurement go/no-go.
+This crosswalk preserves history and does not amend the commissioned schedule.
+
+**Outcome.** Protocol `milestone-loop-test-run-measurement.v1` now has strict
+`1.0.0` runtime and JSON Schema contracts for one command-owned run summary and
+one deterministic summary-only reduction. A summary binds run/stage/command,
+role/owner, exact candidate commit/tree/cleanliness, Windows/Linux and pinned
+runtime provenance, report hashes/counts, units, explicit timing boundaries,
+and measured/unavailable/not-applicable dispositions for wall, setup, Git
+fixture, process-startup, test-body, CPU, and peak-RSS observations. Peak RSS is
+truthfully the maximum instrumented-process peak, not a concurrent process-tree
+peak. Genuine producer receipts hash-bind summaries; the shadow receipt
+hash-binds the reduction. Missing, malformed, contradictory, stale, duplicate,
+or candidate/command-mismatched input fails closed. Metrics cannot alter test
+success, authorize cutover, or make a benchmark claim.
+
+WP6c regressions now pin separate missing and unexpected semantic test
+identities. A production-boundary omission mutation executes a real two-test
+Vitest fixture, removes one executed assertion from the partition report, and
+proves aggregate failure, no PASS `result.json`, retained raw reports, and an
+exact named `missingTests` entry. Its retained proof at
+`C:/w/wp6b-i1/omission-mutation/test-partition-omission-mutation-proof.json`
+has SHA-256
+`5c1fc94219b59ba73616e4679c3029b9aad58f3724a65d0c454c9bdbcd6c5e97`;
+the FAIL manifest hash is
+`16044abc56e91789c23516e593971be7f9e3e6ac79ead019aeab7fe6825926d1`.
+
+**Qualification-discovered regression.** The first clean shadow on initial
+implementation commit `75788cbb6bec6d820df343bd102372a9417bae9e`
+(tree `b6014911da834b72edbfb09f74638888f26a77a5`) retained a genuine FAIL at
+`C:/w/e9/shadow`: legacy orchestrator passed 665/666 assertions, but hard-loss
+candidate recovery mistook an unrelated live process for a crashed controller
+after PID reuse. Probe records independently showed repeated PID reuse,
+including one reuse within 55 seconds. Same-host lease liveness now compares
+the recorded start time with a bounded Windows `Get-Process` or POSIX `ps`
+observation for every live PID; a different incarnation is stale and an
+unavailable observation remains fail-closed. The focused 18-test lease suite
+preserves genuine external live-owner exclusion and proves reclaimed reuse.
+The original 16-row hard-loss matrix then passed under the WP6 probe at
+`C:/w/e9/pid-fix-focused/candidate-prepare-matrix.json`.
+
+**Exact clean qualification.** Fix-forward executable candidate Q is
+`b1d43a2abaf46ad16a79e32b08b3a9b9a548eace`, tree
+`acdf9100b96ce17ec5fd2a1df10aba75362b3ce9`. Fresh short clone `C:/w/za`
+used Node `24.18.0`, pnpm `11.15.1`, and a frozen offline copy install; final
+external evidence is `C:/w/ea`. Focused summary/reducer/schema, omission,
+ownership, supervision/receipt, exact-workflow, and PID regressions passed
+103/103. Ownership passed for 82 files; standalone partitions passed
+663/16/4/1 tests for controller/repository/adopter/trusted owners. The
+five-command invariants suite passed. Exact `test:unit` passed 683/683 in 200
+suites, exact `test:orchestrator` passed 667/667 in 198 suites, and typecheck,
+lint, format, exact-runtime workflow 5/5, demo safety 6/6, and
+`git diff --check` passed.
+
+The final `C:/w/ea/shadow` aggregate passed 684 unique tests over the exact
+82-file disjoint union. It reduced 1,351 legacy observations to the same 684
+semantic identities as the owner partitions with every conflict/delta list
+empty. Its receipt/proof/reduction SHA-256 values are
+`74cd01dffdeb7073eebd331600a8473778a2e636d09ec57e86944cf26841cc55`,
+`5e356ebc80013dd2cde2962da8f2dbebe20749c108969b609326b92a7f9ace42`,
+and
+`5b2fbfa886fbd386d1a1d44360b9c848a0ee0f3fd0411dba4e135510c701eca5`.
+Independent runtime validation accepted all eight summary inputs and the
+reduction; all declared receipt/artifact sizes and hashes, raw passing
+dispositions, exact clean candidate identities, resource dispositions, and
+false non-semantic flags were rechecked.
+
+**Honest readiness result.** Exact no-argument `pnpm verify` ran for 59.8
+minutes at
+`C:/w/za/artifacts/verify-2026-08-29T060015-721Z-1184/result.json` (SHA-256
+`82a062381ed983fdae49d99a96b387a65a09907b88e905f2d7ebeac2ea24e7eb`).
+It ended FAIL/exit 1 with 2 PASS, 2 FAIL, 11 NOT_READY, and 0 ERROR stages.
+The nested full unit command passed 683/683 with valid receipt and summary;
+contract integrity passed; every supervised command had clean timeout/output/
+drain facts; and start/final candidate identity stayed exact clean Q with no
+drift. Existing dependency/architecture placeholders, undeclared build/domain/
+readiness scripts, and the unattested provider are the only causes. Completion
+is ineligible and no autonomous-readiness claim is made.
+
+**Commits and boundary.** Intended WP6b/WP6c implementation commit is
+`75788cbb6bec6d820df343bd102372a9417bae9e`; qualification fix-forward Q is
+`b1d43a2abaf46ad16a79e32b08b3a9b9a548eace`. The successor containing this
+entry is documentation-only and is not represented as shadow-tested. The
+active manifest, commissioned source, exact-runtime workflow, slow registry,
+`benchmark.ts`, package/verify entry points, frozen authorities, acceptance
+meaning, CAL-1, tiers, and readiness gates are unchanged. The protected human
+roadmap remains byte-identical at SHA-256
+`53ea98fb1cb880163a02d3b1d9365963e3fe891025ae3630f00bd4c9232293b1`.
+
+**Known gaps / handoff.** No benchmark matrix or Linux performance result was
+run, and these observations support no improvement or cutover claim. Intended
+WP6d must begin under a new plan and add only the benchmark CI lane plus the
+prescribed repeated cold/warm Windows/Linux matrix consuming these summaries.
+The legacy schedule remains authoritative. WP6e alone owns any later
+manifest/tier recomposition; WP6f owns interpretation and go/no-go.
+
 ## 2026-08-26 — WP6b closed on exact executable candidate X
 
 **Outcome.** WP6b is closed on executable commit
