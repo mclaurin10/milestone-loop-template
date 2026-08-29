@@ -1,335 +1,317 @@
 # Current Execution Plan
 
-**Status:** Complete — intended WP6b instrumentation and WP6c omission coverage
+**Status:** Active — step 0 (hosted CI validation of the pushed head) in progress
 **Updated:** 2026-08-29
 **Owner:** autonomous loop
+**Predecessor:** intended WP6b/WP6c closed at commit
+`62f225f` (docs closeout; executable candidate Q
+`b1d43a2abaf46ad16a79e32b08b3a9b9a548eace`) — see the 2026-08-29
+autonomy-log entry.
 
 ## Objective
 
-Complete intended WP6b by adding command-owned, schema-validated compact
-per-run measurement summaries and a deterministic summary-only reducer, then
-repair the intended WP6c partition/shadow acceptance surface with semantic-ID
-and integration-level omission mutations. Produce exact, independently checked
-evidence and a durable handoff to intended WP6d.
+Complete intended **WP6d** in two bounded parts, in order:
 
-Historical naming crosswalk: repository history called the owner-derived
-partition and shadow implementation “WP6b”; that historical work corresponds
-to intended **WP6c**. Intended **WP6b** is the compact-summary and measurement
-instrumentation increment in this plan. This crosswalk describes history and
-does not rewrite it or change the legacy commissioned schedule.
+1. **Measurement-contract repair.** Close the 2026-08-29 external review
+   findings so that contradictory producer output actually fails closed at the
+   summary and reduction validators before anything consumes those artifacts,
+   and make the omission-mutation evidence claim only what it exercises.
+2. **Benchmark CI lane.** Add the additive hosted lane that runs the
+   prescribed repeated cold/warm Windows/Linux matrix over the measured
+   verification commands, consuming strict compact summaries
+   (`milestone-loop-test-run-measurement.v1`), producing per-run reductions
+   and deterministic descriptive statistics, and making no benchmark,
+   improvement, or cutover claim.
 
-Explicit non-goals are candidate-tier or manifest recomposition, workflow argv
-changes, slow-suite registry changes, benchmark CI or the Windows/Linux matrix,
-`benchmark.ts` semantic changes, product behavior, readiness meaning, CAL-1,
-and any frozen authority or immutable acceptance change.
+Explicit non-goals: manifest/tier/slow-registry recomposition and any
+candidate-schedule change (intended WP6e); performance interpretation and the
+go/no-go decision (intended WP6f); `benchmark.ts` / commissioned D032
+(`d032-loop-efficiency.v1`) semantics; test-success meaning; readiness gates;
+CAL-1; frozen authorities; immutable acceptance; rewriting historical records.
 
 ## Goal Constraints
 
-- Preserve `PROJECT_GOAL.md`, the original acceptance contract, immutable hash
-  baselines/active hashes, readiness gates, and the protected untracked roadmap
-  byte-for-byte.
-- Keep the commissioned legacy verification schedule authoritative. The new
-  measurements are non-semantic: missing or invalid summaries block only the
-  new summary/reducer proof, never redefine an underlying test result or
-  authorize a tier cutover.
-- Preserve the existing owner catalogue, disjoint-union proof, same-commit
-  legacy/partition semantic comparison, exact-runtime workflow commands,
-  active verification manifest, and all public owner command identities.
-- A successful command must own a genuine receipt whose declared artifacts
-  hash-bind the compact summary. The reducer must consume only validated
-  summaries, use deterministic ordering, and write hash-bound output.
-- Measurement fields must define units, boundaries, platform/runtime
-  provenance, and explicit measured/unavailable/not-applicable dispositions.
-  Wall time, setup, Git-fixture work, process startup, test-body time, CPU, and
-  peak RSS must remain distinguishable rather than inferred or conflated.
-- Retain valid raw evidence and rejected-candidate history. Do not represent
-  documentation-only Y (`c52a4748193dea0b19a558c79a9ced3ee4ed14e0`) as
-  shadow-tested; executable predecessor X is
-  `0400c32f93ebf0b7d8e6be165e880dd9aff2ebbe`.
+- Preserve `PROJECT_GOAL.md`, the original acceptance contract, readiness
+  gates, and every frozen authority byte-for-byte. The immutable lock remains
+  `d1166088b00c54af65e8654188adc58a3cabd9d7908820809fe66af28c933050`; the
+  protected untracked roadmap remains untracked and byte-identical at
+  `53ea98fb1cb880163a02d3b1d9365963e3fe891025ae3630f00bd4c9232293b1`.
+- The legacy commissioned candidate schedule stays authoritative throughout
+  WP6d. The active generic verification manifest, verification tiers,
+  `config/slow-suite-registry.json`, `benchmark.ts`, package/verify entry
+  points, and the existing `.github/workflows/exact-runtime-ci.yml` jobs are
+  not modified. New scripts/workflows are additive only.
+- Measurement artifacts remain non-semantic: `nonSemantic` flags stay false;
+  metrics can never alter test success, authorize cutover, or state a
+  benchmark claim.
+- Historical log entries and retained evidence are never rewritten or edited;
+  corrections are appended.
 
 ## Baseline Evidence
 
-- `master`, `origin/master`, and HEAD are Y
-  `c52a4748193dea0b19a558c79a9ced3ee4ed14e0`, tree
-  `fa295001603084576dbd95274bc9c0989fcd7f15`; `X..Y` changes only
-  `.agent/current-exec-plan.md`, `docs/autonomy-log.md`, and
-  `docs/decision-log.md`.
-- The sole worktree entry before this plan was protected untracked
-  `Implementation-ready improvement plan 8-5-26.txt`, independently checked at
-  SHA-256
-  `53ea98fb1cb880163a02d3b1d9365963e3fe891025ae3630f00bd4c9232293b1`.
-- `evals/immutable-contract-lock.json` is unchanged at SHA-256
-  `d1166088b00c54af65e8654188adc58a3cabd9d7908820809fe66af28c933050`.
-- Existing `test-partitions.ts` proves file ownership/union and semantic
-  equivalence from raw Vitest reports. Unit mutations cover file-union omission
-  and semantic mismatch, but do not explicitly pin missing and unexpected test
-  identities, and no integration mutation removes one executed representative
-  test while checking aggregate failure/no-PASS-receipt/retained evidence.
-- Existing partition and aggregate receipts bind raw reports and the shadow
-  proof, but no compact measurement-summary schema or summary-only reducer is
-  present. Existing timing fields do not distinguish the required measurement
-  phases or resource dispositions.
-- Retained X evidence remains at `C:/w/e8`, including `shadow/` and the honest
-  default-readiness failure; it is historical baseline evidence, not evidence
-  for this increment.
+- HEAD `62f225f` pushed to `origin/master` on 2026-08-29; hosted run
+  33267979183 **failed**, as did the runs for both prior WP6-era pushes
+  (32923050149 at `18324be` and 33010495747 at `c52a474`, both 2026-08-26).
+  Hosted CI has been red since the WP6c ownership gate landed; the last green
+  hosted run is 32785374927 at `b01467b` (2026-08-24). The trusted-container
+  job passes; the failures are Controller (both platforms, invariant suite →
+  `test-ownership`) and Fresh adopter smoke (both platforms, generated
+  adopter strict typecheck). Neither WP6b/c closeout claimed hosted-CI
+  status, but the lease-liveness `ps` path still has no hosted-Linux
+  execution because the invariant suite fails before the test suites run.
+- Root cause A (diagnosed 2026-08-29 from retained CI evidence): the
+  ownership gate's `runVitestDiscoveryPass`
+  (`src/test-ownership.ts` ~lines 729–774) parses the entire
+  `pnpm exec vitest list --json` stdout as JSON. On hosted runners pnpm 11
+  prints its pre-run dependency-verification banner ("Scope: all 2 workspace
+  projects", supply-chain policy line, "Already up to date") to stdout ahead
+  of vitest's JSON — the retained
+  `ownership-discovery-01-1.stdout.log` shows the valid JSON array after the
+  banner. Local runs emit no banner, which is why qualification passed.
+- Root cause B (reproduced locally 2026-08-29, exit 2 with the identical
+  error): `src/test-ownership.ts` line 9 imports
+  `../ci/exact-runtime-workflow-contract.js`, but the adopter packager
+  (`src/adopter-package.ts` `copyReusableRuntime`, ~lines 482–505) copies
+  only `src/**/*.ts`; nothing under `tools/milestone-orchestrator/ci/` is
+  packaged, so every generated adopter fails strict typecheck with TS2307.
+  Related latent gap found on the same path: `src/test-run-probe.cjs` is
+  excluded by the `.ts`-only filter, so packaged adopters are missing the
+  WP6 probe at runtime even though `test-run-summary.ts` resolves it by
+  path (`PROBE_PATH`, line 37).
+- Candidate Q closeout evidence (autonomy log 2026-08-29): eight validated
+  summaries and one reduction, external evidence at `C:/w/ea`;
+  receipt/proof/reduction SHA-256
+  `74cd01df…`, `5e356ebc…`, `5b2fbfa8…`.
+- External review findings, independently verified in code on 2026-08-29:
+  - **Summary validator** (`src/test-run-summary.ts`): measured durations
+    accept `sampleCount === 0` (`validateDuration`, ~line 394); an
+    unavailable probe constrains `processCount` but not
+    `synchronousLaunchCount` (~lines 766–773); no relationship couples probe
+    availability to Git/startup/test-body/CPU/RSS availability, and
+    CPU/RSS `processCount` are never reconciled with `probe.processCount`
+    (~lines 706–773). The loader (~line 1451) and the reducer (~line 1558)
+    both delegate to the same `assertTestRunSummary`, so no second layer
+    catches these.
+  - **Reduction validator** (`src/test-run-summary.ts`):
+    `validateDispositionCounts` (~lines 1686–1713) never reconciles
+    disposition rows with the `measuredCount`/`unavailableCount`/
+    `notApplicableCount` counters or with `inputCount`; duration metrics have
+    no zero-measured coherence rule (~lines 1915–1916), although RSS has the
+    analogous rule (~line 1979); inputs accept a null `owner` for any role
+    including `partition` (~lines 1792–1796).
+  - **Omission mutation** (`src/test-partitions.ts`): the test-only CLI
+    (~line 1822) runs real Vitest and the production comparator but bypasses
+    the normal aggregate finalization (compare → validate summaries → reduce
+    → proof → throw-before-receipt, ~lines 1655–1759); its retained FAIL
+    message (~line 2012) claims "the aggregate rejected … and issued no PASS
+    receipt", overstating what ran.
+  - Reviewer recalibrations to confirm, not assume: all eight retained Q
+    summaries and the retained reduction are claimed to satisfy the missing
+    relationships; `reduceTestRunSummaries` is claimed to currently generate
+    internally consistent reductions.
+- Measured command surface: legacy `test:orchestrator` / `test:unit`,
+  partition scripts `test:partition:<owner>` (controller-runtime,
+  repository-tooling, adopter-template, trusted-container-fixture), aggregate
+  `test:partitions:shadow`; probe preload `src/test-run-probe.cjs`; JSON
+  Schemas `schemas/test-run-summary.schema.json` and
+  `schemas/test-run-reduction.schema.json`.
+- Honest no-argument `pnpm verify` remains FAIL (2 PASS / 2 FAIL /
+  11 NOT_READY) solely from pre-existing placeholder stages; this bounds
+  completion claims and is out of scope here.
 
 ## Steps
 
-1. **Complete — inspect and reconcile baseline.** Validate authorities, Git
-   identities, protected bytes, historical evidence, WP6 records, current
-   partition implementation, and acceptance omissions.
-2. **Complete — implement intended WP6b contracts and instrumentation.** Add
-   strict compact-summary/reducer schemas, phase/resource instrumentation,
-   command-owned artifact/receipt binding, deterministic summary-only
-   reduction, and fail-closed missing/malformed/contradictory/stale/identity
-   mutation coverage.
-3. **Complete — repair intended WP6c omission coverage.** Add explicit missing
-   and unexpected semantic-ID mutations plus an integration mutation that
-   omits one representative executed test and proves aggregate nonzero, no PASS
-   receipt, and useful retained diagnostics.
-4. **Complete — qualify the tracked implementation.** Run focused and broad
-   checks with pinned Node/pnpm, inspect schemas, receipts, hashes,
-   dispositions, identities, and resource summaries, and correct every harness
-   defect without changing commissioned semantics.
-5. **Complete — commit executable candidate and run clean short-path shadow.**
-   Commit the cohesive implementation, clone that exact commit to short paths,
-   run ownership/owners/shadow, and independently validate all declared
-   evidence. Preserve failed attempts accurately. The first clean-candidate
-   shadow exposed a pre-existing controller-lease PID-incarnation race during
-   hard-loss recovery; fix that fail-closed liveness defect with focused
-   regression coverage before repeating the complete clean shadow.
-6. **Complete — record closeout and commit documentation successor.** Update
-   this plan, autonomy log, and decision log with the crosswalk, exact evidence,
-   executable/documentation identities, limitations, and intended WP6d handoff;
-   verify the successor is documentation-only and leave the tracked tree clean.
+0. **[in progress] Restore hosted CI at the pushed head.** Both root causes
+   are diagnosed (see Baseline Evidence); fix forward and re-run until the
+   exact-runtime matrix is green on both platforms, which also gives the
+   lease-liveness `ps` path its first Linux execution. No later step starts
+   on a red head.
+   - **0a — ownership discovery must not parse a shared stdout stream.**
+     Have Vitest write discovery JSON to a declared file (`vitest list
+     --json=<path>` into the discovery artifact directory) and parse that
+     file, so wrapper stdout (pnpm banners, warnings) cannot corrupt the
+     input; keep the fail-closed behavior for a missing/invalid file.
+     Regression: discovery succeeds with polluted stdout, still fails on
+     malformed/missing JSON file output.
+   - **0b — package the `ci/` contract module the runtime now imports.**
+     Make the adopter package include
+     `tools/milestone-orchestrator/ci/exact-runtime-workflow-contract.ts`
+     (or relocate the contract under `src/` if that stays cohesive), and
+     decide `test-run-probe.cjs` packaging explicitly: ship it so the
+     packaged summary machinery can run, or record the exclusion and its
+     runtime consequence. Regression: adopter package creation followed by
+     strict typecheck of the generated output (the local reproduction
+     already exists), so the packager can no longer drop a compile-time
+     dependency silently.
+   - **0c — re-run hosted CI** on the fix-forward commit and record the
+     green run URL for both platforms.
+1. **Tighten summary semantic validation (review finding 1).** First derive
+   the true producer invariants from the summary producer and
+   `test-run-probe.cjs`, then encode only truthful relationships in
+   `assertTestRunSummary`:
+   - unavailable probe ⇒ `synchronousLaunchCount === 0`;
+   - unavailable probe ⇒ `gitFixtureTime`, `processStartupTime`,
+     `testBodyTime`, `cpuTime`, `peakRss` must not be `measured`;
+   - measured `wallTime`/`setupTime`/`testBodyTime` ⇒ `sampleCount ≥ 1`;
+     per-metric floors for `gitFixtureTime`/`processStartupTime` exactly as
+     the producer can truthfully emit them (e.g. measured Git time with zero
+     samples is legitimate only with `nanoseconds === "0"`), derived, not
+     guessed;
+   - measured `cpuTime.processCount`/`peakRss.processCount` reconciled with
+     `probe.processCount` using the exact producer relation (`===` or `≤`,
+     as derived).
+   Regressions must drive every reviewer-demonstrated contradiction class
+   through the production path (`loadValidatedTestRunSummary` with matching
+   bytes/SHA-256, then `reduceTestRunSummaries`) and must also pin one
+   legitimate boundary emission per new rule as still accepted.
+2. **Tighten reduction semantic validation (review finding 2).** In
+   `assertTestRunReduction`: reconcile disposition rows summed by
+   availability against the per-metric counters and require the rows to total
+   `inputCount`; duration metrics with `measuredCount === 0` require
+   `totalNanoseconds === "0"` and `sampleCount === 0`; CPU with
+   `measuredCount === 0` requires zero user/system/total; encode the
+   role-conditional owner rule matching the child definitions (`partition` ⇒
+   non-null owner; legacy roles exactly as the producer emits). Regressions
+   exercise `writeTestRunReduction` → reload → assert.
+3. **Truthful omission evidence (review finding 3).** Reword the retained
+   FAIL-manifest message (`test-partitions.ts` ~line 2012) to claim only the
+   exercised boundary (production comparator inside the test-only CLI). Add
+   aggregate-boundary coverage: preferred — mechanically extract the existing
+   shadow finalization block (semantic compare → summary validation →
+   reduction → proof → receipt decision) into one internal function with
+   unchanged behavior, order, and error text, verified by the existing shadow
+   suites, then integration-test it with real fixture child reports proving a
+   mutated partition report yields a FAIL proof, a failure manifest, and no
+   PASS receipt. Fallback if that extraction cannot stay bounded and
+   behavior-preserving — an env-gated fault point in the shadow CLI, or an
+   explicit recorded limitation. No production trust boundary may be
+   weakened.
+4. **Re-validate retained evidence and append corrective records.** Run the
+   tightened validators over the eight retained Q summaries and the retained
+   reduction (external evidence at `C:/w/ea`); confirmation validates the
+   reviewer's recalibration, and any rejection is a stop-and-record event
+   (it would invalidate the "retained evidence unaffected" claim), never a
+   silent rule relaxation. Append a decision-log entry for the tightened
+   acceptance (including the schema-version treatment: default is unchanged
+   `1.0.0` shape with tightened runtime acceptance, recorded with rationale)
+   and an autonomy-log correction stating the prior "contradictory input
+   fails closed" claim was overbroad, enumerating the admitted classes.
+5. **Build the measurement-lane runner.** New additive CLI (e.g.
+   `src/measurement-lane-cli.ts` plus a `loop:measurement-lane` script) that
+   executes a declared measured command set under the WP6 probe for one
+   repetition, records the declared cold/warm classification with its exact
+   workspace-state definition, validates every emitted summary, and writes
+   one per-run reduction plus a lane run record binding ordinal, cold/warm,
+   platform/runtime provenance, exact candidate identity, and artifact
+   hashes. Missing or invalid summaries fail the run closed. No thresholds,
+   no comparisons, no claims. Unit tests cover the record contract and the
+   fail-closed paths.
+6. **Add the benchmark CI workflow.** New file
+   `.github/workflows/wp6-measurement-matrix.yml`, `workflow_dispatch` only,
+   matrix ubuntu-24.04 + windows-2022, pinned Node `24.18.0` / pnpm
+   `11.15.1`, serial execution: per platform at least five cold repetitions
+   (each in a fresh clone with a fresh frozen install) and at least five warm
+   repetitions (same workspace after its cold run), each repetition through
+   the step-5 runner; all summaries, reductions, and lane records retained as
+   artifacts (`if-no-files-found: error`); a final deterministic statistics
+   artifact per platform reporting median, range/median-absolute-deviation,
+   CPU, peak-RSS, and test counts per command across repetitions, with no
+   pass/fail judgment. `exact-runtime-ci.yml` stays byte-identical.
+7. **Execute and independently validate one full matrix.** Dispatch the
+   workflow once on the exact candidate commit; on completion, independently
+   re-validate the retained artifacts (hashes, dispositions, identity and
+   cold/warm binding, statistics recomputation) and record the hosted run
+   URL and artifact hashes.
+8. **Closeout.** Update this plan, the autonomy log, and the decision log
+   with exact evidence, limitations, and the successor handoff: intended
+   WP6e alone owns manifest/tier recomposition consuming this lane's
+   evidence; intended WP6f owns interpretation and go/no-go. Leave the
+   tracked tree clean.
 
 ## Acceptance Criteria
 
-- Every measured run emits one strict compact summary with deterministic field
-  and collection ordering, exact candidate/command/run identity, defined units
-  and boundaries, Windows/Linux/runtime provenance, explicit availability for
-  every required timing/resource metric, and no semantic effect on the run.
-- Each summary is declared by its producing command receipt. The reducer
-  accepts only validated summary artifacts, reads no raw reports/logs, rejects
-  missing, malformed, contradictory, stale, duplicate, or identity-mismatched
-  input, and emits deterministic output declared by a genuine receipt.
-- Focused mutations prove each fail-closed summary/reducer boundary, including
-  hash or candidate drift after summary creation.
-- Existing ownership, exact disjoint union, raw-report validation, child exit
-  propagation, and semantic equivalence behavior remain green.
-- Separate semantic mutations produce non-empty `missingTests` and
-  `unexpectedTests`. An integration-level executed-surface omission exits
-  nonzero, leaves no aggregate PASS `result.json`, and retains an inspectable
-  failure manifest/proof naming the omitted semantic identity.
-- No active manifest, commissioned source, exact-runtime workflow command,
-  slow-suite registry, tier composition, or `benchmark.ts` semantic diff
-  exists. No Windows/Linux benchmark matrix is run.
-- Exact implementation qualification and the final short-path shadow bind a
-  clean committed candidate. The no-argument readiness run is reported
-  honestly and contains no new harness error even if product placeholders keep
-  it non-passing.
-- Final tracked tree is clean; only the protected ignored-by-policy roadmap is
-  present untracked and its SHA-256 is unchanged.
+- Every reviewer-demonstrated contradiction class (summary and reduction) is
+  rejected through the production load/reduce/write paths, each with a
+  focused regression; every pinned legitimate boundary emission remains
+  accepted; the focused measurement/omission/ownership suites and full
+  `test:orchestrator` / `test:unit` remain green.
+- The eight retained Q summaries and the retained reduction re-validate under
+  the tightened rules, or the discrepancy is recorded and the affected
+  closeout claims are corrected before any lane work proceeds.
+- The retained omission FAIL message claims only what is exercised, and
+  aggregate-boundary FAIL ⇒ no-PASS-receipt is proven by a test — or the
+  precise residual gap is recorded as an explicit limitation with rationale.
+- One completed hosted matrix run exists with, per platform: ≥5 cold and ≥5
+  warm validated per-run reductions correctly bound to candidate, platform,
+  and cold/warm classification, plus a deterministic statistics artifact
+  reporting median, range, CPU, memory, and test counts; no artifact or log
+  states a benchmark, improvement, or cutover claim; all `nonSemantic` flags
+  are false.
+- `exact-runtime-ci.yml` is byte-identical; the active manifest, tiers, slow
+  registry, `benchmark.ts`, and package/verify entry points are semantically
+  unchanged (additions only); both protected hashes are unchanged.
+- Hosted exact-runtime CI is green on both platforms at every commit this
+  plan produces.
 
 ## Verification
 
-Use `.tools/node-v24.18.0-win-x64/node.exe` and pnpm `11.15.1` for every cited
-command. During iteration, route evidence to unique short directories outside
-the repository where supported.
-
-- Focused summary/schema/reducer and mutation tests, including the
-  integration-level omission fixture.
-- Existing `test-partitions.test.ts`, `test-ownership.test.ts`, evidence
-  receipt/supervision regressions, and exact-runtime workflow-contract tests.
-- `pnpm exec tsx tools/milestone-orchestrator/src/test-ownership-cli.ts`
-- All four `pnpm test:partition:<owner>` commands.
-- Clean committed short-clone `pnpm test:partitions:shadow` with a short
-  external evidence/runtime root, followed by independent manifest, receipt,
-  artifact-size/SHA-256, raw-disposition, candidate, reducer, and resource
-  summary inspection.
-- `pnpm test:invariants`
-- `pnpm test:unit`
-- `pnpm test:orchestrator`
-- `pnpm typecheck`
-- `pnpm lint`
-- `pnpm format:check`
-- `pnpm loop:demo-safety`
-- `git diff --check`
-- Honest no-argument `pnpm verify`
-
-No rendered/visual evidence is required because this increment changes only
-headless verification/evidence infrastructure and documentation. The required
-headless evidence is the real pinned-runtime owner/partition/shadow execution,
-not a synthetic substitute.
+- Focused per change: the new/updated Vitest suites for summary validation,
+  reduction validation, omission/aggregate boundary, and the lane runner.
+- Broad per commit: `pnpm typecheck`, `pnpm lint`, `pnpm format:check`,
+  `pnpm test:orchestrator`, `pnpm test:unit`, `pnpm test:invariants`,
+  `git diff --check`.
+- Hosted: exact-runtime CI on both platforms for every pushed commit; one
+  complete `wp6-measurement-matrix` dispatch on both platforms as the lane
+  acceptance run.
+- Independent artifact validation for step 7 runs outside the producing
+  workflow (fresh process, declared hashes rechecked).
 
 ## Risks and Recovery
 
-- Cross-platform CPU/RSS observation can be unavailable or non-comparable.
-  Record platform-specific collection method and an explicit disposition; do
-  not substitute zero or infer a value.
-- Phase instrumentation can perturb measured time. Keep probes monotonic,
-  bounded, command-scoped, and descriptive; this package records measurements
-  but makes no performance or cutover claim.
-- Vitest may not expose a clean process-start/test-body boundary. Define the
-  observable boundary precisely and fail schema validation if phases overlap,
-  exceed wall time, or claim unavailable data as measured.
-- Integration omission tests can be expensive. Use a minimal real executable
-  fixture through the production aggregate/reducer boundary, with explicit
-  test-only injection rather than weakening production validation.
-- If an implementation commit fails clean qualification, preserve its evidence
-  and fix forward in a new cohesive commit. Ordinary Git commits provide
-  rollback; never discard protected or unrelated worktree bytes.
+- **Linux liveness path fails its first hosted run** (step 0): fix forward
+  with a deterministic reproducer per repository rule; do not weaken
+  live-owner exclusion; benchmark work waits.
+- **Over-strict validation rejects truthful producer output**: rules are
+  derived from the producer before encoding, each rule carries an
+  accepted-boundary regression, and any retained-evidence rejection halts for
+  recording rather than silently relaxing a rule.
+- **Hosted runners cannot guarantee cold OS caches**: "cold" is defined and
+  recorded as fresh-workspace/fresh-frozen-install, no stronger claim is
+  made, and the boundary text lives in every lane record.
+- **Windows matrix wall time may exceed runner limits** (full suites × ≥10
+  repetitions): permitted mitigations are sharding repetitions across matrix
+  jobs or scoping the measured command set per dispatch input, with exactly
+  what ran recorded; forbidden mitigations are dropping suites, reusing
+  receipts, or marking partial runs complete.
+- **Finalization extraction drifts behavior**: the extraction must be
+  mechanical (same order, same error text) and is verified by the existing
+  shadow suites; otherwise use the fallback fault point or record the
+  limitation.
+- **Recovery**: a failed hosted run or invalid artifact invalidates that lane
+  run only — repair causally, commit, re-dispatch; retained evidence is never
+  edited; an interrupted step resumes from its recorded state in this plan.
 
 ## Progress and Evidence
 
-- Baseline inspection completed on 2026-08-28. Branch/commit/tree, X-to-Y
-  documentation-only diff, roadmap hash, immutable-lock hash, package pins,
-  current plan defect, logs, retained X evidence roots, and partition code/tests
-  were checked directly.
-- The strict summary/reduction runtime contracts and JSON schemas, receipt
-  binding, command-scoped process probe, deterministic summary-only reduction,
-  owner/legacy instrumentation, explicit missing/unexpected semantic-ID unit
-  mutations, and real executed-surface omission mutation are implemented.
-- Pinned-runtime focused checks passed for the seven summary/schema/reducer
-  tests and all twenty partition/shadow tests; the latter includes a real
-  omission CLI that exited nonzero, wrote no aggregate PASS receipt, and
-  retained its failure manifest, proof, raw reports, and fixture. Tool TypeScript
-  compilation also passed before documentation formatting. Broader
-  qualification and independent artifact inspection remain pending.
-- The first full `test:unit` qualification attempt at
-  `C:/w/wp6b-i1/unit-full` retained a truthful non-PASS report: 679/681 tests
-  passed and two isolated-copy fixtures could not resolve the new summary
-  module. No PASS receipt or summary was written. The production-build wrapper
-  fixture and contract-integrity adapter fixture now install the exact new
-  summary/probe dependency closure; both formerly failing real-subprocess
-  assertions pass focused reruns; the complete broad rerun is recorded below.
-- The repaired full-unit rerun at `C:/w/wp6b-i1/unit-full-rerun` passed all
-  681 tests in 200 suites. Independent inspection matched both receipt
-  artifact hashes and validated the strict summary: 81 report files, 315
-  instrumented processes, exact pinned runtime provenance, all required
-  measured dispositions, and false semantic/cutover/benchmark flags.
-- Two orchestrator attempts were retained rather than normalized away. The
-  first had one unchanged 30-second workspace fixture timeout; that exact
-  instrumented assertion then passed three times in 16.8–19.2 seconds without
-  a timeout change. The second passed all tests but exposed a persistent empty
-  atomic probe `.tmp` left by a force-terminated process, and therefore wrote
-  no receipt. Probe reduction now waits through a bounded rename-quiescence
-  window and classifies a persistent incomplete record as explicit
-  Git/startup/CPU/RSS unavailability without changing passing test semantics;
-  its regression passes. The unchanged orchestrator rerun then passed all 666
-  tests in 198 suites at `C:/w/wp6b-i1/orchestrator-full-rerun2`, and its
-  receipt/summary hashes and runtime/resource fields were independently
-  validated.
-- The standalone executed-surface omission mutation at
-  `C:/w/wp6b-i1/omission-mutation` exited one as designed, has no `result.json`,
-  and retains a FAIL manifest plus five declared artifacts. Its proof contains
-  exactly one named `missingTests` identity and no unexpected or outcome delta.
-- Final pre-commit checks passed: tool TypeScript, lint, formatting, 95 focused
-  summary/partition/ownership/supervision/receipt/workflow regressions, the
-  five-command invariant suite, demo safety, and `git diff --check`. The
-  protected roadmap and immutable lock remain at their baseline SHA-256 values;
-  no active manifest, exact-runtime workflow, slow-suite registry, tier,
-  benchmark, or frozen-authority file is changed.
-- No benchmark matrix, tier recomposition, or commissioned-semantic change has
-  begun.
-- Executable candidate Z is
-  `75788cbb6bec6d820df343bd102372a9417bae9e`, tree
-  `b6014911da834b72edbfb09f74638888f26a77a5`. Its clean owner inventory and
-  all four owner commands passed from `C:/w/z9`, with evidence under
-  `C:/w/e9/ownership` and `C:/w/e9/owners`.
-- The first clean Z shadow at `C:/w/e9/shadow` correctly retained a FAIL
-  manifest and no PASS receipt after legacy-orchestrator reported 665/666
-  passing assertions. The failure was the hard-loss candidate recovery matrix
-  observing an unrelated live process under a crashed controller's reused
-  PID, rather than the expected candidate-prepare blocked result. The same
-  focused assertion passed unchanged on immediate reproduction, but probe
-  records from the failed run independently show repeated PID reuse, including
-  one PID reused within 55 seconds. Controller lease liveness currently checks
-  the recorded start time only when the recorded PID equals the acquiring
-  process PID, so a different live process incarnation can be mistaken for the
-  former controller. This is a fail-closed correctness regression and must be
-  fixed and tested before shadow qualification resumes; the failed attempt is
-  not passing evidence.
-- The lease now queries the same-host occupant's actual process start time on
-  Windows (bounded Windows PowerShell `Get-Process`) or POSIX (`ps` under the C
-  locale) before treating a live PID as the recorded controller incarnation.
-  A missing occupant is stale; a start-time mismatch is PID reuse; an
-  unavailable observation remains fail-closed. The 18-test lease suite passes,
-  including one live child that is first refused under its matching start time
-  and then reclaimed only after the lease records a different incarnation.
-  The original candidate hard-loss matrix passed under the WP6 process probe
-  in 401.7 seconds and wrote its complete matrix at
-  `C:/w/e9/pid-fix-focused/candidate-prepare-matrix.json`. Typecheck, lint,
-  formatting, and diff hygiene also pass after the fix.
-- Fix-forward executable candidate Q is
-  `b1d43a2abaf46ad16a79e32b08b3a9b9a548eace`, tree
-  `acdf9100b96ce17ec5fd2a1df10aba75362b3ce9`. A fresh offline frozen install
-  in clean short clone `C:/w/za` used pinned Node `24.18.0` and pnpm `11.15.1`;
-  the corresponding external evidence root is `C:/w/ea`.
-- Final focused and owner evidence on Q passed: 103/103 focused tests in 29
-  suites (`focused/focused-report.json`, SHA-256
-  `4178930b76d181a41875eafcbe60a495dc92a53a9845357b44c3f4c4e1055320`),
-  ownership over 82 files, and standalone owner partitions of 663
-  controller-runtime, 16 repository-tooling, 4 adopter-template, and 1
-  trusted-container-fixture test. Every owner receipt/artifact hash was
-  independently rechecked; all summaries bind exact clean Q, use the pinned
-  runtime, expose valid measurement dispositions, and retain false semantic,
-  cutover, and benchmark flags.
-- The final clean shadow at `C:/w/ea/shadow` passed 684 unique tests over the
-  exact 82-file disjoint union. It deduplicated 1,351 legacy observations to
-  the same 684 semantic identities as the partitions, with no conflicts,
-  multiply selected tests, missing tests, unexpected tests, or outcome
-  mismatches. The aggregate receipt, proof, and summary-only reduction hashes
-  are respectively
-  `74cd01dffdeb7073eebd331600a8473778a2e636d09ec57e86944cf26841cc55`,
-  `5e356ebc80013dd2cde2962da8f2dbebe20749c108969b609326b92a7f9ace42`,
-  and
-  `5b2fbfa886fbd386d1a1d44360b9c848a0ee0f3fd0411dba4e135510c701eca5`.
-  Runtime validation independently accepted all eight input summaries and the
-  reduction (`inputSetSha256`
-  `5d9569fc64b2fba18fd6fee23f26a024a98308cb0f6317f0103357f540662f5c`,
-  `contentSha256`
-  `c16a8f80bca8646afb1dbfcf4d2c520ed4ed766920196d808527b7ec8fa89234`).
-  All seven metrics are measured for all eight inputs; the reduction observes
-  2,035 passing executions and carries no semantic/cutover/benchmark claim.
-- Final broad/static qualification on Q passed: the five-command invariant
-  suite (`C:/w/ea/invariants`), `pnpm test:unit` at 683/683 in 200 suites
-  (`C:/w/ea/unit`), `pnpm test:orchestrator` at 667/667 in 198 suites
-  (`C:/w/ea/orchestrator`), typecheck, lint, format, the standalone exact
-  workflow contract at 5/5, demo safety at 6/6, and `git diff --check`.
-  Receipt/artifact hashes and exact clean candidate identity were rechecked for
-  every receipt-owning command. The unit report SHA-256 is
-  `dea8dedd15d76b674615b1733b2f66aca0bfb48cf6fa45864172f3136a959498`;
-  the orchestrator report SHA-256 is
-  `bda9826af15a4dc264708292f9027b3328501b8bd6ac4da4928a4d2da808b624`.
-- Exact no-argument `pnpm verify` ran for 59.8 minutes at
-  `C:/w/za/artifacts/verify-2026-08-29T060015-721Z-1184`. It ended honestly
-  FAIL/exit 1 with 2 PASS, 2 FAIL, 11 NOT_READY, and 0 ERROR stages. The nested
-  full unit command passed 683/683 with valid receipt/summary, all supervised
-  commands had no timeout, output-limit, stream-drain, or duplicate-settle
-  defect, contract integrity passed, and initial/final candidate identity was
-  exact clean Q with no drift. Only the existing dependency and architecture
-  placeholders, undeclared production build/domain/readiness commands, and
-  unattested execution provider keep completion ineligible. The result and
-  run-manifest SHA-256 values are
-  `82a062381ed983fdae49d99a96b387a65a09907b88e905f2d7ebeac2ea24e7eb`
-  and
-  `3b1e9dcfd1a05597ea2b2345b5108d108338b0bedc02c3a1e1b68283f35e369a`.
-- The final implementation diff from documentation-only Y changes 24 tracked
-  files and does not touch the active verification manifest, commissioning
-  source, exact-runtime workflow, slow-suite registry, `benchmark.ts`,
-  package/verify entry points, frozen authority, or acceptance files. The
-  immutable lock remains
-  `d1166088b00c54af65e8654188adc58a3cabd9d7908820809fe66af28c933050`;
-  the protected roadmap remains
-  `53ea98fb1cb880163a02d3b1d9365963e3fe891025ae3630f00bd4c9232293b1`.
+- 2026-08-29 — Plan created. HEAD `62f225f` pushed; review findings verified
+  in code at the locations listed under Baseline Evidence.
+- 2026-08-29 — Step 0 diagnosis complete. Hosted run 33267979183 red on both
+  Controller lanes (invariant suite → `test-ownership`,
+  `OWNERSHIP_GATE_ERROR`: pnpm banner ahead of Vitest JSON on stdout;
+  retained log `invariants/entries/test-ownership/discovery-logs/
+  ownership-discovery-01-1.stdout.log` contains the valid JSON after the
+  banner) and both Fresh-adopter lanes (generated-adopter strict typecheck).
+  Root cause B reproduced locally: `pnpm run typecheck` in a freshly
+  generated adopter package fails exit 2 with
+  `test-ownership.ts(9,8): error TS2307: Cannot find module
+  '../ci/exact-runtime-workflow-contract.js'`. Hosted CI red since
+  `18324be` (2026-08-26); last green `b01467b` (2026-08-24). Fixes 0a/0b
+  not yet implemented.
 
 ## Next Action
 
-Begin intended WP6d only under a new active plan. WP6d owns the benchmark CI
-lane and the prescribed repeated cold/warm Windows/Linux matrix, consuming the
-strict compact summaries without redefining test success. It must preserve the
-legacy commissioned schedule and must not recompose the active manifest or
-candidate tiers; that belongs to intended WP6e. Performance interpretation and
-the go/no-go decision remain intended WP6f. This closeout makes no Linux,
-cross-platform performance, benchmark-improvement, or cutover claim.
+Implement step 0a (file-based ownership discovery JSON) and step 0b (package
+the `ci/` workflow-contract module; decide probe packaging) with their
+regressions, run the focused and broad suites, commit fix-forward, push, and
+confirm the exact-runtime matrix is green on both platforms before starting
+step 1.
