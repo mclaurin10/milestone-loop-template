@@ -3,6 +3,7 @@ import { lstat, readFile } from "node:fs/promises";
 import { hostname, tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 
+import { spawnBoundedSync } from "./bounded-spawn-sync.js";
 import { ensureContainedDirectory } from "./path-safety.js";
 import {
   CONTROLLER_LEASE_REF,
@@ -74,6 +75,81 @@ const LEGACY_GUARD = serializeJson({
 // milliseconds between reads; anything inside this window is the same process
 // incarnation, anything outside it is a reused pid.
 const PROCESS_START_TOLERANCE_MS = 10_000;
+const PROCESS_IDENTITY_TIMEOUT_MS = 5_000;
+
+type ProcessIncarnationObservation =
+  | { readonly status: "alive"; readonly startedAtMs: number }
+  | { readonly status: "dead" | "unavailable" };
+
+function windowsProcessIncarnation(pid: number): ProcessIncarnationObservation {
+  const systemRoot = process.env["SystemRoot"] ?? process.env["WINDIR"];
+  const powershell = systemRoot
+    ? join(
+        systemRoot,
+        "System32",
+        "WindowsPowerShell",
+        "v1.0",
+        "powershell.exe",
+      )
+    : "powershell.exe";
+  const script = [
+    "$targetId = [int]$env:MILESTONE_LOOP_CONTROLLER_PID",
+    "$target = Get-Process -Id $targetId -ErrorAction SilentlyContinue",
+    "if ($null -eq $target) { exit 3 }",
+    "[Console]::Out.Write($target.StartTime.ToUniversalTime().ToString('O', [Globalization.CultureInfo]::InvariantCulture))",
+  ].join("; ");
+  try {
+    const result = spawnBoundedSync(
+      powershell,
+      ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", script],
+      {
+        env: {
+          ...process.env,
+          MILESTONE_LOOP_CONTROLLER_PID: String(pid),
+        },
+        maxBuffer: 4 * 1024,
+        timeoutMs: PROCESS_IDENTITY_TIMEOUT_MS,
+      },
+    );
+    if (result.status === 3) return { status: "dead" };
+    if (result.status !== 0) return { status: "unavailable" };
+    const startedAtMs = Date.parse(result.stdout.trim());
+    return Number.isFinite(startedAtMs)
+      ? { status: "alive", startedAtMs }
+      : { status: "unavailable" };
+  } catch {
+    return { status: "unavailable" };
+  }
+}
+
+function posixProcessIncarnation(pid: number): ProcessIncarnationObservation {
+  try {
+    const result = spawnBoundedSync(
+      "ps",
+      ["-p", String(pid), "-o", "lstart="],
+      {
+        env: { ...process.env, LANG: "C", LC_ALL: "C" },
+        maxBuffer: 4 * 1024,
+        timeoutMs: PROCESS_IDENTITY_TIMEOUT_MS,
+      },
+    );
+    if (result.status === 1 && result.stdout.trim().length === 0)
+      return { status: "dead" };
+    if (result.status !== 0) return { status: "unavailable" };
+    const startedAtMs = Date.parse(result.stdout.trim());
+    return Number.isFinite(startedAtMs)
+      ? { status: "alive", startedAtMs }
+      : { status: "unavailable" };
+  } catch {
+    return { status: "unavailable" };
+  }
+}
+
+function observeProcessIncarnation(pid: number): ProcessIncarnationObservation {
+  return process.platform === "win32"
+    ? windowsProcessIncarnation(pid)
+    : posixProcessIncarnation(pid);
+}
 
 async function machineInstanceId(): Promise<string | null> {
   const path = join(tmpdir(), "milestone-loop-host-instance.json");
@@ -297,12 +373,26 @@ export class ControllerLease {
         } catch (probeError) {
           alive = errorCode(probeError) === "EPERM";
         }
-        if (alive && existing.pid === process.pid) {
-          // Our own pid under a foreign token can be a prior process incarnation
-          // after PID reuse. The recorded process start time is the discriminator.
-          const recorded = Date.parse(existing.processStartedAt);
-          const ours = Date.parse(owner.processStartedAt);
-          if (Math.abs(ours - recorded) > PROCESS_START_TOLERANCE_MS)
+        if (alive) {
+          // PID liveness alone is insufficient because the operating system can
+          // reuse a crashed controller's PID for an unrelated process. Compare
+          // the recorded start time for every same-host owner, not only when the
+          // reused PID happens to equal this process's PID. An unavailable OS
+          // observation remains fail-closed and therefore leaves `alive` true.
+          const incarnation =
+            existing.pid === process.pid
+              ? {
+                  status: "alive" as const,
+                  startedAtMs: Date.parse(owner.processStartedAt),
+                }
+              : observeProcessIncarnation(existing.pid);
+          if (incarnation.status === "dead") alive = false;
+          if (
+            incarnation.status === "alive" &&
+            Math.abs(
+              incarnation.startedAtMs - Date.parse(existing.processStartedAt),
+            ) > PROCESS_START_TOLERANCE_MS
+          )
             alive = false;
         }
         if (alive)

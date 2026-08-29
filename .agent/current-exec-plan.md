@@ -94,7 +94,10 @@ and any frozen authority or immutable acceptance change.
 5. **In progress — commit executable candidate and run clean short-path shadow.**
    Commit the cohesive implementation, clone that exact commit to short paths,
    run ownership/owners/shadow, and independently validate all declared
-   evidence. Preserve failed attempts accurately.
+   evidence. Preserve failed attempts accurately. The first clean-candidate
+   shadow exposed a pre-existing controller-lease PID-incarnation race during
+   hard-loss recovery; fix that fail-closed liveness defect with focused
+   regression coverage before repeating the complete clean shadow.
 6. **Pending — record closeout and commit documentation successor.** Update
    this plan, autonomy log, and decision log with the crosswalk, exact evidence,
    executable/documentation identities, limitations, and intended WP6d handoff;
@@ -229,9 +232,38 @@ not a synthetic substitute.
   benchmark, or frozen-authority file is changed.
 - No benchmark matrix, tier recomposition, or commissioned-semantic change has
   begun.
+- Executable candidate Z is
+  `75788cbb6bec6d820df343bd102372a9417bae9e`, tree
+  `b6014911da834b72edbfb09f74638888f26a77a5`. Its clean owner inventory and
+  all four owner commands passed from `C:/w/z9`, with evidence under
+  `C:/w/e9/ownership` and `C:/w/e9/owners`.
+- The first clean Z shadow at `C:/w/e9/shadow` correctly retained a FAIL
+  manifest and no PASS receipt after legacy-orchestrator reported 665/666
+  passing assertions. The failure was the hard-loss candidate recovery matrix
+  observing an unrelated live process under a crashed controller's reused
+  PID, rather than the expected candidate-prepare blocked result. The same
+  focused assertion passed unchanged on immediate reproduction, but probe
+  records from the failed run independently show repeated PID reuse, including
+  one PID reused within 55 seconds. Controller lease liveness currently checks
+  the recorded start time only when the recorded PID equals the acquiring
+  process PID, so a different live process incarnation can be mistaken for the
+  former controller. This is a fail-closed correctness regression and must be
+  fixed and tested before shadow qualification resumes; the failed attempt is
+  not passing evidence.
+- The lease now queries the same-host occupant's actual process start time on
+  Windows (bounded Windows PowerShell `Get-Process`) or POSIX (`ps` under the C
+  locale) before treating a live PID as the recorded controller incarnation.
+  A missing occupant is stale; a start-time mismatch is PID reuse; an
+  unavailable observation remains fail-closed. The 18-test lease suite passes,
+  including one live child that is first refused under its matching start time
+  and then reclaimed only after the lease records a different incarnation.
+  The original candidate hard-loss matrix passed under the WP6 process probe
+  in 401.7 seconds and wrote its complete matrix at
+  `C:/w/e9/pid-fix-focused/candidate-prepare-matrix.json`. Typecheck, lint,
+  formatting, and diff hygiene also pass after the fix.
 
 ## Next Action
 
-Complete final static/focused checks, inspect the protected/disallowed diff,
-then create the executable candidate commit and qualify its owner commands and
-shadow aggregate from clean short-path clones.
+Commit the focused PID-incarnation fix-forward candidate, clone its exact
+commit to a fresh short path, and repeat owner/shadow qualification before the
+remaining broad and no-argument checks.

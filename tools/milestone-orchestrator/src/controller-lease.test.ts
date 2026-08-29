@@ -146,6 +146,15 @@ function firstLine(child: ChildProcessWithoutNullStreams): Promise<string> {
   });
 }
 
+async function stopChild(child: ChildProcessWithoutNullStreams): Promise<void> {
+  if (child.exitCode !== null || child.signalCode !== null) return;
+  const closed = new Promise<void>((resolveClose) => {
+    child.once("close", () => resolveClose());
+  });
+  child.kill();
+  await closed;
+}
+
 async function waitForPath(path: string): Promise<void> {
   for (let attempt = 0; attempt < 400; attempt += 1) {
     try {
@@ -338,6 +347,54 @@ describe("controller mutation lease", () => {
       operation: "run",
     });
     await lease.release();
+  });
+
+  it("distinguishes an external live owner from a different incarnation reusing its pid", async () => {
+    const fixture = await leaseFixture();
+    const spawnedAt = new Date().toISOString();
+    const child = spawn(
+      process.execPath,
+      ["-e", 'process.stdout.write("READY\\n"); setInterval(() => {}, 1_000);'],
+      { windowsHide: true },
+    );
+    try {
+      expect(await firstLine(child)).toBe("READY");
+      if (!child.pid) throw new Error("Expected the live fixture process PID.");
+
+      const liveObjectId = writeLeaseObject(
+        fixture.root,
+        owner({
+          pid: child.pid,
+          processStartedAt: spawnedAt,
+          acquiredAt: new Date().toISOString(),
+        }),
+      );
+      await expect(
+        ControllerLease.acquire({
+          repositoryRoot: fixture.root,
+          statePath: STATE_PATH,
+          operation: "run",
+        }),
+      ).rejects.toThrow(/Another controller holds the mutation lease/);
+      expect(readLeaseObject(fixture.root).objectId).toBe(liveObjectId);
+
+      const reusedObjectId = writeLeaseObject(
+        fixture.root,
+        owner({
+          pid: child.pid,
+          processStartedAt: "2000-01-01T00:00:00.000Z",
+        }),
+      );
+      const recovered = await ControllerLease.acquire({
+        repositoryRoot: fixture.root,
+        statePath: STATE_PATH,
+        operation: "run",
+      });
+      expect(readLeaseObject(fixture.root).objectId).not.toBe(reusedObjectId);
+      await recovered.release();
+    } finally {
+      await stopChild(child);
+    }
   });
 
   it("still refuses its own live lease within the start-time tolerance", async () => {
