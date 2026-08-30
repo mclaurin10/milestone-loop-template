@@ -1,6 +1,6 @@
 # Current Execution Plan
 
-**Status:** Active — step 6 locally qualified; candidate commit and hosted gates pending
+**Status:** Active — Linux regression repaired and locally qualified; fix-forward commit pending
 **Updated:** 2026-08-30
 **Owner:** autonomous loop
 **Predecessor:** intended WP6b/WP6c closed at commit
@@ -567,10 +567,35 @@ ownership-discovery-01-1.stdout.log` contains the valid JSON after the
   exact-runtime workflow and protected untracked roadmap remain byte-identical.
   A clean candidate commit, push, exact-runtime hosted gate, full hosted
   measurement dispatch, and independent artifact download validation remain.
+- 2026-08-30 — Step 6 candidate commit
+  `487b802619969508190294128ca315691944f1e5` (tree
+  `4d7b295d5aae41637914809a7d9dcb2dae89791b`) was pushed, but exact-runtime
+  run `https://github.com/mclaurin10/milestone-loop-template/actions/runs/33318278132`
+  exposed a real Linux-only regression before any measurement dispatch.
+  Linux invariants passed, then the controller aggregate failed one suite
+  during `measurement-statistics.test.ts` setup because its portable fixture
+  hard-coded `platformId: windows` while genuine Linux compact summaries
+  correctly declared `os: linux`. No assertion was relabelled or skipped; the
+  failed job issued no PASS receipt. Both adopter jobs and trusted-container
+  passed. The still-running Windows controller was cancelled after the exact
+  failure artifact had been retained at
+  `C:/w/wp6d-ci-fail-33318278132`. The bounded repair derives fixture path,
+  IDs, and expected statistics platform from `process.platform`; the focused
+  test passes locally at `C:/w/wp6d-step6-linux-regression-local`. Exact-state
+  typecheck, lint, format, and five-command invariants pass under
+  `C:/w/wp6d-step6-fix-*`. Controller passes 203/203 suites and 691/691 tests
+  at `C:/w/wp6d-step6-fix-orchestrator` (report SHA-256
+  `3e7efb11c5e8774676e7492d60b78633e66a47d96680fbb500edd29619929bce`);
+  complete unit passes 205/205 suites and 707/707 tests at
+  `C:/w/wp6d-step6-fix-unit` (report SHA-256
+  `e86759c3fff1a57aeea1ca46dfafcb35a6798f57a5feb201f5ea36be5af8d280`).
+  Neither aggregate has a failed or pending suite/test. A fix-forward
+  commit/push and fully green replacement exact-runtime run are required
+  before step 7.
 
 ## Next Action
 
-Seal the locally qualified step-6 implementation in one cohesive commit, push
-it, require the protected exact-runtime workflow to pass, then dispatch step 7
-on that exact candidate and independently download/revalidate every retained
-pair and both statistics records.
+Qualify and commit the platform-derived statistics fixture fix, push it, and
+require the replacement protected exact-runtime workflow to pass. Only then
+dispatch step 7 on that exact candidate and independently download/revalidate
+every retained pair and both statistics records.

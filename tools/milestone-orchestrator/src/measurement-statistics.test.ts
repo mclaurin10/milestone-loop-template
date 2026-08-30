@@ -67,6 +67,9 @@ const localExecutionContext = {
   githubJob: null,
 };
 
+const fixturePlatformId =
+  process.platform === "win32" ? ("windows" as const) : ("linux" as const);
+
 const roots: string[] = [];
 let fixtureRoot: string;
 let matrixRoot: string;
@@ -236,20 +239,20 @@ async function createMatrixFixture(): Promise<void> {
     );
     const coldDirectory = resolve(
       matrixRoot,
-      "windows",
+      fixturePlatformId,
       String(ordinal),
       "cold",
     );
     const warmDirectory = resolve(
       matrixRoot,
-      "windows",
+      fixturePlatformId,
       String(ordinal),
       "warm",
     );
     const common = {
       repositoryRoot,
       ordinal,
-      workspaceId: `windows-job-${ordinal}`,
+      workspaceId: `${fixturePlatformId}-job-${ordinal}`,
       selectedCommandIds: ["legacy-fast"],
       readIdentity: async () => identity,
       executeCommand: measuredExecutor(),
@@ -258,14 +261,14 @@ async function createMatrixFixture(): Promise<void> {
     const cold = await runMeasurementLane({
       ...common,
       artifactDirectory: coldDirectory,
-      laneRunId: `windows-cold-${ordinal}`,
+      laneRunId: `${fixturePlatformId}-cold-${ordinal}`,
       classification: "cold",
       now: laneClock(ordinal, "cold"),
     });
     await runMeasurementLane({
       ...common,
       artifactDirectory: warmDirectory,
-      laneRunId: `windows-warm-${ordinal}`,
+      laneRunId: `${fixturePlatformId}-warm-${ordinal}`,
       classification: "warm",
       pairedColdRecordPath: cold.recordPath,
       now: laneClock(ordinal, "warm"),
@@ -277,7 +280,7 @@ async function createMatrixFixture(): Promise<void> {
   statisticsRecord = await buildMeasurementStatistics({
     inputRoot: matrixRoot,
     outputPath: statisticsPath,
-    platformId: "windows",
+    platformId: fixturePlatformId,
     pairCount: 5,
     selectedCommandIds: ["legacy-fast"],
     candidate,
@@ -363,7 +366,7 @@ describe("WP6 deterministic measurement statistics", () => {
         statisticsPath,
         inputRoot: matrixRoot,
         expectation: {
-          platformId: "windows",
+          platformId: fixturePlatformId,
           pairCount: 5,
           selectedCommandIds: ["legacy-fast"],
           candidate,
@@ -375,7 +378,7 @@ describe("WP6 deterministic measurement statistics", () => {
 
   it("rejects a missing pair and a stale command summary", async () => {
     const missing = await copiedMatrix("missing-pair");
-    await rm(resolve(missing, "windows", "5", "warm"), {
+    await rm(resolve(missing, fixturePlatformId, "5", "warm"), {
       recursive: true,
       force: true,
     });
@@ -383,7 +386,7 @@ describe("WP6 deterministic measurement statistics", () => {
       buildMeasurementStatistics({
         inputRoot: missing,
         outputPath: resolve(fixtureRoot, "missing-statistics.json"),
-        platformId: "windows",
+        platformId: fixturePlatformId,
         selectedCommandIds: ["legacy-fast"],
       }),
     ).rejects.toThrow(/requires 10 lane records/u);
@@ -392,7 +395,7 @@ describe("WP6 deterministic measurement statistics", () => {
     await writeFile(
       resolve(
         stale,
-        "windows",
+        fixturePlatformId,
         "1",
         "cold",
         "commands",
@@ -405,7 +408,7 @@ describe("WP6 deterministic measurement statistics", () => {
       buildMeasurementStatistics({
         inputRoot: stale,
         outputPath: resolve(fixtureRoot, "stale-statistics.json"),
-        platformId: "windows",
+        platformId: fixturePlatformId,
         selectedCommandIds: ["legacy-fast"],
       }),
     ).rejects.toThrow(/hash mismatch|summary/u);
@@ -417,7 +420,7 @@ describe("WP6 deterministic measurement statistics", () => {
         statisticsPath,
         inputRoot: matrixRoot,
         expectation: {
-          platformId: "windows",
+          platformId: fixturePlatformId,
           selectedCommandIds: ["legacy-fast"],
           candidate: { ...candidate, gitTree: "c".repeat(40) },
         },
@@ -428,7 +431,7 @@ describe("WP6 deterministic measurement statistics", () => {
         statisticsPath,
         inputRoot: matrixRoot,
         expectation: {
-          platformId: "windows",
+          platformId: fixturePlatformId,
           selectedCommandIds: ["legacy-fast"],
           executionContext: {
             provider: "github-actions",
@@ -458,7 +461,7 @@ describe("WP6 deterministic measurement statistics", () => {
         statisticsPath: mutationPath,
         inputRoot: matrixRoot,
         expectation: {
-          platformId: "windows",
+          platformId: fixturePlatformId,
           selectedCommandIds: ["legacy-fast"],
         },
       }),
