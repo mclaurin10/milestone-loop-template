@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://milestone-loop.local/schemas/measurement-lane-run-1.0.0.json",
+  "$id": "https://milestone-loop.local/schemas/measurement-lane-run-1.1.0.json",
   "title": "Milestone Loop WP6 non-semantic measurement-lane repetition",
   "type": "object",
   "additionalProperties": false,
@@ -22,7 +22,7 @@
     "contentSha256"
   ],
   "properties": {
-    "schemaVersion": { "const": "1.0.0" },
+    "schemaVersion": { "const": "1.1.0" },
     "protocolId": { "const": "milestone-loop-wp6-measurement-lane.v1" },
     "status": { "const": "PASS" },
     "laneRun": {
@@ -64,13 +64,19 @@
         "dependencyInstall": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["command", "lockfile", "modulesManifest"],
+          "required": [
+            "command",
+            "lockfile",
+            "modulesManifest",
+            "virtualStoreLockfile"
+          ],
           "properties": {
             "command": {
               "const": "pnpm install --frozen-lockfile --package-import-method=copy"
             },
             "lockfile": { "$ref": "#/$defs/file" },
-            "modulesManifest": { "$ref": "#/$defs/file" }
+            "modulesManifest": { "$ref": "#/$defs/file" },
+            "virtualStoreLockfile": { "$ref": "#/$defs/file" }
           }
         }
       }

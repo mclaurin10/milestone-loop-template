@@ -32,7 +32,7 @@ import {
 } from "./test-run-summary.js";
 import { validateCommandReceiptDirectory } from "./verifier.js";
 
-export const MEASUREMENT_LANE_SCHEMA_VERSION = "1.0.0" as const;
+export const MEASUREMENT_LANE_SCHEMA_VERSION = "1.1.0" as const;
 export const MEASUREMENT_LANE_PROTOCOL_ID =
   "milestone-loop-wp6-measurement-lane.v1" as const;
 export const MEASUREMENT_COMMAND_CATALOGUE_ID =
@@ -163,6 +163,7 @@ export interface MeasurementLaneRecord {
       readonly command: typeof DEPENDENCY_INSTALL_COMMAND;
       readonly lockfile: MeasurementLaneFileIdentity;
       readonly modulesManifest: MeasurementLaneFileIdentity;
+      readonly virtualStoreLockfile: MeasurementLaneFileIdentity;
     };
   };
   readonly candidate: TestRunCandidate;
@@ -234,6 +235,7 @@ export interface MeasurementLaneWorkspaceSnapshot {
   readonly repositoryPathSha256: string;
   readonly lockfile: MeasurementLaneFileIdentity;
   readonly modulesManifest: MeasurementLaneFileIdentity;
+  readonly virtualStoreLockfile: MeasurementLaneFileIdentity;
 }
 
 export interface RunMeasurementLaneInput {
@@ -502,6 +504,11 @@ export async function collectMeasurementLaneWorkspaceSnapshot(
       root,
       resolve(root, "node_modules", ".modules.yaml"),
       "Workspace modules manifest",
+    ),
+    virtualStoreLockfile: await fileIdentity(
+      root,
+      resolve(root, "node_modules", ".pnpm", "lock.yaml"),
+      "Workspace virtual-store lockfile",
     ),
   };
 }
@@ -778,7 +785,7 @@ export function assertMeasurementLaneRecord(
     throw new Error("Lane dependency installation state must be an object.");
   exactKeys(
     dependencyInstall,
-    ["command", "lockfile", "modulesManifest"],
+    ["command", "lockfile", "modulesManifest", "virtualStoreLockfile"],
     "Lane dependency installation state",
   );
   if (dependencyInstall["command"] !== DEPENDENCY_INSTALL_COMMAND)
@@ -792,6 +799,11 @@ export function assertMeasurementLaneRecord(
     dependencyInstall["modulesManifest"],
     "Lane modules manifest",
     "node_modules/.modules.yaml",
+  );
+  const virtualStoreLockfile = assertFileIdentity(
+    dependencyInstall["virtualStoreLockfile"],
+    "Lane virtual-store lockfile",
+    "node_modules/.pnpm/lock.yaml",
   );
 
   const candidate = assertCandidate(value["candidate"]);
@@ -1096,6 +1108,7 @@ export function assertMeasurementLaneRecord(
         command: DEPENDENCY_INSTALL_COMMAND,
         lockfile,
         modulesManifest,
+        virtualStoreLockfile,
       },
     },
     candidate,
@@ -1166,8 +1179,9 @@ function pairedColdMatchesWarm(input: {
       input.workspace.repositoryPathSha256 ||
     canonicalJson(cold.workspaceState.dependencyInstall.lockfile) !==
       canonicalJson(input.workspace.lockfile) ||
-    canonicalJson(cold.workspaceState.dependencyInstall.modulesManifest) !==
-      canonicalJson(input.workspace.modulesManifest) ||
+    canonicalJson(
+      cold.workspaceState.dependencyInstall.virtualStoreLockfile,
+    ) !== canonicalJson(input.workspace.virtualStoreLockfile) ||
     !sameStrings(
       cold.commandSet.selectedCommandIds,
       input.selectedCommandIds,
@@ -1397,6 +1411,7 @@ export async function runMeasurementLane(
         command: DEPENDENCY_INSTALL_COMMAND,
         lockfile: workspace.lockfile,
         modulesManifest: workspace.modulesManifest,
+        virtualStoreLockfile: workspace.virtualStoreLockfile,
       },
     },
     candidate,
@@ -1568,6 +1583,8 @@ export async function validateMeasurementLaneArtifacts(
         lockfile: loaded.record.workspaceState.dependencyInstall.lockfile,
         modulesManifest:
           loaded.record.workspaceState.dependencyInstall.modulesManifest,
+        virtualStoreLockfile:
+          loaded.record.workspaceState.dependencyInstall.virtualStoreLockfile,
       },
     });
     if (

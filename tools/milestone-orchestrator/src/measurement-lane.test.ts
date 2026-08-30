@@ -89,11 +89,15 @@ function rawVitestReport(): unknown {
 async function workspaceFixture(): Promise<string> {
   const root = await mkdtemp(resolve(tmpdir(), "measurement-lane-"));
   roots.push(root);
-  await mkdir(resolve(root, "node_modules"), { recursive: true });
+  await mkdir(resolve(root, "node_modules", ".pnpm"), { recursive: true });
   await writeFile(resolve(root, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n");
   await writeFile(
     resolve(root, "node_modules", ".modules.yaml"),
     "packageManager: pnpm@11.15.1\n",
+  );
+  await writeFile(
+    resolve(root, "node_modules", ".pnpm", "lock.yaml"),
+    "lockfileVersion: '9.0'\n",
   );
   return root;
 }
@@ -375,7 +379,7 @@ describe("WP6 measurement-lane runner", () => {
     ).rejects.toThrow(/candidate or runtime changed/u);
   });
 
-  it("rejects a warm repetition when the paired workspace state differs", async () => {
+  it("ignores volatile modules metadata but rejects virtual-store dependency drift", async () => {
     const root = await workspaceFixture();
     const cold = await runFixtureLane({
       repositoryRoot: root,
@@ -383,19 +387,46 @@ describe("WP6 measurement-lane runner", () => {
       laneRunId: "cold-mismatch",
       selectedCommandIds: ["legacy-fast"],
     });
-    const snapshot = await collectMeasurementLaneWorkspaceSnapshot(root);
-
+    await writeFile(
+      resolve(root, "node_modules", ".modules.yaml"),
+      "packageManager: pnpm@11.15.1\nprunedAt: rewritten\n",
+    );
     await expect(
       runFixtureLane({
         repositoryRoot: root,
-        artifactDirectory: resolve(root, "warm-mismatch"),
-        laneRunId: "warm-mismatch",
+        artifactDirectory: resolve(root, "warm-volatile-manifest"),
+        laneRunId: "warm-volatile-manifest",
         classification: "warm",
         pairedColdRecordPath: cold.recordPath,
         selectedCommandIds: ["legacy-fast"],
+      }),
+    ).resolves.toMatchObject({
+      record: { laneRun: { classification: "warm" } },
+    });
+
+    const driftRoot = await workspaceFixture();
+    const driftCold = await runFixtureLane({
+      repositoryRoot: driftRoot,
+      artifactDirectory: resolve(driftRoot, "cold-dependency-drift"),
+      laneRunId: "cold-dependency-drift",
+      selectedCommandIds: ["legacy-fast"],
+    });
+    const snapshot = await collectMeasurementLaneWorkspaceSnapshot(driftRoot);
+
+    await expect(
+      runFixtureLane({
+        repositoryRoot: driftRoot,
+        artifactDirectory: resolve(driftRoot, "warm-dependency-drift"),
+        laneRunId: "warm-dependency-drift",
+        classification: "warm",
+        pairedColdRecordPath: driftCold.recordPath,
+        selectedCommandIds: ["legacy-fast"],
         workspaceSnapshot: async () => ({
           ...snapshot,
-          repositoryPathSha256: "c".repeat(64),
+          virtualStoreLockfile: {
+            ...snapshot.virtualStoreLockfile,
+            sha256: "c".repeat(64),
+          },
         }),
       }),
     ).rejects.toThrow(/does not match its paired cold/u);

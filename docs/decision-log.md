@@ -3,6 +3,44 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-30 — Lane dependency identity uses the installed virtual-store lock
+
+**Decision.** Measurement-lane schema `1.1.0` adds the regular-file identity
+of `node_modules/.pnpm/lock.yaml` as `virtualStoreLockfile`. Cold and warm
+pairing requires byte-equal root `pnpm-lock.yaml` and installed virtual-store
+lock identities in the same repository path. The raw
+`node_modules/.modules.yaml` identity remains in every lane record for audit,
+but its full bytes are not a cold/warm equality operand. A changed
+virtual-store lock fails pairing before warm child execution. The protocol ID,
+command surface, classification definitions, receipt/summary/reduction
+validation, and non-semantic authority flags are unchanged.
+
+**Correction to the preceding lane decision.** The earlier decision called a
+full modules-manifest hash part of the cold/warm dependency-tree binding.
+Hosted matrix run 33326405457 proved that interpretation was not executable:
+all seven Linux cold commands passed, then the warm runner rejected the same
+workspace before running a child because ordinary pinned pnpm execution had
+rewritten `.modules.yaml`. That file includes operational `prunedAt`, store
+path, virtual-store path, and ignored-build bookkeeping; byte drift is not
+installed graph drift. Historical `1.0.0` records remain unchanged evidence of
+what they observed, but the repeated matrix accepts only the corrected `1.1.0`
+shape.
+
+**Why.** The root lock identifies the resolved graph and the virtual-store lock
+proves that graph was materialized in the installed workspace. Those files are
+stable across ordinary test-script invocations, while retaining the raw
+modules manifest preserves useful environment metadata without turning
+pnpm's volatile housekeeping into a false dependency mismatch. Alternatives
+rejected: weakening all dependency checks to the root lock alone, stripping
+undocumented keys from `.modules.yaml`, treating the failed warm start as a
+flake, reinstalling between cold and warm, or allowing warm execution after a
+virtual-store-lock mutation.
+
+**Affected files.** Measurement-lane runtime, schema and regression fixtures;
+statistics fixtures; active plan and evidence records. Frozen authorities, the
+protected exact-runtime workflow, measured commands, and statistics semantics
+are unchanged.
+
 ## 2026-08-30 — WP6 statistics are exact five-pair descriptive records
 
 **Decision.** The hosted measurement workflow is manual-dispatch only and

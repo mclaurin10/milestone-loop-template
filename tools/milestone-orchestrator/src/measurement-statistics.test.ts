@@ -228,7 +228,9 @@ async function createMatrixFixture(): Promise<void> {
       "repositories",
       String(ordinal),
     );
-    await mkdir(resolve(repositoryRoot, "node_modules"), { recursive: true });
+    await mkdir(resolve(repositoryRoot, "node_modules", ".pnpm"), {
+      recursive: true,
+    });
     await writeFile(
       resolve(repositoryRoot, "pnpm-lock.yaml"),
       "lockfileVersion: '9.0'\n",
@@ -236,6 +238,10 @@ async function createMatrixFixture(): Promise<void> {
     await writeFile(
       resolve(repositoryRoot, "node_modules", ".modules.yaml"),
       "packageManager: pnpm@11.15.1\n",
+    );
+    await writeFile(
+      resolve(repositoryRoot, "node_modules", ".pnpm", "lock.yaml"),
+      "lockfileVersion: '9.0'\n",
     );
     const coldDirectory = resolve(
       matrixRoot,

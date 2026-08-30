@@ -1,6 +1,6 @@
 # Current Execution Plan
 
-**Status:** Active — Linux regression repaired and locally qualified; fix-forward commit pending
+**Status:** Active — dependency-state repair locally qualified; fix-forward push pending
 **Updated:** 2026-08-30
 **Owner:** autonomous loop
 **Predecessor:** intended WP6b/WP6c closed at commit
@@ -592,10 +592,67 @@ ownership-discovery-01-1.stdout.log` contains the valid JSON after the
   Neither aggregate has a failed or pending suite/test. A fix-forward
   commit/push and fully green replacement exact-runtime run are required
   before step 7.
+- 2026-08-30 — The portable-fixture repair is commit
+  `71244f33bb1f7d257296a5a522f7c8f662646175`, tree
+  `c6e671122382aa41de74e9d6efb17583e06247bd`, pushed to `origin/master`.
+  Replacement exact-runtime run
+  `https://github.com/mclaurin10/milestone-loop-template/actions/runs/33323492507`
+  passed all five jobs. GitHub archive SHA-256 digests are controller Windows
+  `dc0a720534a22e68a902141daf279d4d1abcfbc739d8d33df9e910ed4ca039f3`,
+  controller Linux
+  `5119295e4af2f1d8b7225633190acd9db29cd79988c30e2ac2547cea36b5ec38`,
+  adopter Windows
+  `7101f516ced668518a4d09ffc79aba66908f11cd522047852f849cde49860eb1`,
+  adopter Linux
+  `4b2da93c75b03adf387c39999f7de74a8b1e70b100e74c51d5ca583254229704`,
+  and trusted container
+  `37455089fedd03f788a6fcf73a39846324a53abfd10eedf8502dd345e481eb45`.
+  Step 7 dispatch
+  `https://github.com/mclaurin10/milestone-loop-template/actions/runs/33326405457`
+  targeted that exact candidate. Linux pair 1 completed all seven cold
+  commands and wrote a PASS lane in 8m59s, but its immediately following warm
+  runner failed before any child command because the paired dependency-state
+  equality rejected the post-cold workspace. The retained failure manifest
+  and complete cold evidence are at
+  `C:/w/wp6d-matrix-fail-33326405457-linux-1`; no warm lane/PASS receipt or
+  statistics exists, and the remaining matrix was cancelled.
+
+  The cold record and warm manifest prove equal ordinal, workspace ID,
+  canonical seven-command selection, candidate commit/tree/cleanliness, and
+  hosted source context; the repository path is unchanged, and a differing
+  tracked root lockfile would have violated the clean-candidate reread. The
+  remaining equality operand is the byte hash of
+  `node_modules/.modules.yaml`. That pnpm metadata file contains operational
+  fields such as `prunedAt`, store/virtual-store paths, and ignored-build
+  bookkeeping and can be rewritten by ordinary pnpm command execution without
+  changing the installed dependency graph. Treating its full bytes as the
+  cold/warm tree identity is therefore a contract defect. The bounded repair
+  advances the additive lane schema, retains the raw modules-manifest identity
+  for audit, adds the stable installed virtual-store lock
+  `node_modules/.pnpm/lock.yaml`, and uses root-lock plus virtual-store-lock
+  equality for dependency-tree binding. Regression coverage must show a
+  volatile modules-manifest rewrite is accepted while virtual-store-lock
+  mutation still fails closed. No partial matrix result is performance
+  evidence.
+- 2026-08-30 — The schema `1.1.0` repair is locally qualified on the exact
+  working tree. Focused measurement-lane/statistics coverage passed 5/5 suites
+  and 12/12 tests at
+  `C:/w/wp6d-step7-fix-focused-1/vitest-report.json` (SHA-256
+  `f584ecda09a4690159ff66af719ac0927f8b96caa77c0b11ad6682dea7e55e3c`).
+  Exact-runtime typecheck, lint, format, and five-command invariant evidence
+  passed at `C:/w/wp6d-step7-fix-typecheck-1`,
+  `C:/w/wp6d-step7-fix-lint-1`, `C:/w/wp6d-step7-fix-format-1`, and
+  `C:/w/wp6d-step7-fix-invariants-1`. The full orchestrator aggregate passed
+  203/203 suites and 691/691 tests at
+  `C:/w/wp6d-step7-fix-orchestrator-1/orchestrator-report.json` (SHA-256
+  `f0de8d35e0161ecec7a49f1cc69655c9d4ed21fb4cc8212020009c6f368b7aa0`),
+  and the full unit aggregate passed 205/205 suites and 707/707 tests at
+  `C:/w/wp6d-step7-fix-unit-1/test-report.json` (SHA-256
+  `3da66fcb07c68bc8d0363b3364abd6752a5af6a42cec8feb2ce8bf02ab113ca5`).
 
 ## Next Action
 
-Qualify and commit the platform-derived statistics fixture fix, push it, and
-require the replacement protected exact-runtime workflow to pass. Only then
-dispatch step 7 on that exact candidate and independently download/revalidate
-every retained pair and both statistics records.
+Commit and push the stable virtual-store dependency identity, then require
+exact-runtime CI to pass. Dispatch a fresh step-7 matrix only on that exact
+candidate and independently download/revalidate every retained pair and both
+statistics records.
