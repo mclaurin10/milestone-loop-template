@@ -1,7 +1,7 @@
 # Current Execution Plan
 
-**Status:** Active — cohesive steps 1–4 repair commit/push in progress
-**Updated:** 2026-08-29
+**Status:** Active — step 5 implemented; clean-candidate and hosted qualification pending
+**Updated:** 2026-08-30
 **Owner:** autonomous loop
 **Predecessor:** intended WP6b/WP6c closed at commit
 `62f225f` (docs closeout; executable candidate Q
@@ -465,10 +465,58 @@ ownership-discovery-01-1.stdout.log` contains the valid JSON after the
   passed. The immutable lock, protected workflow, and protected untracked
   roadmap hashes remain unchanged. The repair is ready for its cohesive
   commit, clean-candidate shadow, push, and hosted exact-runtime gate.
+- 2026-08-30 — The cohesive steps 1–4 repair is sealed at commit
+  `09eae95b719aeaa13f1a5ef626a4067088313d1c`, tree
+  `507a25788e0aeaa4521f34dc835ae814112f03d7`, and pushed to
+  `origin/master`. The first clean shadow attempt retained at
+  `C:/w/wp6d-repair-shadow-09eae95` failed honestly because the overlong
+  Windows evidence root exhausted Git path length in six crash-recovery
+  assertions; it is not passing evidence. The same commit in short clean
+  checkout `C:/w/r6` passed the complete production shadow at `C:/w/e6`:
+  696 unique tests across 82 disjoint files, eight validated summaries, and
+  a valid reduction. Receipt/proof/reduction SHA-256 values are
+  `9f8d1ee6e6ec5360ba23df77ed0812401676f392af87a9cb23dd58b7fc7379c8`,
+  `e57a05f205f030a52835ff33ad56ff867a7aba2a7fb826a08d2c216ed2742611`,
+  and `cd487b22903e5f37a8290fe5e8572b848d3771462cef0cb31bde84d069eb66d7`;
+  reduction content SHA-256 is
+  `9821432511f1936224a6e68d315951eb1c924652c892daacf0a9ac11af6a57cd`.
+  Hosted exact-runtime run
+  `https://github.com/mclaurin10/milestone-loop-template/actions/runs/33296797971`
+  passed all five jobs. GitHub artifact archive SHA-256 digests are controller
+  Windows `dbe257496cddffd2f9e6be25dbd0468cd25a4aba266ec82a302858257080380a`,
+  controller Linux
+  `5e570b8a6ab3c492cd7a996cc24d365f8662cd294b9fa362e3a396c572127ce5`,
+  adopter Windows
+  `5ad77255448e60e529bfc38ef6ddf3aab83677c0b8e6ca9e769a5815b1cd8b84`,
+  adopter Linux
+  `09497b1a30d683d6ac90c4d065279888739d8684fac1046e5e63a376b240303a`,
+  and trusted container
+  `63c6ed4e18f3a75000a924ea1423fa10798b22fae2b7afaff0a0cc448fab81bd`.
+  Step 5 may proceed.
+- 2026-08-30 — Step 5 implementation and dirty-tree local qualification are
+  complete. The additive runner/CLI define a seven-command canonical
+  catalogue, exact cold/warm workspace semantics with no OS-cache claim,
+  clean candidate/runtime rereads, strict receipt-bound summary loading, a
+  deterministic per-run reduction, complete file/content hashes, and
+  independently validated cold/warm pairing. The new schema-valid contract
+  permanently denies test-success, cutover, and benchmark authority. Focused
+  lane plus ownership regressions passed at `C:/w/wp6d-step5-focused-5`;
+  typecheck, lint, format, and five-command invariants passed at
+  `C:/w/wp6d-step5-{typecheck-3,lint-2,format-1,invariants-1}`. The first full
+  controller run retained a real one-assertion failure because the canonical
+  ownership total still said 78 after adding the 79th controller test. After
+  updating that exact count and total, controller passed 201/201 suites and
+  685/685 tests (report SHA-256
+  `3399655d01ddd53771b67f9327b94413590ecc3c5f47645d82bf9d8d5e95e152`)
+  and complete unit passed 203/203 suites and 701/701 tests (report SHA-256
+  `bc03508b570a00f984264dd5662907686b921e5852232d0f4cc5546eaa8cbe4e`).
+  There are no failed or pending suites/tests. Clean commit identity, a real
+  cold/warm invocation, push, and hosted exact-runtime CI remain required
+  before step 5 is complete.
 
 ## Next Action
 
-Commit the qualified steps 1–4 repair, run the production shadow from a fresh
-clean checkout of that exact commit, push it, and require the hosted
-exact-runtime workflow to pass before beginning the additive one-repetition
-measurement-lane runner.
+Commit the cohesive step-5 runner increment, exercise one real cold/warm pair
+from a short clean checkout, push the exact candidate, and require all five
+hosted exact-runtime jobs to pass before beginning the workflow/statistics
+increment.

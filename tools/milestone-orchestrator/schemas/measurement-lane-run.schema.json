@@ -1,0 +1,265 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://milestone-loop.local/schemas/measurement-lane-run-1.0.0.json",
+  "title": "Milestone Loop WP6 non-semantic measurement-lane repetition",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "protocolId",
+    "status",
+    "laneRun",
+    "workspaceState",
+    "candidate",
+    "platform",
+    "executionContext",
+    "commandSet",
+    "commands",
+    "reduction",
+    "pairedCold",
+    "timestamps",
+    "nonSemantic",
+    "contentSha256"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "protocolId": { "const": "milestone-loop-wp6-measurement-lane.v1" },
+    "status": { "const": "PASS" },
+    "laneRun": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["laneRunId", "ordinal", "classification"],
+      "properties": {
+        "laneRunId": { "$ref": "#/$defs/safeId" },
+        "ordinal": { "type": "integer", "minimum": 1 },
+        "classification": { "enum": ["cold", "warm"] }
+      }
+    },
+    "workspaceState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "workspaceId",
+        "classificationDefinition",
+        "freshCheckout",
+        "freshFrozenInstall",
+        "reusesPairedColdWorkspace",
+        "operatingSystemCaches",
+        "repositoryPathSha256",
+        "dependencyInstall"
+      ],
+      "properties": {
+        "workspaceId": { "$ref": "#/$defs/safeId" },
+        "classificationDefinition": {
+          "enum": [
+            "First measured invocation in a fresh hosted-job checkout after the declared frozen dependency install; operating-system caches are uncontrolled and no cache-coldness claim is made.",
+            "Measured invocation in the identical workspace and dependency tree immediately after its paired cold invocation; operating-system caches are uncontrolled and no cache-warmness guarantee is claimed."
+          ]
+        },
+        "freshCheckout": { "type": "boolean" },
+        "freshFrozenInstall": { "type": "boolean" },
+        "reusesPairedColdWorkspace": { "type": "boolean" },
+        "operatingSystemCaches": { "const": "uncontrolled-not-claimed" },
+        "repositoryPathSha256": { "$ref": "#/$defs/hash" },
+        "dependencyInstall": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["command", "lockfile", "modulesManifest"],
+          "properties": {
+            "command": {
+              "const": "pnpm install --frozen-lockfile --package-import-method=copy"
+            },
+            "lockfile": { "$ref": "#/$defs/file" },
+            "modulesManifest": { "$ref": "#/$defs/file" }
+          }
+        }
+      }
+    },
+    "candidate": { "$ref": "#/$defs/candidate" },
+    "platform": { "$ref": "#/$defs/platform" },
+    "executionContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "githubRunId", "githubRunAttempt", "githubJob"],
+      "properties": {
+        "provider": { "enum": ["github-actions", "local-validation"] },
+        "githubRunId": { "type": ["string", "null"] },
+        "githubRunAttempt": { "type": ["integer", "null"], "minimum": 1 },
+        "githubJob": { "type": ["string", "null"] }
+      }
+    },
+    "commandSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "catalogueId",
+        "catalogueSha256",
+        "selectedCommandIds",
+        "selectedSetSha256"
+      ],
+      "properties": {
+        "catalogueId": {
+          "const": "milestone-loop-wp6-measured-command-set.v1"
+        },
+        "catalogueSha256": { "$ref": "#/$defs/hash" },
+        "selectedCommandIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/safeId" }
+        },
+        "selectedSetSha256": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "commands": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/command" }
+    },
+    "reduction": { "$ref": "#/$defs/reduction" },
+    "pairedCold": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/pairedCold" }]
+    },
+    "timestamps": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["startedAt", "finishedAt"],
+      "properties": {
+        "startedAt": { "$ref": "#/$defs/nonempty" },
+        "finishedAt": { "$ref": "#/$defs/nonempty" }
+      }
+    },
+    "nonSemantic": { "$ref": "#/$defs/nonSemantic" },
+    "contentSha256": { "$ref": "#/$defs/hash" }
+  },
+  "$defs": {
+    "nonempty": { "type": "string", "minLength": 1 },
+    "safeId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,191}$"
+    },
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "gitId": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "bytes", "sha256"],
+      "properties": {
+        "path": { "$ref": "#/$defs/nonempty" },
+        "bytes": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gitCommit", "gitTree", "workingTreeDirty"],
+      "properties": {
+        "gitCommit": { "$ref": "#/$defs/gitId" },
+        "gitTree": { "$ref": "#/$defs/gitId" },
+        "workingTreeDirty": { "const": false }
+      }
+    },
+    "platform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "os",
+        "release",
+        "arch",
+        "endianness",
+        "nodeVersion",
+        "pnpmVersion"
+      ],
+      "properties": {
+        "os": { "enum": ["win32", "linux"] },
+        "release": { "$ref": "#/$defs/nonempty" },
+        "arch": { "$ref": "#/$defs/nonempty" },
+        "endianness": { "enum": ["BE", "LE"] },
+        "nodeVersion": { "const": "v24.18.0" },
+        "pnpmVersion": { "const": "11.15.1" }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "contentSha256"],
+      "properties": {
+        "path": { "$ref": "#/$defs/nonempty" },
+        "bytes": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/hash" },
+        "contentSha256": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "script",
+        "stageId",
+        "commandId",
+        "role",
+        "owner",
+        "runId",
+        "artifactDirectory",
+        "receipt",
+        "summary"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/safeId" },
+        "script": { "$ref": "#/$defs/nonempty" },
+        "stageId": { "$ref": "#/$defs/nonempty" },
+        "commandId": { "$ref": "#/$defs/nonempty" },
+        "role": { "enum": ["legacy", "partition"] },
+        "owner": { "type": ["string", "null"] },
+        "runId": { "$ref": "#/$defs/safeId" },
+        "artifactDirectory": { "$ref": "#/$defs/nonempty" },
+        "receipt": { "$ref": "#/$defs/file" },
+        "summary": { "$ref": "#/$defs/summary" }
+      }
+    },
+    "reduction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "bytes",
+        "sha256",
+        "contentSha256",
+        "inputCount",
+        "inputSetSha256"
+      ],
+      "properties": {
+        "path": { "$ref": "#/$defs/nonempty" },
+        "bytes": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/hash" },
+        "contentSha256": { "$ref": "#/$defs/hash" },
+        "inputCount": { "type": "integer", "minimum": 1 },
+        "inputSetSha256": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "pairedCold": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "laneRunId", "contentSha256"],
+      "properties": {
+        "path": { "$ref": "#/$defs/nonempty" },
+        "bytes": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/hash" },
+        "laneRunId": { "$ref": "#/$defs/safeId" },
+        "contentSha256": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "nonSemantic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["changesTestSuccess", "authorizesCutover", "benchmarkClaim"],
+      "properties": {
+        "changesTestSuccess": { "const": false },
+        "authorizesCutover": { "const": false },
+        "benchmarkClaim": { "const": false }
+      }
+    }
+  }
+}

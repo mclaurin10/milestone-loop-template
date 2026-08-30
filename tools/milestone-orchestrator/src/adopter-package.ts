@@ -75,6 +75,8 @@ const excludedRuntimeSourceFiles = new Set([
   "adopter-package-cli.ts",
   "adopter-package-proof.ts",
   "adopter-package-proof-cli.ts",
+  "measurement-lane.ts",
+  "measurement-lane-cli.ts",
 ]);
 
 type JsonRecord = Record<string, unknown>;

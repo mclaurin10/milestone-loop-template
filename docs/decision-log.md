@@ -3,6 +3,45 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-30 — WP6 measurement lanes are paired, non-semantic evidence runs
+
+**Decision.** A measurement-lane invocation executes a canonical selection
+from seven existing measured commands and emits one strict
+`milestone-loop-wp6-measurement-lane.v1` record plus the existing deterministic
+test-run reduction. The record binds the clean commit/tree, exact Node and
+pnpm versions, platform, hosted-job provenance, catalogue and selection
+hashes, ordinal, child receipt/summary identities, reduction identity, and
+the installed lockfile/modules-manifest hashes. Cold means the first measured
+invocation in a fresh hosted-job checkout after the declared frozen install;
+warm means the immediately following invocation in that same workspace and
+dependency tree. OS caches are explicitly uncontrolled in both cases.
+
+Warm execution independently revalidates the complete cold artifact root,
+copies and hash-binds the cold record, and requires equal ordinal, workspace,
+dependency state, command set, candidate, platform, and hosted-job context.
+Every child must pass its existing command-owned receipt contract and emit
+exactly one strict compact summary; the runner rereads clean candidate/runtime
+identity after every command, reproduces its reduction, and fails before a
+lane record or PASS receipt on missing, stale, contradictory, or drifted
+evidence. The lane's permanent flags say it changes no test success,
+authorizes no cutover, and makes no benchmark claim.
+
+**Why.** The hosted matrix needs reproducible descriptive inputs without
+creating a second test-success authority or implying cache states the runner
+cannot prove. Pairing within one job gives the warm classification an
+inspectable workspace boundary, while one fresh job per cold repetition makes
+the cold declaration executable. Alternatives rejected: treating the OS
+cache as cold/warm, comparing or thresholding in the runner, consuming raw
+reports without receipt validation, trusting a cold record without its child
+artifacts, permitting dirty candidates, or adding this WP6-only tooling to
+the generated adopter runtime.
+
+**Affected files.** The additive measurement-lane runner, CLI, JSON Schema,
+tests, package script, ownership catalogue/count, and adopter-package source
+exclusions. The active manifest, tiers, slow registry, `benchmark.ts`,
+verification scripts, frozen authorities, and protected exact-runtime
+workflow are unchanged.
+
 ## 2026-08-29 — Measurement v1.0.0 runtime acceptance is producer-coherent
 
 **Decision.** Keep `milestone-loop-test-run-measurement.v1` summary and

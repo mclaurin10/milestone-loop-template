@@ -3,6 +3,41 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-30 — WP6d measurement-contract repair qualified
+
+**Objective and outcome.** Close the externally demonstrated summary,
+reduction, and omission-evidence acceptance defects before building the WP6d
+measurement lane. The cohesive repair is commit
+`09eae95b719aeaa13f1a5ef626a4067088313d1c`, tree
+`507a25788e0aeaa4521f34dc835ae814112f03d7`, pushed to `origin/master`.
+It tightens producer-coherent runtime acceptance without changing the
+`1.0.0` wire shape, shares the production shadow finalizer with the real
+omission mutation, and preserves the frozen authorities and measurement's
+non-semantic boundary.
+
+**Local qualification.** Exact Node `24.18.0` / pnpm `11.15.1` typecheck,
+lint, format, invariants, orchestrator (198/198 suites, 679/679 tests), and
+complete unit (200/200 suites, 695/695 tests) passed under
+`C:/w/wp6d-repair-*`. The first clean production-shadow attempt at
+`C:/w/wp6d-repair-shadow-09eae95` retained a real failure: its overlong
+Windows evidence root caused six crash-recovery assertions to exhaust Git
+path length. No result was relabelled or discarded. Repetition from short
+clean checkout `C:/w/r6` with evidence at `C:/w/e6` passed 696 unique tests
+across all 82 disjoint files and reduced eight validated summaries. The PASS
+receipt, proof, reduction, and reduction-content SHA-256 values are
+`9f8d1ee6e6ec5360ba23df77ed0812401676f392af87a9cb23dd58b7fc7379c8`,
+`e57a05f205f030a52835ff33ad56ff867a7aba2a7fb826a08d2c216ed2742611`,
+`cd487b22903e5f37a8290fe5e8572b848d3771462cef0cb31bde84d069eb66d7`,
+and `9821432511f1936224a6e68d315951eb1c924652c892daacf0a9ac11af6a57cd`.
+
+**Hosted qualification and gaps.** Exact-runtime run
+`https://github.com/mclaurin10/milestone-loop-template/actions/runs/33296797971`
+passed Windows/Linux controllers, Windows/Linux fresh-adopter smoke, and the
+trusted Linux container. GitHub archive digests are recorded in the active
+plan. The protected workflow remains byte-identical. This closes the repair
+increment only; the WP6d measurement runner, repeated matrix, statistics,
+independent artifact validation, and WP6e/WP6f handoff remain open.
+
 ## 2026-08-29 — WP6d corrective record for measurement acceptance
 
 **Correction.** The preceding 2026-08-29 closeout said all contradictory

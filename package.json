@@ -50,6 +50,7 @@
     "loop:commission": "tsx tools/milestone-orchestrator/src/commissioning-cli.ts",
     "loop:template:create": "tsx tools/milestone-orchestrator/src/adopter-package-cli.ts",
     "loop:template:prove": "tsx tools/milestone-orchestrator/src/adopter-package-proof-cli.ts",
+    "loop:measurement-lane": "tsx tools/milestone-orchestrator/src/measurement-lane-cli.ts",
     "loop:example:validate": "tsx tools/milestone-orchestrator/src/worked-example-cli.ts",
     "loop:doctor": "tsx tools/milestone-orchestrator/src/cli.ts doctor",
     "loop:check-model-policy": "tsx tools/milestone-orchestrator/src/cli.ts check-model-policy",
