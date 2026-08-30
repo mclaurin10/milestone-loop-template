@@ -51,6 +51,7 @@
     "loop:template:create": "tsx tools/milestone-orchestrator/src/adopter-package-cli.ts",
     "loop:template:prove": "tsx tools/milestone-orchestrator/src/adopter-package-proof-cli.ts",
     "loop:measurement-lane": "tsx tools/milestone-orchestrator/src/measurement-lane-cli.ts",
+    "loop:measurement-statistics": "tsx tools/milestone-orchestrator/src/measurement-statistics-cli.ts",
     "loop:example:validate": "tsx tools/milestone-orchestrator/src/worked-example-cli.ts",
     "loop:doctor": "tsx tools/milestone-orchestrator/src/cli.ts doctor",
     "loop:check-model-policy": "tsx tools/milestone-orchestrator/src/cli.ts check-model-policy",

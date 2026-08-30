@@ -3,6 +3,50 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-30 — WP6 statistics are exact five-pair descriptive records
+
+**Decision.** The hosted measurement workflow is manual-dispatch only and
+shards one cold/warm pair into each of ten isolated jobs: five ordinals on
+`ubuntu-24.04` and five on `windows-2022`. Each job checks out the exact
+candidate, performs one fresh frozen copy-mode install, executes all seven
+canonical measured commands in its cold lane, and then immediately executes
+the same commands in the paired warm lane without changing workspace or
+dependency state. Pair jobs may run concurrently; the two lanes within a pair
+are strictly ordered. A separate per-platform job downloads all five pairs and
+produces one statistics record.
+
+The statistics producer recursively rejects symlinked inputs, independently
+validates every lane, child receipt, compact summary, reduction, and copied
+cold record, and requires exactly ten records: unique cold/warm ordinals 1–5,
+unique lane-run IDs, five distinct declared job workspaces, equal clean
+candidate and hosted source context, one operating system, the exact command
+catalogue/selection, and valid cold/warm hash binding. For every command and
+classification it reports exact integer minimum, maximum, range, median, and
+median absolute deviation for wall/setup/Git/startup/test-body duration, total
+CPU, peak RSS, and test counts. Missing required measurements fail the
+statistics command; values never set thresholds, compare cold with warm, alter
+test success, make a benchmark claim, or authorize cutover. The retained
+statistics record is content-hashed and accepted only when a fresh validator
+reproduces it byte-semantically from the lane artifacts.
+
+**Why.** Isolating each pair gives every cold repetition a real hosted-job
+checkout/install boundary while keeping its warm counterpart in the one
+workspace it is permitted to reuse. Sharding keeps the long Windows command
+surface within the six-hour job ceiling without weakening or omitting any
+measured command. Integer medians and median absolute deviations over five
+samples are deterministic and avoid floating-point or performance-judgment
+semantics. Alternatives rejected: push/schedule triggers, reusing one checkout
+for multiple cold ordinals, running warm in another job, relying on archive or
+record hashes without revalidating children, averaging durations, comparing
+cold/warm values, thresholds, changing `benchmark.ts`, or modifying the
+protected exact-runtime workflow.
+
+**Affected files.** The additive statistics producer, CLI, JSON Schema and
+regressions; the manual-dispatch measurement workflow; root package script;
+ownership catalogue/count; and adopter-package exclusions. The commissioned
+manifest, tiers, slow registry, `benchmark.ts`, frozen authorities, and
+`.github/workflows/exact-runtime-ci.yml` remain unchanged.
+
 ## 2026-08-30 — WP6 measurement lanes are paired, non-semantic evidence runs
 
 **Decision.** A measurement-lane invocation executes a canonical selection

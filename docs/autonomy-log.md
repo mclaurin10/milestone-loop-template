@@ -3,6 +3,37 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-30 — WP6d one-repetition measurement runner qualified
+
+**Objective and outcome.** Add a non-semantic one-repetition runner before
+authoring the repeated hosted matrix. Commit
+`9f1767cba800b551faa648e8a317715fe282f6a4`, tree
+`4a2c6c13a9068c51e7580a50a32ca04b3aa4ac6d`, is pushed to
+`origin/master`. Its additive CLI runs a canonical selection from the seven
+existing measured commands, validates every command receipt and compact
+summary, rereads clean candidate/runtime identity, writes and reproduces one
+reduction, and hash-binds exact cold/warm workspace semantics without an OS
+cache claim. Warm execution independently validates and binds its cold pair.
+
+**Qualification.** Focused fail-closed and ownership regressions, typecheck,
+lint, format, and invariants passed under `C:/w/wp6d-step5-*`. A first broad
+run honestly failed the stale ownership-count expectation; after the exact
+79/83 totals were corrected, controller passed 201/201 suites and 685/685
+tests, while complete unit passed 203/203 suites and 701/701 tests with no
+pending results. Clean checkout `C:/w/m5` then passed a real `legacy-fast`
+cold/warm pair under `C:/w/m5e`; exact record/reduction hashes are in the
+active plan. Hosted exact-runtime run
+`https://github.com/mclaurin10/milestone-loop-template/actions/runs/33309783742`
+passed all five jobs on the same candidate; GitHub archive digests are also
+in the plan. The immutable lock, protected workflow, and protected untracked
+roadmap hashes remain unchanged.
+
+**Remaining boundary.** This closes only the one-repetition runner. The
+dispatch-only repeated Windows/Linux matrix, deterministic descriptive
+statistics, one completed hosted matrix and independent download validation,
+and WP6e/WP6f handoff remain open. No result compares performance, changes
+test success, sets a threshold, or authorizes cutover.
+
 ## 2026-08-30 — WP6d measurement-contract repair qualified
 
 **Objective and outcome.** Close the externally demonstrated summary,

@@ -1,0 +1,291 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://milestone-loop.local/schemas/measurement-statistics-1.0.0.json",
+  "title": "Milestone Loop WP6 deterministic non-semantic measurement statistics",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "protocolId",
+    "status",
+    "platformId",
+    "candidate",
+    "executionContext",
+    "commandSet",
+    "matrix",
+    "platformVariants",
+    "inputs",
+    "commands",
+    "sourceWindow",
+    "nonSemantic",
+    "contentSha256"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "protocolId": {
+      "const": "milestone-loop-wp6-measurement-statistics.v1"
+    },
+    "status": { "const": "PASS" },
+    "platformId": { "enum": ["linux", "windows"] },
+    "candidate": { "$ref": "#/$defs/candidate" },
+    "executionContext": { "$ref": "#/$defs/executionContext" },
+    "commandSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["catalogueId", "catalogueSha256", "selectedCommandIds"],
+      "properties": {
+        "catalogueId": {
+          "const": "milestone-loop-wp6-measured-command-set.v1"
+        },
+        "catalogueSha256": { "$ref": "#/$defs/hash" },
+        "selectedCommandIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/safeId" }
+        }
+      }
+    },
+    "matrix": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pairCount",
+        "coldCount",
+        "warmCount",
+        "recordCount",
+        "ordinalSetSha256",
+        "recordSetSha256"
+      ],
+      "properties": {
+        "pairCount": { "type": "integer", "minimum": 5 },
+        "coldCount": { "type": "integer", "minimum": 5 },
+        "warmCount": { "type": "integer", "minimum": 5 },
+        "recordCount": { "type": "integer", "minimum": 10 },
+        "ordinalSetSha256": { "$ref": "#/$defs/hash" },
+        "recordSetSha256": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "platformVariants": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/platform" }
+    },
+    "inputs": {
+      "type": "array",
+      "minItems": 10,
+      "items": { "$ref": "#/$defs/input" }
+    },
+    "commands": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/command" }
+    },
+    "sourceWindow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["earliestStartedAt", "latestFinishedAt"],
+      "properties": {
+        "earliestStartedAt": { "$ref": "#/$defs/nonempty" },
+        "latestFinishedAt": { "$ref": "#/$defs/nonempty" }
+      }
+    },
+    "nonSemantic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "changesTestSuccess",
+        "authorizesCutover",
+        "benchmarkClaim",
+        "comparesClassifications"
+      ],
+      "properties": {
+        "changesTestSuccess": { "const": false },
+        "authorizesCutover": { "const": false },
+        "benchmarkClaim": { "const": false },
+        "comparesClassifications": { "const": false }
+      }
+    },
+    "contentSha256": { "$ref": "#/$defs/hash" }
+  },
+  "$defs": {
+    "nonempty": { "type": "string", "minLength": 1 },
+    "safeId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,191}$"
+    },
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "gitId": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "decimal": { "type": "string", "pattern": "^(0|[1-9][0-9]*)$" },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gitCommit", "gitTree", "workingTreeDirty"],
+      "properties": {
+        "gitCommit": { "$ref": "#/$defs/gitId" },
+        "gitTree": { "$ref": "#/$defs/gitId" },
+        "workingTreeDirty": { "const": false }
+      }
+    },
+    "executionContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "githubRunId", "githubRunAttempt", "githubJob"],
+      "properties": {
+        "provider": { "enum": ["github-actions", "local-validation"] },
+        "githubRunId": { "type": ["string", "null"] },
+        "githubRunAttempt": { "type": ["integer", "null"], "minimum": 1 },
+        "githubJob": { "type": ["string", "null"] }
+      }
+    },
+    "platform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "os",
+        "release",
+        "arch",
+        "endianness",
+        "nodeVersion",
+        "pnpmVersion"
+      ],
+      "properties": {
+        "os": { "enum": ["win32", "linux"] },
+        "release": { "$ref": "#/$defs/nonempty" },
+        "arch": { "$ref": "#/$defs/nonempty" },
+        "endianness": { "enum": ["BE", "LE"] },
+        "nodeVersion": { "const": "v24.18.0" },
+        "pnpmVersion": { "const": "11.15.1" }
+      }
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "bytes",
+        "sha256",
+        "contentSha256",
+        "classification",
+        "ordinal",
+        "laneRunId",
+        "workspaceId",
+        "repositoryPathSha256",
+        "reductionContentSha256"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"
+        },
+        "bytes": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/hash" },
+        "contentSha256": { "$ref": "#/$defs/hash" },
+        "classification": { "enum": ["cold", "warm"] },
+        "ordinal": { "type": "integer", "minimum": 1 },
+        "laneRunId": { "$ref": "#/$defs/safeId" },
+        "workspaceId": { "$ref": "#/$defs/safeId" },
+        "repositoryPathSha256": { "$ref": "#/$defs/hash" },
+        "reductionContentSha256": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "distribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "unit",
+        "sampleCount",
+        "minimum",
+        "maximum",
+        "range",
+        "median",
+        "medianAbsoluteDeviation"
+      ],
+      "properties": {
+        "unit": { "enum": ["nanoseconds", "microseconds", "bytes", "count"] },
+        "sampleCount": { "type": "integer", "minimum": 5 },
+        "minimum": { "$ref": "#/$defs/decimal" },
+        "maximum": { "$ref": "#/$defs/decimal" },
+        "range": { "$ref": "#/$defs/decimal" },
+        "median": { "$ref": "#/$defs/decimal" },
+        "medianAbsoluteDeviation": { "$ref": "#/$defs/decimal" }
+      }
+    },
+    "classificationStatistics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sampleCount",
+        "measurementAvailability",
+        "durationNanoseconds",
+        "cpuTotalMicroseconds",
+        "peakRssBytes",
+        "testCounts"
+      ],
+      "properties": {
+        "sampleCount": { "type": "integer", "minimum": 5 },
+        "measurementAvailability": {
+          "const": "all-required-measurements-observed"
+        },
+        "durationNanoseconds": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "wallTime",
+            "setupTime",
+            "gitFixtureTime",
+            "processStartupTime",
+            "testBodyTime"
+          ],
+          "properties": {
+            "wallTime": { "$ref": "#/$defs/distribution" },
+            "setupTime": { "$ref": "#/$defs/distribution" },
+            "gitFixtureTime": { "$ref": "#/$defs/distribution" },
+            "processStartupTime": { "$ref": "#/$defs/distribution" },
+            "testBodyTime": { "$ref": "#/$defs/distribution" }
+          }
+        },
+        "cpuTotalMicroseconds": { "$ref": "#/$defs/distribution" },
+        "peakRssBytes": { "$ref": "#/$defs/distribution" },
+        "testCounts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["files", "tests", "passed", "failed", "skipped"],
+          "properties": {
+            "files": { "$ref": "#/$defs/distribution" },
+            "tests": { "$ref": "#/$defs/distribution" },
+            "passed": { "$ref": "#/$defs/distribution" },
+            "failed": { "$ref": "#/$defs/distribution" },
+            "skipped": { "$ref": "#/$defs/distribution" }
+          }
+        }
+      }
+    },
+    "command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "script",
+        "stageId",
+        "commandId",
+        "role",
+        "owner",
+        "cold",
+        "warm"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/safeId" },
+        "script": { "$ref": "#/$defs/nonempty" },
+        "stageId": { "$ref": "#/$defs/nonempty" },
+        "commandId": { "$ref": "#/$defs/nonempty" },
+        "role": { "enum": ["legacy", "partition"] },
+        "owner": { "type": ["string", "null"] },
+        "cold": { "$ref": "#/$defs/classificationStatistics" },
+        "warm": { "$ref": "#/$defs/classificationStatistics" }
+      }
+    }
+  }
+}

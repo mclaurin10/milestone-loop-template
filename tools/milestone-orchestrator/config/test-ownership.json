@@ -40,6 +40,7 @@
         "tools/milestone-orchestrator/src/git-isolation.test.ts",
         "tools/milestone-orchestrator/src/invariant-suite.test.ts",
         "tools/milestone-orchestrator/src/measurement-lane.test.ts",
+        "tools/milestone-orchestrator/src/measurement-statistics.test.ts",
         "tools/milestone-orchestrator/src/model-policy-check.test.ts",
         "tools/milestone-orchestrator/src/model-policy.test.ts",
         "tools/milestone-orchestrator/src/operation-intent.test.ts",

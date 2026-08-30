@@ -1,0 +1,178 @@
+name: WP6 measurement matrix
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CI: "true"
+  NODE_VERSION: "24.18.0"
+  PNPM_VERSION: "11.15.1"
+
+jobs:
+  measure:
+    name: Measure (${{ matrix.platform }} pair ${{ matrix.ordinal }})
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        include:
+          - platform: linux
+            runner: ubuntu-24.04
+            ordinal: 1
+            timeoutMinutes: 240
+          - platform: linux
+            runner: ubuntu-24.04
+            ordinal: 2
+            timeoutMinutes: 240
+          - platform: linux
+            runner: ubuntu-24.04
+            ordinal: 3
+            timeoutMinutes: 240
+          - platform: linux
+            runner: ubuntu-24.04
+            ordinal: 4
+            timeoutMinutes: 240
+          - platform: linux
+            runner: ubuntu-24.04
+            ordinal: 5
+            timeoutMinutes: 240
+          - platform: windows
+            runner: windows-2022
+            ordinal: 1
+            timeoutMinutes: 360
+          - platform: windows
+            runner: windows-2022
+            ordinal: 2
+            timeoutMinutes: 360
+          - platform: windows
+            runner: windows-2022
+            ordinal: 3
+            timeoutMinutes: 360
+          - platform: windows
+            runner: windows-2022
+            ordinal: 4
+            timeoutMinutes: 360
+          - platform: windows
+            runner: windows-2022
+            ordinal: 5
+            timeoutMinutes: 360
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: ${{ matrix.timeoutMinutes }}
+    steps:
+      - name: Check out exact candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Install exact Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24.18.0"
+          check-latest: false
+      - name: Install and assert exact pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@11.15.1 --activate
+          node tools/milestone-orchestrator/ci/assert-exact-toolchain.mjs --output artifacts/wp6-measurement/${{ matrix.platform }}/${{ matrix.ordinal }}/toolchain.json
+      - name: Install fresh frozen dependencies
+        run: pnpm install --frozen-lockfile --package-import-method=copy
+      - name: Run cold repetition
+        run: >-
+          pnpm loop:measurement-lane --
+          --lane-run-id ${{ matrix.platform }}-cold-${{ matrix.ordinal }}-${{ github.run_id }}-${{ github.run_attempt }}
+          --ordinal ${{ matrix.ordinal }}
+          --classification cold
+          --workspace-id ${{ matrix.platform }}-job-${{ matrix.ordinal }}-${{ github.run_id }}-${{ github.run_attempt }}
+          --command legacy-fast
+          --command legacy-migration
+          --command legacy-orchestrator
+          --command partition-controller-runtime
+          --command partition-repository-tooling
+          --command partition-adopter-template
+          --command partition-trusted-container-fixture
+        env:
+          LOOP_VERIFY_COMMAND_ARTIFACT_DIR: artifacts/wp6-measurement/${{ matrix.platform }}/${{ matrix.ordinal }}/cold
+      - name: Run immediately paired warm repetition
+        run: >-
+          pnpm loop:measurement-lane --
+          --lane-run-id ${{ matrix.platform }}-warm-${{ matrix.ordinal }}-${{ github.run_id }}-${{ github.run_attempt }}
+          --ordinal ${{ matrix.ordinal }}
+          --classification warm
+          --workspace-id ${{ matrix.platform }}-job-${{ matrix.ordinal }}-${{ github.run_id }}-${{ github.run_attempt }}
+          --command legacy-fast
+          --command legacy-migration
+          --command legacy-orchestrator
+          --command partition-controller-runtime
+          --command partition-repository-tooling
+          --command partition-adopter-template
+          --command partition-trusted-container-fixture
+          --paired-cold-record artifacts/wp6-measurement/${{ matrix.platform }}/${{ matrix.ordinal }}/cold/measurement-lane-run.json
+        env:
+          LOOP_VERIFY_COMMAND_ARTIFACT_DIR: artifacts/wp6-measurement/${{ matrix.platform }}/${{ matrix.ordinal }}/warm
+      - name: Retain measured pair
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: wp6-measurement-${{ matrix.platform }}-${{ matrix.ordinal }}-${{ github.sha }}
+          path: artifacts/wp6-measurement
+          if-no-files-found: error
+          retention-days: 14
+
+  statistics:
+    name: Statistics (${{ matrix.platform }})
+    needs: measure
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux
+            runner: ubuntu-24.04
+          - platform: windows
+            runner: windows-2022
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    steps:
+      - name: Check out exact candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Install exact Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24.18.0"
+          check-latest: false
+      - name: Install and assert exact pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@11.15.1 --activate
+          node tools/milestone-orchestrator/ci/assert-exact-toolchain.mjs --output artifacts/wp6-statistics/${{ matrix.platform }}/toolchain.json
+      - name: Install fresh frozen dependencies
+        run: pnpm install --frozen-lockfile --package-import-method=copy
+      - name: Download five retained pairs
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: wp6-measurement-${{ matrix.platform }}-*-${{ github.sha }}
+          path: artifacts/wp6-measurement
+          merge-multiple: true
+      - name: Reproduce deterministic descriptive statistics
+        run: >-
+          pnpm loop:measurement-statistics --
+          --input artifacts/wp6-measurement
+          --platform ${{ matrix.platform }}
+          --source-github-run-id ${{ github.run_id }}
+          --source-github-run-attempt ${{ github.run_attempt }}
+          --source-github-job measure
+        env:
+          LOOP_VERIFY_COMMAND_ARTIFACT_DIR: artifacts/wp6-statistics/${{ matrix.platform }}/statistics
+      - name: Retain deterministic statistics
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: wp6-statistics-${{ matrix.platform }}-${{ github.sha }}
+          path: artifacts/wp6-statistics/${{ matrix.platform }}
+          if-no-files-found: error
+          retention-days: 14

@@ -1,6 +1,6 @@
 # Current Execution Plan
 
-**Status:** Active — step 5 implemented; clean-candidate and hosted qualification pending
+**Status:** Active — step 6 locally qualified; candidate commit and hosted gates pending
 **Updated:** 2026-08-30
 **Owner:** autonomous loop
 **Predecessor:** intended WP6b/WP6c closed at commit
@@ -196,7 +196,7 @@ CAL-1; frozen authorities; immutable acceptance; rewriting historical records.
    `1.0.0` shape with tightened runtime acceptance, recorded with rationale)
    and an autonomy-log correction stating the prior "contradictory input
    fails closed" claim was overbroad, enumerating the admitted classes.
-5. **Build the measurement-lane runner.** New additive CLI (e.g.
+5. **[complete] Build the measurement-lane runner.** New additive CLI (e.g.
    `src/measurement-lane-cli.ts` plus a `loop:measurement-lane` script) that
    executes a declared measured command set under the WP6 probe for one
    repetition, records the declared cold/warm classification with its exact
@@ -206,7 +206,7 @@ CAL-1; frozen authorities; immutable acceptance; rewriting historical records.
    hashes. Missing or invalid summaries fail the run closed. No thresholds,
    no comparisons, no claims. Unit tests cover the record contract and the
    fail-closed paths.
-6. **Add the benchmark CI workflow.** New file
+6. **[complete] Add the benchmark CI workflow.** New file
    `.github/workflows/wp6-measurement-matrix.yml`, `workflow_dispatch` only,
    matrix ubuntu-24.04 + windows-2022, pinned Node `24.18.0` / pnpm
    `11.15.1`, serial execution: per platform at least five cold repetitions
@@ -513,10 +513,64 @@ ownership-discovery-01-1.stdout.log` contains the valid JSON after the
   There are no failed or pending suites/tests. Clean commit identity, a real
   cold/warm invocation, push, and hosted exact-runtime CI remain required
   before step 5 is complete.
+- 2026-08-30 — Step 5 is complete at commit
+  `9f1767cba800b551faa648e8a317715fe282f6a4`, tree
+  `4a2c6c13a9068c51e7580a50a32ca04b3aa4ac6d`, pushed to
+  `origin/master`. Short clean checkout `C:/w/m5` with evidence under
+  `C:/w/m5e` executed one real `legacy-fast` cold/warm pair through the
+  production CLI. Cold/warm lane record SHA-256 values are
+  `fbab51288feb41dbc88c4daafc3a4fe717404a33972979b46657176a7d1da8fa`
+  and `cf1ee5c888231184020aba59ca8c1f99d30fa5880f2a20ea5dec6ecacb055a47`;
+  reduction SHA-256 values are
+  `f58ac93348baab18ffe4b1ecd27eea096379d05ffc5a36e554f8c35835f612ee`
+  and `6f22754f941e9de56e039f35ca8c29fddaa8f4ac7bc181674a20da3a27b4ec5f`.
+  Both records bind the exact clean candidate, one input, local-validation
+  provenance, and false non-semantic authority flags; the warm copy is
+  byte-identical to the cold record and binds cold content SHA-256
+  `01c1068ec738240aba9ed8e733c516af1cbc1a16a45ecef00ff0bb7bea7c3704`.
+  Hosted exact-runtime run
+  `https://github.com/mclaurin10/milestone-loop-template/actions/runs/33309783742`
+  passed all five jobs (Windows controller 1h6m21s, Linux controller 8m30s,
+  both adopter smokes, trusted container). GitHub archive SHA-256 digests are
+  controller Windows
+  `71b53a0c83194d2ee46ec9ced1e598cfb2280785b0ffeb4d97b9c42639932299`,
+  controller Linux
+  `2e8df062e12f8489be7323da101a40362c7f5a161d774e8533c390d02b725836`,
+  adopter Windows
+  `9c5bb9be13477440f6efd734f34363ba845128d89519dcfad5ea0d276a6f554c`,
+  adopter Linux
+  `40eb7191468ff864074fb45538633bd2b78e45b704a925d894e18bf3985901a5`,
+  and trusted container
+  `d112f2e012d2f73c852cc63648300c31ae1f23f2fbe5543e0c2e3fd647c14f73`.
+  The protected workflow remains byte-identical. Step 6 may proceed.
+- 2026-08-30 — Step 6 implementation and dirty-tree local qualification are
+  complete. The new `milestone-loop-wp6-measurement-statistics.v1` producer
+  requires exactly five independently validated cold/warm pairs per platform,
+  reproduces their lane/receipt/summary/reduction and pairing contracts, and
+  emits exact median/range/MAD statistics for durations, total CPU, peak RSS,
+  and test counts without comparisons or judgment. The additive
+  `workflow_dispatch` workflow shards ten isolated pair jobs, retains every
+  pair, then downloads and recomputes one statistics artifact per platform;
+  Node, pnpm, runner images, and all four GitHub actions are pinned. Focused
+  statistics/ownership tests passed 15/15 at
+  `C:/w/wp6d-step6-focused-2`. Receipt-owning typecheck, lint, format, and
+  five-command invariants passed at
+  `C:/w/wp6d-step6-{typecheck-final,lint-final,format-final,invariants-1}`.
+  Controller
+  passed 203/203 suites and 691/691 tests at
+  `C:/w/wp6d-step6-orchestrator-1` (report SHA-256
+  `60b518e6509f87cb4baefbd502d3f60fbaa22d3367fb5734c3f6344d775dd5e4`);
+  complete unit passed 205/205 suites and 707/707 tests at
+  `C:/w/wp6d-step6-unit-1` (report SHA-256
+  `bc9c3ce493e99932836e02ea2f51eb8b01f263ee3a4bfce5ec963f84230047ac`).
+  Neither aggregate has a failed or pending suite/test. The protected
+  exact-runtime workflow and protected untracked roadmap remain byte-identical.
+  A clean candidate commit, push, exact-runtime hosted gate, full hosted
+  measurement dispatch, and independent artifact download validation remain.
 
 ## Next Action
 
-Commit the cohesive step-5 runner increment, exercise one real cold/warm pair
-from a short clean checkout, push the exact candidate, and require all five
-hosted exact-runtime jobs to pass before beginning the workflow/statistics
-increment.
+Seal the locally qualified step-6 implementation in one cohesive commit, push
+it, require the protected exact-runtime workflow to pass, then dispatch step 7
+on that exact candidate and independently download/revalidate every retained
+pair and both statistics records.
