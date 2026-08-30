@@ -727,16 +727,41 @@ export function assertTestRunSummary(
     measurements["setupTime"],
     "Setup-time measurement",
   );
-  validateDuration(measurements["gitFixtureTime"], "Git-fixture measurement");
-  validateDuration(
+  const gitFixture = validateDuration(
+    measurements["gitFixtureTime"],
+    "Git-fixture measurement",
+  );
+  const processStartup = validateDuration(
     measurements["processStartupTime"],
     "Process-startup measurement",
   );
-  validateDuration(measurements["testBodyTime"], "Test-body measurement");
-  validateCpu(measurements["cpuTime"]);
-  validateRss(measurements["peakRss"]);
+  const testBody = validateDuration(
+    measurements["testBodyTime"],
+    "Test-body measurement",
+  );
+  const cpu = validateCpu(measurements["cpuTime"]);
+  const rss = validateRss(measurements["peakRss"]);
   if (wall.availability !== "measured" || setup.availability !== "measured")
     throw new Error("Wall and setup time must always be measured.");
+  for (const [label, measurement] of [
+    ["Wall-time", wall],
+    ["Setup-time", setup],
+    ["Process-startup", processStartup],
+    ["Test-body", testBody],
+  ] as const)
+    if (
+      measurement.availability === "measured" &&
+      measurement.sampleCount === 0
+    )
+      throw new Error(`${label} measured values require at least one sample.`);
+  if (
+    gitFixture.availability === "measured" &&
+    gitFixture.sampleCount === 0 &&
+    gitFixture.nanoseconds !== "0"
+  )
+    throw new Error(
+      "Measured Git-fixture time with zero samples must be zero.",
+    );
   if (BigInt(setup.nanoseconds ?? "0") > BigInt(wall.nanoseconds ?? "0"))
     throw new Error("Setup time cannot exceed the measured run wall time.");
 
@@ -754,7 +779,10 @@ export function assertTestRunSummary(
     "Test-run probe",
   );
   const processCount = safeCount(probe["processCount"], "Probe process count");
-  safeCount(probe["synchronousLaunchCount"], "Probe synchronous launch count");
+  const synchronousLaunchCount = safeCount(
+    probe["synchronousLaunchCount"],
+    "Probe synchronous launch count",
+  );
   if (probe["availability"] === "measured") {
     if (
       processCount === 0 ||
@@ -766,11 +794,34 @@ export function assertTestRunSummary(
   } else if (
     probe["availability"] !== "unavailable" ||
     processCount !== 0 ||
+    synchronousLaunchCount !== 0 ||
     probe["recordsSha256"] !== null ||
     typeof probe["reason"] !== "string" ||
     probe["reason"].length === 0
   )
     throw new Error("Unavailable probe identity is contradictory.");
+
+  if (probe["availability"] === "unavailable") {
+    const measuredWithoutProbe = [
+      ["gitFixtureTime", gitFixture.availability],
+      ["processStartupTime", processStartup.availability],
+      ["testBodyTime", testBody.availability],
+      ["cpuTime", cpu.availability],
+      ["peakRss", rss.availability],
+    ]
+      .filter(([, disposition]) => disposition === "measured")
+      .map(([name]) => name);
+    if (measuredWithoutProbe.length > 0)
+      throw new Error(
+        `Unavailable probe cannot support measured observations: ${measuredWithoutProbe.join(", ")}.`,
+      );
+  }
+  if (cpu.availability === "measured" && cpu.processCount !== processCount)
+    throw new Error("CPU process coverage contradicts the measured probe.");
+  if (rss.availability === "measured" && rss.processCount !== processCount)
+    throw new Error(
+      "Peak RSS process coverage contradicts the measured probe.",
+    );
 
   const nonSemantic = value["nonSemantic"];
   if (!isRecord(nonSemantic))
@@ -1247,7 +1298,7 @@ export async function beginTestRunMeasurement(input: {
           peakRss:
             "Maximum process.resourceUsage maxRSS across instrumented Node processes, converted from kibibytes to bytes; this is not an aggregate concurrent process-tree peak.",
           relationship:
-            "Measurements are independently observed and intentionally non-additive; Git, startup, and test-body intervals may overlap wall/setup categories.",
+            "Measurements are independently observed and intentionally non-additive; fine-grained Git, startup, test-body, CPU, and RSS observations are reported as measured only when the preload probe record set is available, and their intervals may overlap wall/setup categories.",
         },
         units: {
           duration: "nanoseconds" as const,
@@ -1290,7 +1341,7 @@ export async function beginTestRunMeasurement(input: {
                 reason: unavailableProbeReason,
               },
           processStartupTime:
-            probeComplete && startupSamples.length + probeStartupSamples > 0
+            probeMeasured && startupSamples.length + probeStartupSamples > 0
               ? {
                   availability: "measured" as const,
                   nanoseconds: (
@@ -1303,26 +1354,29 @@ export async function beginTestRunMeasurement(input: {
                   availability: "unavailable" as const,
                   nanoseconds: null,
                   sampleCount: 0,
-                  reason: probeComplete
+                  reason: probeMeasured
                     ? "no-asynchronous-spawn-latency-samples"
-                    : INCOMPLETE_PROBE_REASON,
+                    : unavailableProbeReason,
                 },
-          testBodyTime: testBodyMeasured
-            ? {
-                availability: "measured" as const,
-                nanoseconds: testBodyNanoseconds.toString(),
-                sampleCount: reports.reduce(
-                  (sum, item) => sum + item.testCount,
-                  0,
-                ),
-                reason: null,
-              }
-            : {
-                availability: "unavailable" as const,
-                nanoseconds: null,
-                sampleCount: 0,
-                reason: "vitest-assertion-duration-field-unavailable",
-              },
+          testBodyTime:
+            probeMeasured && testBodyMeasured
+              ? {
+                  availability: "measured" as const,
+                  nanoseconds: testBodyNanoseconds.toString(),
+                  sampleCount: reports.reduce(
+                    (sum, item) => sum + item.testCount,
+                    0,
+                  ),
+                  reason: null,
+                }
+              : {
+                  availability: "unavailable" as const,
+                  nanoseconds: null,
+                  sampleCount: 0,
+                  reason: probeMeasured
+                    ? "vitest-assertion-duration-field-unavailable"
+                    : unavailableProbeReason,
+                },
           cpuTime: probeMeasured
             ? {
                 availability: "measured" as const,
@@ -1683,9 +1737,19 @@ export function reduceTestRunSummaries(input: {
   });
 }
 
-function validateDispositionCounts(value: unknown, label: string): void {
+function validateDispositionCounts(
+  value: unknown,
+  label: string,
+  expected: {
+    readonly measured: number;
+    readonly unavailable: number;
+    readonly notApplicable: number;
+    readonly inputCount: number;
+  },
+): void {
   if (!Array.isArray(value)) throw new Error(`${label} must be an array.`);
   let prior = "";
+  const totals = { measured: 0, unavailable: 0, notApplicable: 0 };
   for (const [index, item] of value.entries()) {
     if (!isRecord(item))
       throw new Error(`${label}[${index}] must be an object.`);
@@ -1703,13 +1767,25 @@ function validateDispositionCounts(value: unknown, label: string): void {
       throw new Error(
         `${label}[${index}] measured disposition cannot have a reason.`,
       );
-    if (safeCount(item["count"], `${label}[${index}].count`) === 0)
+    const count = safeCount(item["count"], `${label}[${index}].count`);
+    if (count === 0)
       throw new Error(`${label}[${index}] count must be positive.`);
+    if (disposition === "measured") totals.measured += count;
+    else if (disposition === "unavailable") totals.unavailable += count;
+    else totals.notApplicable += count;
     const key = `${disposition}\0${item["reason"] ?? ""}`;
     if (index > 0 && compareStrings(prior, key) >= 0)
       throw new Error(`${label} must be unique and deterministically ordered.`);
     prior = key;
   }
+  if (
+    totals.measured !== expected.measured ||
+    totals.unavailable !== expected.unavailable ||
+    totals.notApplicable !== expected.notApplicable ||
+    totals.measured + totals.unavailable + totals.notApplicable !==
+      expected.inputCount
+  )
+    throw new Error(`${label} contradict counters or input count.`);
 }
 
 export function assertTestRunReduction(value: unknown): TestRunReduction {
@@ -1783,10 +1859,9 @@ export function assertTestRunReduction(value: unknown): TestRunReduction {
       item["commandId"],
       `Reduction input ${index} command ID`,
     );
+    const role = item["role"] as TestRunRole;
     if (
-      !new Set<TestRunRole>(["legacy", "partition", "legacy-extra"]).has(
-        item["role"] as TestRunRole,
-      )
+      !new Set<TestRunRole>(["legacy", "partition", "legacy-extra"]).has(role)
     )
       throw new Error(`Reduction input ${index} role is invalid.`);
     if (!(
@@ -1794,6 +1869,8 @@ export function assertTestRunReduction(value: unknown): TestRunReduction {
       (typeof item["owner"] === "string" && item["owner"].length > 0)
     ))
       throw new Error(`Reduction input ${index} owner is invalid.`);
+    if ((role === "partition") !== (item["owner"] !== null))
+      throw new Error(`Reduction input ${index} owner contradicts its role.`);
     const path = canonicalRelativePath(
       item["path"],
       `Reduction input ${index} path`,
@@ -1903,20 +1980,36 @@ export function assertTestRunReduction(value: unknown): TestRunReduction {
       ],
       `Reduction ${key}`,
     );
-    const classified =
-      safeCount(metric["measuredCount"], `Reduction ${key} measured`) +
-      safeCount(metric["unavailableCount"], `Reduction ${key} unavailable`) +
-      safeCount(
-        metric["notApplicableCount"],
-        `Reduction ${key} not-applicable`,
-      );
-    if (classified !== inputCount)
+    const measured = safeCount(
+      metric["measuredCount"],
+      `Reduction ${key} measured`,
+    );
+    const unavailable = safeCount(
+      metric["unavailableCount"],
+      `Reduction ${key} unavailable`,
+    );
+    const notApplicable = safeCount(
+      metric["notApplicableCount"],
+      `Reduction ${key} not-applicable`,
+    );
+    if (measured + unavailable + notApplicable !== inputCount)
       throw new Error(`Reduction ${key} dispositions contradict input count.`);
-    decimal(metric["totalNanoseconds"], `Reduction ${key} total`);
-    safeCount(metric["sampleCount"], `Reduction ${key} samples`);
+    const totalNanoseconds = decimal(
+      metric["totalNanoseconds"],
+      `Reduction ${key} total`,
+    );
+    const sampleCount = safeCount(
+      metric["sampleCount"],
+      `Reduction ${key} samples`,
+    );
+    if (measured === 0 && (totalNanoseconds !== "0" || sampleCount !== 0))
+      throw new Error(
+        `Reduction ${key} totals contradict zero measured inputs.`,
+      );
     validateDispositionCounts(
       metric["dispositions"],
       `Reduction ${key} dispositions`,
+      { measured, unavailable, notApplicable, inputCount },
     );
   }
   const cpu = measurements["cpuTime"];
@@ -1935,23 +2028,34 @@ export function assertTestRunReduction(value: unknown): TestRunReduction {
     ],
     "Reduction CPU measurement",
   );
-  if (
-    safeCount(cpu["measuredCount"], "Reduction CPU measured") +
-      safeCount(cpu["unavailableCount"], "Reduction CPU unavailable") +
-      safeCount(cpu["notApplicableCount"], "Reduction CPU not-applicable") !==
-    inputCount
-  )
+  const cpuMeasured = safeCount(cpu["measuredCount"], "Reduction CPU measured");
+  const cpuUnavailable = safeCount(
+    cpu["unavailableCount"],
+    "Reduction CPU unavailable",
+  );
+  const cpuNotApplicable = safeCount(
+    cpu["notApplicableCount"],
+    "Reduction CPU not-applicable",
+  );
+  if (cpuMeasured + cpuUnavailable + cpuNotApplicable !== inputCount)
     throw new Error("Reduction CPU dispositions contradict input count.");
   const user = BigInt(decimal(cpu["userMicroseconds"], "Reduction CPU user"));
   const system = BigInt(
     decimal(cpu["systemMicroseconds"], "Reduction CPU system"),
   );
-  if (
-    user + system !==
-    BigInt(decimal(cpu["totalMicroseconds"], "Reduction CPU total"))
-  )
+  const total = BigInt(
+    decimal(cpu["totalMicroseconds"], "Reduction CPU total"),
+  );
+  if (user + system !== total)
     throw new Error("Reduction CPU totals are contradictory.");
-  validateDispositionCounts(cpu["dispositions"], "Reduction CPU dispositions");
+  if (cpuMeasured === 0 && (user !== 0n || system !== 0n || total !== 0n))
+    throw new Error("Reduction CPU totals contradict zero measured inputs.");
+  validateDispositionCounts(cpu["dispositions"], "Reduction CPU dispositions", {
+    measured: cpuMeasured,
+    unavailable: cpuUnavailable,
+    notApplicable: cpuNotApplicable,
+    inputCount,
+  });
   const rss = measurements["peakRss"];
   if (!isRecord(rss))
     throw new Error("Reduction RSS measurement must be an object.");
@@ -1968,11 +2072,16 @@ export function assertTestRunReduction(value: unknown): TestRunReduction {
     "Reduction RSS measurement",
   );
   const rssMeasured = safeCount(rss["measuredCount"], "Reduction RSS measured");
+  const rssUnavailable = safeCount(
+    rss["unavailableCount"],
+    "Reduction RSS unavailable",
+  );
+  const rssNotApplicable = safeCount(
+    rss["notApplicableCount"],
+    "Reduction RSS not-applicable",
+  );
   if (
-    rssMeasured +
-      safeCount(rss["unavailableCount"], "Reduction RSS unavailable") +
-      safeCount(rss["notApplicableCount"], "Reduction RSS not-applicable") !==
-      inputCount ||
+    rssMeasured + rssUnavailable + rssNotApplicable !== inputCount ||
     rss["aggregation"] !== "maximum-of-summary-process-peaks"
   )
     throw new Error("Reduction RSS disposition or aggregation is invalid.");
@@ -1980,7 +2089,12 @@ export function assertTestRunReduction(value: unknown): TestRunReduction {
     throw new Error("Reduction RSS maximum contradicts availability.");
   if (rss["maximumBytes"] !== null)
     decimal(rss["maximumBytes"], "Reduction RSS maximum");
-  validateDispositionCounts(rss["dispositions"], "Reduction RSS dispositions");
+  validateDispositionCounts(rss["dispositions"], "Reduction RSS dispositions", {
+    measured: rssMeasured,
+    unavailable: rssUnavailable,
+    notApplicable: rssNotApplicable,
+    inputCount,
+  });
   const nonSemantic = value["nonSemantic"];
   if (!isRecord(nonSemantic))
     throw new Error("Reduction semantic boundary must be an object.");

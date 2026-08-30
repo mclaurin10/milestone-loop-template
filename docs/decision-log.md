@@ -3,6 +3,45 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-29 — Measurement v1.0.0 runtime acceptance is producer-coherent
+
+**Decision.** Keep `milestone-loop-test-run-measurement.v1` summary and
+reduction `schemaVersion: "1.0.0"` and their existing JSON shapes, while
+tightening the authoritative runtime validators to reject values the genuine
+producer cannot coherently emit. Measured wall/setup/startup/test-body
+durations require a positive sample count. Measured Git time may have zero
+samples only at zero nanoseconds. An unavailable preload probe has zero
+synchronous launches and cannot support measured Git/startup/test-body/CPU/RSS
+observations. Measured CPU and RSS process coverage equals the probe record
+count. The producer now withholds those fine-grained observations when the
+probe set is unavailable, and its boundary text states that completeness rule.
+
+Reduction disposition rows must reconcile by availability with their declared
+counters and `inputCount`. Zero-measured duration and CPU aggregates must be
+zero, and only partition inputs have non-null owners. These relational checks
+remain runtime acceptance because the unchanged JSON Schemas describe the
+wire shape, not every cross-field invariant. The shared shadow finalizer owns
+semantic comparison, final candidate check, summary validation, reduction,
+proof publication, and the receipt decision for both production execution and
+the test-only omission mutation.
+
+**Why.** The prior validators admitted internally impossible combinations even
+when artifact bytes and content hashes were self-consistent. That contradicted
+the intended fail-closed claim. This is a validation bug fix, not a new wire
+format: no field, enum, identifier, unit, artifact kind, or producer version
+changes, and all eight retained candidate-Q summaries plus their retained
+reduction validate and reproduce byte-semantically under the tighter rules.
+Alternatives rejected: bumping the version for an unchanged shape, preserving
+permissive acceptance for compatibility with impossible values, inferring
+missing metrics as zero, weakening validation to preserve a bad artifact, or
+letting the omission CLI maintain a second receipt-decision path.
+
+**Affected files.** `test-run-summary.ts` and its contract regressions;
+`test-partitions.ts` and its omission/finalization regressions; this decision,
+the corrective autonomy record, and the active WP6d plan. Frozen authorities,
+test-success meaning, the generic manifest/tiers/slow registry,
+`benchmark.ts`, and `exact-runtime-ci.yml` are unchanged.
+
 ## 2026-08-29 — Same-host controller liveness is PID plus incarnation
 
 **Decision.** A live PID is the recorded controller only when its observed

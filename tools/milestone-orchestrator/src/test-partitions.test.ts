@@ -6,6 +6,7 @@ import { join, resolve } from "node:path";
 
 import { afterAll, describe, expect, it } from "vitest";
 
+import { assertTestRunReduction } from "./test-run-summary.js";
 import type { TestOwnershipReport } from "./test-ownership.js";
 import { TEST_OWNER_IDS } from "./test-ownership.js";
 import {
@@ -445,7 +446,7 @@ describe("WP6 aggregate child failure propagation", () => {
 });
 
 describe("WP6 integration-level omission mutation", () => {
-  it("fails the aggregate, emits no PASS receipt, and retains the omitted semantic identity", async () => {
+  it("fails shared aggregate finalization, emits no PASS receipt, and retains the omitted semantic identity", async () => {
     const root = await mkdtemp(join(tmpdir(), "wp6-omission-"));
     integrationRoots.push(root);
     const artifactDirectory = resolve(root, "evidence");
@@ -481,6 +482,7 @@ describe("WP6 integration-level omission mutation", () => {
     ) as {
       status: string;
       receipt: unknown;
+      failureClassification: { kind: string; message: string };
       declaredArtifacts: {
         declarations: readonly { kind: string; path: string }[];
       };
@@ -495,10 +497,35 @@ describe("WP6 integration-level omission mutation", () => {
       ),
     ) as {
       status: string;
+      expectedFailure: string;
       mutation: { omittedTestId: string };
       shadowComparison: { missingTests: readonly string[] };
+      measurementReduction: {
+        inputCount: number;
+        nonSemantic: {
+          changesTestSuccess: boolean;
+          authorizesCutover: boolean;
+          benchmarkClaim: boolean;
+        };
+      };
     };
+    const reduction = JSON.parse(
+      await readFile(
+        resolve(artifactDirectory, "test-run-summary-reduction.json"),
+        "utf8",
+      ),
+    ) as unknown;
     expect(manifest).toMatchObject({ status: "FAIL", receipt: null });
+    expect(manifest.failureClassification).toMatchObject({ kind: "product" });
+    expect(manifest.failureClassification.message).toContain(
+      "the production semantic comparator rejected exactly that missing identity",
+    );
+    expect(manifest.failureClassification.message).not.toContain(
+      "the aggregate rejected",
+    );
+    expect(manifest.failureClassification.message).not.toContain(
+      "issued no PASS receipt",
+    );
     expect(
       manifest.declaredArtifacts.declarations.map((item) => item.kind),
     ).toEqual(
@@ -506,14 +533,31 @@ describe("WP6 integration-level omission mutation", () => {
         "test-partition-omission-mutation-proof",
         "test-partition-shadow-legacy-vitest-report",
         "test-partition-vitest-report",
+        "test-run-summary-reduction",
+        "test-run-summary",
       ]),
     );
     expect(proof.status).toBe("FAIL");
+    expect(proof.expectedFailure).toBe("missing-semantic-test-identity");
     expect(proof.mutation.omittedTestId).toContain(
       "representative omitted by mutation",
     );
     expect(proof.shadowComparison.missingTests).toEqual([
       proof.mutation.omittedTestId,
     ]);
+    expect(proof.measurementReduction).toEqual(
+      expect.objectContaining({
+        inputCount: 2,
+        nonSemantic: {
+          changesTestSuccess: false,
+          authorizesCutover: false,
+          benchmarkClaim: false,
+        },
+      }),
+    );
+    expect(assertTestRunReduction(reduction)).toMatchObject({
+      status: "PASS",
+      inputCount: 2,
+    });
   }, 30_000);
 });

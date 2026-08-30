@@ -1473,10 +1473,114 @@ const LEGACY_CHILDREN: readonly Omit<EvidenceChildDefinition, "directory">[] = [
   },
 ];
 
+type ShadowCandidateIdentity = ReturnType<typeof candidateFromIdentity>;
+type ShadowFinalizationComparison = ReturnType<typeof compareShadowSemantics>;
+
+async function finalizePartitionShadow(input: {
+  readonly context: Awaited<ReturnType<typeof evidenceContext>>;
+  readonly proofName: string;
+  readonly initialCandidate: ShadowCandidateIdentity;
+  readonly exactMeasurementCandidate: TestRunCandidate;
+  readonly legacyObservations: readonly SemanticTestObservation[];
+  readonly partitionObservations: readonly SemanticTestObservation[];
+  readonly readFinalCandidate: () => Promise<ShadowCandidateIdentity>;
+  readonly loadSummarySet: () => Promise<{
+    readonly sources: readonly ValidatedTestRunSummarySource[];
+    readonly expectations: readonly TestRunSummaryExpectation[];
+  }>;
+  readonly proofBody: {
+    readonly ownershipDeclaration: unknown;
+    readonly discoveredUniverse: unknown;
+    readonly partitions: unknown;
+    readonly pairwiseIntersections: unknown;
+    readonly union: unknown;
+    readonly execution: unknown;
+  };
+  readonly proofExtension?: Readonly<Record<string, unknown>>;
+  readonly writePassReceipt: (result: {
+    readonly semanticComparison: ShadowFinalizationComparison;
+    readonly reduction: ReturnType<typeof reduceTestRunSummaries>;
+    readonly reductionPath: string;
+    readonly reductionDeclaration: {
+      readonly path: string;
+      readonly bytes: number;
+      readonly sha256: string;
+    };
+  }) => Promise<void>;
+}): Promise<{
+  readonly semanticComparison: ShadowFinalizationComparison;
+  readonly reduction: ReturnType<typeof reduceTestRunSummaries>;
+}> {
+  const semanticComparison = compareShadowSemantics(
+    input.legacyObservations,
+    input.partitionObservations,
+  );
+  const finalCandidate = await input.readFinalCandidate();
+  assertPinnedCleanCandidate(finalCandidate);
+  if (!sameCandidate(input.initialCandidate, finalCandidate))
+    throw new Error(
+      "Candidate commit, tree, cleanliness, or runtime changed during shadow execution.",
+    );
+
+  const summarySet = await input.loadSummarySet();
+  const reduction = reduceTestRunSummaries({
+    sources: summarySet.sources,
+    expected: summarySet.expectations,
+    candidate: input.exactMeasurementCandidate,
+    relativePath: (path) =>
+      relative(input.context.artifactDirectory, path).replaceAll("\\", "/"),
+  });
+  const reductionPath = resolve(
+    input.context.artifactDirectory,
+    TEST_RUN_REDUCTION_NAME,
+  );
+  await writeTestRunReduction(reductionPath, reduction);
+  const reductionDeclaration = await artifactDeclaration(
+    input.context.artifactDirectory,
+    reductionPath,
+    TEST_RUN_REDUCTION_KIND,
+  );
+
+  const status = semanticComparison.status;
+  const proofPath = resolve(input.context.artifactDirectory, input.proofName);
+  await writeJson(proofPath, {
+    schemaVersion: TEST_PARTITION_SHADOW_SCHEMA_VERSION,
+    status,
+    candidate: input.initialCandidate,
+    ...(input.proofExtension ?? {}),
+    ownershipDeclaration: input.proofBody.ownershipDeclaration,
+    discoveredUniverse: input.proofBody.discoveredUniverse,
+    partitions: input.proofBody.partitions,
+    pairwiseIntersections: input.proofBody.pairwiseIntersections,
+    union: input.proofBody.union,
+    execution: input.proofBody.execution,
+    measurementReduction: {
+      path: reductionDeclaration.path,
+      bytes: reductionDeclaration.bytes,
+      sha256: reductionDeclaration.sha256,
+      contentSha256: reduction.contentSha256,
+      inputCount: reduction.inputCount,
+      nonSemantic: reduction.nonSemantic,
+    },
+    shadowComparison: semanticComparison,
+  });
+  if (status !== "PASS")
+    throw new Error(
+      `Shadow semantic equivalence failed: missing=${semanticComparison.missingTests.length}, unexpected=${semanticComparison.unexpectedTests.length}, multiplySelected=${semanticComparison.multiplySelectedTests.length}, mismatched=${semanticComparison.outcomeMismatches.length}, legacyConflicts=${semanticComparison.legacyConflicts.length}.`,
+    );
+
+  await input.writePassReceipt({
+    semanticComparison,
+    reduction,
+    reductionPath,
+    reductionDeclaration,
+  });
+  return { semanticComparison, reduction };
+}
+
 export async function runPartitionShadowCli(): Promise<number> {
   const context = await evidenceContext(SHADOW_STAGE_ID, SHADOW_COMMAND_ID);
   const proofName = "test-partition-shadow-proof.json";
-  const proofPath = resolve(context.artifactDirectory, proofName);
   try {
     const initialCandidate = candidateFromIdentity(
       (await commandIdentity(context.repositoryRoot)) as Record<
@@ -1652,100 +1756,7 @@ export async function runPartitionShadowCli(): Promise<number> {
         "Executed partition file union does not equal the discovered universe.",
       );
 
-    const semanticComparison = compareShadowSemantics(
-      allLegacyReports.flatMap((report) => report.observations),
-      partitionReports.flatMap((report) => report.observations),
-    );
-    const finalCandidate = candidateFromIdentity(
-      (await commandIdentity(context.repositoryRoot)) as Record<
-        string,
-        unknown
-      >,
-    );
-    assertPinnedCleanCandidate(finalCandidate);
-    if (!sameCandidate(initialCandidate, finalCandidate))
-      throw new Error(
-        "Candidate commit, tree, cleanliness, or runtime changed during shadow execution.",
-      );
-
     const allChildResults = [...legacyChildren, ...partitionChildren];
-    const childSummarySources = await Promise.all(
-      allChildResults.map((child) =>
-        validatedChildSummary(child, exactMeasurementCandidate),
-      ),
-    );
-    const summarySources = [
-      ...childSummarySources,
-      ...(extraSummarySource ? [extraSummarySource] : []),
-    ];
-    const summaryExpectations = [
-      ...allChildResults.map((child) =>
-        childSummaryExpectation(child.definition, exactMeasurementCandidate),
-      ),
-      ...(extraExpectation ? [extraExpectation] : []),
-    ];
-    const reduction = reduceTestRunSummaries({
-      sources: summarySources,
-      expected: summaryExpectations,
-      candidate: exactMeasurementCandidate,
-      relativePath: (path) =>
-        relative(context.artifactDirectory, path).replaceAll("\\", "/"),
-    });
-    const reductionPath = resolve(
-      context.artifactDirectory,
-      TEST_RUN_REDUCTION_NAME,
-    );
-    await writeTestRunReduction(reductionPath, reduction);
-    const reductionDeclaration = await artifactDeclaration(
-      context.artifactDirectory,
-      reductionPath,
-      TEST_RUN_REDUCTION_KIND,
-    );
-
-    const status = semanticComparison.status;
-    await writeJson(proofPath, {
-      schemaVersion: TEST_PARTITION_SHADOW_SCHEMA_VERSION,
-      status,
-      candidate: initialCandidate,
-      ownershipDeclaration: ownership.catalogue,
-      discoveredUniverse: membership.universe,
-      partitions: membership.partitions,
-      pairwiseIntersections: membership.pairwiseIntersections,
-      union: membership.union,
-      execution: {
-        legacy: {
-          childReceipts: legacyChildren.map((child) =>
-            receiptProof(context.artifactDirectory, child),
-          ),
-          extraReports: extraLegacyExecutions.map((execution) =>
-            rawReportProof(context.artifactDirectory, execution),
-          ),
-          fileCount: legacyFiles.length,
-          filesSha256: inventorySha256(legacyFiles),
-        },
-        partitions: {
-          childReceipts: partitionChildren.map((child) =>
-            receiptProof(context.artifactDirectory, child),
-          ),
-          fileCount: partitionFiles.length,
-          filesSha256: inventorySha256(partitionFiles),
-        },
-      },
-      measurementReduction: {
-        path: reductionDeclaration.path,
-        bytes: reductionDeclaration.bytes,
-        sha256: reductionDeclaration.sha256,
-        contentSha256: reduction.contentSha256,
-        inputCount: reduction.inputCount,
-        nonSemantic: reduction.nonSemantic,
-      },
-      shadowComparison: semanticComparison,
-    });
-    if (status !== "PASS")
-      throw new Error(
-        `Shadow semantic equivalence failed: missing=${semanticComparison.missingTests.length}, unexpected=${semanticComparison.unexpectedTests.length}, multiplySelected=${semanticComparison.multiplySelectedTests.length}, mismatched=${semanticComparison.outcomeMismatches.length}, legacyConflicts=${semanticComparison.legacyConflicts.length}.`,
-      );
-
     const legacyRawPaths = [
       ...legacyChildren.flatMap((child) =>
         requiredReceipt(child)
@@ -1756,58 +1767,130 @@ export async function runPartitionShadowCli(): Promise<number> {
       ),
       ...extraLegacyExecutions.map((execution) => execution.rawReportPath),
     ];
-    await writeReceipt(
+    const finalized = await finalizePartitionShadow({
       context,
-      [
-        {
-          id: "partition-membership-disjoint-and-complete",
-          summary: `${membership.partitions.length} executable owner partitions form an exact ${membership.universe.fileCount}-file union with ${membership.pairwiseIntersections.length} empty pairwise intersections.`,
+      proofName,
+      initialCandidate,
+      exactMeasurementCandidate,
+      legacyObservations: allLegacyReports.flatMap(
+        (report) => report.observations,
+      ),
+      partitionObservations: partitionReports.flatMap(
+        (report) => report.observations,
+      ),
+      readFinalCandidate: async () =>
+        candidateFromIdentity(
+          (await commandIdentity(context.repositoryRoot)) as Record<
+            string,
+            unknown
+          >,
+        ),
+      loadSummarySet: async () => {
+        const childSummarySources = await Promise.all(
+          allChildResults.map((child) =>
+            validatedChildSummary(child, exactMeasurementCandidate),
+          ),
+        );
+        return {
+          sources: [
+            ...childSummarySources,
+            ...(extraSummarySource ? [extraSummarySource] : []),
+          ],
+          expectations: [
+            ...allChildResults.map((child) =>
+              childSummaryExpectation(
+                child.definition,
+                exactMeasurementCandidate,
+              ),
+            ),
+            ...(extraExpectation ? [extraExpectation] : []),
+          ],
+        };
+      },
+      proofBody: {
+        ownershipDeclaration: ownership.catalogue,
+        discoveredUniverse: membership.universe,
+        partitions: membership.partitions,
+        pairwiseIntersections: membership.pairwiseIntersections,
+        union: membership.union,
+        execution: {
+          legacy: {
+            childReceipts: legacyChildren.map((child) =>
+              receiptProof(context.artifactDirectory, child),
+            ),
+            extraReports: extraLegacyExecutions.map((execution) =>
+              rawReportProof(context.artifactDirectory, execution),
+            ),
+            fileCount: legacyFiles.length,
+            filesSha256: inventorySha256(legacyFiles),
+          },
+          partitions: {
+            childReceipts: partitionChildren.map((child) =>
+              receiptProof(context.artifactDirectory, child),
+            ),
+            fileCount: partitionFiles.length,
+            filesSha256: inventorySha256(partitionFiles),
+          },
         },
-        {
-          id: "child-receipts-validated",
-          summary: `Validated ${allChildResults.length} genuine legacy/partition child receipts and their declared raw reports.`,
-        },
-        {
-          id: "same-commit-shadow-equivalence",
-          summary: `Deduplicated ${semanticComparison.legacy.observationCount} legacy observations to ${semanticComparison.legacy.uniqueTestCount} stable tests and matched every normalized partition outcome on commit ${initialCandidate.gitCommit}.`,
-        },
-        {
-          id: "compact-measurement-summaries-reduced",
-          summary: `Validated and deterministically reduced ${reduction.inputCount} command-owned compact summaries without changing test success or authorizing cutover.`,
-        },
-      ],
-      [
-        { path: proofName, kind: SHADOW_PROOF_KIND },
-        {
-          path: TEST_RUN_REDUCTION_NAME,
-          kind: TEST_RUN_REDUCTION_KIND,
-        },
-        ...(extraSummarySource
-          ? [
-              {
-                path: relative(
-                  context.artifactDirectory,
-                  extraSummarySource.path,
-                ).replaceAll("\\", "/"),
-                kind: TEST_RUN_SUMMARY_KIND,
-              },
-            ]
-          : []),
-        ...allChildResults.map((child) => ({
-          path: relative(
-            context.artifactDirectory,
-            requiredReceipt(child).receiptPath,
-          ).replaceAll("\\", "/"),
-          kind: CHILD_RECEIPT_KIND,
-        })),
-        ...legacyRawPaths.map((path) => ({
-          path: relative(context.artifactDirectory, path).replaceAll("\\", "/"),
-          kind: LEGACY_RAW_KIND,
-        })),
-      ],
-    );
+      },
+      writePassReceipt: async ({ semanticComparison, reduction }) => {
+        await writeReceipt(
+          context,
+          [
+            {
+              id: "partition-membership-disjoint-and-complete",
+              summary: `${membership.partitions.length} executable owner partitions form an exact ${membership.universe.fileCount}-file union with ${membership.pairwiseIntersections.length} empty pairwise intersections.`,
+            },
+            {
+              id: "child-receipts-validated",
+              summary: `Validated ${allChildResults.length} genuine legacy/partition child receipts and their declared raw reports.`,
+            },
+            {
+              id: "same-commit-shadow-equivalence",
+              summary: `Deduplicated ${semanticComparison.legacy.observationCount} legacy observations to ${semanticComparison.legacy.uniqueTestCount} stable tests and matched every normalized partition outcome on commit ${initialCandidate.gitCommit}.`,
+            },
+            {
+              id: "compact-measurement-summaries-reduced",
+              summary: `Validated and deterministically reduced ${reduction.inputCount} command-owned compact summaries without changing test success or authorizing cutover.`,
+            },
+          ],
+          [
+            { path: proofName, kind: SHADOW_PROOF_KIND },
+            {
+              path: TEST_RUN_REDUCTION_NAME,
+              kind: TEST_RUN_REDUCTION_KIND,
+            },
+            ...(extraSummarySource
+              ? [
+                  {
+                    path: relative(
+                      context.artifactDirectory,
+                      extraSummarySource.path,
+                    ).replaceAll("\\", "/"),
+                    kind: TEST_RUN_SUMMARY_KIND,
+                  },
+                ]
+              : []),
+            ...allChildResults.map((child) => ({
+              path: relative(
+                context.artifactDirectory,
+                requiredReceipt(child).receiptPath,
+              ).replaceAll("\\", "/"),
+              kind: CHILD_RECEIPT_KIND,
+            })),
+            ...legacyRawPaths.map((path) => ({
+              path: relative(context.artifactDirectory, path).replaceAll(
+                "\\",
+                "/",
+              ),
+              kind: LEGACY_RAW_KIND,
+            })),
+          ],
+        );
+      },
+    });
     process.stdout.write(
-      `WP6 shadow equivalence passed ${semanticComparison.partitions.uniqueTestCount} unique tests across ${membership.universe.fileCount} disjoint files.\n`,
+      `WP6 shadow equivalence passed ${finalized.semanticComparison.partitions.uniqueTestCount} unique tests across ${membership.universe.fileCount} disjoint files.\n`,
     );
     return 0;
   } catch (error) {
@@ -1960,46 +2043,210 @@ export async function runPartitionOmissionMutationCli(): Promise<number> {
       throw new Error(
         "Integration omission mutation did not produce exactly one missing semantic identity.",
       );
-    await writeJson(proofPath, {
-      schemaVersion: "1.0.0",
-      status: "FAIL",
-      expectedFailure: "missing-semantic-test-identity",
-      mutation: {
-        kind: "remove-executed-assertion-from-partition-report",
-        omittedTestId,
-        legacyTestCount: legacy.counts.tests,
-        partitionTestCount: partition.counts.tests,
-      },
-      reports: {
-        legacy: rawReportProof(context.artifactDirectory, {
-          source: legacy.source,
-          configPath: relative(
-            context.artifactDirectory,
-            configPath,
-          ).replaceAll("\\", "/"),
-          selectedFiles: legacy.files,
-          rawReportPath: legacyReportPath,
-          normalized: legacy,
+
+    const omissionCandidate: ShadowCandidateIdentity = {
+      gitCommit: "d".repeat(40),
+      gitTree: "e".repeat(40),
+      workingTreeDirty: false,
+      nodeVersion: "v24.18.0",
+      pnpmVersion: "11.15.1",
+    };
+    assertPinnedCleanCandidate(omissionCandidate);
+    const exactMeasurementCandidate = measurementCandidate(omissionCandidate);
+    const fixtureMembership = provePartitionMembership(legacy.files, [
+      { owner: "omission-fixture", files: partition.files },
+    ]);
+    if (fixtureMembership.status !== "PASS")
+      throw new Error(
+        "Omission fixture membership is not disjoint and complete.",
+      );
+
+    const createSummaryArtifact = async (input: {
+      readonly name: string;
+      readonly report: Record<string, unknown>;
+      readonly role: TestRunRole;
+      readonly owner: string | null;
+    }) => {
+      const directory = resolve(
+        context.artifactDirectory,
+        "finalization-summaries",
+        input.name,
+      );
+      await mkdir(directory, { recursive: true });
+      const reportPath = resolve(directory, "vitest-report.json");
+      await writeJson(reportPath, input.report);
+      const expectation: TestRunSummaryExpectation = {
+        runId: `omission-finalization-${input.name}`,
+        stageId: context.stageId,
+        commandId: `test:partitions:shadow:omission:${input.name}`,
+        role: input.role,
+        owner: input.owner,
+        candidate: exactMeasurementCandidate,
+      };
+      const measurement = await beginTestRunMeasurement({
+        artifactDirectory: directory,
+        runId: expectation.runId,
+        stageId: expectation.stageId,
+        commandId: expectation.commandId,
+        role: expectation.role,
+        owner: expectation.owner,
+        identity: requiredMeasurementIdentity(omissionCandidate),
+      });
+      measurement.markSetupFinished();
+      const finished = await measurement.finish([
+        await describeVitestReport({
+          artifactDirectory: directory,
+          reportPath,
         }),
-        partition: rawReportProof(context.artifactDirectory, {
-          source: partition.source,
-          configPath: relative(
-            context.artifactDirectory,
-            configPath,
-          ).replaceAll("\\", "/"),
-          selectedFiles: partition.files,
-          rawReportPath: partitionReportPath,
-          normalized: partition,
+      ]);
+      const contents = await readFile(finished.path);
+      return {
+        expectation,
+        artifact: {
+          path: finished.path,
+          kind: TEST_RUN_SUMMARY_KIND,
+          bytes: contents.byteLength,
+          sha256: sha256(contents),
+        },
+      };
+    };
+    const summaryArtifacts = await Promise.all([
+      createSummaryArtifact({
+        name: "legacy",
+        report: legacyValue,
+        role: "legacy",
+        owner: null,
+      }),
+      createSummaryArtifact({
+        name: "partition",
+        report: mutatedValue,
+        role: "partition",
+        owner: "omission-fixture",
+      }),
+    ]);
+
+    let finalizationError: unknown = null;
+    try {
+      await finalizePartitionShadow({
+        context,
+        proofName,
+        initialCandidate: omissionCandidate,
+        exactMeasurementCandidate,
+        legacyObservations: legacy.observations,
+        partitionObservations: partition.observations,
+        readFinalCandidate: async () => omissionCandidate,
+        loadSummarySet: async () => ({
+          sources: await Promise.all(
+            summaryArtifacts.map((item) =>
+              loadValidatedTestRunSummary({
+                receipt: { artifacts: [item.artifact] },
+                expected: item.expectation,
+              }),
+            ),
+          ),
+          expectations: summaryArtifacts.map((item) => item.expectation),
         }),
-      },
-      shadowComparison: comparison,
-    });
+        proofExtension: {
+          expectedFailure: "missing-semantic-test-identity",
+          mutation: {
+            kind: "remove-executed-assertion-from-partition-report",
+            omittedTestId,
+            legacyTestCount: legacy.counts.tests,
+            partitionTestCount: partition.counts.tests,
+          },
+          reports: {
+            legacy: rawReportProof(context.artifactDirectory, {
+              source: legacy.source,
+              configPath: relative(
+                context.artifactDirectory,
+                configPath,
+              ).replaceAll("\\", "/"),
+              selectedFiles: legacy.files,
+              rawReportPath: legacyReportPath,
+              normalized: legacy,
+            }),
+            partition: rawReportProof(context.artifactDirectory, {
+              source: partition.source,
+              configPath: relative(
+                context.artifactDirectory,
+                configPath,
+              ).replaceAll("\\", "/"),
+              selectedFiles: partition.files,
+              rawReportPath: partitionReportPath,
+              normalized: partition,
+            }),
+          },
+        },
+        proofBody: {
+          ownershipDeclaration: {
+            source: "test-only-real-vitest-omission-fixture",
+          },
+          discoveredUniverse: fixtureMembership.universe,
+          partitions: fixtureMembership.partitions,
+          pairwiseIntersections: fixtureMembership.pairwiseIntersections,
+          union: fixtureMembership.union,
+          execution: {
+            legacy: { reportCount: 1, testCount: legacy.counts.tests },
+            partitions: {
+              reportCount: 1,
+              testCount: partition.counts.tests,
+            },
+          },
+        },
+        writePassReceipt: async () => {
+          await writeReceipt(
+            context,
+            [
+              {
+                id: "omission-finalization-unexpectedly-passed",
+                summary:
+                  "The shared aggregate finalizer unexpectedly accepted the omission fixture.",
+              },
+            ],
+            [
+              { path: proofName, kind: OMISSION_MUTATION_PROOF_KIND },
+              {
+                path: TEST_RUN_REDUCTION_NAME,
+                kind: TEST_RUN_REDUCTION_KIND,
+              },
+              ...summaryArtifacts.map((item) => ({
+                path: relative(
+                  context.artifactDirectory,
+                  item.artifact.path,
+                ).replaceAll("\\", "/"),
+                kind: TEST_RUN_SUMMARY_KIND,
+              })),
+            ],
+          );
+        },
+      });
+    } catch (error) {
+      finalizationError = error;
+    }
+    if (
+      !(finalizationError instanceof Error) ||
+      !/^Shadow semantic equivalence failed: missing=1, unexpected=0, multiplySelected=0, mismatched=0, legacyConflicts=0\.$/u.test(
+        finalizationError.message,
+      )
+    )
+      throw (
+        finalizationError ??
+        new Error("The omission fixture unexpectedly passed finalization.")
+      );
+
     const artifactInputs = [
       [proofPath, OMISSION_MUTATION_PROOF_KIND],
       [legacyReportPath, LEGACY_RAW_KIND],
       [partitionReportPath, PARTITION_RAW_KIND],
       [configPath, "test-partition-omission-fixture-config"],
       [testPath, "test-partition-omission-fixture-source"],
+      [
+        resolve(context.artifactDirectory, TEST_RUN_REDUCTION_NAME),
+        TEST_RUN_REDUCTION_KIND,
+      ],
+      ...summaryArtifacts.map(
+        (item) => [item.artifact.path, TEST_RUN_SUMMARY_KIND] as const,
+      ),
     ] as const;
     const artifacts = await Promise.all(
       artifactInputs.map(([path, kind]) =>
@@ -2009,7 +2256,7 @@ export async function runPartitionOmissionMutationCli(): Promise<number> {
     await writeManualEvidenceFailure(context, {
       status: "FAIL",
       kind: "product",
-      message: `Expected omission mutation removed ${omittedTestId}; the aggregate rejected the missing semantic identity and issued no PASS receipt.`,
+      message: `Expected omission mutation removed ${omittedTestId}; the production semantic comparator rejected exactly that missing identity.`,
       artifacts,
     });
     process.stderr.write(

@@ -3,6 +3,62 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-29 — WP6d corrective record for measurement acceptance
+
+**Correction.** The preceding 2026-08-29 closeout said all contradictory
+summary/reduction input failed closed. That statement was overbroad. Runtime
+acceptance still admitted: measured wall/setup/startup/test-body durations
+with zero samples; nonzero measured Git time with zero samples; an unavailable
+probe with nonzero synchronous launches or measured Git/startup/test-body/CPU/
+RSS observations; measured CPU/RSS coverage differing from the probe record
+count; reduction disposition rows inconsistent with their counters or
+`inputCount`; nonzero duration/CPU aggregates with zero measured inputs; and a
+null partition owner or non-null legacy/legacy-extra owner. The prior omission
+FAIL manifest also said the aggregate rejected the mutation and issued no PASS
+receipt even though that test-only CLI had exercised only the production
+semantic comparator. Historical bytes and entries are preserved; this entry
+corrects their scope.
+
+**Repair outcome.** Summary and reduction runtime validators now reject every
+listed class after receipt-byte/hash and semantic-content-hash matching, and
+genuine producer boundaries remain accepted. Producer output with an
+unavailable preload probe withholds fine-grained metrics; measured zero-sample
+Git remains valid only at zero nanoseconds. The shadow's existing comparison,
+candidate check, summary validation, reduction, proof, and receipt decision
+are one shared finalizer. The real two-test omission mutation now traverses
+that finalizer, retains a valid two-summary reduction and FAIL proof with one
+named missing identity, and throws before the PASS-receipt callback. Its
+manual FAIL text now claims only the comparator result.
+
+**Retained-Q recalibration.** Exact candidate Q remains
+`b1d43a2abaf46ad16a79e32b08b3a9b9a548eace`, tree
+`acdf9100b96ce17ec5fd2a1df10aba75362b3ce9`, clean. All eight external
+receipt-bound summaries under `C:/w/ea/shadow` passed the tightened loader and
+reducer expectations. Every probe is measured; every measured wall/setup/
+startup/test-body count is positive; the three legitimate zero-Git summaries
+also have zero Git nanoseconds; and every CPU/RSS process count equals its
+probe count. Re-reduction reproduced the retained reduction exactly. Its file
+SHA-256 remains
+`5b2fbfa886fbd386d1a1d44360b9c848a0ee0f3fd0411dba4e135510c701eca5`,
+content SHA-256 is
+`c16a8f80bca8646afb1dbfcf4d2c520ed4ed766920196d808527b7ec8fa89234`,
+and `inputCount` is eight. This confirms the prior retained-evidence
+recalibration; no historical artifact was edited.
+
+**Verification and boundary.** The compact summary/reduction suite passed
+16/16 and the partition/omission suite passed 20/20 under exact Node `24.18.0`
+and pnpm `11.15.1`; receipt-owning typecheck evidence is retained under
+`C:/w/wp6d-step{1,2,3}-typecheck*`. The new omission evidence at
+`C:/w/wp6d-step3-omission` has no `result.json`; proof, reduction, and manifest
+SHA-256 values are
+`454e4af1d2caa670687856734d4b7a78afe566bf8ad7173cec2c57a49547e24a`,
+`bd12e54f3ca43b5b7e386eb50b9d87d9e4dd3b67f81e8c69b7fc4ad192232c1d`,
+and `07e32dd2a84bc75a00502dcd4e06fce382fd012ef016810e86948cc7894a1bfa`.
+The cohesive repair commit and broad clean-candidate qualification are not yet
+assigned; their exact identity will be appended at qualification rather than
+fabricated here. This is not WP6d completion: the measurement runner, hosted
+matrix, statistics, independent validation, and WP6e/WP6f handoff remain open.
+
 ## 2026-08-29 — Intended WP6b summaries and intended WP6c acceptance closeout
 
 **Objective and crosswalk.** Complete intended WP6b's compact non-semantic

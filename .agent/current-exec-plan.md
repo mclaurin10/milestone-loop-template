@@ -1,6 +1,6 @@
 # Current Execution Plan
 
-**Status:** Active — step 0c (hosted CI validation of the fix-forward commit) in progress
+**Status:** Active — cohesive steps 1–4 repair commit/push in progress
 **Updated:** 2026-08-29
 **Owner:** autonomous loop
 **Predecessor:** intended WP6b/WP6c closed at commit
@@ -121,7 +121,7 @@ CAL-1; frozen authorities; immutable acceptance; rewriting historical records.
 
 ## Steps
 
-0. **[in progress] Restore hosted CI at the pushed head.** Both root causes
+0. **[complete] Restore hosted CI at the pushed head.** Both root causes
    are diagnosed (see Baseline Evidence); fix forward and re-run until the
    exact-runtime matrix is green on both platforms, which also gives the
    lease-liveness `ps` path its first Linux execution. No later step starts
@@ -145,7 +145,7 @@ CAL-1; frozen authorities; immutable acceptance; rewriting historical records.
      dependency silently.
    - **0c — re-run hosted CI** on the fix-forward commit and record the
      green run URL for both platforms.
-1. **Tighten summary semantic validation (review finding 1).** First derive
+1. **[complete] Tighten summary semantic validation (review finding 1).** First derive
    the true producer invariants from the summary producer and
    `test-run-probe.cjs`, then encode only truthful relationships in
    `assertTestRunSummary`:
@@ -164,7 +164,7 @@ CAL-1; frozen authorities; immutable acceptance; rewriting historical records.
      through the production path (`loadValidatedTestRunSummary` with matching
      bytes/SHA-256, then `reduceTestRunSummaries`) and must also pin one
      legitimate boundary emission per new rule as still accepted.
-2. **Tighten reduction semantic validation (review finding 2).** In
+2. **[complete] Tighten reduction semantic validation (review finding 2).** In
    `assertTestRunReduction`: reconcile disposition rows summed by
    availability against the per-metric counters and require the rows to total
    `inputCount`; duration metrics with `measuredCount === 0` require
@@ -173,7 +173,7 @@ CAL-1; frozen authorities; immutable acceptance; rewriting historical records.
    role-conditional owner rule matching the child definitions (`partition` ⇒
    non-null owner; legacy roles exactly as the producer emits). Regressions
    exercise `writeTestRunReduction` → reload → assert.
-3. **Truthful omission evidence (review finding 3).** Reword the retained
+3. **[complete] Truthful omission evidence (review finding 3).** Reword the retained
    FAIL-manifest message (`test-partitions.ts` ~line 2012) to claim only the
    exercised boundary (production comparator inside the test-only CLI). Add
    aggregate-boundary coverage: preferred — mechanically extract the existing
@@ -186,7 +186,7 @@ CAL-1; frozen authorities; immutable acceptance; rewriting historical records.
    behavior-preserving — an env-gated fault point in the shadow CLI, or an
    explicit recorded limitation. No production trust boundary may be
    weakened.
-4. **Re-validate retained evidence and append corrective records.** Run the
+4. **[complete] Re-validate retained evidence and append corrective records.** Run the
    tightened validators over the eight retained Q summaries and the retained
    reduction (external evidence at `C:/w/ea`); confirmation validates the
    reviewer's recalibration, and any rejection is a stop-and-record event
@@ -372,8 +372,103 @@ ownership-discovery-01-1.stdout.log` contains the valid JSON after the
   Neither aggregate has a failed or pending suite/test; `git diff --check`
   passed. Step 0 remains open only for the clean commit/push and a fully green
   hosted rerun on both platforms.
+- 2026-08-29 — Step 0 complete on fix-forward commit
+  `818db3a2963591b29f8acf5ff72c74be21825df9`. Hosted exact-runtime run
+  `https://github.com/mclaurin10/milestone-loop-template/actions/runs/33280254241`
+  passed all five jobs: Windows/Linux controllers, Windows/Linux fresh-adopter
+  smoke, and the trusted Linux container. Both controller invariant,
+  orchestrator, complete-unit, typecheck, lint, and format stages passed; the
+  Linux controller therefore executed the formerly Windows-only linked-root
+  assertion with no pending test. All five retained artifacts bind exact
+  candidate `818db3a`; GitHub-reported archive SHA-256 digests are controller
+  Windows `9a1b2b2ff99c7daded7df26a9b23dadff8fcc22be1b213ff0236fbd46fc2951e`,
+  controller Linux `f3fef17a984a994bb63dbd4800389fc0e2f2b69437ee13ead2cee1a967d2f36d`,
+  adopter Windows `8af261de23aabc6b89f94272760f98f7c68e19f78e966be58e3862ae3aa10116`,
+  adopter Linux `cf36f794d7253be42d8349071369ba5db37550acd505ac2c0e9b2492285e270b`,
+  and trusted container `08529e8fa091da636ae55ae236909b45a522923ac4966c416c3a2edf7377d8a0`.
+  The protected workflow remains byte-identical. Step 1 may proceed.
+- 2026-08-29 — Step 1 implementation complete. Producer inspection established
+  positive sample floors for measured wall/setup/startup/test-body durations,
+  the legitimate measured Git zero-sample boundary only at zero nanoseconds,
+  and exact equality between measured CPU/RSS coverage and probe process
+  coverage. Fine-grained measurements now remain unavailable when the preload
+  probe set is unavailable, so producer output satisfies the tightened
+  acceptance it consumes; boundary prose records that completeness rule.
+  Receipt-byte/hash-matched mutations drive every admitted contradiction
+  through both `loadValidatedTestRunSummary` and `reduceTestRunSummaries`.
+  Real producer boundaries cover unavailable probe output and a measured
+  no-Git child with zero Git samples. The focused summary suite passed 12/12,
+  exact receipt-owning typecheck passed at `C:/w/wp6d-step1-typecheck`, focused
+  ESLint and Prettier passed, and `git diff --check` passed. Broad qualification
+  is intentionally deferred to the cohesive measurement-contract repair
+  commit after steps 2–4.
+- 2026-08-29 — Step 2 implementation complete. Reduction disposition rows now
+  reconcile by availability with their declared counters and with
+  `inputCount`; zero-measured durations require zero time/samples, and
+  zero-measured CPU requires zero user/system/total time. Reduction inputs now
+  preserve the producer's role/owner rule for `legacy`, `legacy-extra`, and
+  `partition`. Regressions reject duration/CPU/RSS row contradictions,
+  nonzero zero-measured aggregates, and every role/owner direction through
+  both `writeTestRunReduction` and a disk reload into
+  `assertTestRunReduction`. Genuine all-unavailable and mixed measured/
+  unavailable reducer output writes, reloads, validates, and remains schema
+  valid. The combined summary/reduction suite passed 16/16, exact
+  receipt-owning typecheck passed at `C:/w/wp6d-step2-typecheck`, focused
+  ESLint passed, and `git diff --check` passed. Broad qualification remains
+  deferred to the cohesive steps 1–4 repair commit.
+- 2026-08-29 — Step 3 implementation complete. The production shadow's
+  comparison → candidate check → summary load/validation → reduction → proof
+  → receipt decision is now one shared finalizer; the production caller keeps
+  the original order, proof fields, error text, receipt checks, and artifact
+  declarations. The test-only CLI executes a real two-test Vitest report,
+  removes one executed partition assertion, creates and receipt-validates two
+  genuine summaries, and passes both reports through that shared finalizer.
+  The finalizer writes a FAIL proof and valid two-input non-semantic reduction,
+  then throws before its PASS-receipt callback. The manual failure message now
+  claims only the exercised production comparator boundary. The focused
+  partition suite passed 20/20; exact receipt-owning typecheck, focused ESLint,
+  and `git diff --check` passed. Retained evidence at
+  `C:/w/wp6d-step3-omission` has no `result.json`, a product FAIL manifest, and
+  exactly one named missing identity; proof/reduction/manifest SHA-256 values
+  are `454e4af1d2caa670687856734d4b7a78afe566bf8ad7173cec2c57a49547e24a`,
+  `bd12e54f3ca43b5b7e386eb50b9d87d9e4dd3b67f81e8c69b7fc4ad192232c1d`,
+  and `07e32dd2a84bc75a00502dcd4e06fce382fd012ef016810e86948cc7894a1bfa`.
+  The clean-candidate production shadow remains part of the cohesive broad
+  qualification after step 4.
+- 2026-08-29 — Step 4 complete. The tightened runtime loader accepted all
+  eight receipt-bound candidate-Q summaries at `C:/w/ea/shadow`; every probe
+  is measured, measured sample floors hold, the three zero-Git observations
+  also have zero nanoseconds, and every CPU/RSS process count equals the probe
+  count. `assertTestRunReduction` accepted the retained reduction and a fresh
+  `reduceTestRunSummaries` invocation reproduced it exactly with eight inputs.
+  The reduction file SHA-256 remains
+  `5b2fbfa886fbd386d1a1d44360b9c848a0ee0f3fd0411dba4e135510c701eca5`
+  and its content SHA-256 remains
+  `c16a8f80bca8646afb1dbfcf4d2c520ed4ed766920196d808527b7ec8fa89234`.
+  No retained artifact was edited. New top-of-file autonomy and decision
+  entries correct the prior overbroad contradiction/omission claims,
+  enumerate every formerly admitted class, and record the unchanged `1.0.0`
+  shape with stricter producer-coherent runtime acceptance. Step 5 may begin;
+  broad clean-candidate qualification of the cohesive repair remains required
+  before its commit is claimed or pushed.
+- 2026-08-29 — The cohesive steps 1–4 repair passed broad exact-runtime
+  qualification under Node `24.18.0` / pnpm `11.15.1`: receipt-owning
+  typecheck, lint, format, and the five-command invariant suite passed at
+  `C:/w/wp6d-repair-{typecheck,lint,format,invariants}`. Orchestrator passed
+  198/198 suites and 679/679 tests at `C:/w/wp6d-repair-orchestrator`
+  (report SHA-256
+  `89cb34edeb4c3b0b36a7259601f05a87ae786257f956fa73aee845e60f37ee67`);
+  complete unit passed 200/200 suites and 695/695 tests at
+  `C:/w/wp6d-repair-unit` (report SHA-256
+  `8a3b6fc837bf0deddd243a7aad47a5db182feabcfeedbccfa4d3bbe419c8c298`).
+  Neither aggregate has a failed or pending suite/test; `git diff --check`
+  passed. The immutable lock, protected workflow, and protected untracked
+  roadmap hashes remain unchanged. The repair is ready for its cohesive
+  commit, clean-candidate shadow, push, and hosted exact-runtime gate.
 
 ## Next Action
 
-Commit and push the qualified run-33275334325 fixes, then confirm the
-exact-runtime matrix is green on both platforms before starting step 1.
+Commit the qualified steps 1–4 repair, run the production shadow from a fresh
+clean checkout of that exact commit, push it, and require the hosted
+exact-runtime workflow to pass before beginning the additive one-repetition
+measurement-lane runner.

@@ -16,8 +16,11 @@ import {
   loadValidatedTestRunSummary,
   reduceTestRunSummaries,
   TEST_RUN_SUMMARY_KIND,
+  writeTestRunReduction,
   type TestRunCandidate,
+  type TestRunReduction,
   type TestRunRole,
+  type TestRunSummary,
   type TestRunSummaryExpectation,
   type ValidatedTestRunSummarySource,
 } from "./test-run-summary.js";
@@ -82,6 +85,7 @@ async function summaryFixture(input: {
   readonly commandId: string;
   readonly role?: TestRunRole;
   readonly owner?: string | null;
+  readonly instrumentedChild?: "node" | "git";
 }): Promise<{
   readonly root: string;
   readonly source: ValidatedTestRunSummarySource;
@@ -123,7 +127,36 @@ async function summaryFixture(input: {
     },
   });
   session.markSetupFinished();
-  session.observeProcessStartup(7n);
+  if (input.instrumentedChild) {
+    const command = await runCommand(
+      {
+        id: `summary-${input.runId}`,
+        executable: "node",
+        args: [
+          "-e",
+          input.instrumentedChild === "git"
+            ? "require('node:child_process').spawnSync('git', ['--version'], { stdio: 'ignore' });"
+            : "process.exit(0);",
+        ],
+        parser: "exit-code",
+      },
+      {
+        workingDirectory: resolve("."),
+        artifactDirectory: resolve(root, "logs"),
+        timeoutMs: 30_000,
+        trustedControllerCommand: true,
+        extraEnvironment: session.probeEnvironment,
+        processStartupObserver: (nanoseconds) =>
+          session.observeProcessStartup(nanoseconds),
+      },
+    );
+    if (command.status !== "PASS")
+      throw new Error(
+        `Instrumented summary fixture failed: ${command.status}.`,
+      );
+  } else {
+    session.observeProcessStartup(7n);
+  }
   const finished = await session.finish([
     await describeVitestReport({ artifactDirectory: root, reportPath }),
   ]);
@@ -149,6 +182,140 @@ async function summaryFixture(input: {
   };
 }
 
+type Mutable<T> = T extends readonly (infer Item)[]
+  ? Mutable<Item>[]
+  : T extends object
+    ? { -readonly [Key in keyof T]: Mutable<T[Key]> }
+    : T;
+
+function canonicalJson(value: unknown): string {
+  if (Array.isArray(value))
+    return `[${value.map((item) => canonicalJson(item)).join(",")}]`;
+  if (typeof value === "object" && value !== null) {
+    const record = value as Record<string, unknown>;
+    return `{${Object.keys(record)
+      .sort((left, right) => (left < right ? -1 : left > right ? 1 : 0))
+      .map((key) => `${JSON.stringify(key)}:${canonicalJson(record[key])}`)
+      .join(",")}}`;
+  }
+  const serialized = JSON.stringify(value);
+  if (serialized === undefined)
+    throw new Error("Test canonical JSON cannot encode undefined values.");
+  return serialized;
+}
+
+function refreshContentHash(value: { contentSha256: string }): void {
+  const content = structuredClone(value) as unknown as Record<string, unknown>;
+  delete content["contentSha256"];
+  value.contentSha256 = createHash("sha256")
+    .update(canonicalJson(content))
+    .digest("hex");
+}
+
+async function writeSummaryMutation(input: {
+  readonly fixture: Awaited<ReturnType<typeof summaryFixture>>;
+  readonly name: string;
+  readonly mutate: (summary: Mutable<TestRunSummary>) => void;
+}): Promise<ValidatedTestRunSummarySource> {
+  const summary = structuredClone(
+    input.fixture.source.summary,
+  ) as Mutable<TestRunSummary>;
+  input.mutate(summary);
+  refreshContentHash(summary);
+  const path = resolve(input.fixture.root, `${input.name}.json`);
+  const contents = Buffer.from(`${JSON.stringify(summary, null, 2)}\n`, "utf8");
+  await writeFile(path, contents);
+  return {
+    path,
+    bytes: contents.byteLength,
+    sha256: createHash("sha256").update(contents).digest("hex"),
+    summary,
+  };
+}
+
+async function expectSummaryMutationRejected(input: {
+  readonly fixture: Awaited<ReturnType<typeof summaryFixture>>;
+  readonly name: string;
+  readonly mutate: (summary: Mutable<TestRunSummary>) => void;
+  readonly message: RegExp;
+}): Promise<void> {
+  const source = await writeSummaryMutation(input);
+  await expect(
+    loadValidatedTestRunSummary({
+      receipt: {
+        artifacts: [
+          {
+            path: source.path,
+            kind: TEST_RUN_SUMMARY_KIND,
+            bytes: source.bytes,
+            sha256: source.sha256,
+          },
+        ],
+      },
+      expected: input.fixture.expected,
+    }),
+  ).rejects.toThrow(input.message);
+  expect(() =>
+    reduceTestRunSummaries({
+      sources: [source],
+      expected: [input.fixture.expected],
+      candidate,
+      relativePath: (path) =>
+        relative(input.fixture.root, path).replaceAll("\\", "/"),
+    }),
+  ).toThrow(input.message);
+}
+
+async function loadFixtureSource(
+  fixture: Awaited<ReturnType<typeof summaryFixture>>,
+): Promise<ValidatedTestRunSummarySource> {
+  return loadValidatedTestRunSummary({
+    receipt: {
+      artifacts: [
+        {
+          path: fixture.source.path,
+          kind: TEST_RUN_SUMMARY_KIND,
+          bytes: fixture.source.bytes,
+          sha256: fixture.source.sha256,
+        },
+      ],
+    },
+    expected: fixture.expected,
+  });
+}
+
+function reduceFixtures(
+  fixtures: readonly Awaited<ReturnType<typeof summaryFixture>>[],
+): TestRunReduction {
+  return reduceTestRunSummaries({
+    sources: fixtures.map((fixture) => fixture.source),
+    expected: fixtures.map((fixture) => fixture.expected),
+    candidate,
+    relativePath: (path) => relative(tmpdir(), path).replaceAll("\\", "/"),
+  });
+}
+
+async function expectReductionMutationRejected(input: {
+  readonly reduction: TestRunReduction;
+  readonly root: string;
+  readonly name: string;
+  readonly mutate: (reduction: Mutable<TestRunReduction>) => void;
+  readonly message: RegExp;
+}): Promise<void> {
+  const reduction = structuredClone(
+    input.reduction,
+  ) as Mutable<TestRunReduction>;
+  input.mutate(reduction);
+  refreshContentHash(reduction);
+  const path = resolve(input.root, `${input.name}.json`);
+  await expect(writeTestRunReduction(path, reduction)).rejects.toThrow(
+    input.message,
+  );
+  await writeFile(path, `${JSON.stringify(reduction, null, 2)}\n`, "utf8");
+  const reloaded = JSON.parse(await readFile(path, "utf8")) as unknown;
+  expect(() => assertTestRunReduction(reloaded)).toThrow(input.message);
+}
+
 describe("WP6 compact test-run summary contract", () => {
   it("distinguishes all required boundaries and explicit unavailable resources", async () => {
     const fixture = await summaryFixture({
@@ -171,12 +338,12 @@ describe("WP6 compact test-run summary contract", () => {
           reason: "no-instrumented-node-process-records",
         },
         processStartupTime: {
-          availability: "measured",
-          nanoseconds: "7",
+          availability: "unavailable",
+          reason: "no-instrumented-node-process-records",
         },
         testBodyTime: {
-          availability: "measured",
-          nanoseconds: "2500000",
+          availability: "unavailable",
+          reason: "no-instrumented-node-process-records",
         },
         cpuTime: { availability: "unavailable" },
         peakRss: { availability: "unavailable" },
@@ -258,6 +425,252 @@ describe("WP6 compact test-run summary contract", () => {
         candidate: { ...candidate, gitTree: "c".repeat(40) },
       }),
     ).toThrow(/candidate identity is mismatched/u);
+  });
+
+  it("accepts truthful unavailable and zero-Git producer boundaries through load and reduction", async () => {
+    const unavailable = await summaryFixture({
+      runId: "summary-boundary-unavailable",
+      stageId: "candidate-unit",
+      commandId: "test:unit:unavailable-boundary",
+    });
+    const zeroGit = await summaryFixture({
+      runId: "summary-boundary-zero-git",
+      stageId: "candidate-unit",
+      commandId: "test:unit:zero-git-boundary",
+      instrumentedChild: "node",
+    });
+    const unavailableSource = await loadFixtureSource(unavailable);
+    const zeroGitSource = await loadFixtureSource(zeroGit);
+
+    expect(unavailableSource.summary.probe).toMatchObject({
+      availability: "unavailable",
+      processCount: 0,
+      synchronousLaunchCount: 0,
+    });
+    for (const measurement of [
+      unavailableSource.summary.measurements.gitFixtureTime,
+      unavailableSource.summary.measurements.processStartupTime,
+      unavailableSource.summary.measurements.testBodyTime,
+      unavailableSource.summary.measurements.cpuTime,
+      unavailableSource.summary.measurements.peakRss,
+    ])
+      expect(measurement.availability).toBe("unavailable");
+
+    expect(zeroGitSource.summary.measurements.gitFixtureTime).toEqual({
+      availability: "measured",
+      nanoseconds: "0",
+      sampleCount: 0,
+      reason: null,
+    });
+    expect(zeroGitSource.summary.measurements.processStartupTime).toMatchObject(
+      { availability: "measured", sampleCount: 1 },
+    );
+    expect(zeroGitSource.summary.measurements.testBodyTime).toMatchObject({
+      availability: "measured",
+      sampleCount: 1,
+    });
+    expect(zeroGitSource.summary.measurements.cpuTime.processCount).toBe(
+      zeroGitSource.summary.probe.processCount,
+    );
+    expect(zeroGitSource.summary.measurements.peakRss.processCount).toBe(
+      zeroGitSource.summary.probe.processCount,
+    );
+
+    for (const [fixture, source] of [
+      [unavailable, unavailableSource],
+      [zeroGit, zeroGitSource],
+    ] as const)
+      expect(() =>
+        reduceTestRunSummaries({
+          sources: [source],
+          expected: [fixture.expected],
+          candidate,
+          relativePath: (path) =>
+            relative(fixture.root, path).replaceAll("\\", "/"),
+        }),
+      ).not.toThrow();
+  });
+
+  it("rejects false measured-duration sample coverage through load and reduction", async () => {
+    const fixture = await summaryFixture({
+      runId: "summary-duration-contradictions",
+      stageId: "candidate-unit",
+      commandId: "test:unit:duration-contradictions",
+    });
+
+    await expectSummaryMutationRejected({
+      fixture,
+      name: "wall-zero-samples",
+      mutate: (summary) => {
+        summary.measurements.wallTime.sampleCount = 0;
+      },
+      message: /Wall-time measured values require at least one sample/u,
+    });
+    await expectSummaryMutationRejected({
+      fixture,
+      name: "setup-zero-samples",
+      mutate: (summary) => {
+        summary.measurements.setupTime.sampleCount = 0;
+      },
+      message: /Setup-time measured values require at least one sample/u,
+    });
+    await expectSummaryMutationRejected({
+      fixture,
+      name: "startup-zero-samples",
+      mutate: (summary) => {
+        summary.measurements.processStartupTime = {
+          availability: "measured",
+          nanoseconds: "1",
+          sampleCount: 0,
+          reason: null,
+        };
+      },
+      message: /Process-startup measured values require at least one sample/u,
+    });
+    await expectSummaryMutationRejected({
+      fixture,
+      name: "test-body-zero-samples",
+      mutate: (summary) => {
+        summary.measurements.testBodyTime = {
+          availability: "measured",
+          nanoseconds: "1",
+          sampleCount: 0,
+          reason: null,
+        };
+      },
+      message: /Test-body measured values require at least one sample/u,
+    });
+    await expectSummaryMutationRejected({
+      fixture,
+      name: "git-zero-samples-nonzero-time",
+      mutate: (summary) => {
+        summary.measurements.gitFixtureTime = {
+          availability: "measured",
+          nanoseconds: "1",
+          sampleCount: 0,
+          reason: null,
+        };
+      },
+      message: /Git-fixture time with zero samples must be zero/u,
+    });
+  });
+
+  it("rejects unavailable-probe measurement contradictions through load and reduction", async () => {
+    const fixture = await summaryFixture({
+      runId: "summary-unavailable-probe-contradictions",
+      stageId: "candidate-unit",
+      commandId: "test:unit:unavailable-probe-contradictions",
+    });
+
+    await expectSummaryMutationRejected({
+      fixture,
+      name: "unavailable-probe-sync-launch",
+      mutate: (summary) => {
+        summary.probe.synchronousLaunchCount = 1;
+      },
+      message: /Unavailable probe identity is contradictory/u,
+    });
+    await expectSummaryMutationRejected({
+      fixture,
+      name: "unavailable-probe-measured-git",
+      mutate: (summary) => {
+        summary.measurements.gitFixtureTime = {
+          availability: "measured",
+          nanoseconds: "0",
+          sampleCount: 0,
+          reason: null,
+        };
+      },
+      message:
+        /Unavailable probe cannot support measured observations: gitFixtureTime/u,
+    });
+    await expectSummaryMutationRejected({
+      fixture,
+      name: "unavailable-probe-measured-startup",
+      mutate: (summary) => {
+        summary.measurements.processStartupTime = {
+          availability: "measured",
+          nanoseconds: "1",
+          sampleCount: 1,
+          reason: null,
+        };
+      },
+      message:
+        /Unavailable probe cannot support measured observations: processStartupTime/u,
+    });
+    await expectSummaryMutationRejected({
+      fixture,
+      name: "unavailable-probe-measured-test-body",
+      mutate: (summary) => {
+        summary.measurements.testBodyTime = {
+          availability: "measured",
+          nanoseconds: "1",
+          sampleCount: 1,
+          reason: null,
+        };
+      },
+      message:
+        /Unavailable probe cannot support measured observations: testBodyTime/u,
+    });
+    await expectSummaryMutationRejected({
+      fixture,
+      name: "unavailable-probe-measured-cpu",
+      mutate: (summary) => {
+        summary.measurements.cpuTime = {
+          availability: "measured",
+          userMicroseconds: "0",
+          systemMicroseconds: "0",
+          totalMicroseconds: "0",
+          processCount: 1,
+          reason: null,
+        };
+      },
+      message:
+        /Unavailable probe cannot support measured observations: cpuTime/u,
+    });
+    await expectSummaryMutationRejected({
+      fixture,
+      name: "unavailable-probe-measured-rss",
+      mutate: (summary) => {
+        summary.measurements.peakRss = {
+          availability: "measured",
+          bytes: "0",
+          processCount: 1,
+          aggregation: "maximum-instrumented-process-peak",
+          reason: null,
+        };
+      },
+      message:
+        /Unavailable probe cannot support measured observations: peakRss/u,
+    });
+  });
+
+  it("rejects CPU and RSS coverage that differs from the measured probe", async () => {
+    const fixture = await summaryFixture({
+      runId: "summary-process-coverage",
+      stageId: "candidate-unit",
+      commandId: "test:unit:process-coverage",
+      instrumentedChild: "node",
+    });
+
+    await expectSummaryMutationRejected({
+      fixture,
+      name: "cpu-process-coverage",
+      mutate: (summary) => {
+        summary.measurements.cpuTime.processCount =
+          summary.probe.processCount + 1;
+      },
+      message: /CPU process coverage contradicts the measured probe/u,
+    });
+    await expectSummaryMutationRejected({
+      fixture,
+      name: "rss-process-coverage",
+      mutate: (summary) => {
+        summary.measurements.peakRss.processCount =
+          summary.probe.processCount + 1;
+      },
+      message: /Peak RSS process coverage contradicts the measured probe/u,
+    });
   });
 
   it("revalidates receipt-bound bytes and rejects absent, malformed, or changed summaries", async () => {
@@ -360,6 +773,189 @@ describe("WP6 deterministic summary-only reducer", () => {
     expect(forward.nonSemantic.authorizesCutover).toBe(false);
   });
 
+  it("writes, reloads, and accepts producer-consistent reduction boundaries", async () => {
+    const unavailable = await summaryFixture({
+      runId: "reduction-boundary-unavailable",
+      stageId: "candidate-unit",
+      commandId: "test:unit:reduction-unavailable",
+    });
+    const measured = await summaryFixture({
+      runId: "reduction-boundary-measured",
+      stageId: "candidate-unit",
+      commandId: "test:unit:reduction-measured",
+      instrumentedChild: "node",
+    });
+    const allUnavailable = reduceFixtures([unavailable]);
+    const mixed = reduceFixtures([unavailable, measured]);
+    const path = resolve(unavailable.root, "accepted-reduction.json");
+
+    expect(allUnavailable.measurements.gitFixtureTime).toMatchObject({
+      measuredCount: 0,
+      unavailableCount: 1,
+      totalNanoseconds: "0",
+      sampleCount: 0,
+    });
+    expect(allUnavailable.measurements.cpuTime).toMatchObject({
+      measuredCount: 0,
+      userMicroseconds: "0",
+      systemMicroseconds: "0",
+      totalMicroseconds: "0",
+    });
+    expect(mixed.measurements.gitFixtureTime).toMatchObject({
+      measuredCount: 1,
+      unavailableCount: 1,
+      totalNanoseconds: "0",
+      sampleCount: 0,
+    });
+    await writeTestRunReduction(path, mixed);
+    const reloaded = JSON.parse(await readFile(path, "utf8")) as unknown;
+    expect(assertTestRunReduction(reloaded)).toEqual(mixed);
+    expect(validateJsonSchema202012(reductionSchema, reloaded)).toEqual({
+      valid: true,
+      errors: [],
+    });
+  });
+
+  it("rejects disposition rows that contradict counters or input count", async () => {
+    const fixture = await summaryFixture({
+      runId: "reduction-disposition-contradictions",
+      stageId: "candidate-unit",
+      commandId: "test:unit:reduction-dispositions",
+    });
+    const reduction = reduceFixtures([fixture]);
+
+    await expectReductionMutationRejected({
+      reduction,
+      root: fixture.root,
+      name: "duration-disposition-availability",
+      mutate: (value) => {
+        const row = value.measurements.wallTime.dispositions[0];
+        if (!row) throw new Error("Duration disposition fixture disappeared.");
+        row.availability = "unavailable";
+        row.reason = "mutated-disposition";
+      },
+      message:
+        /Reduction wallTime dispositions contradict counters or input count/u,
+    });
+    await expectReductionMutationRejected({
+      reduction,
+      root: fixture.root,
+      name: "cpu-disposition-count",
+      mutate: (value) => {
+        const row = value.measurements.cpuTime.dispositions[0];
+        if (!row) throw new Error("CPU disposition fixture disappeared.");
+        row.count = 2;
+      },
+      message: /Reduction CPU dispositions contradict counters or input count/u,
+    });
+    await expectReductionMutationRejected({
+      reduction,
+      root: fixture.root,
+      name: "rss-disposition-count",
+      mutate: (value) => {
+        const row = value.measurements.peakRss.dispositions[0];
+        if (!row) throw new Error("RSS disposition fixture disappeared.");
+        row.count = 2;
+      },
+      message: /Reduction RSS dispositions contradict counters or input count/u,
+    });
+  });
+
+  it("rejects nonzero aggregates with zero measured inputs", async () => {
+    const fixture = await summaryFixture({
+      runId: "reduction-zero-measured-contradictions",
+      stageId: "candidate-unit",
+      commandId: "test:unit:reduction-zero-measured",
+    });
+    const reduction = reduceFixtures([fixture]);
+
+    await expectReductionMutationRejected({
+      reduction,
+      root: fixture.root,
+      name: "duration-zero-measured-total",
+      mutate: (value) => {
+        value.measurements.gitFixtureTime.totalNanoseconds = "1";
+      },
+      message:
+        /Reduction gitFixtureTime totals contradict zero measured inputs/u,
+    });
+    await expectReductionMutationRejected({
+      reduction,
+      root: fixture.root,
+      name: "duration-zero-measured-samples",
+      mutate: (value) => {
+        value.measurements.gitFixtureTime.sampleCount = 1;
+      },
+      message:
+        /Reduction gitFixtureTime totals contradict zero measured inputs/u,
+    });
+    await expectReductionMutationRejected({
+      reduction,
+      root: fixture.root,
+      name: "cpu-zero-measured-total",
+      mutate: (value) => {
+        value.measurements.cpuTime.userMicroseconds = "1";
+        value.measurements.cpuTime.totalMicroseconds = "1";
+      },
+      message: /Reduction CPU totals contradict zero measured inputs/u,
+    });
+  });
+
+  it("rejects reduction owners that contradict legacy and partition roles", async () => {
+    const legacy = await summaryFixture({
+      runId: "reduction-owner-legacy",
+      stageId: "candidate-unit",
+      commandId: "test:unit:reduction-owner-legacy",
+    });
+    const legacyExtra = await summaryFixture({
+      runId: "reduction-owner-legacy-extra",
+      stageId: "candidate-unit",
+      commandId: "test:unit:reduction-owner-legacy-extra",
+      role: "legacy-extra",
+      owner: null,
+    });
+    const partition = await summaryFixture({
+      runId: "reduction-owner-partition",
+      stageId: "wp6-shadow-partition",
+      commandId: "test:partition:controller-runtime",
+      role: "partition",
+      owner: "controller-runtime",
+    });
+
+    for (const [fixture, name] of [
+      [legacy, "legacy-owner"],
+      [legacyExtra, "legacy-extra-owner"],
+    ] as const) {
+      const reduction = reduceFixtures([fixture]);
+      await expectReductionMutationRejected({
+        reduction,
+        root: fixture.root,
+        name,
+        mutate: (value) => {
+          const reductionInput = value.inputs[0];
+          if (!reductionInput)
+            throw new Error("Reduction input fixture disappeared.");
+          reductionInput.owner = "controller-runtime";
+        },
+        message: /Reduction input 0 owner contradicts its role/u,
+      });
+    }
+
+    const partitionReduction = reduceFixtures([partition]);
+    await expectReductionMutationRejected({
+      reduction: partitionReduction,
+      root: partition.root,
+      name: "partition-owner",
+      mutate: (value) => {
+        const reductionInput = value.inputs[0];
+        if (!reductionInput)
+          throw new Error("Reduction input fixture disappeared.");
+        reductionInput.owner = null;
+      },
+      message: /Reduction input 0 owner contradicts its role/u,
+    });
+  });
+
   it("rejects missing, unexpected, duplicate, and identity-mismatched input", async () => {
     const left = await summaryFixture({
       runId: "set-left",
@@ -449,10 +1045,10 @@ describe("WP6 real process probe", () => {
 
     expect(summary.status).toBe("PASS");
     expect(summary.measurements.wallTime.availability).toBe("measured");
-    expect(summary.measurements.testBodyTime.availability).toBe("measured");
     for (const measurement of [
       summary.measurements.gitFixtureTime,
       summary.measurements.processStartupTime,
+      summary.measurements.testBodyTime,
       summary.measurements.cpuTime,
       summary.measurements.peakRss,
     ])
