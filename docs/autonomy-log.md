@@ -3,6 +3,53 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-31 — WP6d Windows measurement harness repair locally qualified
+
+**Objective and outcome.** Preserve the production controller lease's
+five-second, fail-closed process-incarnation probe while making its verification
+deterministic under the non-semantic measurement preload. Exact-runtime run
+`33350041568` passed all five jobs on candidate
+`f5de977f973ed68cec250cdadea890ec9817ec35`, but measurement run `33353378514`
+proved a second defect after all five Linux pairs passed: every Windows cold
+lane passed 674/675 fast tests, exhausted both real PowerShell observations,
+and correctly refused to steal the simulated live lease. The repaired test
+still launches a real external process and delegates one real OS observation,
+then explicitly proves unavailable and matching-start observations remain
+blocking while only a known different start time permits exact-old recovery.
+No production source or timeout changed. Qualification also exposed and fixed
+an independent 10-second `afterEach` budget that could expire while the
+candidate-prepare hard-loss matrix continued its genuine recursive cleanup;
+only that hook now has a 120-second budget.
+
+**Verification.** Ten consecutive probe-instrumented lease repetitions and the
+full 18-test lease file passed under
+`C:/w/wp6d-step7-incarnation-{probed-repeat-1,lease-suite-1}`. Typecheck, lint,
+format, the five-command invariant suite, and the measured fast partition
+passed; fast retained 202/202 suites and 675/675 tests at
+`C:/w/wp6d-step7-incarnation-fast-1` (report SHA-256
+`40d7c052d83a6c487ee3e7685a04ad011661f4bc9b1019a829ab4bacf7943ce4`).
+The orchestrator aggregate passed 203/203 suites and 691/691 tests at
+`C:/w/wp6d-step7-incarnation-orchestrator-1` (SHA-256
+`4ee58e77928f4c00f20faef859e752bd3b375ff75887a08f3f8156160f427e47`).
+The first complete-unit attempt retained the cleanup-hook failure at
+`C:/w/wp6d-step7-incarnation-unit-1`; the focused matrix then passed and left
+zero temporary repositories at `C:/w/wp6d-step7-cleanup-focused-1`. The final
+complete-unit rerun passed 205/205 suites and 707/707 tests at
+`C:/w/wp6d-step7-incarnation-unit-2` (SHA-256
+`410847cee40937d01559f99c5cd5e99c0ab318f50c9358b50ecf0b062fb6bea7`).
+The final five-command invariant suite passed again after all repository
+records were written, at `C:/w/wp6d-step7-incarnation-invariants-3`.
+The immutable lock, protected exact-runtime workflow, and protected untracked
+roadmap hashes remain unchanged.
+
+**Commit and remaining boundary.** The locally qualified candidate commit is
+not yet assigned; its exact identity and hosted result will be appended after
+commit and push rather than predicted. A green exact-runtime run, a wholly
+passing five-pair Windows/Linux measurement matrix, and independent validation
+of all retained pairs and both statistics records remain mandatory. Failed or
+partial matrix artifacts are diagnostic only, make no performance claim, and
+do not support readiness.
+
 ## 2026-08-30 — WP6d one-repetition measurement runner qualified
 
 **Objective and outcome.** Add a non-semantic one-repetition runner before

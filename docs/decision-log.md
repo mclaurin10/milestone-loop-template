@@ -3,6 +3,37 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-31 — Lease verification separates probe availability from semantics
+
+**Decision.** Keep the production process-incarnation observer, its five-second
+bound, and its fail-closed `unavailable` result unchanged. The external-process
+lease regression delegates its first observation to the real platform helper,
+then controls only subsequent observer results at the existing bounded-spawn
+boundary. It proves four distinct cases in one live process lifetime: the real
+probe cannot permit theft, an unavailable observation blocks, an alive matching
+start time blocks, and an alive mismatched start time alone permits exact-old
+recovery. Separately, the candidate-prepare baseline's real recursive
+`afterEach` cleanup has a 120-second hook budget so Vitest can contain the
+already-bounded cleanup it invokes.
+
+**Why.** Hosted measurement run `33353378514` showed that PowerShell process
+identity can be unavailable in every Windows measured lane even though the
+same integration succeeds outside the measurement preload. Unavailability is
+an intentional safe production outcome, so requiring availability made test
+success depend on host timing rather than lease semantics. Raising the
+production timeout would change controller failure latency without guaranteeing
+availability; treating unavailable as stale could steal a live lease; skipping
+or conditionally weakening the test would remove required coverage. The broad
+unit gate also proved that a default 10-second hook budget can expire while the
+hard-loss matrix's repository deletion continues and completes successfully.
+Giving that cleanup an explicit containing budget changes neither assertions
+nor product behavior.
+
+**Affected files.** `controller-lease.test.ts`,
+`candidate-prepare-baseline.test.ts`, the active execution plan, and autonomy
+evidence records. `controller-lease.ts`, production command behavior, frozen
+authorities, and the protected exact-runtime workflow are unchanged.
+
 ## 2026-08-30 — Lane dependency identity uses the installed virtual-store lock
 
 **Decision.** Measurement-lane schema `1.1.0` adds the regular-file identity

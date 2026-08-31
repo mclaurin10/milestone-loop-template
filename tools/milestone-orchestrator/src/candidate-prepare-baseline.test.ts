@@ -46,6 +46,7 @@ import { validConfig, validProposal } from "../test/fixtures.js";
 
 const NOW = "2026-08-23T20:00:00.000Z";
 const MILESTONE_ID = "cpb";
+const CLEANUP_TIMEOUT_MS = 120_000;
 const temporaryDirectories: string[] = [];
 
 afterEach(async () => {
@@ -56,7 +57,7 @@ afterEach(async () => {
       maxRetries: 5,
       retryDelay: 100,
     });
-});
+}, CLEANUP_TIMEOUT_MS);
 
 function git(repository: string, ...args: string[]): string {
   const result = spawnBoundedSync("git", ["-C", repository, ...args], {

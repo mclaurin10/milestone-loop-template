@@ -634,6 +634,7 @@ ownership-discovery-01-1.stdout.log` contains the valid JSON after the
   volatile modules-manifest rewrite is accepted while virtual-store-lock
   mutation still fails closed. No partial matrix result is performance
   evidence.
+
 - 2026-08-30 — The schema `1.1.0` repair is locally qualified on the exact
   working tree. Focused measurement-lane/statistics coverage passed 5/5 suites
   and 12/12 tests at
@@ -673,7 +674,7 @@ ownership-discovery-01-1.stdout.log` contains the valid JSON after the
   cold lanes independently failed the first `legacy-fast` command at the same
   integration test,
   `controller mutation lease distinguishes an external live owner from a
-  different incarnation reusing its pid`; each report passed 674/675 tests
+different incarnation reusing its pid`; each report passed 674/675 tests
   and recorded that failure after 5.70-5.87 seconds. The retained reports are
   under `C:/w/wp6d-matrix-fail-33336023838-windows-1`,
   `C:/w/wp6d-matrix-fail-33336023838-windows-2`, and
@@ -693,6 +694,7 @@ ownership-discovery-01-1.stdout.log` contains the valid JSON after the
   before another fix-forward commit, exact-runtime run, and fresh matrix.
   The failed run produced no Windows PASS lane or statistics and is not
   performance evidence.
+
 - 2026-08-30 — The single-test timeout repair is locally qualified on its
   formatted working-tree bytes. The selected external-process test passed ten
   consecutive exact-runtime repetitions at
@@ -713,10 +715,102 @@ ownership-discovery-01-1.stdout.log` contains the valid JSON after the
   and the full unit aggregate passed 205/205 suites and 707/707 tests at
   `C:/w/wp6d-step7-timeout-unit-2/test-report.json` (SHA-256
   `dee1c61701721c4d7701ba8360f8b7dd4acceb352a13c9d8b2e86b2e547c758d`).
+- 2026-08-30 — The timeout repair is commit
+  `f5de977f973ed68cec250cdadea890ec9817ec35`, tree
+  `f03e542b7fb702c19e5205a4bd119e1c55f0618e`, pushed to `origin/master`.
+  Protected exact-runtime run
+  `https://github.com/mclaurin10/milestone-loop-template/actions/runs/33350041568`
+  passed all five jobs. GitHub archive SHA-256 digests are controller Windows
+  `3822ead4ba6898260745cc16146e00bb81068e48e7c423a05ed898f9a6184389`,
+  controller Linux
+  `eaaa0e2283ffe0603d64c0a836730f4dcfca50eb09b5c5bf24772db76f62fb81`,
+  adopter Windows
+  `30b4d7f501682a724414d9381d5b4d45a4e8a182055d7efb6d159c4c184d8308`,
+  adopter Linux
+  `ab3984e30f151c61bf92d95e04f16afecb8932ed8f05111a5516f4dc7cee7444`,
+  and trusted container
+  `453574061797471e0c6e26733f8732b8d09b65fc6b179d5d17344b63e4b2666c`.
+
+  Fresh step-7 run
+  `https://github.com/mclaurin10/milestone-loop-template/actions/runs/33353378514`
+  again passed all five Linux cold/warm pairs, but all five Windows cold lanes
+  independently failed the same `legacy-fast` test with 674/675 passing.
+  With the test budget no longer masking the underlying result, every failure
+  is the reused-PID acquisition's fail-closed `Another controller holds` error
+  after 10.85-11.06 seconds. That duration is two exhausted 5-second Windows
+  process-incarnation observations plus bounded cleanup, not Vitest's default
+  timeout. Retained artifacts are under
+  `C:/w/wp6d-matrix-fail-33353378514-windows-5`,
+  `C:/w/wp6d-matrix-fail-33353378514-windows-more`, and
+  `C:/w/wp6d-matrix-fail-33353378514-windows-3`.
+
+  Production intentionally treats an unavailable OS observation as live and
+  refuses to steal the lease. The test currently conflates that safe
+  fail-closed outcome with the deterministic comparison branch it means to
+  verify, so it demands an environment-sensitive PowerShell observation even
+  though unavailability is an explicit production result. The bounded repair
+  will leave production unchanged, retain a real external live process and the
+  fail-closed assertion, and deterministically substitute only the observation
+  needed to prove that a known different process start time permits exact-old
+  recovery. Regression coverage must verify the real probe is still attempted,
+  unavailable observations remain blocking, and reused-PID recovery changes
+  only when an alive observation proves a start-time mismatch.
+
+- 2026-08-31 — The deterministic incarnation boundary passed ten consecutive
+  probe-instrumented focused repetitions and the complete 18-test lease file at
+  `C:/w/wp6d-step7-incarnation-{probed-repeat-1,lease-suite-1}`. Exact-runtime
+  typecheck, lint, format, the five-command invariant suite, and the measured
+  fast partition passed; fast retained 202/202 suites and 675/675 tests at
+  `C:/w/wp6d-step7-incarnation-fast-1`. The orchestrator aggregate passed
+  203/203 suites and 691/691 tests at
+  `C:/w/wp6d-step7-incarnation-orchestrator-1`.
+
+  The first complete-unit attempt at
+  `C:/w/wp6d-step7-incarnation-unit-1` then retained a genuine non-passing
+  report: 706/707 tests passed and the candidate-prepare hard-loss matrix was
+  associated with `STACK_TRACE_ERROR` created at its line-51 `afterEach` hook.
+  The 460.83-second test body remained inside its explicit 30-minute budget;
+  the failure is the file's default 10-second hook budget expiring while it
+  serially removes the many repositories produced by that matrix. No `cpb-*`
+  directory remained after the run, proving cleanup continued to completion
+  after Vitest had already failed the hook. The same semantic matrix passed in
+  the immediately preceding orchestrator aggregate and two prior broad runs at
+  402.88-453.91 seconds. The bounded repair will give only this real recursive
+  cleanup hook an explicit 120-second budget, without changing any assertion,
+  fixture matrix, production path, or cleanup operation. A focused hard-loss
+  rerun and a fresh complete-unit aggregate must pass before the candidate can
+  advance.
+
+- 2026-08-31 — Final local qualification is green on the formatted working
+  tree. The cleanup-focused hard-loss matrix passed its one selected test with
+  eight unselected tests at `C:/w/wp6d-step7-cleanup-focused-1` (report
+  SHA-256
+  `67ee8156b671dbb91ae256c17f77553f40c405bca899f1f1cfd451e709d876e0`)
+  and left zero `cpb-*` directories. Exact-runtime typecheck, lint, and format
+  passed at `C:/w/wp6d-step7-cleanup-{typecheck,lint,format}-1`. The complete
+  unit rerun passed 205/205 suites and 707/707 tests, with zero failed or
+  pending results, at
+  `C:/w/wp6d-step7-incarnation-unit-2/test-report.json` (SHA-256
+  `410847cee40937d01559f99c5cd5e99c0ab318f50c9358b50ecf0b062fb6bea7`).
+  The already-final fast and orchestrator reports contain 202/202 suites plus
+  675/675 tests and 203/203 suites plus 691/691 tests, with SHA-256 values
+  `40d7c052d83a6c487ee3e7685a04ad011661f4bc9b1019a829ab4bacf7943ce4`
+  and
+  `4ee58e77928f4c00f20faef859e752bd3b375ff75887a08f3f8156160f427e47`.
+  The immutable lock, protected exact-runtime workflow, and protected untracked
+  roadmap remain byte-identical at SHA-256
+  `d1166088b00c54af65e8654188adc58a3cabd9d7908820809fe66af28c933050`,
+  `9dc35e44aacd35e3058895cccc89c43de9ff535ad20a0552c9b8a80b23cb19bf`,
+  and
+  `53ea98fb1cb880163a02d3b1d9365963e3fe891025ae3630f00bd4c9232293b1`.
+  After the plan, autonomy, and decision records were updated, all five final
+  invariant commands passed at
+  `C:/w/wp6d-step7-incarnation-invariants-3`.
 
 ## Next Action
 
-Commit and push the single-test Windows process-incarnation budget, then
-require exact-runtime CI to pass. Dispatch a fresh step-7 matrix only on that
-exact candidate and independently download/revalidate every retained pair and
-both statistics records.
+Inspect the final protected hashes and working-tree scope, then commit and push
+both test-harness repairs. Require exact-runtime CI to pass before dispatching
+another fresh step-7 matrix on that exact candidate; independently
+download/revalidate every retained pair and both statistics records only after
+the full matrix passes.

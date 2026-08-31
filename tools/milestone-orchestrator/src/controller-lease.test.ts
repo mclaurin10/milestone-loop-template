@@ -17,9 +17,19 @@ import { dirname, join, resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { pathToFileURL } from "node:url";
 
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { spawnBoundedSync } from "./bounded-spawn-sync.js";
 import { ControllerLease } from "./controller-lease.js";
+
+vi.mock("./bounded-spawn-sync.js", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("./bounded-spawn-sync.js")>();
+  return {
+    ...actual,
+    spawnBoundedSync: vi.fn(actual.spawnBoundedSync),
+  };
+});
 
 const STATE_PATH = "artifacts/orchestrator/state/state.json";
 const LEASE_REF = ControllerLease.leaseReference();
@@ -73,6 +83,20 @@ function deadPid(): number {
   if (result.status !== 0 || !result.pid)
     throw new Error("Could not spawn a short-lived process for a dead PID.");
   return result.pid;
+}
+
+function processObservationResult(
+  status: number,
+  stdout: string,
+): ReturnType<typeof spawnBoundedSync> {
+  return {
+    pid: 0,
+    output: [null, stdout, ""],
+    stdout,
+    stderr: "",
+    status,
+    signal: null,
+  };
 }
 
 function owner(
@@ -357,9 +381,35 @@ describe("controller mutation lease", () => {
       ["-e", 'process.stdout.write("READY\\n"); setInterval(() => {}, 1_000);'],
       { windowsHide: true },
     );
+    const actual = await vi.importActual<
+      typeof import("./bounded-spawn-sync.js")
+    >("./bounded-spawn-sync.js");
+    const boundedSpawn = vi.mocked(spawnBoundedSync);
+    const defaultImplementation = boundedSpawn.getMockImplementation();
+    let processObservationCount = 0;
     try {
       expect(await firstLine(child)).toBe("READY");
       if (!child.pid) throw new Error("Expected the live fixture process PID.");
+      const childPid = child.pid;
+      boundedSpawn.mockImplementation((command, args, options) => {
+        const isProcessObservation =
+          process.platform === "win32"
+            ? options?.env?.["MILESTONE_LOOP_CONTROLLER_PID"] ===
+              String(childPid)
+            : command === "ps" &&
+              args[0] === "-p" &&
+              args[1] === String(childPid) &&
+              args[2] === "-o" &&
+              args[3] === "lstart=";
+        if (!isProcessObservation)
+          return actual.spawnBoundedSync(command, args, options);
+        processObservationCount += 1;
+        if (processObservationCount === 1)
+          return actual.spawnBoundedSync(command, args, options);
+        if (processObservationCount === 2)
+          return processObservationResult(2, "");
+        return processObservationResult(0, spawnedAt);
+      });
 
       const liveObjectId = writeLeaseObject(
         fixture.root,
@@ -377,6 +427,27 @@ describe("controller mutation lease", () => {
         }),
       ).rejects.toThrow(/Another controller holds the mutation lease/);
       expect(readLeaseObject(fixture.root).objectId).toBe(liveObjectId);
+      expect(processObservationCount).toBe(1);
+
+      await expect(
+        ControllerLease.acquire({
+          repositoryRoot: fixture.root,
+          statePath: STATE_PATH,
+          operation: "run",
+        }),
+      ).rejects.toThrow(/Another controller holds the mutation lease/);
+      expect(readLeaseObject(fixture.root).objectId).toBe(liveObjectId);
+      expect(processObservationCount).toBe(2);
+
+      await expect(
+        ControllerLease.acquire({
+          repositoryRoot: fixture.root,
+          statePath: STATE_PATH,
+          operation: "run",
+        }),
+      ).rejects.toThrow(/Another controller holds the mutation lease/);
+      expect(readLeaseObject(fixture.root).objectId).toBe(liveObjectId);
+      expect(processObservationCount).toBe(3);
 
       const reusedObjectId = writeLeaseObject(
         fixture.root,
@@ -392,7 +463,11 @@ describe("controller mutation lease", () => {
       });
       expect(readLeaseObject(fixture.root).objectId).not.toBe(reusedObjectId);
       await recovered.release();
+      expect(processObservationCount).toBe(4);
     } finally {
+      if (defaultImplementation)
+        boundedSpawn.mockImplementation(defaultImplementation);
+      else boundedSpawn.mockReset();
       await stopChild(child);
     }
   }, 30_000);
