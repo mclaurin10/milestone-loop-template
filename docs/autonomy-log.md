@@ -3,6 +3,87 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-31 — WP6d completed-crash observation seam locally qualified
+
+**Objective and outcome.** Remove host PID-reuse timing from the
+candidate-prepare transaction matrix without changing production lease
+semantics. The test now records only crash-worker PIDs backed by the expected
+point marker and exit status 86, substitutes a deterministic dead observation
+only for those exact completed workers, and delegates every other bounded
+spawn. A regression proves the platform command parser and verified-PID
+boundary. The dedicated controller-lease suite continues to exercise real
+process liveness and deterministic unavailable, matching, and reused
+incarnations.
+
+**Verification.** The selected hard-loss matrix passed all 16 rows (13
+automatic convergences and 3 preserved ambiguous blocks) with no remaining
+temporary repository at
+`C:/w/wp6d-step7-crash-observation-focused-1`; report SHA-256 is
+`7572c6106e403b3b5b24d72934ef771692d40235cc588beda4b84966d456443d`.
+The complete candidate and controller-lease files passed 10/10 and 18/18 tests
+at `C:/w/wp6d-step7-crash-observation-{candidate-suite-1,lease-suite-1}`.
+Typecheck, lint, and the post-Prettier format check passed. Fast passed 202/202
+suites and 676/676 tests at `C:/w/wp6d-step7-crash-observation-fast-1`
+(report SHA-256
+`56cd71d480d0cf62a7dad98abf1523d45f022b8436fa179c99b4464c1912921f`),
+and orchestrator passed 203/203 suites and 692/692 tests at
+`C:/w/wp6d-step7-crash-observation-orchestrator-1` (SHA-256
+`4cc642ec18cb105245336c8d1768f9d5d0a4ed5f79b57c7a7c85615198fca36f`).
+
+**Retained failures and disposition.** The initial format check is retained as
+non-passing because the edited test had not yet been formatted. The first
+complete-unit attempt at `C:/w/wp6d-step7-crash-observation-unit-1` passed
+699/708 tests but nine tests in three unrelated files expired at their
+existing 60-second budgets during one host-wide slowdown. Those exact files
+then passed 30/30 unchanged at
+`C:/w/wp6d-step7-crash-observation-timeout-repro-1`; a fresh complete-unit
+aggregate passed 205/205 suites and 708/708 tests at
+`C:/w/wp6d-step7-crash-observation-unit-2` (report SHA-256
+`50b16de1a2ad690e1a6f8deefa2f2e245a8b6cb196e82507197493e5d87c2525`).
+No timeout was raised and no production source changed. After these execution
+records were written, all five invariant commands passed at
+`C:/w/wp6d-step7-crash-observation-invariants-1` (report SHA-256
+`03cc58c17d9c3c19c4540ec82fc9ead004dd51dce3a851502dafcd111e1937a0`).
+
+**Commit and remaining boundary.** The candidate is not yet committed.
+Protected-file checks, a pushed commit, and a fully green five-job exact-runtime
+run remain mandatory before a fresh measurement matrix. No failed or partial
+run supports a performance, cutover, or readiness claim.
+
+## 2026-08-31 — WP6d hosted candidate-prepare lease race retained
+
+**Outcome.** Test-harness repair commit
+`31fb2274f82153d378db9f9bca6d7c394eb266db`, tree
+`2c69984b51d6c9e69691e672d09c7f549e49d3da`, is pushed to `origin/master`.
+Exact-runtime run `33370485616` passed the Linux controller, both adopter
+smokes, and trusted-container jobs, but its Windows controller aggregate failed
+the candidate-prepare hard-loss matrix after passing 690/691 tests. The
+measurement matrix was not dispatched.
+
+**Failure evidence and diagnosis.** The retained report at
+`C:/w/wp6d-ci-fail-33370485616-controller-windows/orchestrator/orchestrator-report.json`
+has SHA-256
+`2bc06e9210c1568ba26ad311d105549cc3605a55529ddb1a3b7cefcd06553931`;
+GitHub reports controller archive digest
+`365906e11da0dcce1ded5e4d5625b5b75c5f67a7aa0f10de834f5c3d757d3607`.
+The failure occurred only after the real crash worker had exited with its
+expected marker and status: Windows reused or retained that PID within the
+production ten-second process-start tolerance, so lease acquisition correctly
+failed closed as though the recorded owner were still live. A direct
+exact-runtime rerun passed the selected matrix with 13 automatic convergences,
+3 preserved ambiguous blocks, and no remaining `cpb-*` directories at
+`C:/w/wp6d-step7-hosted-lease-race-repro-1`; its report SHA-256 is
+`9c501aedad02fcf3a1d3b2680e1384b5f133fd23671644c06217619f394ecbd`.
+
+**Repair boundary.** Keep production liveness, tolerance, and fail-closed
+behavior unchanged. The candidate transaction fault matrix may substitute a
+dead observation only for exact worker PIDs whose real marker and exit 86 were
+already verified; the dedicated lease suite remains responsible for real
+live-owner and deterministic unavailable/matching/reused-incarnation semantics.
+A focused matrix, lease suite, all broad local gates, a new commit, and a fully
+green five-job exact-runtime run remain mandatory before any fresh measurement
+dispatch.
+
 ## 2026-08-31 — WP6d Windows measurement harness repair locally qualified
 
 **Objective and outcome.** Preserve the production controller lease's

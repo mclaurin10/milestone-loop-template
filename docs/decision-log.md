@@ -3,6 +3,33 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-31 — Transaction recovery owns completed-worker identity, not OS liveness
+
+**Decision.** The candidate-prepare hard-loss matrix may substitute a dead
+process observation only for the exact PIDs of fault workers whose
+point-specific crash marker and exit status 86 have both been verified in that
+test. Platform-specific parsing recognizes only the production observer's
+exact PowerShell or `ps` invocation; every unrelated command and every
+unverified PID delegates to the real bounded-spawn implementation. The
+dedicated controller-lease suite remains the authority for real live-owner,
+unavailable-observation, matching-incarnation, and reused-PID behavior.
+
+**Why.** The transaction matrix proves checkpoint convergence after a known
+worker crash; marker plus exit-status evidence already proves that worker
+incarnation completed. Asking the host to establish liveness again introduces
+a separate timing race: Windows can retain or reuse the numeric PID within the
+production ten-second start-time tolerance. Protected run `33370485616`
+demonstrated that race while a direct rerun passed the same transaction rows.
+Changing the production tolerance or fail-closed rule would weaken safety, and
+raising test timeouts would not make PID identity deterministic. Limiting the
+substitution to verified completed workers keeps both responsibilities explicit
+and independently covered.
+
+**Affected files.** `candidate-prepare-baseline.test.ts`, the active execution
+plan, and autonomy evidence records. `controller-lease.ts`, production
+liveness behavior, frozen authorities, and the protected exact-runtime
+workflow are unchanged.
+
 ## 2026-08-31 — Lease verification separates probe availability from semantics
 
 **Decision.** Keep the production process-incarnation observer, its five-second

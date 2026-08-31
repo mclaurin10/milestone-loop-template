@@ -807,10 +807,82 @@ different incarnation reusing its pid`; each report passed 674/675 tests
   invariant commands passed at
   `C:/w/wp6d-step7-incarnation-invariants-3`.
 
+- 2026-08-31 — The locally qualified repairs are commit
+  `31fb2274f82153d378db9f9bca6d7c394eb266db`, tree
+  `2c69984b51d6c9e69691e672d09c7f549e49d3da`, pushed to `origin/master`.
+  Protected exact-runtime run
+  `https://github.com/mclaurin10/milestone-loop-template/actions/runs/33370485616`
+  passed the Linux controller, both fresh-adopter smokes, and trusted-container
+  jobs, but the Windows controller aggregate failed and therefore blocks the
+  measurement matrix. Its retained report passed 690/691 tests and failed the
+  candidate-prepare hard-loss matrix when recovery correctly refused a lease
+  whose completed crash-worker PID had already become live again within the
+  production ten-second incarnation tolerance. The report is retained at
+  `C:/w/wp6d-ci-fail-33370485616-controller-windows/orchestrator/orchestrator-report.json`
+  (SHA-256
+  `2bc06e9210c1568ba26ad311d105549cc3605a55529ddb1a3b7cefcd06553931`);
+  GitHub's controller archive digest is
+  `365906e11da0dcce1ded5e4d5625b5b75c5f67a7aa0f10de834f5c3d757d3607`.
+  A direct exact-runtime rerun of the selected hard-loss test passed its 16-row
+  matrix (13 automatic convergences, 3 preserved ambiguous blocks) and left no
+  temporary repositories at `C:/w/wp6d-step7-hosted-lease-race-repro-1`;
+  report SHA-256 is
+  `9c501aedad02fcf3a1d3b2680e1384b5f133fd23671644c06217619f394ecbd`.
+  This confirms a host-timing race rather than a candidate transaction defect.
+  The bounded repair is test-only: after each real crash worker's marker and
+  exit 86 are verified, the candidate transaction matrix may treat that exact
+  completed worker incarnation as dead. Production liveness stays fail-closed,
+  while the dedicated lease suite continues to own real live-process,
+  unavailable-observation, matching-incarnation, and reused-PID coverage.
+
+- 2026-08-31 — The candidate transaction matrix now substitutes a dead
+  process observation only when the queried PID belongs to the exact set of
+  crash workers whose point-specific marker and exit status 86 were already
+  verified. Every other bounded spawn delegates to the production helper, and
+  a focused regression proves both exact command parsing and rejection of an
+  unverified PID or unrelated command. Production controller code, liveness
+  tolerance, and fail-closed behavior are unchanged.
+
+  The focused hard-loss matrix passed its 16 rows (13 automatic convergences,
+  3 preserved ambiguous blocks) and left no `cpb-*` directories at
+  `C:/w/wp6d-step7-crash-observation-focused-1`; report and matrix SHA-256 are
+  `7572c6106e403b3b5b24d72934ef771692d40235cc588beda4b84966d456443d`
+  and
+  `cf4c8e88a16317a9d2d042690e3fa98ba62b6ac40241a9bd0f48d0569ed177e4`.
+  The complete candidate file passed 10/10 tests at
+  `C:/w/wp6d-step7-crash-observation-candidate-suite-1` (report SHA-256
+  `157f0ac570365646fd1bbe6934df42217feba4c896a9b0667f7236f5f7594efa`),
+  and the real-process controller lease file passed 18/18 at
+  `C:/w/wp6d-step7-crash-observation-lease-suite-1` (SHA-256
+  `92e51ed11d0060409de99f9af02c6a306b3fcf2fa0f4b217e677399658323214`).
+  Exact-runtime typecheck, lint, and the post-Prettier format check passed at
+  `C:/w/wp6d-step7-crash-observation-{typecheck-2,lint-1,format-2}`. The first
+  format check is retained as non-passing because the test edit had not yet
+  been formatted.
+
+  The fast and orchestrator aggregates passed 202/202 suites plus 676/676
+  tests and 203/203 suites plus 692/692 tests at
+  `C:/w/wp6d-step7-crash-observation-{fast-1,orchestrator-1}`; report SHA-256
+  values are
+  `56cd71d480d0cf62a7dad98abf1523d45f022b8436fa179c99b4464c1912921f`
+  and
+  `4cc642ec18cb105245336c8d1768f9d5d0a4ed5f79b57c7a7c85615198fca36f`.
+  A first complete-unit attempt is retained as non-passing at
+  `C:/w/wp6d-step7-crash-observation-unit-1`: 699/708 tests passed and nine
+  unrelated tests expired at their existing 60-second budgets during a
+  host-wide slowdown. All 30 tests in the three affected files then passed
+  unchanged at `C:/w/wp6d-step7-crash-observation-timeout-repro-1`, and a
+  fresh complete-unit rerun passed 205/205 suites and 708/708 tests at
+  `C:/w/wp6d-step7-crash-observation-unit-2/test-report.json` (SHA-256
+  `50b16de1a2ad690e1a6f8deefa2f2e245a8b6cb196e82507197493e5d87c2525`).
+  After the execution records were updated, all five invariant commands passed
+  at `C:/w/wp6d-step7-crash-observation-invariants-1` (report SHA-256
+  `03cc58c17d9c3c19c4540ec82fc9ead004dd51dce3a851502dafcd111e1937a0`).
+
 ## Next Action
 
-Inspect the final protected hashes and working-tree scope, then commit and push
-both test-harness repairs. Require exact-runtime CI to pass before dispatching
-another fresh step-7 matrix on that exact candidate; independently
+Finish the protected-file and final working-tree checks on the locally
+qualified candidate, then commit and push it. Require all five protected hosted
+jobs to pass before dispatching another fresh step-7 matrix; independently
 download/revalidate every retained pair and both statistics records only after
 the full matrix passes.

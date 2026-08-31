@@ -44,12 +44,26 @@ import { enforcementProtectedPatterns } from "./protected-roots.js";
 import { createIsolatedWorkspaceFixture } from "../test/workspace-fixture.js";
 import { validConfig, validProposal } from "../test/fixtures.js";
 
+vi.mock("./bounded-spawn-sync.js", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("./bounded-spawn-sync.js")>();
+  return {
+    ...actual,
+    spawnBoundedSync: vi.fn(actual.spawnBoundedSync),
+  };
+});
+
 const NOW = "2026-08-23T20:00:00.000Z";
 const MILESTONE_ID = "cpb";
 const CLEANUP_TIMEOUT_MS = 120_000;
 const temporaryDirectories: string[] = [];
+const boundedSpawn = vi.mocked(spawnBoundedSync);
+const defaultBoundedSpawnImplementation = boundedSpawn.getMockImplementation();
+if (!defaultBoundedSpawnImplementation)
+  throw new Error("Expected the bounded-spawn test passthrough.");
 
 afterEach(async () => {
+  boundedSpawn.mockImplementation(defaultBoundedSpawnImplementation);
   for (const directory of temporaryDirectories.splice(0))
     await rm(directory, {
       recursive: true,
@@ -239,6 +253,57 @@ async function faultWorker(metadataPath: string): Promise<{
   return { error, status, stderr };
 }
 
+function processObservationPid(
+  command: string,
+  args: readonly string[],
+  options: Parameters<typeof spawnBoundedSync>[2],
+): number | null {
+  if (process.platform === "win32") {
+    if (
+      command.replaceAll("\\", "/").split("/").at(-1)?.toLowerCase() !==
+        "powershell.exe" ||
+      args[0] !== "-NoLogo" ||
+      args[1] !== "-NoProfile" ||
+      args[2] !== "-NonInteractive" ||
+      args[3] !== "-Command"
+    )
+      return null;
+    const value = options?.env?.["MILESTONE_LOOP_CONTROLLER_PID"];
+    if (typeof value !== "string" || !/^\d+$/.test(value)) return null;
+    const pid = Number(value);
+    return Number.isSafeInteger(pid) && pid > 0 ? pid : null;
+  }
+  if (
+    command !== "ps" ||
+    args[0] !== "-p" ||
+    args[2] !== "-o" ||
+    args[3] !== "lstart="
+  )
+    return null;
+  const pid = Number(args[1]);
+  return Number.isSafeInteger(pid) && pid > 0 ? pid : null;
+}
+
+function deadProcessObservation(): ReturnType<typeof spawnBoundedSync> {
+  return {
+    pid: 0,
+    output: [null, "", ""],
+    stdout: "",
+    stderr: "",
+    status: process.platform === "win32" ? 3 : 1,
+    signal: null,
+  };
+}
+
+function completedCrashWorkerObservation(
+  completedCrashWorkerPids: ReadonlySet<number>,
+  observedPid: number | null,
+): ReturnType<typeof spawnBoundedSync> | null {
+  return observedPid !== null && completedCrashWorkerPids.has(observedPid)
+    ? deadProcessObservation()
+    : null;
+}
+
 async function fileSha256(path: string): Promise<string | null> {
   return await readFile(path).then(
     (bytes) => createHash("sha256").update(bytes).digest("hex"),
@@ -423,6 +488,44 @@ async function releaseResumeBarrier(
 }
 
 describe("candidate-prepare current-semantics recovery baseline", () => {
+  it("limits deterministic dead observations to verified completed crash workers", () => {
+    const completedCrashWorkerPids = new Set([41_001]);
+    const observedPid =
+      process.platform === "win32"
+        ? processObservationPid(
+            "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+            ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", "fixture"],
+            {
+              env: {
+                ...process.env,
+                MILESTONE_LOOP_CONTROLLER_PID: "41001",
+              },
+            },
+          )
+        : processObservationPid("ps", ["-p", "41001", "-o", "lstart="], {
+            env: { ...process.env },
+          });
+    expect(observedPid).toBe(41_001);
+    expect(
+      completedCrashWorkerObservation(completedCrashWorkerPids, observedPid)
+        ?.status,
+    ).toBe(process.platform === "win32" ? 3 : 1);
+    expect(
+      completedCrashWorkerObservation(completedCrashWorkerPids, 41_002),
+    ).toBeNull();
+    expect(
+      completedCrashWorkerObservation(completedCrashWorkerPids, null),
+    ).toBeNull();
+    expect(
+      processObservationPid("git", ["status"], {
+        env: {
+          ...process.env,
+          MILESTONE_LOOP_CONTROLLER_PID: "41001",
+        },
+      }),
+    ).toBeNull();
+  });
+
   it(
     "publishes intent before Worker mutation and completes the uninterrupted checkpoint once",
     { timeout: 60_000 },
@@ -876,6 +979,7 @@ describe("candidate-prepare current-semantics recovery baseline", () => {
         readonly crashMarkerPath: string;
         readonly metadataPath: string;
       }> = [];
+      const completedCrashWorkerPids = new Set<number>();
       for (const [index, point] of CANDIDATE_PREPARE_FAULT_POINTS.entries()) {
         const fixture = await runningFixture();
         const controlDirectory = join(
@@ -919,12 +1023,42 @@ describe("candidate-prepare current-semantics recovery baseline", () => {
         for (const { entry, result } of crashed) {
           expect(result.error, entry.point).toBeUndefined();
           expect(result.status, `${entry.point}: ${result.stderr}`).toBe(86);
-          expect(
-            JSON.parse(await readFile(entry.crashMarkerPath, "utf8")),
-          ).toMatchObject({ point: entry.point });
+          const marker = JSON.parse(
+            await readFile(entry.crashMarkerPath, "utf8"),
+          ) as { readonly point?: unknown; readonly pid?: unknown };
+          expect(marker).toMatchObject({
+            point: entry.point,
+            pid: expect.any(Number),
+          });
+          if (
+            typeof marker.pid !== "number" ||
+            !Number.isSafeInteger(marker.pid) ||
+            marker.pid <= 0
+          )
+            throw new Error(
+              `${entry.point}: crash marker did not contain a valid worker PID.`,
+            );
+          completedCrashWorkerPids.add(marker.pid);
         }
         offset += crashBatchSize;
       }
+
+      const substitutedObservationPids: number[] = [];
+      // This transaction matrix has direct marker plus exit-status proof that
+      // these worker incarnations ended. Keep host PID reuse out of this test;
+      // the controller-lease suite separately owns real liveness semantics.
+      boundedSpawn.mockImplementation((command, args, options) => {
+        const observedPid = processObservationPid(command, args, options);
+        const completedObservation = completedCrashWorkerObservation(
+          completedCrashWorkerPids,
+          observedPid,
+        );
+        if (completedObservation && observedPid !== null) {
+          substitutedObservationPids.push(observedPid);
+          return completedObservation;
+        }
+        return defaultBoundedSpawnImplementation(command, args, options);
+      });
 
       const recoverCase = async (entry: (typeof cases)[number]) => {
         const { index, point, fixture } = entry;
@@ -1058,6 +1192,11 @@ describe("candidate-prepare current-semantics recovery baseline", () => {
         .map((entry) => entry.row);
 
       matrix.splice(0, matrix.length, ...orderedMatrix);
+      expect(
+        substitutedObservationPids.every((pid) =>
+          completedCrashWorkerPids.has(pid),
+        ),
+      ).toBe(true);
 
       const output = process.env["CANDIDATE_PREPARE_FAULT_MATRIX_OUTPUT"];
       if (output) {
