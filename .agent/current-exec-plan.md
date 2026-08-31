@@ -217,12 +217,12 @@ CAL-1; frozen authorities; immutable acceptance; rewriting historical records.
    artifact per platform reporting median, range/median-absolute-deviation,
    CPU, peak-RSS, and test counts per command across repetitions, with no
    pass/fail judgment. `exact-runtime-ci.yml` stays byte-identical.
-7. **Execute and independently validate one full matrix.** Dispatch the
+7. **[complete] Execute and independently validate one full matrix.** Dispatch the
    workflow once on the exact candidate commit; on completion, independently
    re-validate the retained artifacts (hashes, dispositions, identity and
    cold/warm binding, statistics recomputation) and record the hosted run
    URL and artifact hashes.
-8. **Closeout.** Update this plan, the autonomy log, and the decision log
+8. **[complete] Closeout.** Update this plan, the autonomy log, and the decision log
    with exact evidence, limitations, and the successor handoff: intended
    WP6e alone owns manifest/tier recomposition consuming this lane's
    evidence; intended WP6f owns interpretation and go/no-go. Leave the
@@ -879,10 +879,104 @@ different incarnation reusing its pid`; each report passed 674/675 tests
   at `C:/w/wp6d-step7-crash-observation-invariants-1` (report SHA-256
   `03cc58c17d9c3c19c4540ec82fc9ead004dd51dce3a851502dafcd111e1937a0`).
 
+- 2026-08-31 — The bounded observation repair is commit
+  `93e03e2ff28d295f38590b7723d5d6b1460eae07`, tree
+  `e421903de5505dee20fd59dde487a031511c209b`, pushed to `origin/master`.
+  Protected exact-runtime run
+  `https://github.com/mclaurin10/milestone-loop-template/actions/runs/33397675209`
+  passed all five jobs. Independently downloaded evidence at
+  `C:/w/wp6d-ci-33397675209` contains 42 PASS manifests and 62 declared
+  artifacts with matching hashes and sizes, no reparse point, exact clean
+  candidate identity, 203/203 orchestrator suites plus 692/692 tests and
+  205/205 unit suites plus 708/708 tests on both controllers, two PASS adopter
+  smokes, and the expected PASS trusted-container matrix. GitHub artifact
+  SHA-256 digests are controller Windows
+  `ee172554ab4b49ea3c06d00f7598cbd25b66ba03e31efd33555ecc648620090b`,
+  controller Linux
+  `fb9b018091e66ac63bce8954f28d2d5164737f94e3793d9bbd968638376ccbfe`,
+  adopter Windows
+  `6ecfdfc73047c7897755e5fdfc2069f031da97ce06b49596b149c6c09f30e75d`,
+  adopter Linux
+  `29f2a174f157fbdf13ed594913350e9a26b1aa1d6fe6881d88949173fe74be91`,
+  and trusted container
+  `bd1747fcd35287752d9a6cf79ba7fc4f432ecf635b5942f8d287fdd3980c8b03`.
+
+- 2026-08-31 — Fresh manual-dispatch measurement run
+  `https://github.com/mclaurin10/milestone-loop-template/actions/runs/33402460152`
+  passed all ten isolated pair jobs and both statistics jobs on the exact
+  candidate: five cold and five immediately paired warm records for each of
+  Linux and Windows. The ten pair artifact SHA-256 digests, in Linux ordinal
+  1-5 order, are
+  `c4bfa40e4f3709d77929bc6d4f51e337a071093412c62dc3b8ee6eeecc63a33d`,
+  `cab7477e16a3b49916582b369e8354fc55a31eda27ab3a296f9c0322dc06ab35`,
+  `762c0132a59686af9a1aed57d9fc692533fab0b4f14bc8e8ad489f1e4c4505f7`,
+  `95a965bde4244cb176dc54ff9eedad9c97181f5a2a82f327f1848845ad35f9e1`,
+  `d538392d5b8571d04eeed8a6d8072b10e05948af7bddb4061ce38dc6a0eb20c2`,
+  and, in Windows ordinal 1-5 order,
+  `01bb40e1ffefe2fed3eba29e165b9e12aecba2d64a2c6bc9a560378ea2954b25`,
+  `7b451aeeff2256f0cc08881cfd1847414273ca5c48901c0c656858b663816536`,
+  `bb2ae0e2706e4cff8fd3b5238a166f2670aab1860bc85bb3c617ec55d532e824`,
+  `896469abda556da9ab577a774fe9e9f6f72247fbbfc7d8710512e52a4e7294a2`,
+  and
+  `245e80c02c670b529c38dcbe62b32bc71a4761378a646e48c591152aab104758`.
+  Linux and Windows statistics archive digests are
+  `1bd87841d16ac5f2e08502dd9c37dc490d4677f4517e786c8c4e3deaf0359617`
+  and
+  `494f3c81af3668a356fec665720e4afbb72338c14f3a90b02a406d5fdf3ec54e`.
+
+  All 12 archives were independently downloaded to
+  `C:/w/wp6d-matrix-33402460152`. Hash/size verification passed for 162 PASS
+  manifests and 732 declared artifacts; all 20 lane records bind the exact
+  clean candidate, run/attempt/job, seven-command selection, platform,
+  ordinal, classification, reduction, and cold/warm pair while keeping every
+  non-semantic authority flag false. Their sorted path/file-hash inventory has
+  SHA-256
+  `24240c2c6c17435a66c78e8091c78d1f54ab86946a3f3f1d5250075fa923c646`.
+  From a no-local/no-hardlink clean checkout at
+  `C:/w/wp6d-validate-33402460152`, the production statistics validator
+  independently reproduced the retained Linux and Windows records from the
+  exact merged download topology at
+  `C:/w/wp6d-independent-33402460152/{linux,windows}-validation-2`.
+  Statistics file SHA-256 values are
+  `216d45e5774a6bdf7293e4403978bfa40af80edd282c14d4d4369248014beb2c`
+  and
+  `ce7ea64ccca9f5416065375d4b0dd6e1f37afc2842c937ffe1f5843a19dfa0ef`;
+  their content hashes are
+  `6053830f29fbe4e8a4d7200ab779c90a5ac2c8efdedb85ca984ee7557fe4d126`
+  and
+  `b612febd0ff85b3930e7c12db55c7fa86d669ce759352a1075ef0d1b45dc722d`.
+
+  The first independent invocations are retained as non-passing at the same
+  root under `{linux,windows}-validation`: preserving GitHub archive-name
+  wrapper directories changed the recorded relative input paths, whereas the
+  producing workflow used `merge-multiple: true`. Their ERROR manifest hashes
+  are
+  `bec247bc4edd6f5e788361d6364706a7b248fff078acbf8f8aec3c7e5fd53e8d`
+  and
+  `4bcebec7c3035c25418c0c6f89b24f4321663bee4a73df5060ffbad4aef151a8`.
+  Recreating the workflow's exact `platform/ordinal/...` topology resolved the
+  procedural mismatch without changing any downloaded byte or repository
+  source. These records are descriptive evidence only: they set no threshold,
+  compare no performance, authorize no cutover, and support no readiness
+  claim.
+
+  On the record-only closeout working tree, exact-runtime typecheck, lint, and
+  format passed at `C:/w/wp6d-closeout-{typecheck,lint,format}-1`. The complete
+  orchestrator aggregate passed 203/203 suites and 692/692 tests at
+  `C:/w/wp6d-closeout-orchestrator-1` (report SHA-256
+  `fe784c3cfe02906324ba5d2f575cb07076b10cefa851bb2a306385a8283b7d5d`),
+  and the complete unit aggregate passed 205/205 suites and 708/708 tests at
+  `C:/w/wp6d-closeout-unit-1` (report SHA-256
+  `ee9c545461ef6ea98841a15b1780b1cff5a4e04f885c38b36089ef0d930ff469`).
+  After the closeout records were written, all five invariant commands passed
+  at `C:/w/wp6d-closeout-invariants-1` (report SHA-256
+  `6ca10df459cf5429b3514a951998a7edca2c4378c61abfd71fb6dc496524b4cd`).
+
 ## Next Action
 
-Finish the protected-file and final working-tree checks on the locally
-qualified candidate, then commit and push it. Require all five protected hosted
-jobs to pass before dispatching another fresh step-7 matrix; independently
-download/revalidate every retained pair and both statistics records only after
-the full matrix passes.
+Commit and push this record-only closeout and require its protected
+exact-runtime workflow to pass. If green, WP6d is closed without another
+repository mutation. Intended WP6e alone may consume these records for
+manifest/tier/slow-registry recomposition; intended WP6f alone owns performance
+interpretation and go/no-go. Neither successor may relabel this descriptive
+matrix as a benchmark, cutover, or readiness result.

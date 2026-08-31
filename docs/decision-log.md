@@ -3,6 +3,36 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-08-31 — WP6d closes on reproduced evidence without interpretation
+
+**Decision.** Accept WP6d's hosted execution surface only after all ten
+cold/warm pair jobs and both statistics jobs pass, every retained archive is
+downloaded, every lane/receipt/summary/reduction and cold/warm binding is
+revalidated, and each retained statistics record is reproduced with the
+production validator from the workflow's exact merged
+`platform/ordinal/...` artifact topology. Archive-name wrapper directories are
+transport metadata, not part of the statistics input topology. The resulting
+records remain descriptive and non-semantic; only intended WP6e may consume
+them for manifest/tier/slow-registry recomposition, and only intended WP6f may
+interpret them or make a go/no-go decision.
+
+**Why.** Run `33402460152` supplied the required five pairs per platform and
+passed its producing validators. Independent download validation additionally
+proved exact candidate/source identity, dispositions, hashes, pair bindings,
+and statistics reproduction. A first local assembly retained archive-name
+wrappers and correctly failed canonical reproduction because relative input
+paths no longer matched the producer's `merge-multiple: true` topology;
+reconstructing that declared topology passed without changing evidence. The
+alternatives were rejected: treating transport wrapper names as semantic,
+editing a retained record to fit a new path, accepting workflow exit codes
+without reproduction, interpreting timings inside WP6d, or allowing this lane
+to authorize cutover/readiness.
+
+**Affected files.** The active execution plan, autonomy and decision records,
+and external retained evidence for runs `33397675209` and `33402460152`.
+Production source, the protected exact-runtime workflow, the commissioned
+benchmark, frozen authorities, and successor ownership remain unchanged.
+
 ## 2026-08-31 — Transaction recovery owns completed-worker identity, not OS liveness
 
 **Decision.** The candidate-prepare hard-loss matrix may substitute a dead

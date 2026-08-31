@@ -3,6 +3,98 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-08-31 — WP6d hosted matrix completed and independently reproduced
+
+**Outcome.** Test-only repair commit
+`93e03e2ff28d295f38590b7723d5d6b1460eae07`, tree
+`e421903de5505dee20fd59dde487a031511c209b`, is pushed to `origin/master`.
+Exact-runtime run `33397675209` passed Windows/Linux controllers, both
+fresh-adopter smokes, and trusted-container execution. Downloaded evidence at
+`C:/w/wp6d-ci-33397675209` independently matched 42 PASS manifests, 62
+declared artifacts, exact clean candidate identity, both 203-suite/692-test
+orchestrator reports, both 205-suite/708-test unit reports, and all expected
+adopter/container boundaries. Controller Windows/Linux, adopter
+Windows/Linux, and trusted-container GitHub artifact digests are respectively
+`ee172554ab4b49ea3c06d00f7598cbd25b66ba03e31efd33555ecc648620090b`,
+`fb9b018091e66ac63bce8954f28d2d5164737f94e3793d9bbd968638376ccbfe`,
+`6ecfdfc73047c7897755e5fdfc2069f031da97ce06b49596b149c6c09f30e75d`,
+`29f2a174f157fbdf13ed594913350e9a26b1aa1d6fe6881d88949173fe74be91`,
+and
+`bd1747fcd35287752d9a6cf79ba7fc4f432ecf635b5942f8d287fdd3980c8b03`.
+
+**Hosted matrix.** Manual run `33402460152` passed all ten pair jobs and both
+statistics jobs. It retains exactly five cold and five immediately paired warm
+lane records per platform on the same candidate. Linux pair archive digests
+for ordinals 1-5 are
+`c4bfa40e4f3709d77929bc6d4f51e337a071093412c62dc3b8ee6eeecc63a33d`,
+`cab7477e16a3b49916582b369e8354fc55a31eda27ab3a296f9c0322dc06ab35`,
+`762c0132a59686af9a1aed57d9fc692533fab0b4f14bc8e8ad489f1e4c4505f7`,
+`95a965bde4244cb176dc54ff9eedad9c97181f5a2a82f327f1848845ad35f9e1`,
+and
+`d538392d5b8571d04eeed8a6d8072b10e05948af7bddb4061ce38dc6a0eb20c2`.
+Windows ordinal 1-5 digests are
+`01bb40e1ffefe2fed3eba29e165b9e12aecba2d64a2c6bc9a560378ea2954b25`,
+`7b451aeeff2256f0cc08881cfd1847414273ca5c48901c0c656858b663816536`,
+`bb2ae0e2706e4cff8fd3b5238a166f2670aab1860bc85bb3c617ec55d532e824`,
+`896469abda556da9ab577a774fe9e9f6f72247fbbfc7d8710512e52a4e7294a2`,
+and
+`245e80c02c670b529c38dcbe62b32bc71a4761378a646e48c591152aab104758`.
+Statistics archive digests are Linux
+`1bd87841d16ac5f2e08502dd9c37dc490d4677f4517e786c8c4e3deaf0359617`
+and Windows
+`494f3c81af3668a356fec665720e4afbb72338c14f3a90b02a406d5fdf3ec54e`.
+
+**Independent validation.** All archives were downloaded under
+`C:/w/wp6d-matrix-33402460152`. A read-only audit matched hash and size for
+162 PASS manifests and 732 declared artifacts and found no reparse point.
+Every one of the 20 lane records binds the exact clean candidate, hosted
+source context, seven-command catalogue, platform, unique ordinal and run ID,
+classification, validated reduction, and paired dependency state; all
+non-semantic authority flags are false. The sorted lane path/file-hash
+inventory SHA-256 is
+`24240c2c6c17435a66c78e8091c78d1f54ab86946a3f3f1d5250075fa923c646`.
+A clean no-local/no-hardlink checkout at
+`C:/w/wp6d-validate-33402460152` then ran the production validator with
+`--validate-existing` over each exact merged platform root. PASS evidence is
+at `C:/w/wp6d-independent-33402460152/{linux,windows}-validation-2`.
+Retained statistics file hashes are Linux
+`216d45e5774a6bdf7293e4403978bfa40af80edd282c14d4d4369248014beb2c`
+and Windows
+`ce7ea64ccca9f5416065375d4b0dd6e1f37afc2842c937ffe1f5843a19dfa0ef`;
+the independent PASS result hashes are
+`1ff582e75adae1eff93bfd38b22fab62974c5b9fd69aed4e3b75a1e6ef681d6b`
+and
+`6c8a0e163c814e0829c2ef30b3539aa184fd99a3b3e15356cf6b0b00733bb557`.
+
+**Retained procedural failure.** The first two validation invocations are
+retained as ERROR manifests at
+`C:/w/wp6d-independent-33402460152/{linux,windows}-validation`, with SHA-256
+`bec247bc4edd6f5e788361d6364706a7b248fff078acbf8f8aec3c7e5fd53e8d`
+and
+`4bcebec7c3035c25418c0c6f89b24f4321663bee4a73df5060ffbad4aef151a8`.
+They preserved per-archive wrapper directories while the producing workflow
+used `merge-multiple: true`, so relative input paths differed. Reassembling
+the exact `platform/ordinal/...` topology made both retained records reproduce
+without altering any downloaded or repository byte.
+
+**Boundary and handoff.** WP6d supplies descriptive, non-semantic evidence
+only. It neither compares performance nor changes test success, thresholds,
+the commissioned benchmark, cutover authority, or readiness. Intended WP6e
+alone owns any manifest/tier/slow-registry recomposition that consumes this
+evidence; intended WP6f owns interpretation and go/no-go. The record-only
+closeout working tree passed typecheck, lint, and format at
+`C:/w/wp6d-closeout-{typecheck,lint,format}-1`; orchestrator passed 203/203
+suites and 692/692 tests at `C:/w/wp6d-closeout-orchestrator-1` (report
+SHA-256
+`fe784c3cfe02906324ba5d2f575cb07076b10cefa851bb2a306385a8283b7d5d`),
+and complete unit passed 205/205 suites and 708/708 tests at
+`C:/w/wp6d-closeout-unit-1` (report SHA-256
+`ee9c545461ef6ea98841a15b1780b1cff5a4e04f885c38b36089ef0d930ff469`).
+After these records were written, all five invariant commands passed at
+`C:/w/wp6d-closeout-invariants-1` (report SHA-256
+`6ca10df459cf5429b3514a951998a7edca2c4378c61abfd71fb6dc496524b4cd`).
+The closeout commit and its exact-runtime gate remain before final handoff.
+
 ## 2026-08-31 — WP6d completed-crash observation seam locally qualified
 
 **Objective and outcome.** Remove host PID-reuse timing from the
