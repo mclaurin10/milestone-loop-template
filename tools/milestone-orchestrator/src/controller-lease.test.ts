@@ -395,7 +395,7 @@ describe("controller mutation lease", () => {
     } finally {
       await stopChild(child);
     }
-  });
+  }, 30_000);
 
   it("still refuses its own live lease within the start-time tolerance", async () => {
     const fixture = await leaseFixture();

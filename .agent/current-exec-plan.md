@@ -1,6 +1,6 @@
 # Current Execution Plan
 
-**Status:** Active — dependency-state repair locally qualified; fix-forward push pending
+**Status:** Active — Windows timeout repair locally qualified; fix-forward push pending
 **Updated:** 2026-08-30
 **Owner:** autonomous loop
 **Predecessor:** intended WP6b/WP6c closed at commit
@@ -649,10 +649,74 @@ ownership-discovery-01-1.stdout.log` contains the valid JSON after the
   and the full unit aggregate passed 205/205 suites and 707/707 tests at
   `C:/w/wp6d-step7-fix-unit-1/test-report.json` (SHA-256
   `3da66fcb07c68bc8d0363b3364abd6752a5af6a42cec8feb2ce8bf02ab113ca5`).
+- 2026-08-30 — The dependency-identity repair is commit
+  `5a5a4a67e7a07493e5f2be8c553ac97874403827`, tree
+  `70911a5bc213d426027a62690c8bf0ae3a3dc932`, pushed to `origin/master`.
+  Protected exact-runtime run
+  `https://github.com/mclaurin10/milestone-loop-template/actions/runs/33333189792`
+  passed all five jobs on that exact candidate. GitHub archive SHA-256 digests
+  are controller Windows
+  `3b94c0ccc94ce2ba0a52c480acb410712456d371f97facb1cfaafac6bf0d6ccd`,
+  controller Linux
+  `343686c7d71ecadbbdcebbd74ea615127589cb420de77eafa503835b4c276162`,
+  adopter Windows
+  `937d98783225d9aea328d0dc904c2b9548b9c37efd3503e90107a8cecb720c01`,
+  adopter Linux
+  `2c6454ead1591613aa93a227a94679f9f5eede6eec64e6a76875bfcd2215fae1`,
+  and trusted container
+  `242e5fd0028f9ede7a716674c6b84a130cb66c6f7bfe8fa2036231189820b705`.
+
+  Fresh step-7 run
+  `https://github.com/mclaurin10/milestone-loop-template/actions/runs/33336023838`
+  then proved the original dependency-state repair across all five Linux
+  cold/warm pairs, each of which completed successfully. All five Windows
+  cold lanes independently failed the first `legacy-fast` command at the same
+  integration test,
+  `controller mutation lease distinguishes an external live owner from a
+  different incarnation reusing its pid`; each report passed 674/675 tests
+  and recorded that failure after 5.70-5.87 seconds. The retained reports are
+  under `C:/w/wp6d-matrix-fail-33336023838-windows-1`,
+  `C:/w/wp6d-matrix-fail-33336023838-windows-2`, and
+  `C:/w/wp6d-matrix-fail-33336023838-windows-more`. The protected Windows
+  controller had passed the same test twice in 1.56-1.57 seconds, retained at
+  `C:/w/wp6d-ci-33333189792-controller-windows`.
+
+  The failed test exercises a real external Windows process and may invoke
+  the production process-incarnation probe twice. Each probe is itself
+  deliberately bounded at 5 seconds, while the test inherited Vitest's
+  5-second default; its failure stack points to the test declaration and all
+  five durations end just beyond that default. The harness budget therefore
+  cannot contain the production bound it verifies. The bounded repair gives
+  only this integration test a 30-second budget, preserving both live-owner
+  and reused-PID assertions and the production 5-second fail-closed probe.
+  Focused repeated Windows coverage plus both broad aggregates are required
+  before another fix-forward commit, exact-runtime run, and fresh matrix.
+  The failed run produced no Windows PASS lane or statistics and is not
+  performance evidence.
+- 2026-08-30 — The single-test timeout repair is locally qualified on its
+  formatted working-tree bytes. The selected external-process test passed ten
+  consecutive exact-runtime repetitions at
+  `C:/w/wp6d-step7-timeout-focused-2`; each retained report has one selected
+  PASS and 17 unselected tests. The exact fast-unit partition passed 202/202
+  suites and 675/675 tests at
+  `C:/w/wp6d-step7-timeout-fast-1/fast-unit-vitest-report.json` (SHA-256
+  `5e6aac25e27c0bbfe876112246e990408799509654e4a9959f28e6df7d2b5c04`).
+  Typecheck, lint, format, and all five invariant commands passed at
+  `C:/w/wp6d-step7-timeout-typecheck-2`,
+  `C:/w/wp6d-step7-timeout-lint-2`,
+  `C:/w/wp6d-step7-timeout-format-2`, and
+  `C:/w/wp6d-step7-timeout-invariants-2`. The full orchestrator aggregate
+  passed 203/203 suites and 691/691 tests at
+  `C:/w/wp6d-step7-timeout-orchestrator-2/orchestrator-report.json`
+  (SHA-256
+  `da744692c39c6b55dd6c284439cb9a791bade238851fd5a14e98b2528e6f0a88`),
+  and the full unit aggregate passed 205/205 suites and 707/707 tests at
+  `C:/w/wp6d-step7-timeout-unit-2/test-report.json` (SHA-256
+  `dee1c61701721c4d7701ba8360f8b7dd4acceb352a13c9d8b2e86b2e547c758d`).
 
 ## Next Action
 
-Commit and push the stable virtual-store dependency identity, then require
-exact-runtime CI to pass. Dispatch a fresh step-7 matrix only on that exact
-candidate and independently download/revalidate every retained pair and both
-statistics records.
+Commit and push the single-test Windows process-incarnation budget, then
+require exact-runtime CI to pass. Dispatch a fresh step-7 matrix only on that
+exact candidate and independently download/revalidate every retained pair and
+both statistics records.
