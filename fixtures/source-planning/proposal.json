@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.2.0",
+  "id": "qualification-planning-tool",
+  "title": "Document one bounded tooling command",
+  "kind": "tooling",
+  "objective": "Document one tooling command and verify the documented invocation.",
+  "rationale": "A bounded command example makes an existing operation inspectable.",
+  "dependencies": [],
+  "permittedPaths": ["tools/demo-tooling/**"],
+  "exclusions": ["No product feature work.", "No authority changes."],
+  "acceptanceCriteria": [
+    {
+      "id": "tooling-example",
+      "description": "The documented command example matches its public operation.",
+      "evidence": "A focused command check and independent review pass."
+    }
+  ],
+  "requiredTests": ["pnpm test:orchestrator"],
+  "verificationCommands": [
+    {
+      "id": "orchestrator-tests",
+      "executable": "pnpm",
+      "args": ["test:orchestrator"],
+      "parser": "exit-code",
+      "expectedArtifactKinds": ["orchestrator-vitest-report"]
+    },
+    {
+      "id": "authoritative-verification",
+      "executable": "pnpm",
+      "args": ["verify"],
+      "parser": "pnpm-verify",
+      "expectedArtifactKinds": []
+    }
+  ],
+  "terminalConditions": ["All commands and independent review pass."],
+  "estimatedFileCount": 2,
+  "requiresBrowserInspection": false,
+  "requiresHeadlessEvaluation": false,
+  "hiddenValidation": { "requested": false },
+  "verticalSlice": {
+    "mode": "not-applicable",
+    "userGoal": null,
+    "publicActionKinds": [],
+    "sharedRuleOwners": [],
+    "standardCompositionOwner": null,
+    "persistenceReplayEvidence": [],
+    "nodeWorkerParityEvidence": [],
+    "inspectableConsequence": null,
+    "exception": null
+  }
+}

@@ -3,6 +3,69 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-09-05 — ORCH-AUTH-01-B: qualify public planning and authenticated evidence delivery
+
+Continued from e01298b after reproducing A's closeout audit. The approved r2
+normative digest remains unchanged; the user authorized this increment with
+“Begin”. Planning needs no Docker control plane, so both disposable controller
+copies ran inside the real restricted Linux OCI executor. The public plan --json
+dispatch and production SDK gateway adapter admitted one tooling proposal and
+rejected a schema-valid PROJECT_GOAL.md proposal on both bounded attempts,
+recording PROTECTED_SCOPE and PLANNER_POLICY_LIMIT. The deterministic transport
+supplied responses only. Actual state, policy decisions, role observations and
+run summaries were retained; no worker, target change or source state adoption
+occurred.
+
+The new input channel binds purpose, coordinator/run/nonce, source, authority,
+fixture, cases, platform and independently obtained provider/producer identity.
+The outer coordinator pins its digest outside delivered artifacts. The optional
+mount has one fixed read-only destination and bounded regular-file inventory;
+the existing four-mount path and all resource/privilege limits remain intact.
+The local runner refuses the input. A separate real container validated actual
+producer receipts and observations, owned its consumer receipt, and received
+EROFS on an attempted input write. Outer and transferred-archive audits repeated
+the checks. Both containers, exporters and their bounded volumes were removed.
+
+The final tested source is genuine disposable commit
+ae4e4fe5950d0a4711aadcf957bdb75479895911, tree
+0e81e7d8236d34c6982f363c9fb6a2bf7d45f5de. Its patch and Git bundle are retained.
+Producer/consumer duration was 16,494/10,268 ms. Independent archive inspection
+verified 104 files; envelope SHA256 is
+2f4c885e6fda2bb0c0c1b97405f20d9280399b5682a81732d90a06758310a1d8.
+The unchanged complete OCI matrix passed on that same source in 37,707 ms:
+normal/boundary PASS; artifact-link/quota/output-flood ERROR; hang TIMEOUT.
+The unchanged A auditor verified its raw normal build/Vitest evidence, policies
+and cleanup against the 152-file combined archive. Both workflows and the matrix
+reused image sha256:e405e2790e743243dd669f8e58eeaff6c585df3cbc77e9a4316a7f07b4e2eaad
+with tracked input hash 0392ec049d9c168fdefb9ab22fe38f9127953639aa96701a6369fa10ed9556a3;
+zero image builds occurred.
+
+The first functional producer/consumer passed in 8,451/6,031 ms, but its audit
+inventory included still-open stdout. Its refusal is preserved; finalized-root
+inventory replaced that defect and a fresh producer/consumer supplied the final
+evidence. Initial lint (unused variable) and invariant ownership ordering failures
+were corrected and rerun. Command-owned evidence now passes 94 focused tests,
+typecheck, lint, format and all five invariant entries (66,029 ms). An actual
+one-byte transferred producer-report mutation was refused without a PASS receipt.
+The root build remains exit 2 / NOT_READY because its production-build contract
+is undeclared. No full owner floor, candidate tier, source readiness or CI run
+was claimed by these focused supporting checks.
+
+Reproduction and archive seals are in
+docs/runtime-qualification/ORCH-AUTH-01-B/README.md and evidence/manifest.json.
+The closeout validator compares the bundled tested source with current executable
+blobs, preserves frozen authority and revalidates raw artifacts, owned receipts
+and remaining NOT_READY/refusal outcomes. Later closeout files are record-only.
+Record identity is the commit containing this entry and the completed B plan.
+
+Native Windows discovery remains NOT_READY, with no discovered Docker/VM command
+among inspected providers; no host configuration changed. A general disposable
+host for controllers that launch Docker remains unqualified. Next is
+ORCH-AUTH-01-C host/native Windows feasibility before run/integration expansion.
+Authority reader/migration work, bounded target/build, activation, complete native
+coverage and the live human gate remain incomplete. Source private refs remain
+absent and the untracked user roadmap is unchanged and excluded.
+
 ## 2026-09-05 — ORCH-AUTH-01-A: qualify the local Linux OCI runtime and retain raw evidence
 
 Continued the approved r2 handoff from 2ec1d25. Exact Node/pnpm reproduced the

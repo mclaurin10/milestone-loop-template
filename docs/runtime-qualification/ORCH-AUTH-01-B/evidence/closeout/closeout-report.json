@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "orch-auth-01-b-closeout.v1",
+  "status": "PASS",
+  "testedSource": {
+    "commit": "ae4e4fe5950d0a4711aadcf957bdb75479895911",
+    "tree": "0e81e7d8236d34c6982f363c9fb6a2bf7d45f5de"
+  },
+  "frozenFiles": 430,
+  "recordChanges": [
+    ".agent/current-exec-plan.md",
+    "docs/autonomy-log.md",
+    "docs/decision-log.md",
+    "docs/runtime-qualification/ORCH-AUTH-01-B/README.md",
+    "docs/runtime-qualification/ORCH-AUTH-01-B/evidence/linux-initial.tar.gz",
+    "docs/runtime-qualification/ORCH-AUTH-01-B/evidence/linux-qualified.tar.gz",
+    "docs/runtime-qualification/ORCH-AUTH-01-B/evidence/manifest.json",
+    "docs/runtime-qualification/ORCH-AUTH-01-B/evidence/supporting-evidence.tar.gz",
+    "docs/runtime-qualification/ORCH-AUTH-01-B/verify-closeout.ts"
+  ],
+  "supportingReceipts": 11,
+  "tests": 94,
+  "workflowArtifactFiles": 104,
+  "completeMatrixCases": 6,
+  "retainedMatrixArtifactFiles": 152,
+  "sourceBuild": "NOT_READY",
+  "nativeWindowsQualified": false,
+  "generalDockerControllerHostQualified": false,
+  "sourceActivation": false,
+  "completion": {
+    "eligible": false
+  }
+}

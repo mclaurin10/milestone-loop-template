@@ -55,6 +55,7 @@
         "tools/milestone-orchestrator/src/policy.test.ts",
         "tools/milestone-orchestrator/src/process-supervisor.test.ts",
         "tools/milestone-orchestrator/src/protected-roots.test.ts",
+        "tools/milestone-orchestrator/src/qualification-input.test.ts",
         "tools/milestone-orchestrator/src/reasoning-escalation.test.ts",
         "tools/milestone-orchestrator/src/reconciliation-reviewer.test.ts",
         "tools/milestone-orchestrator/src/reconciliation.test.ts",

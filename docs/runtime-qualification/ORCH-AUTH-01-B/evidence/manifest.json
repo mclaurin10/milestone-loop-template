@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "orch-auth-01-b-evidence.v1",
+  "completionEligible": false,
+  "testedCommit": "ae4e4fe5950d0a4711aadcf957bdb75479895911",
+  "testedTree": "0e81e7d8236d34c6982f363c9fb6a2bf7d45f5de",
+  "archives": [
+    {
+      "file": "linux-initial.tar.gz",
+      "bytes": 94396,
+      "sha256": "1d862cea7f74b19a4035700b9c1e0b4d7a0531564e9a1a6204e566a7585ffa2c"
+    },
+    {
+      "file": "linux-qualified.tar.gz",
+      "bytes": 132679,
+      "sha256": "c09ca3311cbf4a1aae4bfccec6312f383e316cb11a1bc596f38db8eb88a1723e"
+    },
+    {
+      "file": "supporting-evidence.tar.gz",
+      "bytes": 49605,
+      "sha256": "d6c7beac1a14f5d51dbf1272b96ed46393aa84d1f7b15be2392c24d217408961"
+    }
+  ]
+}

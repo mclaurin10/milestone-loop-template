@@ -24,6 +24,7 @@ import { applyEvidenceRetentionPlan } from "./retention-apply-operation.js";
 import { demonstrateSafety } from "./safety-demonstration.js";
 import { atomicWriteJson, StateStore } from "./state-store.js";
 import { runStatusDiagnostic } from "./status.js";
+import type { CodexGateway } from "./codex-gateway.js";
 
 export interface LoopCliArguments {
   readonly command: string;
@@ -168,8 +169,11 @@ function output(value: unknown, _json: boolean): void {
   );
 }
 
-async function main(): Promise<void> {
-  const args = parseArguments(process.argv.slice(2));
+export async function runLoopCli(
+  argv: readonly string[] = process.argv.slice(2),
+  dependencies: { readonly gateway?: CodexGateway } = {},
+): Promise<void> {
+  const args = parseArguments([...argv]);
   assertCommandArguments(args);
   const root = repositoryRoot(process.cwd());
   if (args.command === "demo-safety") {
@@ -367,6 +371,7 @@ async function main(): Promise<void> {
     return;
   }
   const orchestrator = await MilestoneOrchestrator.open(root, args.configPath, {
+    ...dependencies,
     leaseOperation:
       args.command === "canary"
         ? "canary"
@@ -435,7 +440,7 @@ if (
   process.argv[1] &&
   resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url))
 )
-  main().catch((error: unknown) => {
+  runLoopCli().catch((error: unknown) => {
     process.stderr.write(
       `${error instanceof Error ? (error.stack ?? error.message) : String(error)}\n`,
     );

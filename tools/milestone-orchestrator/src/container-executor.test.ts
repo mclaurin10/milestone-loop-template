@@ -38,6 +38,10 @@ import {
   executionProviderIdentity,
 } from "./execution-provider-identity.js";
 import type { DisposableVerificationClone } from "./verification-clone.js";
+import {
+  publishQualificationInput,
+  type TrustedQualificationInput,
+} from "./qualification-input.js";
 
 const roots: string[] = [];
 const imageId = `sha256:${"a".repeat(64)}`;
@@ -218,6 +222,236 @@ function policyInspection(
     },
   ]);
 }
+
+describe("explicit qualification input mount", () => {
+  const input: TrustedQualificationInput = {
+    directory: resolve("qualification-evidence"),
+    envelopeSha256: "1".repeat(64),
+    binding: {
+      purpose: "candidate-support",
+      coordinatorId: "coordinator-test",
+      runId: "run-input-test",
+      nonce: "2".repeat(64),
+      source: { commit: "3".repeat(40), tree: "4".repeat(40) },
+      authoritySha256: "5".repeat(64),
+      fixtureSha256: "6".repeat(64),
+      coverage: ["planning-admission"],
+      platform: "linux",
+      provider: providerIdentity,
+      producerId: "7".repeat(64),
+    },
+  };
+  const expected = {
+    imageId,
+    clonePath: "/controller/clone",
+    storePath: "/controller/store",
+    workspaceVolume: "milestone-loop-workspace-test",
+    evidenceVolume: "milestone-loop-evidence-test",
+    containerName: "milestone-loop-check",
+    imageInputHash,
+    qualificationInput: input,
+  };
+  function inspected() {
+    const value = JSON.parse(
+      policyInspection(
+        expected.clonePath,
+        expected.storePath,
+        expected.workspaceVolume,
+        expected.evidenceVolume,
+      ),
+    ) as [
+      {
+        Mounts: Record<string, unknown>[];
+        HostConfig: { Mounts: Record<string, unknown>[] };
+      },
+    ];
+    value[0].HostConfig.Mounts.push({
+      Type: "bind",
+      Source: input.directory,
+      Target: "/qualification-input",
+      ReadOnly: true,
+      BindOptions: { Propagation: "rprivate" },
+    });
+    value[0].Mounts.push({
+      Type: "bind",
+      Source: input.directory,
+      Destination: "/qualification-input",
+      RW: false,
+    });
+    return value;
+  }
+  it("adds exactly one fixed read-only bind and attests its applied state", () => {
+    const args = buildContainerCreateArguments({
+      ...expected,
+      config,
+      command: {
+        id: "planning-consumer",
+        executable: "node",
+        args: ["tools/qualification-planning.mjs", "consume", "context"],
+        parser: "exit-code",
+      },
+      killGraceMs: 1_000,
+    });
+    expect(args.filter((arg) => arg === "--mount")).toHaveLength(5);
+    expect(args).toContain(
+      `type=bind,src=${input.directory},dst=/qualification-input,readonly,bind-propagation=rprivate`,
+    );
+    expect(
+      parseContainerPolicyInspection(
+        Buffer.from(JSON.stringify(inspected())),
+        expected,
+      ).mountDestinations,
+    ).toEqual([
+      "/evidence",
+      "/pnpm-store/v11",
+      "/qualification-input",
+      "/source",
+      "/workspace",
+    ]);
+  });
+  it.each([
+    "writable-intent",
+    "writable-applied",
+    "wrong-source",
+    "wrong-destination",
+    "extra",
+    "missing",
+    "shared-propagation",
+  ])("rejects %s input mount", (kind) => {
+    const value = inspected();
+    const host = value[0].HostConfig.Mounts;
+    const actual = value[0].Mounts;
+    if (kind === "writable-intent") host[4]!["ReadOnly"] = false;
+    if (kind === "writable-applied") actual[4]!["RW"] = true;
+    if (kind === "wrong-source") actual[4]!["Source"] = resolve("elsewhere");
+    if (kind === "wrong-destination")
+      actual[4]!["Destination"] = "/var/run/docker.sock";
+    if (kind === "extra") actual.push({ ...actual[4] });
+    if (kind === "missing") host.pop();
+    if (kind === "shared-propagation")
+      host[4]!["BindOptions"] = { Propagation: "shared" };
+    expect(() =>
+      parseContainerPolicyInspection(
+        Buffer.from(JSON.stringify(value)),
+        expected,
+      ),
+    ).toThrow();
+  });
+  it("rejects any fifth mount when the caller supplied no input", () => {
+    const ordinary = { ...expected };
+    delete (ordinary as { qualificationInput?: TrustedQualificationInput })
+      .qualificationInput;
+    expect(() =>
+      parseContainerPolicyInspection(
+        Buffer.from(JSON.stringify(inspected())),
+        ordinary,
+      ),
+    ).toThrow(/mount/);
+  });
+  it("refuses input from an untrusted caller before any runtime action", async () => {
+    const setup = await fixture();
+    const runtime = vi.fn(async () => syntheticOciResult());
+    const executor = createContainerCommandExecutor(config, {
+      runRuntime: runtime,
+    });
+    const result = await executor(
+      {
+        id: "untrusted-input",
+        executable: "node",
+        args: ["tools/qualification-planning.mjs", "produce"],
+        parser: "exit-code",
+      },
+      {
+        workingDirectory: setup.working,
+        artifactDirectory: resolve(setup.root, "logs"),
+        timeoutMs: 1_000,
+        qualificationInput: input,
+      },
+    );
+    expect(result.status).toBe("ERROR");
+    expect(result.message).toMatch(/trusted controller command/);
+    expect(runtime).not.toHaveBeenCalled();
+  });
+  it("rejects a host-side input change after launch and still removes owned resources", async () => {
+    const setup = await fixture();
+    const source = resolve(setup.root, "input-source");
+    await mkdir(source);
+    await writeFile(resolve(source, "observation.json"), "initial observation");
+    const pinned = await publishQualificationInput({
+      sourceDirectory: source,
+      destinationDirectory: resolve(setup.root, "input"),
+      binding: input.binding,
+    });
+    const runtime = scriptedRuntime({
+      clonePath: setup.cloneWorkspace,
+      storePath: setup.store,
+    });
+    const executor = createContainerCommandExecutor(config, {
+      createClone: async () => setup.clone,
+      resolveStorePath: async () => setup.store,
+      createId: () => "changed-input",
+      runRuntime: async (request) => {
+        const result = await runtime.runner(request);
+        if (request.operation === "inspect-policy") {
+          const value = JSON.parse(result.stdout.toString("utf8")) as [
+            {
+              Mounts: Record<string, unknown>[];
+              HostConfig: { Mounts: Record<string, unknown>[] };
+            },
+          ];
+          value[0].HostConfig.Mounts.push({
+            Type: "bind",
+            Source: pinned.directory,
+            Target: "/qualification-input",
+            ReadOnly: true,
+            BindOptions: { Propagation: "rprivate" },
+          });
+          value[0].Mounts.push({
+            Type: "bind",
+            Source: pinned.directory,
+            Destination: "/qualification-input",
+            RW: false,
+          });
+          return syntheticOciResult({ stdout: JSON.stringify(value) });
+        }
+        if (request.operation === "start")
+          await writeFile(
+            resolve(pinned.directory, "observation.json"),
+            "changed after launch",
+          );
+        return result;
+      },
+    });
+    const result = await executor(
+      {
+        id: "changed-input",
+        executable: "node",
+        args: ["tools/qualification-planning.mjs", "produce"],
+        parser: "exit-code",
+      },
+      {
+        workingDirectory: setup.working,
+        artifactDirectory: resolve(setup.root, "logs"),
+        timeoutMs: 1_000,
+        trustedControllerCommand: true,
+        qualificationInput: pinned,
+      },
+    );
+    expect(result.status).toBe("ERROR");
+    expect(result.message).toMatch(/artifact inventory changed/);
+    const report = JSON.parse(
+      await readFile(result.containmentReport!.path, "utf8"),
+    );
+    expect(report.qualificationInput).toMatchObject({
+      verifiedBefore: true,
+      verifiedAfter: false,
+    });
+    expect(report.container.removed).toBe(true);
+    expect(report.boundedVolumes.workspace.removed).toBe(true);
+    expect(report.boundedVolumes.evidence.removed).toBe(true);
+    expect(setup.cleanup).toHaveBeenCalledOnce();
+  });
+});
 
 function volumeInspection(
   name: string,

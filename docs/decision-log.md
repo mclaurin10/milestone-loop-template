@@ -3,6 +3,42 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-09-05 — Use contained planning and an externally pinned read-only input
+
+The first B workflow uses public planning because that controller needs no Docker
+control plane and can run within the qualified OCI restrictions. This conforms
+to the approved contained-workflow route. It does not qualify a general host for
+run/integration controllers, nor native Windows. Those prerequisites remain open.
+
+Expose the existing CLI dispatch with a gateway dependency seam; keep the normal
+CLI's real SDK default. A deterministic client supplies proposal responses
+through the production SDK gateway adapter, while production code owns state,
+policy and receipts. This supports reproducible mechanism qualification without
+claiming live-agent/model resolution or token usage.
+
+Authentication for this local dispatch is the trusted outer coordinator's
+out-of-band envelope digest and complete expected binding. Neither a supplied
+envelope nor candidate-authored files can grant coordinator/maintainer approval.
+The coordinator obtains actual provider/container identity through its executor.
+The contained consumer and independent outer auditor both inspect real
+observations and producer-owned receipts. This does not establish a portable
+signed remote-job protocol; remote host routing/identity remains future work.
+
+Use one explicit /qualification-input read-only bind, limited to 256 files,
+4 MiB, 512 entries and depth 16. Validate ordinary paths, links, content inventory
+and external pins before and after execution; attest both intended and applied
+mounts. Require trusted-controller dispatch and refuse local-runner fallback.
+Commands without input retain exactly the original four mounts and unchanged
+resource, network, user and privilege restrictions. Real EROFS and after-launch
+mutation regressions exercise these boundaries.
+
+Only finalized producer/input/consumer roots enter the immutable handoff
+inventory. The first run's still-open stdout invalidated its broader snapshot;
+the initial evidence and audit refusal remain retained. A fresh corrected run
+proved the finalized boundary. The complete unchanged OCI matrix was rerun once
+because the executor mount boundary changed. Source readiness and full-platform
+qualification remain distinct, incomplete gates under the approved r2 scope.
+
 ## 2026-09-05 — Require retained raw OCI artifacts for the runtime foundation
 
 The initial real WSL matrix reached all six required dispositions, yet its

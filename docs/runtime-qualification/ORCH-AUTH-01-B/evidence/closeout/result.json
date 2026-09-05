@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0.0",
+  "stageId": "orch-auth-01-b",
+  "commandId": "planning-closeout",
+  "status": "PASS",
+  "checks": [
+    {
+      "id": "bounded-runtime-closeout",
+      "summary": "Verified archive seals, actual workflow/OCI artifacts, owned receipts, frozen executable-source equality, protected authority, retained refusals and the distinct incomplete source gates.",
+      "status": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "closeout-report.json",
+      "kind": "planning-closeout-report",
+      "bytes": 1121,
+      "sha256": "fd3e322a55d9d7e7b1aa5f30c2a533156224d5336241952cb0a3598daa326af0"
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0.0",
+  "manifestId": "manual-planning-closeout-20260905221356760-8432-c244a36b",
+  "stageId": "orch-auth-01-b",
+  "commandId": "planning-closeout",
+  "displayCommand": "C:\\w\\node-v24.18.0-win-x64\\node.exe C:\\Dev\\loop-extraction\\milestone-loop-template\\docs\\runtime-qualification\\ORCH-AUTH-01-B\\verify-closeout.ts artifacts/orch-auth-01-b/curated-check artifacts/orch-auth-01-b/closeout-final",
+  "status": "PASS",
+  "candidate": {
+    "gitCommit": "e01298be5cc76ad33f66a73870e5b6e9d1f661ef",
+    "gitTree": "9e67eaca6980762c6228bf9aa045355e58d824ed",
+    "workingTreeDirty": true
+  },
+  "receipt": {
+    "path": "result.json",
+    "sha256": "6d5d3d95b4151325c2acd939aa79e7311168e3ab2d9711e7912ecbf4ab7d3564",
+    "bytes": 637
+  },
+  "declaredArtifacts": {
+    "count": 1,
+    "bytes": 1121,
+    "declarations": [
+      {
+        "path": "closeout-report.json",
+        "kind": "planning-closeout-report",
+        "bytes": 1121,
+        "sha256": "fd3e322a55d9d7e7b1aa5f30c2a533156224d5336241952cb0a3598daa326af0"
+      }
+    ]
+  },
+  "telemetry": {
+    "runId": null,
+    "manifestPath": null
+  },
+  "citationClass": "uncited-at-creation",
+  "durableCitations": {
+    "trackedPaths": [],
+    "controllerStateReferences": [],
+    "activeReconciliationReference": null
+  },
+  "createdAt": "2026-09-05T22:13:56.760Z",
+  "finishedAt": "2026-09-05T22:13:59.921Z",
+  "failureClassification": null
+}

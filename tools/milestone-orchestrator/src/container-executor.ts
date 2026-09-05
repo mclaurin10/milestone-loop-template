@@ -52,6 +52,11 @@ import {
   createDisposableVerificationClone,
   type DisposableVerificationClone,
 } from "./verification-clone.js";
+import {
+  QUALIFICATION_INPUT_DESTINATION,
+  validateQualificationInput,
+  type TrustedQualificationInput,
+} from "./qualification-input.js";
 
 export const CONTAINER_EXECUTOR_VERSION = "1.0.0" as const;
 export const CONTAINER_EXECUTION_REPORT_SCHEMA_VERSION = "1.0.0" as const;
@@ -162,12 +167,7 @@ interface RuntimePolicyAttestation {
   readonly ipcMode: "none";
   readonly init: true;
   readonly logDriver: "none";
-  readonly mountDestinations: readonly [
-    "/evidence",
-    "/pnpm-store/v11",
-    "/source",
-    "/workspace",
-  ];
+  readonly mountDestinations: readonly string[];
   readonly tmpfsDestinations: readonly ["/tmp"];
   readonly boundedVolumeDestinations: readonly ["/evidence", "/workspace"];
   readonly resources: typeof OCI_RESOURCE_LIMITS_V1;
@@ -467,6 +467,7 @@ export function parseContainerPolicyInspection(
     readonly evidenceVolume: string;
     readonly containerName: string;
     readonly imageInputHash: string;
+    readonly qualificationInput?: TrustedQualificationInput;
   },
 ): RuntimePolicyAttestation {
   let parsed: unknown;
@@ -569,7 +570,8 @@ export function parseContainerPolicyInspection(
   if (!hasNofile || !hasCore)
     throw new Error("OCI runtime did not apply the fixed file/core limits.");
 
-  if (!Array.isArray(mounts) || mounts.length !== 4)
+  const mountCount = expected.qualificationInput ? 5 : 4;
+  if (!Array.isArray(mounts) || mounts.length !== mountCount)
     throw new Error("OCI runtime reported an unexpected host-mount set.");
   const expectedMounts = new Map<
     string,
@@ -604,6 +606,15 @@ export function parseContainerPolicyInspection(
       { type: "volume", source: expected.evidenceVolume, readOnly: false },
     ],
   ]);
+  if (expected.qualificationInput)
+    expectedMounts.set(QUALIFICATION_INPUT_DESTINATION, {
+      type: "bind",
+      source: safeMountPath(
+        expected.qualificationInput.directory,
+        "Qualification input",
+      ),
+      readOnly: true,
+    });
   for (const value of mounts) {
     const mount = recordValue(value, "mount");
     const destination = mount["Target"];
@@ -635,7 +646,7 @@ export function parseContainerPolicyInspection(
   if (expectedMounts.size !== 0)
     throw new Error("OCI runtime omitted a required read-only host mount.");
   const actualMounts = container["Mounts"];
-  if (!Array.isArray(actualMounts) || actualMounts.length !== 4)
+  if (!Array.isArray(actualMounts) || actualMounts.length !== mountCount)
     throw new Error("OCI runtime did not report the applied mount set.");
   const appliedMounts = new Map<
     string,
@@ -670,6 +681,15 @@ export function parseContainerPolicyInspection(
       { type: "volume", source: expected.evidenceVolume, readWrite: true },
     ],
   ]);
+  if (expected.qualificationInput)
+    appliedMounts.set(QUALIFICATION_INPUT_DESTINATION, {
+      type: "bind",
+      source: safeMountPath(
+        expected.qualificationInput.directory,
+        "Qualification input",
+      ),
+      readWrite: false,
+    });
   for (const value of actualMounts) {
     const mount = recordValue(value, "applied mount");
     const destination = mount["Destination"];
@@ -731,6 +751,7 @@ export function parseContainerPolicyInspection(
     mountDestinations: [
       "/evidence",
       "/pnpm-store/v11",
+      ...(expected.qualificationInput ? [QUALIFICATION_INPUT_DESTINATION] : []),
       "/source",
       "/workspace",
     ],
@@ -1081,6 +1102,7 @@ export function buildContainerCreateArguments(input: {
   readonly imageInputHash: string;
   readonly command: VerificationCommand;
   readonly extraEnvironment?: Readonly<Record<string, string>>;
+  readonly qualificationInput?: TrustedQualificationInput;
   readonly killGraceMs: number;
 }): readonly string[] {
   if (!input.config.imageDigest || !IMAGE_ID.test(input.config.imageDigest))
@@ -1149,6 +1171,12 @@ export function buildContainerCreateArguments(input: {
     `type=volume,src=${workspaceVolume},dst=/workspace,volume-nocopy`,
     "--mount",
     `type=volume,src=${evidenceVolume},dst=/evidence,volume-nocopy`,
+    ...(input.qualificationInput
+      ? [
+          "--mount",
+          `type=bind,src=${safeMountPath(input.qualificationInput.directory, "Qualification input")},dst=${QUALIFICATION_INPUT_DESTINATION},readonly,bind-propagation=rprivate`,
+        ]
+      : []),
     "--tmpfs",
     `/tmp:rw,nosuid,nodev,noexec,size=${OCI_RESOURCE_LIMITS_V1.temporaryBytes},nr_inodes=${OCI_RESOURCE_LIMITS_V1.temporaryInodes},uid=65532,gid=65532,mode=1777`,
     ...fixedEnvironment(input.extraEnvironment),
@@ -1237,6 +1265,8 @@ export function createContainerCommandExecutor(
     let workspaceArtifacts: ContainerArtifactInventory | null = null;
     let removed = false;
     let failure: Error | null = null;
+    let qualificationInputVerifiedBefore = false;
+    let qualificationInputVerifiedAfter = false;
     const runtime = config.runtime;
     const killGraceMs = options.killGraceMs ?? DEFAULT_COMMAND_KILL_GRACE_MS;
     const outputLimitBytes =
@@ -1264,6 +1294,14 @@ export function createContainerCommandExecutor(
 
     try {
       assertSafeVerificationCommand(command);
+      if (options.qualificationInput) {
+        if (options.trustedControllerCommand !== true)
+          throw new Error(
+            "Qualification input requires a trusted controller command.",
+          );
+        await validateQualificationInput(options.qualificationInput);
+        qualificationInputVerifiedBefore = true;
+      }
       if (!config.imageDigest || !IMAGE_ID.test(config.imageDigest))
         throw new Error(
           "Trusted OCI execution requires an immutable local image ID.",
@@ -1424,6 +1462,9 @@ export function createContainerCommandExecutor(
           config,
           containerName,
           clonePath: clone.workspacePath,
+          ...(options.qualificationInput
+            ? { qualificationInput: options.qualificationInput }
+            : {}),
           storePath,
           workspaceVolume,
           evidenceVolume,
@@ -1452,6 +1493,9 @@ export function createContainerCommandExecutor(
       runtimePolicy = parseContainerPolicyInspection(policyResult.stdout, {
         imageId: config.imageDigest,
         clonePath: clone.workspacePath,
+        ...(options.qualificationInput
+          ? { qualificationInput: options.qualificationInput }
+          : {}),
         storePath,
         workspaceVolume,
         evidenceVolume,
@@ -1509,6 +1553,10 @@ export function createContainerCommandExecutor(
         throw new Error(
           "Candidate container remained alive after termination.",
         );
+      if (options.qualificationInput) {
+        await validateQualificationInput(options.qualificationInput);
+        qualificationInputVerifiedAfter = true;
+      }
 
       const preflightResult = await invoke("artifact-preflight", [
         "exec",
@@ -1761,6 +1809,18 @@ export function createContainerCommandExecutor(
         id: command.id,
         argvSha256: hash(JSON.stringify([command.executable, ...command.args])),
       },
+      ...(options.qualificationInput
+        ? {
+            qualificationInput: {
+              destination: QUALIFICATION_INPUT_DESTINATION,
+              envelopeSha256: options.qualificationInput.envelopeSha256,
+              binding: options.qualificationInput.binding,
+              readOnly: true,
+              verifiedBefore: qualificationInputVerifiedBefore,
+              verifiedAfter: qualificationInputVerifiedAfter,
+            },
+          }
+        : {}),
       lifecycle: lifecycleRecords,
       artifacts: {
         preflight: artifactPreflight,

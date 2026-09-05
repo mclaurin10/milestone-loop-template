@@ -14,6 +14,7 @@ import {
   superviseCommand,
 } from "./process-supervisor.js";
 import { redactSensitiveText, safeAgentEnvironment } from "./redaction.js";
+import type { TrustedQualificationInput } from "./qualification-input.js";
 import type {
   CommandTelemetryMeasurement,
   TelemetryStore,
@@ -80,6 +81,7 @@ export interface CommandRunnerOptions {
   readonly killGraceMs?: number;
   readonly extraEnvironment?: Readonly<Record<string, string>>;
   readonly trustedControllerCommand?: boolean;
+  readonly qualificationInput?: TrustedQualificationInput;
   readonly processStartupObserver?: (nanoseconds: bigint) => void;
   readonly telemetry?: {
     readonly store: Pick<TelemetryStore, "recordCommand">;
@@ -161,6 +163,10 @@ export async function runCommand(
   );
   let resolved;
   try {
+    if (options.qualificationInput)
+      throw new Error(
+        "Qualification inputs require the attested OCI executor.",
+      );
     if (!options.trustedControllerCommand)
       assertSafeVerificationCommand(command);
     resolved = invocation(command);
