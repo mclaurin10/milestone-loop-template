@@ -3,6 +3,85 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-09-05 — WP6e active generation verified; final execution gates pending
+
+The corrected v2 application remains the actual tool-owned publication from
+clean `b03a6cd`, with ledger entry
+`4fbdbb3528043e35d6859fa9846da5d38d039249a162ca8a698b33c04e6f3c74`. The
+first complete active-generation run exposed 14 historical fixture-policy
+mismatches (756/770 passed). The original failed source clone remains at
+`/tmp/e6v-yLhrvj`; its retained diagnostic archive is
+`artifacts/wp6e-amendment-dev/active-generation-fixture-failure.tar.gz`,
+SHA256 `63db41c40ecbf4d8570b315fe4c8998ff10f14ce677135c7938cb8cf33ecf53c`.
+
+Only historical/generic test setup now loads the original committed v1
+policy through the commissioning anchor. The active-source fixture still
+loads the live manifest and policy together. Every test assertion and
+identity is preserved; production mixed-generation rejection is unchanged.
+All 55 focused affected-scope, benchmark, tier, and source-schedule tests
+passed.
+
+On Linux `/tmp/e6w-9YTJJg`, exact Node 24.18.0/pnpm 11.15.1 passed
+typecheck, lint, format, all five invariants, all 770 orchestrator tests,
+all 786 root tests, and diff checking. Independently validated evidence is
+exported to `C:/w/wp6e-active-linux-evidence.zip`; the workspace audit at
+`artifacts/wp6e-amendment-dev/active-precommit-audit/` verifies twelve
+receipts, every artifact, the source bytes, all prior 786 identities, the
+actual amendment and Doctor, immutable files/scripts/owner order, and log
+history. This fixture repair adds or removes no test identity.
+
+Protected run `33944911461` passed all five jobs on `4338f47`.
+`artifacts/wp6e-amendment-dev/compatible-hosted-audit/` independently
+validated all archive digests and 43 command receipts, including real Docker
+containment. Repair `b03a6cd` was then pushed; its separate protected run is
+`33948310909`. Do not push this activation before those five jobs pass.
+
+The coherent activation commit, clean after-state
+shadow/unit-domain/mutation executions, final-head historical statistics
+validation, and the activation's own five-job hosted gate remain post-commit
+work. The inherited unavailable trusted runtime, project placeholders, and
+absent production build remain full-candidate prerequisites. WP6e is not
+complete and no readiness or performance benefit is claimed.
+
+## 2026-09-04 — WP6e corrected source generation applied and format-verified
+
+The compatible repair was committed locally as
+`b03a6cd6ff5eef0dc571bc6d606b6a30c80ed184` (tree
+`ac2e0f8759285842c08085652bdff15325639ad4`). Its complete local verification
+and independent audit are recorded in the preceding entry. Its push waits
+for protected run `33944911461` on `4338f47` to finish, preventing workflow
+cancellation. Every pushed candidate still requires all five exact-runtime
+jobs and independent artifact validation.
+
+Clean Windows clone `C:/w/e6-b` captured all three before-state contexts,
+then executed
+`pnpm loop:commission:amend -- --descriptor tools/milestone-orchestrator/config/wp6e-partition-amendment.json`
+using Node 24.18.0 and pnpm 11.15.1. The operation passed and generated the
+input, policy, manifest, and ledger as one recoverable publication. Evidence
+is under `artifacts/wp6e-amendment/`; entry SHA-256 is
+`4fbdbb3528043e35d6859fa9846da5d38d039249a162ca8a698b33c04e6f3c74` and
+ledger SHA-256 is
+`a11322a36258c821a80c24f112e7d2a76abfcf522122cb92b6d3392e62f0fc11`.
+
+The independent `artifacts/wp6e-application-audit.ts C:/w/e6-a` procedure
+validated the actual operation receipt, live generation, Git anchor/chain,
+commissioning Doctor PASS, and all twelve identical-context plan
+comparisons. It also revalidated the already-executed historical CLI
+receipts from `C:/w/e6-a`; this does not claim a new historical invocation
+on `b03a6cd`. Its receipt is under `artifacts/wp6e-application-audit/`. The
+unchanged `pnpm format:check` passed the actual generated files at
+`artifacts/wp6e-application-format/`. The preserved first failed generation
+in `C:/w/e6-a` was not edited or reused as this candidate.
+
+README, CONTRACT, and the configuration guide now describe the active source
+schedule, legacy diagnostics, formatter-compatible committed requests,
+semantic no-op rejection, recovery/reversal, and partition deadline. Full
+Doctor output at `artifacts/doctor-after.log` remains blocked on the dirty
+publication plus the inherited build/placeholders/runtime prerequisites. The
+complete active-generation precommit cohort, coherent commit, clean
+candidate/unit-domain/shadow/mutation evidence, final-head historical CLI
+validation, and hosted after-state gates remain pending. WP6e is incomplete.
+
 ## 2026-09-04 — WP6e active-generation format regression and repair
 
 Compatible commit `4338f47c8c7abbdc02ac96725c121742bce8c4e3` (tree

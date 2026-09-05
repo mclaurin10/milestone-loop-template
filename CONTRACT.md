@@ -193,9 +193,14 @@ tsconfig the `typecheck` evidence covers.
   proof of empty intersections, exact union, and normalized per-test semantic
   equivalence after legacy deduplication. Child nonzero exits propagate and no
   aggregate PASS receipt is issued on missing/invalid evidence or any delta.
-  These commands are shadow candidates only; they do not alter the active
-  commissioned manifest, tier composition, no-argument verifier, or exact
-  runtime closure schedule.
+  The source v2 generation commissions all four owners in candidate and
+  milestone, with invariant execution first. Canonical complete partitions
+  subsume legacy unit/fast/migration/orchestrator checks after validation of
+  the production invariant entry point and ownership child. Partition tier
+  records bind the exact argv and 3,900,000 ms outer timeout; unrelated
+  focused commands retain 1,200,000 ms. Inner partition, measurement, test,
+  and exact-closure deadlines are unchanged. The shadow aggregate remains an
+  independent comparison command and does not establish candidate PASS.
 
 ## 4. Command-owned evidence receipts
 
@@ -345,6 +350,42 @@ hash, Git-identity, and clean-status rechecks. Strict post-publication doctor
 validation must pass; an owned partial stage is cleaned, and a post-publication
 fault removes only the exact inode and hash that this invocation created. The
 command reports every generated path, byte count, and SHA-256.
+
+An existing source commissioning can change only through
+`pnpm loop:commission:amend -- --descriptor <committed-file>`. The strict
+`verification-manifest-amendment-request.v1` descriptor binds canonical
+paths, expected prior hashes and chain tip, exact proposed input/policy text,
+and the approved decision heading. It supplies no manifest bytes. Only the
+Git-anchored original v1 or reviewed source v2 transformation is permitted;
+commissioning identity, profile, timestamps, protected floor, authorities,
+and exact policy remain fixed. This source amendment does not change the
+generated-adopter schedule or relax one-shot creation.
+
+The descriptor owns input/policy formatting; every parsed field must still
+equal the reviewed transformation. Prepare its JSON text with the repository
+formatter. Publication and ledger validation reject formatting-only no-ops.
+Reversal restores the original v1 bytes exactly.
+
+The existing controller mutation lease protects a durable pending intent.
+Each atomic file replacement rechecks Git identity, index, descriptor, and
+prior/new bytes. Consumers reject a pending generation. The same request
+with `--resume` accepts only its recorded prior/new states and preserves
+foreign changes. Temporary staging is confined to the ignored contained
+`.agent/.cache/verification-amendments/` directory. Successful publication
+owns a `commissioning-amendment-report` receipt, with completion eligibility
+false, after commissioning Doctor passes. It does not commit or adopt state.
+
+The generated input, policy, manifest, and
+`.agent/completed/verification-manifest-amendments.json` must be committed
+together. Each ledger entry binds invocation commit/tree, committed
+descriptor, exact generations, before/after ordered tier projections,
+diff, preceding entry, and content hash. Doctor checks genuine Git ancestry,
+every committed prefix, live hashes, and canonical render; coordinated edits,
+ledger deletion/truncation, and partial publication fail closed. A reverse
+request restores original input/policy bytes through the same operation and
+extends the ledger. The active source policy is
+`milestone-loop-shadow-scope-policy.v2`; scope selection remains shadow-only
+and closure suppression remains forbidden.
 
 The commissioning diagnostic uses `loop-commissioning-doctor.v2`. Each
 `tierPlans` entry is a `verification-schedule-projection.v1` record containing

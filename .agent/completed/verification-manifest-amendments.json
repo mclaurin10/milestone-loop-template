@@ -1,0 +1,880 @@
+{
+  "schemaVersion": "verification-manifest-amendments.v1",
+  "paths": {
+    "input": "tools/milestone-orchestrator/config/source-commissioning-input.json",
+    "policy": "tools/milestone-orchestrator/config/verification-scope-policy.json",
+    "manifest": ".agent/verification-manifest.json"
+  },
+  "anchor": {
+    "commit": "345591818b220964618dc4e80cce3c0e0213783c",
+    "tree": "d63a88e749dbfe64c1cbc86310c43b8b70054d76",
+    "generation": {
+      "files": {
+        "input": "{\n  \"schemaVersion\": \"loop-commissioning-input.v1\",\n  \"commissioning\": {\n    \"id\": \"milestone-loop-template-source.v1\",\n    \"targetBranch\": \"master\",\n    \"baseCommit\": \"0f4ab3e5ef39bda07d6e77356ad53fca9136cdd5\",\n    \"profile\": \"readiness\"\n  },\n  \"sources\": {\n    \"configPath\": \"tools/milestone-orchestrator/config/default.json\",\n    \"invariantSuitePath\": \"tools/milestone-orchestrator/config/invariant-suite.json\",\n    \"scopePolicyPath\": \"tools/milestone-orchestrator/config/verification-scope-policy.json\",\n    \"immutableContractLockPath\": \"evals/immutable-contract-lock.json\",\n    \"immutableContractLockSha256\": \"d1166088b00c54af65e8654188adc58a3cabd9d7908820809fe66af28c933050\"\n  },\n  \"objective\": \"Commission the generic verification lifecycle for the milestone-loop template repository.\",\n  \"exclusions\": [\n    \"No frozen authority, calibration, readiness meaning, verifier deadline, or exact command changes.\",\n    \"No product implementation, placeholder replacement, historical-record rewrite, or worked-example migration.\"\n  ],\n  \"focusedCommands\": [\n    {\n      \"id\": \"test-invariants\",\n      \"argv\": [\"pnpm\", \"test:invariants\"],\n      \"tiers\": [\"iteration\", \"candidate\", \"milestone\"],\n      \"expectedArtifactKinds\": [\"invariant-suite-report\"]\n    },\n    {\n      \"id\": \"test-unit-fast\",\n      \"argv\": [\"pnpm\", \"test:unit:fast\"],\n      \"tiers\": [\"candidate\", \"milestone\"],\n      \"expectedArtifactKinds\": [\n        \"fast-unit-vitest-report\",\n        \"unit-partition-report\"\n      ]\n    },\n    {\n      \"id\": \"test-unit-migrations\",\n      \"argv\": [\"pnpm\", \"test:unit:migrations\"],\n      \"tiers\": [\"milestone\"],\n      \"expectedArtifactKinds\": [\n        \"migration-unit-vitest-report\",\n        \"unit-partition-report\"\n      ]\n    },\n    {\n      \"id\": \"test-orchestrator\",\n      \"argv\": [\"pnpm\", \"test:orchestrator\"],\n      \"tiers\": [\"candidate\", \"milestone\"],\n      \"expectedArtifactKinds\": [\"orchestrator-vitest-report\"]\n    },\n    {\n      \"id\": \"format-check\",\n      \"argv\": [\"pnpm\", \"format:check\"],\n      \"tiers\": [\"candidate\", \"milestone\"],\n      \"expectedArtifactKinds\": [\"format-report\"]\n    },\n    {\n      \"id\": \"lint\",\n      \"argv\": [\"pnpm\", \"lint\"],\n      \"tiers\": [\"candidate\", \"milestone\"],\n      \"expectedArtifactKinds\": [\"lint-report\"]\n    },\n    {\n      \"id\": \"lint-architecture\",\n      \"argv\": [\"pnpm\", \"lint:architecture\"],\n      \"tiers\": [\"candidate\", \"milestone\"],\n      \"expectedArtifactKinds\": [\"architecture-report\"]\n    },\n    {\n      \"id\": \"typecheck\",\n      \"argv\": [\"pnpm\", \"typecheck\"],\n      \"tiers\": [\"candidate\", \"milestone\"],\n      \"expectedArtifactKinds\": [\"typecheck-report\"]\n    },\n    {\n      \"id\": \"build\",\n      \"argv\": [\"pnpm\", \"build\"],\n      \"tiers\": [\"candidate\", \"milestone\"],\n      \"expectedArtifactKinds\": [\"build-report\"]\n    },\n    {\n      \"id\": \"domain-construction-standard\",\n      \"argv\": [\"pnpm\", \"verify:domain-construction-standard\"],\n      \"tiers\": [\"milestone\"],\n      \"expectedArtifactKinds\": [\n        \"domain-construction-standard-proof\",\n        \"independent-domain-construction-standard-proof\",\n        \"domain-construction-standard-vitest-report\",\n        \"domain-construction-standard-worker-parity-report\",\n        \"playwright-report\",\n        \"browser-diagnostics\",\n        \"domain-construction-standard-verification-report\"\n      ]\n    },\n    {\n      \"id\": \"domain-resources\",\n      \"argv\": [\"pnpm\", \"verify:domain-resources\"],\n      \"tiers\": [\"milestone\"],\n      \"expectedArtifactKinds\": [\"domain-resources-report\"]\n    },\n    {\n      \"id\": \"domain-networks\",\n      \"argv\": [\"pnpm\", \"verify:domain-networks\"],\n      \"tiers\": [\"milestone\"],\n      \"expectedArtifactKinds\": [\"domain-networks-report\"]\n    },\n    {\n      \"id\": \"domain-planning\",\n      \"argv\": [\"pnpm\", \"verify:domain-planning\"],\n      \"tiers\": [\"milestone\"],\n      \"expectedArtifactKinds\": [\"domain-planning-report\"]\n    },\n    {\n      \"id\": \"domain-entitlement\",\n      \"argv\": [\"pnpm\", \"verify:domain-entitlement\"],\n      \"tiers\": [\"milestone\"],\n      \"expectedArtifactKinds\": [\"domain-entitlement-report\"]\n    },\n    {\n      \"id\": \"domain-entitlement-standard\",\n      \"argv\": [\"pnpm\", \"verify:domain-entitlement-standard\"],\n      \"tiers\": [\"milestone\"],\n      \"expectedArtifactKinds\": [\"domain-entitlement-standard-report\"]\n    },\n    {\n      \"id\": \"domain-development\",\n      \"argv\": [\"pnpm\", \"verify:domain-development\"],\n      \"tiers\": [\"milestone\"],\n      \"expectedArtifactKinds\": [\"domain-development-report\"]\n    },\n    {\n      \"id\": \"domain-simulation\",\n      \"argv\": [\"pnpm\", \"verify:domain-simulation\"],\n      \"tiers\": [\"milestone\"],\n      \"expectedArtifactKinds\": [\"domain-simulation-report\"]\n    },\n    {\n      \"id\": \"domain-browser\",\n      \"argv\": [\"pnpm\", \"verify:domain-browser\"],\n      \"tiers\": [\"milestone\"],\n      \"expectedArtifactKinds\": [\"domain-browser-report\"]\n    }\n  ],\n  \"requiredProtectedPaths\": [\n    \".agent/completed/loop-recommissioning-verification.json\",\n    \".agent/readiness-profile-activated.json\",\n    \".agent/verification-manifest.json\",\n    \"AGENTS.md\",\n    \"PROJECT_GOAL.md\",\n    \"evals/ACCEPTANCE.md\",\n    \"evals/HIDDEN_VALIDATION_PROTOCOL.md\",\n    \"evals/acceptance-manifest.json\",\n    \"evals/immutable-contract-lock.json\",\n    \"package.json\",\n    \"pnpm-lock.yaml\",\n    \"scripts/verify.mjs\",\n    \"tools/milestone-orchestrator/config/default.json\",\n    \"tools/milestone-orchestrator/config/invariant-suite.json\",\n    \"tools/milestone-orchestrator/config/source-commissioning-input.json\",\n    \"tools/milestone-orchestrator/config/verification-scope-policy.json\"\n  ],\n  \"requiredInvariantSuiteId\": \"milestone-loop-core-invariants.v1\",\n  \"scopePolicyId\": \"milestone-loop-shadow-scope-policy.v1\",\n  \"exactVerification\": {\n    \"argv\": [\"pnpm\", \"verify\"],\n    \"requiresNoArguments\": true,\n    \"profileSource\": \"package-default\",\n    \"selectedByOverride\": false\n  },\n  \"reconciliationPolicy\": {\n    \"id\": \"milestone-loop-source-reconciliation.v1\",\n    \"nextProposalPath\": \".agent/next-milestone.json\",\n    \"requiredReviewChecks\": [\n      \"completeCommitLineage\",\n      \"protectedIntegrity\",\n      \"noFabricatedHistory\",\n      \"commandOwnedEvidenceValidity\",\n      \"verificationTierNonAuthority\",\n      \"invariantSuiteQuality\",\n      \"selectorShadowOnlyEnforcement\",\n      \"telemetryNonSemanticBehavior\",\n      \"artifactContainmentAndNonDeletion\",\n      \"stateMigrationAndRecovery\",\n      \"verticalMilestonePolicy\",\n      \"dependencyValidNextProposal\",\n      \"noScopeReductionOrSuspiciousShortcut\"\n    ]\n  },\n  \"output\": {\n    \"verificationManifestPath\": \".agent/verification-manifest.json\"\n  }\n}\n",
+        "policy": "{\n  \"schemaVersion\": \"1.0.0\",\n  \"id\": \"milestone-loop-shadow-scope-policy.v1\",\n  \"mode\": \"shadow-only\",\n  \"unknownDisposition\": \"fail-broad\",\n  \"closureSuppressionAllowed\": false,\n  \"browserHostScriptPatterns\": [],\n  \"triggerClasses\": [\n    \"protected-authority\",\n    \"canonical-encoding\",\n    \"shared-protocol\",\n    \"persistence-codec\",\n    \"migration\",\n    \"accepted-fixture\",\n    \"standard-state\",\n    \"composition-root\",\n    \"worker-message\",\n    \"package-graph\",\n    \"browser-host\",\n    \"ui-renderer\",\n    \"domain-local-simulation\",\n    \"orchestrator-evidence\",\n    \"documentation-only\",\n    \"unknown\"\n  ],\n  \"broadTriggerClasses\": [\n    \"protected-authority\",\n    \"canonical-encoding\",\n    \"shared-protocol\",\n    \"persistence-codec\",\n    \"migration\",\n    \"accepted-fixture\",\n    \"standard-state\",\n    \"composition-root\",\n    \"worker-message\",\n    \"package-graph\",\n    \"unknown\"\n  ],\n  \"mandatoryChecks\": {\n    \"protected-authority\": [\n      \"test-invariants\",\n      \"test-unit\",\n      \"test-orchestrator\",\n      \"build\"\n    ],\n    \"canonical-encoding\": [\n      \"test-invariants\",\n      \"test-unit\",\n      \"test-unit-migrations\",\n      \"domain-construction-standard\",\n      \"domain-resources\",\n      \"domain-networks\",\n      \"domain-planning\",\n      \"domain-entitlement\",\n      \"domain-entitlement-standard\",\n      \"domain-development\",\n      \"domain-simulation\",\n      \"domain-browser\"\n    ],\n    \"shared-protocol\": [\"test-invariants\", \"test-unit\", \"typecheck\", \"build\"],\n    \"persistence-codec\": [\n      \"test-invariants\",\n      \"test-unit\",\n      \"test-unit-migrations\",\n      \"domain-construction-standard\",\n      \"domain-entitlement-standard\",\n      \"domain-simulation\"\n    ],\n    \"migration\": [\n      \"test-invariants\",\n      \"test-unit\",\n      \"test-unit-migrations\",\n      \"domain-construction-standard\",\n      \"domain-entitlement-standard\",\n      \"domain-simulation\"\n    ],\n    \"accepted-fixture\": [\n      \"test-invariants\",\n      \"test-unit\",\n      \"test-unit-migrations\",\n      \"domain-construction-standard\",\n      \"domain-entitlement-standard\",\n      \"domain-simulation\"\n    ],\n    \"standard-state\": [\n      \"test-invariants\",\n      \"test-unit\",\n      \"typecheck\",\n      \"build\",\n      \"domain-construction-standard\",\n      \"domain-resources\",\n      \"domain-networks\",\n      \"domain-planning\",\n      \"domain-entitlement\",\n      \"domain-entitlement-standard\",\n      \"domain-development\",\n      \"domain-simulation\",\n      \"domain-browser\"\n    ],\n    \"composition-root\": [\n      \"test-invariants\",\n      \"test-unit\",\n      \"typecheck\",\n      \"build\",\n      \"domain-construction-standard\",\n      \"domain-resources\",\n      \"domain-networks\",\n      \"domain-planning\",\n      \"domain-entitlement\",\n      \"domain-entitlement-standard\",\n      \"domain-development\",\n      \"domain-simulation\",\n      \"domain-browser\"\n    ],\n    \"worker-message\": [\n      \"test-invariants\",\n      \"typecheck\",\n      \"build\",\n      \"domain-construction-standard\",\n      \"domain-simulation\",\n      \"domain-browser\"\n    ],\n    \"package-graph\": [\n      \"test-invariants\",\n      \"dependencies\",\n      \"lint-architecture\",\n      \"typecheck\",\n      \"build\",\n      \"test-unit\"\n    ],\n    \"browser-host\": [\"test-invariants\", \"typecheck\", \"build\", \"domain-browser\"],\n    \"ui-renderer\": [\"test-invariants\", \"test-unit-fast\", \"build\"],\n    \"domain-local-simulation\": [\n      \"test-invariants\",\n      \"test-unit-fast\",\n      \"typecheck\"\n    ],\n    \"orchestrator-evidence\": [\n      \"test-invariants\",\n      \"test-orchestrator\",\n      \"typecheck\"\n    ],\n    \"documentation-only\": [\"test-invariants\"],\n    \"unknown\": [\"test-invariants\", \"test-unit\", \"test-orchestrator\", \"build\"]\n  },\n  \"workspaceChecks\": {\n    \"@milestone-loop/orchestrator\": [\"test-orchestrator\", \"typecheck\"],\n    \"milestone-loop-template\": [\n      \"dependencies\",\n      \"format-check\",\n      \"lint\",\n      \"lint-architecture\",\n      \"typecheck\",\n      \"build\",\n      \"test-unit\"\n    ]\n  },\n  \"graduation\": {\n    \"deferred\": true,\n    \"minimumComparisons\": 30,\n    \"minimumExamplesPerTrigger\": 3,\n    \"requiresZeroFalseNegatives\": true,\n    \"requiresZeroUnknowns\": true,\n    \"requiresDeterministicRecommendations\": true,\n    \"requiresMeasuredSavingsAboveNoise\": true,\n    \"requiresNoClosureRegression\": true,\n    \"requiresIndependentReview\": true,\n    \"requiresExplicitPolicyChange\": true\n  }\n}\n",
+        "manifest": "{\n  \"schemaVersion\": \"verification-manifest.v2\",\n  \"commissioning\": {\n    \"id\": \"milestone-loop-template-source.v1\",\n    \"targetBranch\": \"master\",\n    \"baseCommit\": \"0f4ab3e5ef39bda07d6e77356ad53fca9136cdd5\",\n    \"profile\": \"readiness\",\n    \"createdAt\": \"2026-08-15T20:50:19.000Z\"\n  },\n  \"objective\": \"Commission the generic verification lifecycle for the milestone-loop template repository.\",\n  \"exclusions\": [\n    \"No frozen authority, calibration, readiness meaning, verifier deadline, or exact command changes.\",\n    \"No product implementation, placeholder replacement, historical-record rewrite, or worked-example migration.\"\n  ],\n  \"focusedCommands\": [\n    {\n      \"id\": \"test-invariants\",\n      \"argv\": [\n        \"pnpm\",\n        \"test:invariants\"\n      ],\n      \"tiers\": [\n        \"iteration\",\n        \"candidate\",\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"invariant-suite-report\"\n      ]\n    },\n    {\n      \"id\": \"test-unit-fast\",\n      \"argv\": [\n        \"pnpm\",\n        \"test:unit:fast\"\n      ],\n      \"tiers\": [\n        \"candidate\",\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"fast-unit-vitest-report\",\n        \"unit-partition-report\"\n      ]\n    },\n    {\n      \"id\": \"test-unit-migrations\",\n      \"argv\": [\n        \"pnpm\",\n        \"test:unit:migrations\"\n      ],\n      \"tiers\": [\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"migration-unit-vitest-report\",\n        \"unit-partition-report\"\n      ]\n    },\n    {\n      \"id\": \"test-orchestrator\",\n      \"argv\": [\n        \"pnpm\",\n        \"test:orchestrator\"\n      ],\n      \"tiers\": [\n        \"candidate\",\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"orchestrator-vitest-report\"\n      ]\n    },\n    {\n      \"id\": \"format-check\",\n      \"argv\": [\n        \"pnpm\",\n        \"format:check\"\n      ],\n      \"tiers\": [\n        \"candidate\",\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"format-report\"\n      ]\n    },\n    {\n      \"id\": \"lint\",\n      \"argv\": [\n        \"pnpm\",\n        \"lint\"\n      ],\n      \"tiers\": [\n        \"candidate\",\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"lint-report\"\n      ]\n    },\n    {\n      \"id\": \"lint-architecture\",\n      \"argv\": [\n        \"pnpm\",\n        \"lint:architecture\"\n      ],\n      \"tiers\": [\n        \"candidate\",\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"architecture-report\"\n      ]\n    },\n    {\n      \"id\": \"typecheck\",\n      \"argv\": [\n        \"pnpm\",\n        \"typecheck\"\n      ],\n      \"tiers\": [\n        \"candidate\",\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"typecheck-report\"\n      ]\n    },\n    {\n      \"id\": \"build\",\n      \"argv\": [\n        \"pnpm\",\n        \"build\"\n      ],\n      \"tiers\": [\n        \"candidate\",\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"build-report\"\n      ]\n    },\n    {\n      \"id\": \"domain-construction-standard\",\n      \"argv\": [\n        \"pnpm\",\n        \"verify:domain-construction-standard\"\n      ],\n      \"tiers\": [\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"domain-construction-standard-proof\",\n        \"independent-domain-construction-standard-proof\",\n        \"domain-construction-standard-vitest-report\",\n        \"domain-construction-standard-worker-parity-report\",\n        \"playwright-report\",\n        \"browser-diagnostics\",\n        \"domain-construction-standard-verification-report\"\n      ]\n    },\n    {\n      \"id\": \"domain-resources\",\n      \"argv\": [\n        \"pnpm\",\n        \"verify:domain-resources\"\n      ],\n      \"tiers\": [\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"domain-resources-report\"\n      ]\n    },\n    {\n      \"id\": \"domain-networks\",\n      \"argv\": [\n        \"pnpm\",\n        \"verify:domain-networks\"\n      ],\n      \"tiers\": [\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"domain-networks-report\"\n      ]\n    },\n    {\n      \"id\": \"domain-planning\",\n      \"argv\": [\n        \"pnpm\",\n        \"verify:domain-planning\"\n      ],\n      \"tiers\": [\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"domain-planning-report\"\n      ]\n    },\n    {\n      \"id\": \"domain-entitlement\",\n      \"argv\": [\n        \"pnpm\",\n        \"verify:domain-entitlement\"\n      ],\n      \"tiers\": [\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"domain-entitlement-report\"\n      ]\n    },\n    {\n      \"id\": \"domain-entitlement-standard\",\n      \"argv\": [\n        \"pnpm\",\n        \"verify:domain-entitlement-standard\"\n      ],\n      \"tiers\": [\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"domain-entitlement-standard-report\"\n      ]\n    },\n    {\n      \"id\": \"domain-development\",\n      \"argv\": [\n        \"pnpm\",\n        \"verify:domain-development\"\n      ],\n      \"tiers\": [\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"domain-development-report\"\n      ]\n    },\n    {\n      \"id\": \"domain-simulation\",\n      \"argv\": [\n        \"pnpm\",\n        \"verify:domain-simulation\"\n      ],\n      \"tiers\": [\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"domain-simulation-report\"\n      ]\n    },\n    {\n      \"id\": \"domain-browser\",\n      \"argv\": [\n        \"pnpm\",\n        \"verify:domain-browser\"\n      ],\n      \"tiers\": [\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"domain-browser-report\"\n      ]\n    }\n  ],\n  \"requiredProtectedPaths\": [\n    \".agent/completed/loop-recommissioning-verification.json\",\n    \".agent/readiness-profile-activated.json\",\n    \".agent/verification-manifest.json\",\n    \"AGENTS.md\",\n    \"PROJECT_GOAL.md\",\n    \"evals/ACCEPTANCE.md\",\n    \"evals/HIDDEN_VALIDATION_PROTOCOL.md\",\n    \"evals/acceptance-manifest.json\",\n    \"evals/immutable-contract-lock.json\",\n    \"package.json\",\n    \"pnpm-lock.yaml\",\n    \"scripts/verify.mjs\",\n    \"tools/milestone-orchestrator/config/default.json\",\n    \"tools/milestone-orchestrator/config/invariant-suite.json\",\n    \"tools/milestone-orchestrator/config/source-commissioning-input.json\",\n    \"tools/milestone-orchestrator/config/verification-scope-policy.json\"\n  ],\n  \"requiredInvariantSuiteId\": \"milestone-loop-core-invariants.v1\",\n  \"scopePolicyId\": \"milestone-loop-shadow-scope-policy.v1\",\n  \"exactVerification\": {\n    \"argv\": [\n      \"pnpm\",\n      \"verify\"\n    ],\n    \"requiresNoArguments\": true,\n    \"profileSource\": \"package-default\",\n    \"selectedByOverride\": false\n  },\n  \"reconciliationPolicy\": {\n    \"id\": \"milestone-loop-source-reconciliation.v1\",\n    \"nextProposalPath\": \".agent/next-milestone.json\",\n    \"requiredReviewChecks\": [\n      \"completeCommitLineage\",\n      \"protectedIntegrity\",\n      \"noFabricatedHistory\",\n      \"commandOwnedEvidenceValidity\",\n      \"verificationTierNonAuthority\",\n      \"invariantSuiteQuality\",\n      \"selectorShadowOnlyEnforcement\",\n      \"telemetryNonSemanticBehavior\",\n      \"artifactContainmentAndNonDeletion\",\n      \"stateMigrationAndRecovery\",\n      \"verticalMilestonePolicy\",\n      \"dependencyValidNextProposal\",\n      \"noScopeReductionOrSuspiciousShortcut\"\n    ]\n  }\n}\n"
+      },
+      "hashes": {
+        "input": "59f053d0b4ed195e2fda8746f8ee018ea3c97706c07f53a37908c40ef41b8629",
+        "policy": "b7a8d58db1a894b6fdddad41f61ff2d062c7bad5b3eacbed170521cc23615f29",
+        "manifest": "f765765d8082280282151253e616f87a460dbe8c38f17909aa22d7dcb7930dd9"
+      }
+    }
+  },
+  "entries": [
+    {
+      "ordinal": 1,
+      "previousEntrySha256": null,
+      "descriptorPath": "tools/milestone-orchestrator/config/wp6e-partition-amendment.json",
+      "descriptorSha256": "e0a24e83ba53bb7f5dc2aa011b9c204b775c513be85d119d869a1af3d3113b52",
+      "decisionHeading": "2026-09-04 — WP6e recomposition direction and transition requirements approved",
+      "invocation": {
+        "headCommit": "b03a6cd6ff5eef0dc571bc6d606b6a30c80ed184",
+        "headTree": "ac2e0f8759285842c08085652bdff15325639ad4",
+        "branch": "master"
+      },
+      "prior": {
+        "files": {
+          "input": "{\n  \"schemaVersion\": \"loop-commissioning-input.v1\",\n  \"commissioning\": {\n    \"id\": \"milestone-loop-template-source.v1\",\n    \"targetBranch\": \"master\",\n    \"baseCommit\": \"0f4ab3e5ef39bda07d6e77356ad53fca9136cdd5\",\n    \"profile\": \"readiness\"\n  },\n  \"sources\": {\n    \"configPath\": \"tools/milestone-orchestrator/config/default.json\",\n    \"invariantSuitePath\": \"tools/milestone-orchestrator/config/invariant-suite.json\",\n    \"scopePolicyPath\": \"tools/milestone-orchestrator/config/verification-scope-policy.json\",\n    \"immutableContractLockPath\": \"evals/immutable-contract-lock.json\",\n    \"immutableContractLockSha256\": \"d1166088b00c54af65e8654188adc58a3cabd9d7908820809fe66af28c933050\"\n  },\n  \"objective\": \"Commission the generic verification lifecycle for the milestone-loop template repository.\",\n  \"exclusions\": [\n    \"No frozen authority, calibration, readiness meaning, verifier deadline, or exact command changes.\",\n    \"No product implementation, placeholder replacement, historical-record rewrite, or worked-example migration.\"\n  ],\n  \"focusedCommands\": [\n    {\n      \"id\": \"test-invariants\",\n      \"argv\": [\"pnpm\", \"test:invariants\"],\n      \"tiers\": [\"iteration\", \"candidate\", \"milestone\"],\n      \"expectedArtifactKinds\": [\"invariant-suite-report\"]\n    },\n    {\n      \"id\": \"test-unit-fast\",\n      \"argv\": [\"pnpm\", \"test:unit:fast\"],\n      \"tiers\": [\"candidate\", \"milestone\"],\n      \"expectedArtifactKinds\": [\n        \"fast-unit-vitest-report\",\n        \"unit-partition-report\"\n      ]\n    },\n    {\n      \"id\": \"test-unit-migrations\",\n      \"argv\": [\"pnpm\", \"test:unit:migrations\"],\n      \"tiers\": [\"milestone\"],\n      \"expectedArtifactKinds\": [\n        \"migration-unit-vitest-report\",\n        \"unit-partition-report\"\n      ]\n    },\n    {\n      \"id\": \"test-orchestrator\",\n      \"argv\": [\"pnpm\", \"test:orchestrator\"],\n      \"tiers\": [\"candidate\", \"milestone\"],\n      \"expectedArtifactKinds\": [\"orchestrator-vitest-report\"]\n    },\n    {\n      \"id\": \"format-check\",\n      \"argv\": [\"pnpm\", \"format:check\"],\n      \"tiers\": [\"candidate\", \"milestone\"],\n      \"expectedArtifactKinds\": [\"format-report\"]\n    },\n    {\n      \"id\": \"lint\",\n      \"argv\": [\"pnpm\", \"lint\"],\n      \"tiers\": [\"candidate\", \"milestone\"],\n      \"expectedArtifactKinds\": [\"lint-report\"]\n    },\n    {\n      \"id\": \"lint-architecture\",\n      \"argv\": [\"pnpm\", \"lint:architecture\"],\n      \"tiers\": [\"candidate\", \"milestone\"],\n      \"expectedArtifactKinds\": [\"architecture-report\"]\n    },\n    {\n      \"id\": \"typecheck\",\n      \"argv\": [\"pnpm\", \"typecheck\"],\n      \"tiers\": [\"candidate\", \"milestone\"],\n      \"expectedArtifactKinds\": [\"typecheck-report\"]\n    },\n    {\n      \"id\": \"build\",\n      \"argv\": [\"pnpm\", \"build\"],\n      \"tiers\": [\"candidate\", \"milestone\"],\n      \"expectedArtifactKinds\": [\"build-report\"]\n    },\n    {\n      \"id\": \"domain-construction-standard\",\n      \"argv\": [\"pnpm\", \"verify:domain-construction-standard\"],\n      \"tiers\": [\"milestone\"],\n      \"expectedArtifactKinds\": [\n        \"domain-construction-standard-proof\",\n        \"independent-domain-construction-standard-proof\",\n        \"domain-construction-standard-vitest-report\",\n        \"domain-construction-standard-worker-parity-report\",\n        \"playwright-report\",\n        \"browser-diagnostics\",\n        \"domain-construction-standard-verification-report\"\n      ]\n    },\n    {\n      \"id\": \"domain-resources\",\n      \"argv\": [\"pnpm\", \"verify:domain-resources\"],\n      \"tiers\": [\"milestone\"],\n      \"expectedArtifactKinds\": [\"domain-resources-report\"]\n    },\n    {\n      \"id\": \"domain-networks\",\n      \"argv\": [\"pnpm\", \"verify:domain-networks\"],\n      \"tiers\": [\"milestone\"],\n      \"expectedArtifactKinds\": [\"domain-networks-report\"]\n    },\n    {\n      \"id\": \"domain-planning\",\n      \"argv\": [\"pnpm\", \"verify:domain-planning\"],\n      \"tiers\": [\"milestone\"],\n      \"expectedArtifactKinds\": [\"domain-planning-report\"]\n    },\n    {\n      \"id\": \"domain-entitlement\",\n      \"argv\": [\"pnpm\", \"verify:domain-entitlement\"],\n      \"tiers\": [\"milestone\"],\n      \"expectedArtifactKinds\": [\"domain-entitlement-report\"]\n    },\n    {\n      \"id\": \"domain-entitlement-standard\",\n      \"argv\": [\"pnpm\", \"verify:domain-entitlement-standard\"],\n      \"tiers\": [\"milestone\"],\n      \"expectedArtifactKinds\": [\"domain-entitlement-standard-report\"]\n    },\n    {\n      \"id\": \"domain-development\",\n      \"argv\": [\"pnpm\", \"verify:domain-development\"],\n      \"tiers\": [\"milestone\"],\n      \"expectedArtifactKinds\": [\"domain-development-report\"]\n    },\n    {\n      \"id\": \"domain-simulation\",\n      \"argv\": [\"pnpm\", \"verify:domain-simulation\"],\n      \"tiers\": [\"milestone\"],\n      \"expectedArtifactKinds\": [\"domain-simulation-report\"]\n    },\n    {\n      \"id\": \"domain-browser\",\n      \"argv\": [\"pnpm\", \"verify:domain-browser\"],\n      \"tiers\": [\"milestone\"],\n      \"expectedArtifactKinds\": [\"domain-browser-report\"]\n    }\n  ],\n  \"requiredProtectedPaths\": [\n    \".agent/completed/loop-recommissioning-verification.json\",\n    \".agent/readiness-profile-activated.json\",\n    \".agent/verification-manifest.json\",\n    \"AGENTS.md\",\n    \"PROJECT_GOAL.md\",\n    \"evals/ACCEPTANCE.md\",\n    \"evals/HIDDEN_VALIDATION_PROTOCOL.md\",\n    \"evals/acceptance-manifest.json\",\n    \"evals/immutable-contract-lock.json\",\n    \"package.json\",\n    \"pnpm-lock.yaml\",\n    \"scripts/verify.mjs\",\n    \"tools/milestone-orchestrator/config/default.json\",\n    \"tools/milestone-orchestrator/config/invariant-suite.json\",\n    \"tools/milestone-orchestrator/config/source-commissioning-input.json\",\n    \"tools/milestone-orchestrator/config/verification-scope-policy.json\"\n  ],\n  \"requiredInvariantSuiteId\": \"milestone-loop-core-invariants.v1\",\n  \"scopePolicyId\": \"milestone-loop-shadow-scope-policy.v1\",\n  \"exactVerification\": {\n    \"argv\": [\"pnpm\", \"verify\"],\n    \"requiresNoArguments\": true,\n    \"profileSource\": \"package-default\",\n    \"selectedByOverride\": false\n  },\n  \"reconciliationPolicy\": {\n    \"id\": \"milestone-loop-source-reconciliation.v1\",\n    \"nextProposalPath\": \".agent/next-milestone.json\",\n    \"requiredReviewChecks\": [\n      \"completeCommitLineage\",\n      \"protectedIntegrity\",\n      \"noFabricatedHistory\",\n      \"commandOwnedEvidenceValidity\",\n      \"verificationTierNonAuthority\",\n      \"invariantSuiteQuality\",\n      \"selectorShadowOnlyEnforcement\",\n      \"telemetryNonSemanticBehavior\",\n      \"artifactContainmentAndNonDeletion\",\n      \"stateMigrationAndRecovery\",\n      \"verticalMilestonePolicy\",\n      \"dependencyValidNextProposal\",\n      \"noScopeReductionOrSuspiciousShortcut\"\n    ]\n  },\n  \"output\": {\n    \"verificationManifestPath\": \".agent/verification-manifest.json\"\n  }\n}\n",
+          "policy": "{\n  \"schemaVersion\": \"1.0.0\",\n  \"id\": \"milestone-loop-shadow-scope-policy.v1\",\n  \"mode\": \"shadow-only\",\n  \"unknownDisposition\": \"fail-broad\",\n  \"closureSuppressionAllowed\": false,\n  \"browserHostScriptPatterns\": [],\n  \"triggerClasses\": [\n    \"protected-authority\",\n    \"canonical-encoding\",\n    \"shared-protocol\",\n    \"persistence-codec\",\n    \"migration\",\n    \"accepted-fixture\",\n    \"standard-state\",\n    \"composition-root\",\n    \"worker-message\",\n    \"package-graph\",\n    \"browser-host\",\n    \"ui-renderer\",\n    \"domain-local-simulation\",\n    \"orchestrator-evidence\",\n    \"documentation-only\",\n    \"unknown\"\n  ],\n  \"broadTriggerClasses\": [\n    \"protected-authority\",\n    \"canonical-encoding\",\n    \"shared-protocol\",\n    \"persistence-codec\",\n    \"migration\",\n    \"accepted-fixture\",\n    \"standard-state\",\n    \"composition-root\",\n    \"worker-message\",\n    \"package-graph\",\n    \"unknown\"\n  ],\n  \"mandatoryChecks\": {\n    \"protected-authority\": [\n      \"test-invariants\",\n      \"test-unit\",\n      \"test-orchestrator\",\n      \"build\"\n    ],\n    \"canonical-encoding\": [\n      \"test-invariants\",\n      \"test-unit\",\n      \"test-unit-migrations\",\n      \"domain-construction-standard\",\n      \"domain-resources\",\n      \"domain-networks\",\n      \"domain-planning\",\n      \"domain-entitlement\",\n      \"domain-entitlement-standard\",\n      \"domain-development\",\n      \"domain-simulation\",\n      \"domain-browser\"\n    ],\n    \"shared-protocol\": [\"test-invariants\", \"test-unit\", \"typecheck\", \"build\"],\n    \"persistence-codec\": [\n      \"test-invariants\",\n      \"test-unit\",\n      \"test-unit-migrations\",\n      \"domain-construction-standard\",\n      \"domain-entitlement-standard\",\n      \"domain-simulation\"\n    ],\n    \"migration\": [\n      \"test-invariants\",\n      \"test-unit\",\n      \"test-unit-migrations\",\n      \"domain-construction-standard\",\n      \"domain-entitlement-standard\",\n      \"domain-simulation\"\n    ],\n    \"accepted-fixture\": [\n      \"test-invariants\",\n      \"test-unit\",\n      \"test-unit-migrations\",\n      \"domain-construction-standard\",\n      \"domain-entitlement-standard\",\n      \"domain-simulation\"\n    ],\n    \"standard-state\": [\n      \"test-invariants\",\n      \"test-unit\",\n      \"typecheck\",\n      \"build\",\n      \"domain-construction-standard\",\n      \"domain-resources\",\n      \"domain-networks\",\n      \"domain-planning\",\n      \"domain-entitlement\",\n      \"domain-entitlement-standard\",\n      \"domain-development\",\n      \"domain-simulation\",\n      \"domain-browser\"\n    ],\n    \"composition-root\": [\n      \"test-invariants\",\n      \"test-unit\",\n      \"typecheck\",\n      \"build\",\n      \"domain-construction-standard\",\n      \"domain-resources\",\n      \"domain-networks\",\n      \"domain-planning\",\n      \"domain-entitlement\",\n      \"domain-entitlement-standard\",\n      \"domain-development\",\n      \"domain-simulation\",\n      \"domain-browser\"\n    ],\n    \"worker-message\": [\n      \"test-invariants\",\n      \"typecheck\",\n      \"build\",\n      \"domain-construction-standard\",\n      \"domain-simulation\",\n      \"domain-browser\"\n    ],\n    \"package-graph\": [\n      \"test-invariants\",\n      \"dependencies\",\n      \"lint-architecture\",\n      \"typecheck\",\n      \"build\",\n      \"test-unit\"\n    ],\n    \"browser-host\": [\"test-invariants\", \"typecheck\", \"build\", \"domain-browser\"],\n    \"ui-renderer\": [\"test-invariants\", \"test-unit-fast\", \"build\"],\n    \"domain-local-simulation\": [\n      \"test-invariants\",\n      \"test-unit-fast\",\n      \"typecheck\"\n    ],\n    \"orchestrator-evidence\": [\n      \"test-invariants\",\n      \"test-orchestrator\",\n      \"typecheck\"\n    ],\n    \"documentation-only\": [\"test-invariants\"],\n    \"unknown\": [\"test-invariants\", \"test-unit\", \"test-orchestrator\", \"build\"]\n  },\n  \"workspaceChecks\": {\n    \"@milestone-loop/orchestrator\": [\"test-orchestrator\", \"typecheck\"],\n    \"milestone-loop-template\": [\n      \"dependencies\",\n      \"format-check\",\n      \"lint\",\n      \"lint-architecture\",\n      \"typecheck\",\n      \"build\",\n      \"test-unit\"\n    ]\n  },\n  \"graduation\": {\n    \"deferred\": true,\n    \"minimumComparisons\": 30,\n    \"minimumExamplesPerTrigger\": 3,\n    \"requiresZeroFalseNegatives\": true,\n    \"requiresZeroUnknowns\": true,\n    \"requiresDeterministicRecommendations\": true,\n    \"requiresMeasuredSavingsAboveNoise\": true,\n    \"requiresNoClosureRegression\": true,\n    \"requiresIndependentReview\": true,\n    \"requiresExplicitPolicyChange\": true\n  }\n}\n",
+          "manifest": "{\n  \"schemaVersion\": \"verification-manifest.v2\",\n  \"commissioning\": {\n    \"id\": \"milestone-loop-template-source.v1\",\n    \"targetBranch\": \"master\",\n    \"baseCommit\": \"0f4ab3e5ef39bda07d6e77356ad53fca9136cdd5\",\n    \"profile\": \"readiness\",\n    \"createdAt\": \"2026-08-15T20:50:19.000Z\"\n  },\n  \"objective\": \"Commission the generic verification lifecycle for the milestone-loop template repository.\",\n  \"exclusions\": [\n    \"No frozen authority, calibration, readiness meaning, verifier deadline, or exact command changes.\",\n    \"No product implementation, placeholder replacement, historical-record rewrite, or worked-example migration.\"\n  ],\n  \"focusedCommands\": [\n    {\n      \"id\": \"test-invariants\",\n      \"argv\": [\n        \"pnpm\",\n        \"test:invariants\"\n      ],\n      \"tiers\": [\n        \"iteration\",\n        \"candidate\",\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"invariant-suite-report\"\n      ]\n    },\n    {\n      \"id\": \"test-unit-fast\",\n      \"argv\": [\n        \"pnpm\",\n        \"test:unit:fast\"\n      ],\n      \"tiers\": [\n        \"candidate\",\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"fast-unit-vitest-report\",\n        \"unit-partition-report\"\n      ]\n    },\n    {\n      \"id\": \"test-unit-migrations\",\n      \"argv\": [\n        \"pnpm\",\n        \"test:unit:migrations\"\n      ],\n      \"tiers\": [\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"migration-unit-vitest-report\",\n        \"unit-partition-report\"\n      ]\n    },\n    {\n      \"id\": \"test-orchestrator\",\n      \"argv\": [\n        \"pnpm\",\n        \"test:orchestrator\"\n      ],\n      \"tiers\": [\n        \"candidate\",\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"orchestrator-vitest-report\"\n      ]\n    },\n    {\n      \"id\": \"format-check\",\n      \"argv\": [\n        \"pnpm\",\n        \"format:check\"\n      ],\n      \"tiers\": [\n        \"candidate\",\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"format-report\"\n      ]\n    },\n    {\n      \"id\": \"lint\",\n      \"argv\": [\n        \"pnpm\",\n        \"lint\"\n      ],\n      \"tiers\": [\n        \"candidate\",\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"lint-report\"\n      ]\n    },\n    {\n      \"id\": \"lint-architecture\",\n      \"argv\": [\n        \"pnpm\",\n        \"lint:architecture\"\n      ],\n      \"tiers\": [\n        \"candidate\",\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"architecture-report\"\n      ]\n    },\n    {\n      \"id\": \"typecheck\",\n      \"argv\": [\n        \"pnpm\",\n        \"typecheck\"\n      ],\n      \"tiers\": [\n        \"candidate\",\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"typecheck-report\"\n      ]\n    },\n    {\n      \"id\": \"build\",\n      \"argv\": [\n        \"pnpm\",\n        \"build\"\n      ],\n      \"tiers\": [\n        \"candidate\",\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"build-report\"\n      ]\n    },\n    {\n      \"id\": \"domain-construction-standard\",\n      \"argv\": [\n        \"pnpm\",\n        \"verify:domain-construction-standard\"\n      ],\n      \"tiers\": [\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"domain-construction-standard-proof\",\n        \"independent-domain-construction-standard-proof\",\n        \"domain-construction-standard-vitest-report\",\n        \"domain-construction-standard-worker-parity-report\",\n        \"playwright-report\",\n        \"browser-diagnostics\",\n        \"domain-construction-standard-verification-report\"\n      ]\n    },\n    {\n      \"id\": \"domain-resources\",\n      \"argv\": [\n        \"pnpm\",\n        \"verify:domain-resources\"\n      ],\n      \"tiers\": [\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"domain-resources-report\"\n      ]\n    },\n    {\n      \"id\": \"domain-networks\",\n      \"argv\": [\n        \"pnpm\",\n        \"verify:domain-networks\"\n      ],\n      \"tiers\": [\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"domain-networks-report\"\n      ]\n    },\n    {\n      \"id\": \"domain-planning\",\n      \"argv\": [\n        \"pnpm\",\n        \"verify:domain-planning\"\n      ],\n      \"tiers\": [\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"domain-planning-report\"\n      ]\n    },\n    {\n      \"id\": \"domain-entitlement\",\n      \"argv\": [\n        \"pnpm\",\n        \"verify:domain-entitlement\"\n      ],\n      \"tiers\": [\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"domain-entitlement-report\"\n      ]\n    },\n    {\n      \"id\": \"domain-entitlement-standard\",\n      \"argv\": [\n        \"pnpm\",\n        \"verify:domain-entitlement-standard\"\n      ],\n      \"tiers\": [\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"domain-entitlement-standard-report\"\n      ]\n    },\n    {\n      \"id\": \"domain-development\",\n      \"argv\": [\n        \"pnpm\",\n        \"verify:domain-development\"\n      ],\n      \"tiers\": [\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"domain-development-report\"\n      ]\n    },\n    {\n      \"id\": \"domain-simulation\",\n      \"argv\": [\n        \"pnpm\",\n        \"verify:domain-simulation\"\n      ],\n      \"tiers\": [\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"domain-simulation-report\"\n      ]\n    },\n    {\n      \"id\": \"domain-browser\",\n      \"argv\": [\n        \"pnpm\",\n        \"verify:domain-browser\"\n      ],\n      \"tiers\": [\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"domain-browser-report\"\n      ]\n    }\n  ],\n  \"requiredProtectedPaths\": [\n    \".agent/completed/loop-recommissioning-verification.json\",\n    \".agent/readiness-profile-activated.json\",\n    \".agent/verification-manifest.json\",\n    \"AGENTS.md\",\n    \"PROJECT_GOAL.md\",\n    \"evals/ACCEPTANCE.md\",\n    \"evals/HIDDEN_VALIDATION_PROTOCOL.md\",\n    \"evals/acceptance-manifest.json\",\n    \"evals/immutable-contract-lock.json\",\n    \"package.json\",\n    \"pnpm-lock.yaml\",\n    \"scripts/verify.mjs\",\n    \"tools/milestone-orchestrator/config/default.json\",\n    \"tools/milestone-orchestrator/config/invariant-suite.json\",\n    \"tools/milestone-orchestrator/config/source-commissioning-input.json\",\n    \"tools/milestone-orchestrator/config/verification-scope-policy.json\"\n  ],\n  \"requiredInvariantSuiteId\": \"milestone-loop-core-invariants.v1\",\n  \"scopePolicyId\": \"milestone-loop-shadow-scope-policy.v1\",\n  \"exactVerification\": {\n    \"argv\": [\n      \"pnpm\",\n      \"verify\"\n    ],\n    \"requiresNoArguments\": true,\n    \"profileSource\": \"package-default\",\n    \"selectedByOverride\": false\n  },\n  \"reconciliationPolicy\": {\n    \"id\": \"milestone-loop-source-reconciliation.v1\",\n    \"nextProposalPath\": \".agent/next-milestone.json\",\n    \"requiredReviewChecks\": [\n      \"completeCommitLineage\",\n      \"protectedIntegrity\",\n      \"noFabricatedHistory\",\n      \"commandOwnedEvidenceValidity\",\n      \"verificationTierNonAuthority\",\n      \"invariantSuiteQuality\",\n      \"selectorShadowOnlyEnforcement\",\n      \"telemetryNonSemanticBehavior\",\n      \"artifactContainmentAndNonDeletion\",\n      \"stateMigrationAndRecovery\",\n      \"verticalMilestonePolicy\",\n      \"dependencyValidNextProposal\",\n      \"noScopeReductionOrSuspiciousShortcut\"\n    ]\n  }\n}\n"
+        },
+        "hashes": {
+          "input": "59f053d0b4ed195e2fda8746f8ee018ea3c97706c07f53a37908c40ef41b8629",
+          "policy": "b7a8d58db1a894b6fdddad41f61ff2d062c7bad5b3eacbed170521cc23615f29",
+          "manifest": "f765765d8082280282151253e616f87a460dbe8c38f17909aa22d7dcb7930dd9"
+        }
+      },
+      "next": {
+        "files": {
+          "input": "{\n  \"schemaVersion\": \"loop-commissioning-input.v1\",\n  \"commissioning\": {\n    \"id\": \"milestone-loop-template-source.v1\",\n    \"targetBranch\": \"master\",\n    \"baseCommit\": \"0f4ab3e5ef39bda07d6e77356ad53fca9136cdd5\",\n    \"profile\": \"readiness\"\n  },\n  \"sources\": {\n    \"configPath\": \"tools/milestone-orchestrator/config/default.json\",\n    \"invariantSuitePath\": \"tools/milestone-orchestrator/config/invariant-suite.json\",\n    \"scopePolicyPath\": \"tools/milestone-orchestrator/config/verification-scope-policy.json\",\n    \"immutableContractLockPath\": \"evals/immutable-contract-lock.json\",\n    \"immutableContractLockSha256\": \"d1166088b00c54af65e8654188adc58a3cabd9d7908820809fe66af28c933050\"\n  },\n  \"objective\": \"Commission the generic verification lifecycle for the milestone-loop template repository.\",\n  \"exclusions\": [\n    \"No frozen authority, calibration, readiness meaning, verifier deadline, or exact command changes.\",\n    \"No product implementation, placeholder replacement, historical-record rewrite, or worked-example migration.\"\n  ],\n  \"focusedCommands\": [\n    {\n      \"id\": \"test-invariants\",\n      \"argv\": [\"pnpm\", \"test:invariants\"],\n      \"tiers\": [\"iteration\", \"candidate\", \"milestone\"],\n      \"expectedArtifactKinds\": [\"invariant-suite-report\"]\n    },\n    {\n      \"id\": \"format-check\",\n      \"argv\": [\"pnpm\", \"format:check\"],\n      \"tiers\": [\"candidate\", \"milestone\"],\n      \"expectedArtifactKinds\": [\"format-report\"]\n    },\n    {\n      \"id\": \"lint\",\n      \"argv\": [\"pnpm\", \"lint\"],\n      \"tiers\": [\"candidate\", \"milestone\"],\n      \"expectedArtifactKinds\": [\"lint-report\"]\n    },\n    {\n      \"id\": \"lint-architecture\",\n      \"argv\": [\"pnpm\", \"lint:architecture\"],\n      \"tiers\": [\"candidate\", \"milestone\"],\n      \"expectedArtifactKinds\": [\"architecture-report\"]\n    },\n    {\n      \"id\": \"typecheck\",\n      \"argv\": [\"pnpm\", \"typecheck\"],\n      \"tiers\": [\"candidate\", \"milestone\"],\n      \"expectedArtifactKinds\": [\"typecheck-report\"]\n    },\n    {\n      \"id\": \"build\",\n      \"argv\": [\"pnpm\", \"build\"],\n      \"tiers\": [\"candidate\", \"milestone\"],\n      \"expectedArtifactKinds\": [\"build-report\"]\n    },\n    {\n      \"id\": \"test-partition-controller-runtime\",\n      \"argv\": [\"pnpm\", \"test:partition:controller-runtime\"],\n      \"tiers\": [\"candidate\", \"milestone\"],\n      \"expectedArtifactKinds\": [\n        \"test-partition-report\",\n        \"test-partition-vitest-report\",\n        \"test-run-summary\"\n      ]\n    },\n    {\n      \"id\": \"test-partition-repository-tooling\",\n      \"argv\": [\"pnpm\", \"test:partition:repository-tooling\"],\n      \"tiers\": [\"candidate\", \"milestone\"],\n      \"expectedArtifactKinds\": [\n        \"test-partition-report\",\n        \"test-partition-vitest-report\",\n        \"test-run-summary\"\n      ]\n    },\n    {\n      \"id\": \"test-partition-adopter-template\",\n      \"argv\": [\"pnpm\", \"test:partition:adopter-template\"],\n      \"tiers\": [\"candidate\", \"milestone\"],\n      \"expectedArtifactKinds\": [\n        \"test-partition-report\",\n        \"test-partition-vitest-report\",\n        \"test-run-summary\"\n      ]\n    },\n    {\n      \"id\": \"test-partition-trusted-container-fixture\",\n      \"argv\": [\"pnpm\", \"test:partition:trusted-container-fixture\"],\n      \"tiers\": [\"candidate\", \"milestone\"],\n      \"expectedArtifactKinds\": [\n        \"test-partition-report\",\n        \"test-partition-vitest-report\",\n        \"test-run-summary\"\n      ]\n    },\n    {\n      \"id\": \"domain-construction-standard\",\n      \"argv\": [\"pnpm\", \"verify:domain-construction-standard\"],\n      \"tiers\": [\"milestone\"],\n      \"expectedArtifactKinds\": [\n        \"domain-construction-standard-proof\",\n        \"independent-domain-construction-standard-proof\",\n        \"domain-construction-standard-vitest-report\",\n        \"domain-construction-standard-worker-parity-report\",\n        \"playwright-report\",\n        \"browser-diagnostics\",\n        \"domain-construction-standard-verification-report\"\n      ]\n    },\n    {\n      \"id\": \"domain-resources\",\n      \"argv\": [\"pnpm\", \"verify:domain-resources\"],\n      \"tiers\": [\"milestone\"],\n      \"expectedArtifactKinds\": [\"domain-resources-report\"]\n    },\n    {\n      \"id\": \"domain-networks\",\n      \"argv\": [\"pnpm\", \"verify:domain-networks\"],\n      \"tiers\": [\"milestone\"],\n      \"expectedArtifactKinds\": [\"domain-networks-report\"]\n    },\n    {\n      \"id\": \"domain-planning\",\n      \"argv\": [\"pnpm\", \"verify:domain-planning\"],\n      \"tiers\": [\"milestone\"],\n      \"expectedArtifactKinds\": [\"domain-planning-report\"]\n    },\n    {\n      \"id\": \"domain-entitlement\",\n      \"argv\": [\"pnpm\", \"verify:domain-entitlement\"],\n      \"tiers\": [\"milestone\"],\n      \"expectedArtifactKinds\": [\"domain-entitlement-report\"]\n    },\n    {\n      \"id\": \"domain-entitlement-standard\",\n      \"argv\": [\"pnpm\", \"verify:domain-entitlement-standard\"],\n      \"tiers\": [\"milestone\"],\n      \"expectedArtifactKinds\": [\"domain-entitlement-standard-report\"]\n    },\n    {\n      \"id\": \"domain-development\",\n      \"argv\": [\"pnpm\", \"verify:domain-development\"],\n      \"tiers\": [\"milestone\"],\n      \"expectedArtifactKinds\": [\"domain-development-report\"]\n    },\n    {\n      \"id\": \"domain-simulation\",\n      \"argv\": [\"pnpm\", \"verify:domain-simulation\"],\n      \"tiers\": [\"milestone\"],\n      \"expectedArtifactKinds\": [\"domain-simulation-report\"]\n    },\n    {\n      \"id\": \"domain-browser\",\n      \"argv\": [\"pnpm\", \"verify:domain-browser\"],\n      \"tiers\": [\"milestone\"],\n      \"expectedArtifactKinds\": [\"domain-browser-report\"]\n    }\n  ],\n  \"requiredProtectedPaths\": [\n    \".agent/completed/loop-recommissioning-verification.json\",\n    \".agent/readiness-profile-activated.json\",\n    \".agent/verification-manifest.json\",\n    \"AGENTS.md\",\n    \"PROJECT_GOAL.md\",\n    \"evals/ACCEPTANCE.md\",\n    \"evals/HIDDEN_VALIDATION_PROTOCOL.md\",\n    \"evals/acceptance-manifest.json\",\n    \"evals/immutable-contract-lock.json\",\n    \"package.json\",\n    \"pnpm-lock.yaml\",\n    \"scripts/verify.mjs\",\n    \"tools/milestone-orchestrator/config/default.json\",\n    \"tools/milestone-orchestrator/config/invariant-suite.json\",\n    \"tools/milestone-orchestrator/config/source-commissioning-input.json\",\n    \"tools/milestone-orchestrator/config/verification-scope-policy.json\"\n  ],\n  \"requiredInvariantSuiteId\": \"milestone-loop-core-invariants.v1\",\n  \"scopePolicyId\": \"milestone-loop-shadow-scope-policy.v2\",\n  \"exactVerification\": {\n    \"argv\": [\"pnpm\", \"verify\"],\n    \"requiresNoArguments\": true,\n    \"profileSource\": \"package-default\",\n    \"selectedByOverride\": false\n  },\n  \"reconciliationPolicy\": {\n    \"id\": \"milestone-loop-source-reconciliation.v1\",\n    \"nextProposalPath\": \".agent/next-milestone.json\",\n    \"requiredReviewChecks\": [\n      \"completeCommitLineage\",\n      \"protectedIntegrity\",\n      \"noFabricatedHistory\",\n      \"commandOwnedEvidenceValidity\",\n      \"verificationTierNonAuthority\",\n      \"invariantSuiteQuality\",\n      \"selectorShadowOnlyEnforcement\",\n      \"telemetryNonSemanticBehavior\",\n      \"artifactContainmentAndNonDeletion\",\n      \"stateMigrationAndRecovery\",\n      \"verticalMilestonePolicy\",\n      \"dependencyValidNextProposal\",\n      \"noScopeReductionOrSuspiciousShortcut\"\n    ]\n  },\n  \"output\": {\n    \"verificationManifestPath\": \".agent/verification-manifest.json\"\n  }\n}\n",
+          "policy": "{\n  \"schemaVersion\": \"1.0.0\",\n  \"id\": \"milestone-loop-shadow-scope-policy.v2\",\n  \"mode\": \"shadow-only\",\n  \"unknownDisposition\": \"fail-broad\",\n  \"closureSuppressionAllowed\": false,\n  \"browserHostScriptPatterns\": [],\n  \"triggerClasses\": [\n    \"protected-authority\",\n    \"canonical-encoding\",\n    \"shared-protocol\",\n    \"persistence-codec\",\n    \"migration\",\n    \"accepted-fixture\",\n    \"standard-state\",\n    \"composition-root\",\n    \"worker-message\",\n    \"package-graph\",\n    \"browser-host\",\n    \"ui-renderer\",\n    \"domain-local-simulation\",\n    \"orchestrator-evidence\",\n    \"documentation-only\",\n    \"unknown\"\n  ],\n  \"broadTriggerClasses\": [\n    \"protected-authority\",\n    \"canonical-encoding\",\n    \"shared-protocol\",\n    \"persistence-codec\",\n    \"migration\",\n    \"accepted-fixture\",\n    \"standard-state\",\n    \"composition-root\",\n    \"worker-message\",\n    \"package-graph\",\n    \"unknown\"\n  ],\n  \"mandatoryChecks\": {\n    \"protected-authority\": [\n      \"test-invariants\",\n      \"test-partition-controller-runtime\",\n      \"test-partition-repository-tooling\",\n      \"test-partition-adopter-template\",\n      \"build\"\n    ],\n    \"canonical-encoding\": [\n      \"test-invariants\",\n      \"test-partition-controller-runtime\",\n      \"test-partition-repository-tooling\",\n      \"test-partition-adopter-template\",\n      \"domain-construction-standard\",\n      \"domain-resources\",\n      \"domain-networks\",\n      \"domain-planning\",\n      \"domain-entitlement\",\n      \"domain-entitlement-standard\",\n      \"domain-development\",\n      \"domain-simulation\",\n      \"domain-browser\"\n    ],\n    \"shared-protocol\": [\n      \"test-invariants\",\n      \"test-partition-controller-runtime\",\n      \"test-partition-repository-tooling\",\n      \"test-partition-adopter-template\",\n      \"typecheck\",\n      \"build\"\n    ],\n    \"persistence-codec\": [\n      \"test-invariants\",\n      \"test-partition-controller-runtime\",\n      \"test-partition-repository-tooling\",\n      \"test-partition-adopter-template\",\n      \"domain-construction-standard\",\n      \"domain-entitlement-standard\",\n      \"domain-simulation\"\n    ],\n    \"migration\": [\n      \"test-invariants\",\n      \"test-partition-controller-runtime\",\n      \"test-partition-repository-tooling\",\n      \"test-partition-adopter-template\",\n      \"domain-construction-standard\",\n      \"domain-entitlement-standard\",\n      \"domain-simulation\"\n    ],\n    \"accepted-fixture\": [\n      \"test-invariants\",\n      \"test-partition-controller-runtime\",\n      \"test-partition-repository-tooling\",\n      \"test-partition-adopter-template\",\n      \"domain-construction-standard\",\n      \"domain-entitlement-standard\",\n      \"domain-simulation\"\n    ],\n    \"standard-state\": [\n      \"test-invariants\",\n      \"test-partition-controller-runtime\",\n      \"test-partition-repository-tooling\",\n      \"test-partition-adopter-template\",\n      \"typecheck\",\n      \"build\",\n      \"domain-construction-standard\",\n      \"domain-resources\",\n      \"domain-networks\",\n      \"domain-planning\",\n      \"domain-entitlement\",\n      \"domain-entitlement-standard\",\n      \"domain-development\",\n      \"domain-simulation\",\n      \"domain-browser\"\n    ],\n    \"composition-root\": [\n      \"test-invariants\",\n      \"test-partition-controller-runtime\",\n      \"test-partition-repository-tooling\",\n      \"test-partition-adopter-template\",\n      \"typecheck\",\n      \"build\",\n      \"domain-construction-standard\",\n      \"domain-resources\",\n      \"domain-networks\",\n      \"domain-planning\",\n      \"domain-entitlement\",\n      \"domain-entitlement-standard\",\n      \"domain-development\",\n      \"domain-simulation\",\n      \"domain-browser\"\n    ],\n    \"worker-message\": [\n      \"test-invariants\",\n      \"typecheck\",\n      \"build\",\n      \"domain-construction-standard\",\n      \"domain-simulation\",\n      \"domain-browser\"\n    ],\n    \"package-graph\": [\n      \"test-invariants\",\n      \"dependencies\",\n      \"lint-architecture\",\n      \"typecheck\",\n      \"build\",\n      \"test-partition-controller-runtime\",\n      \"test-partition-repository-tooling\",\n      \"test-partition-adopter-template\"\n    ],\n    \"browser-host\": [\"test-invariants\", \"typecheck\", \"build\", \"domain-browser\"],\n    \"ui-renderer\": [\n      \"test-invariants\",\n      \"test-partition-controller-runtime\",\n      \"test-partition-repository-tooling\",\n      \"test-partition-adopter-template\",\n      \"build\"\n    ],\n    \"domain-local-simulation\": [\n      \"test-invariants\",\n      \"test-partition-controller-runtime\",\n      \"test-partition-repository-tooling\",\n      \"test-partition-adopter-template\",\n      \"typecheck\"\n    ],\n    \"orchestrator-evidence\": [\n      \"test-invariants\",\n      \"test-partition-controller-runtime\",\n      \"test-partition-adopter-template\",\n      \"typecheck\"\n    ],\n    \"documentation-only\": [\"test-invariants\"],\n    \"unknown\": [\n      \"test-invariants\",\n      \"test-partition-controller-runtime\",\n      \"test-partition-repository-tooling\",\n      \"test-partition-adopter-template\",\n      \"build\"\n    ]\n  },\n  \"workspaceChecks\": {\n    \"@milestone-loop/orchestrator\": [\n      \"test-partition-controller-runtime\",\n      \"test-partition-adopter-template\",\n      \"typecheck\"\n    ],\n    \"milestone-loop-template\": [\n      \"dependencies\",\n      \"format-check\",\n      \"lint\",\n      \"lint-architecture\",\n      \"typecheck\",\n      \"build\",\n      \"test-partition-controller-runtime\",\n      \"test-partition-repository-tooling\",\n      \"test-partition-adopter-template\"\n    ]\n  },\n  \"graduation\": {\n    \"deferred\": true,\n    \"minimumComparisons\": 30,\n    \"minimumExamplesPerTrigger\": 3,\n    \"requiresZeroFalseNegatives\": true,\n    \"requiresZeroUnknowns\": true,\n    \"requiresDeterministicRecommendations\": true,\n    \"requiresMeasuredSavingsAboveNoise\": true,\n    \"requiresNoClosureRegression\": true,\n    \"requiresIndependentReview\": true,\n    \"requiresExplicitPolicyChange\": true\n  }\n}\n",
+          "manifest": "{\n  \"schemaVersion\": \"verification-manifest.v2\",\n  \"commissioning\": {\n    \"id\": \"milestone-loop-template-source.v1\",\n    \"targetBranch\": \"master\",\n    \"baseCommit\": \"0f4ab3e5ef39bda07d6e77356ad53fca9136cdd5\",\n    \"profile\": \"readiness\",\n    \"createdAt\": \"2026-08-15T20:50:19.000Z\"\n  },\n  \"objective\": \"Commission the generic verification lifecycle for the milestone-loop template repository.\",\n  \"exclusions\": [\n    \"No frozen authority, calibration, readiness meaning, verifier deadline, or exact command changes.\",\n    \"No product implementation, placeholder replacement, historical-record rewrite, or worked-example migration.\"\n  ],\n  \"focusedCommands\": [\n    {\n      \"id\": \"test-invariants\",\n      \"argv\": [\n        \"pnpm\",\n        \"test:invariants\"\n      ],\n      \"tiers\": [\n        \"iteration\",\n        \"candidate\",\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"invariant-suite-report\"\n      ]\n    },\n    {\n      \"id\": \"format-check\",\n      \"argv\": [\n        \"pnpm\",\n        \"format:check\"\n      ],\n      \"tiers\": [\n        \"candidate\",\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"format-report\"\n      ]\n    },\n    {\n      \"id\": \"lint\",\n      \"argv\": [\n        \"pnpm\",\n        \"lint\"\n      ],\n      \"tiers\": [\n        \"candidate\",\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"lint-report\"\n      ]\n    },\n    {\n      \"id\": \"lint-architecture\",\n      \"argv\": [\n        \"pnpm\",\n        \"lint:architecture\"\n      ],\n      \"tiers\": [\n        \"candidate\",\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"architecture-report\"\n      ]\n    },\n    {\n      \"id\": \"typecheck\",\n      \"argv\": [\n        \"pnpm\",\n        \"typecheck\"\n      ],\n      \"tiers\": [\n        \"candidate\",\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"typecheck-report\"\n      ]\n    },\n    {\n      \"id\": \"build\",\n      \"argv\": [\n        \"pnpm\",\n        \"build\"\n      ],\n      \"tiers\": [\n        \"candidate\",\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"build-report\"\n      ]\n    },\n    {\n      \"id\": \"test-partition-controller-runtime\",\n      \"argv\": [\n        \"pnpm\",\n        \"test:partition:controller-runtime\"\n      ],\n      \"tiers\": [\n        \"candidate\",\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"test-partition-report\",\n        \"test-partition-vitest-report\",\n        \"test-run-summary\"\n      ]\n    },\n    {\n      \"id\": \"test-partition-repository-tooling\",\n      \"argv\": [\n        \"pnpm\",\n        \"test:partition:repository-tooling\"\n      ],\n      \"tiers\": [\n        \"candidate\",\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"test-partition-report\",\n        \"test-partition-vitest-report\",\n        \"test-run-summary\"\n      ]\n    },\n    {\n      \"id\": \"test-partition-adopter-template\",\n      \"argv\": [\n        \"pnpm\",\n        \"test:partition:adopter-template\"\n      ],\n      \"tiers\": [\n        \"candidate\",\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"test-partition-report\",\n        \"test-partition-vitest-report\",\n        \"test-run-summary\"\n      ]\n    },\n    {\n      \"id\": \"test-partition-trusted-container-fixture\",\n      \"argv\": [\n        \"pnpm\",\n        \"test:partition:trusted-container-fixture\"\n      ],\n      \"tiers\": [\n        \"candidate\",\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"test-partition-report\",\n        \"test-partition-vitest-report\",\n        \"test-run-summary\"\n      ]\n    },\n    {\n      \"id\": \"domain-construction-standard\",\n      \"argv\": [\n        \"pnpm\",\n        \"verify:domain-construction-standard\"\n      ],\n      \"tiers\": [\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"domain-construction-standard-proof\",\n        \"independent-domain-construction-standard-proof\",\n        \"domain-construction-standard-vitest-report\",\n        \"domain-construction-standard-worker-parity-report\",\n        \"playwright-report\",\n        \"browser-diagnostics\",\n        \"domain-construction-standard-verification-report\"\n      ]\n    },\n    {\n      \"id\": \"domain-resources\",\n      \"argv\": [\n        \"pnpm\",\n        \"verify:domain-resources\"\n      ],\n      \"tiers\": [\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"domain-resources-report\"\n      ]\n    },\n    {\n      \"id\": \"domain-networks\",\n      \"argv\": [\n        \"pnpm\",\n        \"verify:domain-networks\"\n      ],\n      \"tiers\": [\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"domain-networks-report\"\n      ]\n    },\n    {\n      \"id\": \"domain-planning\",\n      \"argv\": [\n        \"pnpm\",\n        \"verify:domain-planning\"\n      ],\n      \"tiers\": [\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"domain-planning-report\"\n      ]\n    },\n    {\n      \"id\": \"domain-entitlement\",\n      \"argv\": [\n        \"pnpm\",\n        \"verify:domain-entitlement\"\n      ],\n      \"tiers\": [\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"domain-entitlement-report\"\n      ]\n    },\n    {\n      \"id\": \"domain-entitlement-standard\",\n      \"argv\": [\n        \"pnpm\",\n        \"verify:domain-entitlement-standard\"\n      ],\n      \"tiers\": [\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"domain-entitlement-standard-report\"\n      ]\n    },\n    {\n      \"id\": \"domain-development\",\n      \"argv\": [\n        \"pnpm\",\n        \"verify:domain-development\"\n      ],\n      \"tiers\": [\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"domain-development-report\"\n      ]\n    },\n    {\n      \"id\": \"domain-simulation\",\n      \"argv\": [\n        \"pnpm\",\n        \"verify:domain-simulation\"\n      ],\n      \"tiers\": [\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"domain-simulation-report\"\n      ]\n    },\n    {\n      \"id\": \"domain-browser\",\n      \"argv\": [\n        \"pnpm\",\n        \"verify:domain-browser\"\n      ],\n      \"tiers\": [\n        \"milestone\"\n      ],\n      \"expectedArtifactKinds\": [\n        \"domain-browser-report\"\n      ]\n    }\n  ],\n  \"requiredProtectedPaths\": [\n    \".agent/completed/loop-recommissioning-verification.json\",\n    \".agent/readiness-profile-activated.json\",\n    \".agent/verification-manifest.json\",\n    \"AGENTS.md\",\n    \"PROJECT_GOAL.md\",\n    \"evals/ACCEPTANCE.md\",\n    \"evals/HIDDEN_VALIDATION_PROTOCOL.md\",\n    \"evals/acceptance-manifest.json\",\n    \"evals/immutable-contract-lock.json\",\n    \"package.json\",\n    \"pnpm-lock.yaml\",\n    \"scripts/verify.mjs\",\n    \"tools/milestone-orchestrator/config/default.json\",\n    \"tools/milestone-orchestrator/config/invariant-suite.json\",\n    \"tools/milestone-orchestrator/config/source-commissioning-input.json\",\n    \"tools/milestone-orchestrator/config/verification-scope-policy.json\"\n  ],\n  \"requiredInvariantSuiteId\": \"milestone-loop-core-invariants.v1\",\n  \"scopePolicyId\": \"milestone-loop-shadow-scope-policy.v2\",\n  \"exactVerification\": {\n    \"argv\": [\n      \"pnpm\",\n      \"verify\"\n    ],\n    \"requiresNoArguments\": true,\n    \"profileSource\": \"package-default\",\n    \"selectedByOverride\": false\n  },\n  \"reconciliationPolicy\": {\n    \"id\": \"milestone-loop-source-reconciliation.v1\",\n    \"nextProposalPath\": \".agent/next-milestone.json\",\n    \"requiredReviewChecks\": [\n      \"completeCommitLineage\",\n      \"protectedIntegrity\",\n      \"noFabricatedHistory\",\n      \"commandOwnedEvidenceValidity\",\n      \"verificationTierNonAuthority\",\n      \"invariantSuiteQuality\",\n      \"selectorShadowOnlyEnforcement\",\n      \"telemetryNonSemanticBehavior\",\n      \"artifactContainmentAndNonDeletion\",\n      \"stateMigrationAndRecovery\",\n      \"verticalMilestonePolicy\",\n      \"dependencyValidNextProposal\",\n      \"noScopeReductionOrSuspiciousShortcut\"\n    ]\n  }\n}\n"
+        },
+        "hashes": {
+          "input": "8df3be45f6581a6826d9cb6697a2ae4e7ebd57eddae7b9cec7e6df18dc1f4fd5",
+          "policy": "5ce01baa2844389beb0cd4651ced4acf044d1163211937a9a768a626c86c46d6",
+          "manifest": "0550adb7dfa8570649e384e3f928ef005f664f66e10ab3090730057e5ab73682"
+        }
+      },
+      "beforePlans": [
+        {
+          "schemaVersion": "verification-schedule-projection.v1",
+          "tier": "iteration",
+          "commandCount": 1,
+          "exactVerificationIncluded": false,
+          "actualCheckIds": [
+            "test-invariants"
+          ],
+          "commands": [
+            {
+              "id": "test-invariants",
+              "argv": [
+                "pnpm",
+                "test:invariants"
+              ],
+              "expectedArtifactKinds": [
+                "invariant-suite-report"
+              ]
+            }
+          ]
+        },
+        {
+          "schemaVersion": "verification-schedule-projection.v1",
+          "tier": "candidate",
+          "commandCount": 8,
+          "exactVerificationIncluded": false,
+          "actualCheckIds": [
+            "test-invariants",
+            "format-check",
+            "lint",
+            "lint-architecture",
+            "typecheck",
+            "build",
+            "test-unit-fast",
+            "test-orchestrator"
+          ],
+          "commands": [
+            {
+              "id": "test-invariants",
+              "argv": [
+                "pnpm",
+                "test:invariants"
+              ],
+              "expectedArtifactKinds": [
+                "invariant-suite-report"
+              ]
+            },
+            {
+              "id": "format-check",
+              "argv": [
+                "pnpm",
+                "format:check"
+              ],
+              "expectedArtifactKinds": [
+                "format-report"
+              ]
+            },
+            {
+              "id": "lint",
+              "argv": [
+                "pnpm",
+                "lint"
+              ],
+              "expectedArtifactKinds": [
+                "lint-report"
+              ]
+            },
+            {
+              "id": "lint-architecture",
+              "argv": [
+                "pnpm",
+                "lint:architecture"
+              ],
+              "expectedArtifactKinds": [
+                "architecture-report"
+              ]
+            },
+            {
+              "id": "typecheck",
+              "argv": [
+                "pnpm",
+                "typecheck"
+              ],
+              "expectedArtifactKinds": [
+                "typecheck-report"
+              ]
+            },
+            {
+              "id": "build",
+              "argv": [
+                "pnpm",
+                "build"
+              ],
+              "expectedArtifactKinds": [
+                "build-report"
+              ]
+            },
+            {
+              "id": "test-unit-fast",
+              "argv": [
+                "pnpm",
+                "test:unit:fast"
+              ],
+              "expectedArtifactKinds": [
+                "fast-unit-vitest-report",
+                "unit-partition-report"
+              ]
+            },
+            {
+              "id": "test-orchestrator",
+              "argv": [
+                "pnpm",
+                "test:orchestrator"
+              ],
+              "expectedArtifactKinds": [
+                "orchestrator-vitest-report"
+              ]
+            }
+          ]
+        },
+        {
+          "schemaVersion": "verification-schedule-projection.v1",
+          "tier": "milestone",
+          "commandCount": 18,
+          "exactVerificationIncluded": true,
+          "actualCheckIds": [
+            "test-invariants",
+            "format-check",
+            "lint",
+            "lint-architecture",
+            "typecheck",
+            "build",
+            "test-unit-fast",
+            "test-unit-migrations",
+            "test-orchestrator",
+            "domain-browser",
+            "domain-construction-standard",
+            "domain-development",
+            "domain-entitlement",
+            "domain-entitlement-standard",
+            "domain-networks",
+            "domain-planning",
+            "domain-resources",
+            "domain-simulation",
+            "exact-readiness"
+          ],
+          "commands": [
+            {
+              "id": "test-invariants",
+              "argv": [
+                "pnpm",
+                "test:invariants"
+              ],
+              "expectedArtifactKinds": [
+                "invariant-suite-report"
+              ]
+            },
+            {
+              "id": "format-check",
+              "argv": [
+                "pnpm",
+                "format:check"
+              ],
+              "expectedArtifactKinds": [
+                "format-report"
+              ]
+            },
+            {
+              "id": "lint",
+              "argv": [
+                "pnpm",
+                "lint"
+              ],
+              "expectedArtifactKinds": [
+                "lint-report"
+              ]
+            },
+            {
+              "id": "lint-architecture",
+              "argv": [
+                "pnpm",
+                "lint:architecture"
+              ],
+              "expectedArtifactKinds": [
+                "architecture-report"
+              ]
+            },
+            {
+              "id": "typecheck",
+              "argv": [
+                "pnpm",
+                "typecheck"
+              ],
+              "expectedArtifactKinds": [
+                "typecheck-report"
+              ]
+            },
+            {
+              "id": "build",
+              "argv": [
+                "pnpm",
+                "build"
+              ],
+              "expectedArtifactKinds": [
+                "build-report"
+              ]
+            },
+            {
+              "id": "test-unit-fast",
+              "argv": [
+                "pnpm",
+                "test:unit:fast"
+              ],
+              "expectedArtifactKinds": [
+                "fast-unit-vitest-report",
+                "unit-partition-report"
+              ]
+            },
+            {
+              "id": "test-unit-migrations",
+              "argv": [
+                "pnpm",
+                "test:unit:migrations"
+              ],
+              "expectedArtifactKinds": [
+                "migration-unit-vitest-report",
+                "unit-partition-report"
+              ]
+            },
+            {
+              "id": "test-orchestrator",
+              "argv": [
+                "pnpm",
+                "test:orchestrator"
+              ],
+              "expectedArtifactKinds": [
+                "orchestrator-vitest-report"
+              ]
+            },
+            {
+              "id": "domain-browser",
+              "argv": [
+                "pnpm",
+                "verify:domain-browser"
+              ],
+              "expectedArtifactKinds": [
+                "domain-browser-report"
+              ]
+            },
+            {
+              "id": "domain-construction-standard",
+              "argv": [
+                "pnpm",
+                "verify:domain-construction-standard"
+              ],
+              "expectedArtifactKinds": [
+                "domain-construction-standard-proof",
+                "independent-domain-construction-standard-proof",
+                "domain-construction-standard-vitest-report",
+                "domain-construction-standard-worker-parity-report",
+                "playwright-report",
+                "browser-diagnostics",
+                "domain-construction-standard-verification-report"
+              ]
+            },
+            {
+              "id": "domain-development",
+              "argv": [
+                "pnpm",
+                "verify:domain-development"
+              ],
+              "expectedArtifactKinds": [
+                "domain-development-report"
+              ]
+            },
+            {
+              "id": "domain-entitlement",
+              "argv": [
+                "pnpm",
+                "verify:domain-entitlement"
+              ],
+              "expectedArtifactKinds": [
+                "domain-entitlement-report"
+              ]
+            },
+            {
+              "id": "domain-entitlement-standard",
+              "argv": [
+                "pnpm",
+                "verify:domain-entitlement-standard"
+              ],
+              "expectedArtifactKinds": [
+                "domain-entitlement-standard-report"
+              ]
+            },
+            {
+              "id": "domain-networks",
+              "argv": [
+                "pnpm",
+                "verify:domain-networks"
+              ],
+              "expectedArtifactKinds": [
+                "domain-networks-report"
+              ]
+            },
+            {
+              "id": "domain-planning",
+              "argv": [
+                "pnpm",
+                "verify:domain-planning"
+              ],
+              "expectedArtifactKinds": [
+                "domain-planning-report"
+              ]
+            },
+            {
+              "id": "domain-resources",
+              "argv": [
+                "pnpm",
+                "verify:domain-resources"
+              ],
+              "expectedArtifactKinds": [
+                "domain-resources-report"
+              ]
+            },
+            {
+              "id": "domain-simulation",
+              "argv": [
+                "pnpm",
+                "verify:domain-simulation"
+              ],
+              "expectedArtifactKinds": [
+                "domain-simulation-report"
+              ]
+            },
+            {
+              "id": "exact-readiness",
+              "argv": [
+                "pnpm",
+                "verify"
+              ],
+              "expectedArtifactKinds": []
+            }
+          ]
+        },
+        {
+          "schemaVersion": "verification-schedule-projection.v1",
+          "tier": "periodic",
+          "commandCount": 0,
+          "exactVerificationIncluded": true,
+          "actualCheckIds": [
+            "exact-readiness"
+          ],
+          "commands": [
+            {
+              "id": "exact-readiness",
+              "argv": [
+                "pnpm",
+                "verify"
+              ],
+              "expectedArtifactKinds": []
+            }
+          ]
+        }
+      ],
+      "afterPlans": [
+        {
+          "schemaVersion": "verification-schedule-projection.v1",
+          "tier": "iteration",
+          "commandCount": 1,
+          "exactVerificationIncluded": false,
+          "actualCheckIds": [
+            "test-invariants"
+          ],
+          "commands": [
+            {
+              "id": "test-invariants",
+              "argv": [
+                "pnpm",
+                "test:invariants"
+              ],
+              "expectedArtifactKinds": [
+                "invariant-suite-report"
+              ]
+            }
+          ]
+        },
+        {
+          "schemaVersion": "verification-schedule-projection.v1",
+          "tier": "candidate",
+          "commandCount": 10,
+          "exactVerificationIncluded": false,
+          "actualCheckIds": [
+            "test-invariants",
+            "format-check",
+            "lint",
+            "lint-architecture",
+            "typecheck",
+            "build",
+            "test-partition-controller-runtime",
+            "test-partition-repository-tooling",
+            "test-partition-adopter-template",
+            "test-partition-trusted-container-fixture"
+          ],
+          "commands": [
+            {
+              "id": "test-invariants",
+              "argv": [
+                "pnpm",
+                "test:invariants"
+              ],
+              "expectedArtifactKinds": [
+                "invariant-suite-report"
+              ]
+            },
+            {
+              "id": "format-check",
+              "argv": [
+                "pnpm",
+                "format:check"
+              ],
+              "expectedArtifactKinds": [
+                "format-report"
+              ]
+            },
+            {
+              "id": "lint",
+              "argv": [
+                "pnpm",
+                "lint"
+              ],
+              "expectedArtifactKinds": [
+                "lint-report"
+              ]
+            },
+            {
+              "id": "lint-architecture",
+              "argv": [
+                "pnpm",
+                "lint:architecture"
+              ],
+              "expectedArtifactKinds": [
+                "architecture-report"
+              ]
+            },
+            {
+              "id": "typecheck",
+              "argv": [
+                "pnpm",
+                "typecheck"
+              ],
+              "expectedArtifactKinds": [
+                "typecheck-report"
+              ]
+            },
+            {
+              "id": "build",
+              "argv": [
+                "pnpm",
+                "build"
+              ],
+              "expectedArtifactKinds": [
+                "build-report"
+              ]
+            },
+            {
+              "id": "test-partition-controller-runtime",
+              "argv": [
+                "pnpm",
+                "test:partition:controller-runtime"
+              ],
+              "expectedArtifactKinds": [
+                "test-partition-report",
+                "test-partition-vitest-report",
+                "test-run-summary"
+              ]
+            },
+            {
+              "id": "test-partition-repository-tooling",
+              "argv": [
+                "pnpm",
+                "test:partition:repository-tooling"
+              ],
+              "expectedArtifactKinds": [
+                "test-partition-report",
+                "test-partition-vitest-report",
+                "test-run-summary"
+              ]
+            },
+            {
+              "id": "test-partition-adopter-template",
+              "argv": [
+                "pnpm",
+                "test:partition:adopter-template"
+              ],
+              "expectedArtifactKinds": [
+                "test-partition-report",
+                "test-partition-vitest-report",
+                "test-run-summary"
+              ]
+            },
+            {
+              "id": "test-partition-trusted-container-fixture",
+              "argv": [
+                "pnpm",
+                "test:partition:trusted-container-fixture"
+              ],
+              "expectedArtifactKinds": [
+                "test-partition-report",
+                "test-partition-vitest-report",
+                "test-run-summary"
+              ]
+            }
+          ]
+        },
+        {
+          "schemaVersion": "verification-schedule-projection.v1",
+          "tier": "milestone",
+          "commandCount": 19,
+          "exactVerificationIncluded": true,
+          "actualCheckIds": [
+            "test-invariants",
+            "format-check",
+            "lint",
+            "lint-architecture",
+            "typecheck",
+            "build",
+            "test-partition-controller-runtime",
+            "test-partition-repository-tooling",
+            "test-partition-adopter-template",
+            "test-partition-trusted-container-fixture",
+            "domain-browser",
+            "domain-construction-standard",
+            "domain-development",
+            "domain-entitlement",
+            "domain-entitlement-standard",
+            "domain-networks",
+            "domain-planning",
+            "domain-resources",
+            "domain-simulation",
+            "exact-readiness"
+          ],
+          "commands": [
+            {
+              "id": "test-invariants",
+              "argv": [
+                "pnpm",
+                "test:invariants"
+              ],
+              "expectedArtifactKinds": [
+                "invariant-suite-report"
+              ]
+            },
+            {
+              "id": "format-check",
+              "argv": [
+                "pnpm",
+                "format:check"
+              ],
+              "expectedArtifactKinds": [
+                "format-report"
+              ]
+            },
+            {
+              "id": "lint",
+              "argv": [
+                "pnpm",
+                "lint"
+              ],
+              "expectedArtifactKinds": [
+                "lint-report"
+              ]
+            },
+            {
+              "id": "lint-architecture",
+              "argv": [
+                "pnpm",
+                "lint:architecture"
+              ],
+              "expectedArtifactKinds": [
+                "architecture-report"
+              ]
+            },
+            {
+              "id": "typecheck",
+              "argv": [
+                "pnpm",
+                "typecheck"
+              ],
+              "expectedArtifactKinds": [
+                "typecheck-report"
+              ]
+            },
+            {
+              "id": "build",
+              "argv": [
+                "pnpm",
+                "build"
+              ],
+              "expectedArtifactKinds": [
+                "build-report"
+              ]
+            },
+            {
+              "id": "test-partition-controller-runtime",
+              "argv": [
+                "pnpm",
+                "test:partition:controller-runtime"
+              ],
+              "expectedArtifactKinds": [
+                "test-partition-report",
+                "test-partition-vitest-report",
+                "test-run-summary"
+              ]
+            },
+            {
+              "id": "test-partition-repository-tooling",
+              "argv": [
+                "pnpm",
+                "test:partition:repository-tooling"
+              ],
+              "expectedArtifactKinds": [
+                "test-partition-report",
+                "test-partition-vitest-report",
+                "test-run-summary"
+              ]
+            },
+            {
+              "id": "test-partition-adopter-template",
+              "argv": [
+                "pnpm",
+                "test:partition:adopter-template"
+              ],
+              "expectedArtifactKinds": [
+                "test-partition-report",
+                "test-partition-vitest-report",
+                "test-run-summary"
+              ]
+            },
+            {
+              "id": "test-partition-trusted-container-fixture",
+              "argv": [
+                "pnpm",
+                "test:partition:trusted-container-fixture"
+              ],
+              "expectedArtifactKinds": [
+                "test-partition-report",
+                "test-partition-vitest-report",
+                "test-run-summary"
+              ]
+            },
+            {
+              "id": "domain-browser",
+              "argv": [
+                "pnpm",
+                "verify:domain-browser"
+              ],
+              "expectedArtifactKinds": [
+                "domain-browser-report"
+              ]
+            },
+            {
+              "id": "domain-construction-standard",
+              "argv": [
+                "pnpm",
+                "verify:domain-construction-standard"
+              ],
+              "expectedArtifactKinds": [
+                "domain-construction-standard-proof",
+                "independent-domain-construction-standard-proof",
+                "domain-construction-standard-vitest-report",
+                "domain-construction-standard-worker-parity-report",
+                "playwright-report",
+                "browser-diagnostics",
+                "domain-construction-standard-verification-report"
+              ]
+            },
+            {
+              "id": "domain-development",
+              "argv": [
+                "pnpm",
+                "verify:domain-development"
+              ],
+              "expectedArtifactKinds": [
+                "domain-development-report"
+              ]
+            },
+            {
+              "id": "domain-entitlement",
+              "argv": [
+                "pnpm",
+                "verify:domain-entitlement"
+              ],
+              "expectedArtifactKinds": [
+                "domain-entitlement-report"
+              ]
+            },
+            {
+              "id": "domain-entitlement-standard",
+              "argv": [
+                "pnpm",
+                "verify:domain-entitlement-standard"
+              ],
+              "expectedArtifactKinds": [
+                "domain-entitlement-standard-report"
+              ]
+            },
+            {
+              "id": "domain-networks",
+              "argv": [
+                "pnpm",
+                "verify:domain-networks"
+              ],
+              "expectedArtifactKinds": [
+                "domain-networks-report"
+              ]
+            },
+            {
+              "id": "domain-planning",
+              "argv": [
+                "pnpm",
+                "verify:domain-planning"
+              ],
+              "expectedArtifactKinds": [
+                "domain-planning-report"
+              ]
+            },
+            {
+              "id": "domain-resources",
+              "argv": [
+                "pnpm",
+                "verify:domain-resources"
+              ],
+              "expectedArtifactKinds": [
+                "domain-resources-report"
+              ]
+            },
+            {
+              "id": "domain-simulation",
+              "argv": [
+                "pnpm",
+                "verify:domain-simulation"
+              ],
+              "expectedArtifactKinds": [
+                "domain-simulation-report"
+              ]
+            },
+            {
+              "id": "exact-readiness",
+              "argv": [
+                "pnpm",
+                "verify"
+              ],
+              "expectedArtifactKinds": []
+            }
+          ]
+        },
+        {
+          "schemaVersion": "verification-schedule-projection.v1",
+          "tier": "periodic",
+          "commandCount": 0,
+          "exactVerificationIncluded": true,
+          "actualCheckIds": [
+            "exact-readiness"
+          ],
+          "commands": [
+            {
+              "id": "exact-readiness",
+              "argv": [
+                "pnpm",
+                "verify"
+              ],
+              "expectedArtifactKinds": []
+            }
+          ]
+        }
+      ],
+      "diff": [
+        {
+          "tier": "iteration",
+          "added": [],
+          "removed": []
+        },
+        {
+          "tier": "candidate",
+          "added": [
+            "test-partition-controller-runtime",
+            "test-partition-repository-tooling",
+            "test-partition-adopter-template",
+            "test-partition-trusted-container-fixture"
+          ],
+          "removed": [
+            "test-unit-fast",
+            "test-orchestrator"
+          ]
+        },
+        {
+          "tier": "milestone",
+          "added": [
+            "test-partition-controller-runtime",
+            "test-partition-repository-tooling",
+            "test-partition-adopter-template",
+            "test-partition-trusted-container-fixture"
+          ],
+          "removed": [
+            "test-unit-fast",
+            "test-unit-migrations",
+            "test-orchestrator"
+          ]
+        },
+        {
+          "tier": "periodic",
+          "added": [],
+          "removed": []
+        }
+      ],
+      "contentSha256": "4fbdbb3528043e35d6859fa9846da5d38d039249a162ca8a698b33c04e6f3c74"
+    }
+  ]
+}

@@ -26,30 +26,6 @@
       "expectedArtifactKinds": ["invariant-suite-report"]
     },
     {
-      "id": "test-unit-fast",
-      "argv": ["pnpm", "test:unit:fast"],
-      "tiers": ["candidate", "milestone"],
-      "expectedArtifactKinds": [
-        "fast-unit-vitest-report",
-        "unit-partition-report"
-      ]
-    },
-    {
-      "id": "test-unit-migrations",
-      "argv": ["pnpm", "test:unit:migrations"],
-      "tiers": ["milestone"],
-      "expectedArtifactKinds": [
-        "migration-unit-vitest-report",
-        "unit-partition-report"
-      ]
-    },
-    {
-      "id": "test-orchestrator",
-      "argv": ["pnpm", "test:orchestrator"],
-      "tiers": ["candidate", "milestone"],
-      "expectedArtifactKinds": ["orchestrator-vitest-report"]
-    },
-    {
       "id": "format-check",
       "argv": ["pnpm", "format:check"],
       "tiers": ["candidate", "milestone"],
@@ -78,6 +54,46 @@
       "argv": ["pnpm", "build"],
       "tiers": ["candidate", "milestone"],
       "expectedArtifactKinds": ["build-report"]
+    },
+    {
+      "id": "test-partition-controller-runtime",
+      "argv": ["pnpm", "test:partition:controller-runtime"],
+      "tiers": ["candidate", "milestone"],
+      "expectedArtifactKinds": [
+        "test-partition-report",
+        "test-partition-vitest-report",
+        "test-run-summary"
+      ]
+    },
+    {
+      "id": "test-partition-repository-tooling",
+      "argv": ["pnpm", "test:partition:repository-tooling"],
+      "tiers": ["candidate", "milestone"],
+      "expectedArtifactKinds": [
+        "test-partition-report",
+        "test-partition-vitest-report",
+        "test-run-summary"
+      ]
+    },
+    {
+      "id": "test-partition-adopter-template",
+      "argv": ["pnpm", "test:partition:adopter-template"],
+      "tiers": ["candidate", "milestone"],
+      "expectedArtifactKinds": [
+        "test-partition-report",
+        "test-partition-vitest-report",
+        "test-run-summary"
+      ]
+    },
+    {
+      "id": "test-partition-trusted-container-fixture",
+      "argv": ["pnpm", "test:partition:trusted-container-fixture"],
+      "tiers": ["candidate", "milestone"],
+      "expectedArtifactKinds": [
+        "test-partition-report",
+        "test-partition-vitest-report",
+        "test-run-summary"
+      ]
     },
     {
       "id": "domain-construction-standard",
@@ -161,7 +177,7 @@
     "tools/milestone-orchestrator/config/verification-scope-policy.json"
   ],
   "requiredInvariantSuiteId": "milestone-loop-core-invariants.v1",
-  "scopePolicyId": "milestone-loop-shadow-scope-policy.v1",
+  "scopePolicyId": "milestone-loop-shadow-scope-policy.v2",
   "exactVerification": {
     "argv": ["pnpm", "verify"],
     "requiresNoArguments": true,

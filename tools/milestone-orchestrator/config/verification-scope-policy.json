@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "id": "milestone-loop-shadow-scope-policy.v1",
+  "id": "milestone-loop-shadow-scope-policy.v2",
   "mode": "shadow-only",
   "unknownDisposition": "fail-broad",
   "closureSuppressionAllowed": false,
@@ -39,14 +39,16 @@
   "mandatoryChecks": {
     "protected-authority": [
       "test-invariants",
-      "test-unit",
-      "test-orchestrator",
+      "test-partition-controller-runtime",
+      "test-partition-repository-tooling",
+      "test-partition-adopter-template",
       "build"
     ],
     "canonical-encoding": [
       "test-invariants",
-      "test-unit",
-      "test-unit-migrations",
+      "test-partition-controller-runtime",
+      "test-partition-repository-tooling",
+      "test-partition-adopter-template",
       "domain-construction-standard",
       "domain-resources",
       "domain-networks",
@@ -57,34 +59,46 @@
       "domain-simulation",
       "domain-browser"
     ],
-    "shared-protocol": ["test-invariants", "test-unit", "typecheck", "build"],
+    "shared-protocol": [
+      "test-invariants",
+      "test-partition-controller-runtime",
+      "test-partition-repository-tooling",
+      "test-partition-adopter-template",
+      "typecheck",
+      "build"
+    ],
     "persistence-codec": [
       "test-invariants",
-      "test-unit",
-      "test-unit-migrations",
+      "test-partition-controller-runtime",
+      "test-partition-repository-tooling",
+      "test-partition-adopter-template",
       "domain-construction-standard",
       "domain-entitlement-standard",
       "domain-simulation"
     ],
     "migration": [
       "test-invariants",
-      "test-unit",
-      "test-unit-migrations",
+      "test-partition-controller-runtime",
+      "test-partition-repository-tooling",
+      "test-partition-adopter-template",
       "domain-construction-standard",
       "domain-entitlement-standard",
       "domain-simulation"
     ],
     "accepted-fixture": [
       "test-invariants",
-      "test-unit",
-      "test-unit-migrations",
+      "test-partition-controller-runtime",
+      "test-partition-repository-tooling",
+      "test-partition-adopter-template",
       "domain-construction-standard",
       "domain-entitlement-standard",
       "domain-simulation"
     ],
     "standard-state": [
       "test-invariants",
-      "test-unit",
+      "test-partition-controller-runtime",
+      "test-partition-repository-tooling",
+      "test-partition-adopter-template",
       "typecheck",
       "build",
       "domain-construction-standard",
@@ -99,7 +113,9 @@
     ],
     "composition-root": [
       "test-invariants",
-      "test-unit",
+      "test-partition-controller-runtime",
+      "test-partition-repository-tooling",
+      "test-partition-adopter-template",
       "typecheck",
       "build",
       "domain-construction-standard",
@@ -126,25 +142,46 @@
       "lint-architecture",
       "typecheck",
       "build",
-      "test-unit"
+      "test-partition-controller-runtime",
+      "test-partition-repository-tooling",
+      "test-partition-adopter-template"
     ],
     "browser-host": ["test-invariants", "typecheck", "build", "domain-browser"],
-    "ui-renderer": ["test-invariants", "test-unit-fast", "build"],
+    "ui-renderer": [
+      "test-invariants",
+      "test-partition-controller-runtime",
+      "test-partition-repository-tooling",
+      "test-partition-adopter-template",
+      "build"
+    ],
     "domain-local-simulation": [
       "test-invariants",
-      "test-unit-fast",
+      "test-partition-controller-runtime",
+      "test-partition-repository-tooling",
+      "test-partition-adopter-template",
       "typecheck"
     ],
     "orchestrator-evidence": [
       "test-invariants",
-      "test-orchestrator",
+      "test-partition-controller-runtime",
+      "test-partition-adopter-template",
       "typecheck"
     ],
     "documentation-only": ["test-invariants"],
-    "unknown": ["test-invariants", "test-unit", "test-orchestrator", "build"]
+    "unknown": [
+      "test-invariants",
+      "test-partition-controller-runtime",
+      "test-partition-repository-tooling",
+      "test-partition-adopter-template",
+      "build"
+    ]
   },
   "workspaceChecks": {
-    "@milestone-loop/orchestrator": ["test-orchestrator", "typecheck"],
+    "@milestone-loop/orchestrator": [
+      "test-partition-controller-runtime",
+      "test-partition-adopter-template",
+      "typecheck"
+    ],
     "milestone-loop-template": [
       "dependencies",
       "format-check",
@@ -152,7 +189,9 @@
       "lint-architecture",
       "typecheck",
       "build",
-      "test-unit"
+      "test-partition-controller-runtime",
+      "test-partition-repository-tooling",
+      "test-partition-adopter-template"
     ]
   },
   "graduation": {

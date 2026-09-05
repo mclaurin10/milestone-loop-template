@@ -33,13 +33,14 @@ import {
   trustedTestExecutionProvider,
   trustedTestExecutionProviderIdentity,
   genericTierVerificationManifest,
+  sourceV1ScopePolicyFixture,
   validConfig,
 } from "../test/fixtures.js";
 
 const repositoryRoot = resolve(import.meta.dirname, "../../..");
 
 async function genericPlanningFixture() {
-  const scopePolicy = await loadVerificationScopePolicy(repositoryRoot);
+  const scopePolicy = sourceV1ScopePolicyFixture(repositoryRoot);
   return {
     manifest: genericTierVerificationManifest({
       scopePolicyId: scopePolicy.value.id,

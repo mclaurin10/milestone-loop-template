@@ -17,6 +17,10 @@ import {
 } from "../src/contracts.js";
 import { createInitialState } from "../src/state-store.js";
 import {
+  commissionedSourceAnchor,
+  parseSourceGeneration,
+} from "../src/commissioning-audit.js";
+import {
   executionProviderIdentity,
   type ExecutionProviderIdentity,
 } from "../src/execution-provider-identity.js";
@@ -25,6 +29,15 @@ import type {
   CandidateExecutionProvider,
 } from "../src/execution-provider.js";
 import type { VerificationScheduleProjection } from "../src/schedule-projection.js";
+
+// Historical and generic manifests retain their original policy vocabulary.
+// Active-source tests must load the live manifest and live policy together.
+export function sourceV1ScopePolicyFixture(repositoryRoot: string) {
+  const { generation, policy } = parseSourceGeneration(
+    commissionedSourceAnchor(repositoryRoot).generation,
+  );
+  return { value: policy, sha256: generation.hashes.policy };
+}
 
 export function genericCommissioningTierPlans(): readonly VerificationScheduleProjection[] {
   return VERIFICATION_TIERS.map((tier) => {

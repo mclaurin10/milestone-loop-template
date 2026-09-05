@@ -177,8 +177,11 @@ their JSON schemas live in `../schemas/test-run-summary.schema.json` and
 `test:partitions:shadow` aggregate authenticates the exact-union/intersection
 proof, normalized legacy-equivalence result, and receipt-validated summary
 reduction. Measurements cannot change test success, authorize cutover, or make
-a benchmark claim. These commands are not part of the commissioned tier
-schedule yet and do not suppress existing execution.
+a benchmark claim. The source v2 schedule commissions all four owners in
+candidate and milestone. Only a complete canonical owner set, validated
+invariant prerequisite, and production ownership child allow subsumption of
+the legacy unit/fast/migration/orchestrator IDs. Legacy commands remain
+auxiliary diagnostics; their scripts and the exact verifier are unchanged.
 
 ## slow-suite-registry.json (`SlowSuiteRegistry`)
 
@@ -218,6 +221,32 @@ the current invariant/scope registries, protected floor, focused package
 commands, exact and reconciliation policies, and all four tier plans. It
 derives the manifest timestamp from the base commit, publishes validated bytes
 without clobber, reports path/bytes/SHA-256, and never regenerates authority.
+
+The source-only `wp6e-partition-amendment.json` request applies via
+`pnpm loop:commission:amend -- --descriptor
+tools/milestone-orchestrator/config/wp6e-partition-amendment.json` from its
+clean committed target-branch base. It supplies exact proposed input/policy
+text, expected prior hashes and chain tip, canonical paths, and decision
+heading; the tool generates manifest bytes and the append-only ledger.
+Commit all four outputs together. The request is stale after application;
+`--resume` only resumes that same interrupted operation. Later amendments
+need a new committed request matching the current generation and chain tip.
+For reversal, supply the anchor's original input and policy bytes. Doctor
+and controller consumers reject partial publication and unaudited drift.
+Prepare proposed input/policy text with the repository JSON formatter. All
+parsed values must equal the approved generation; formatting-only requests
+are rejected as no-ops, and v1 reversal requires the exact original bytes.
+
+Policy `milestone-loop-shadow-scope-policy.v2` maps full-unit and fast-unit
+recommendations to controller/repository/adopter owners, orchestrator to
+controller/adopter, and migration to controller. The trusted-container owner
+is commissioned independently in candidate and milestone; broad selection
+also recommends it. All non-test checks, trigger classes, workspace rules,
+and deferred graduation fields are preserved. Canonical partition commands
+receive a 65-minute tier deadline, retained with exact argv in tier records;
+other focused commands retain 20 minutes. The request and ledger schemas are
+`commissioning-amendment-request.schema.json` and
+`commissioning-amendment-ledger.schema.json` under `../schemas/`.
 
 Commissioning Doctor v2 exposes a `verification-schedule-projection.v1` for
 each tier. Its ordered check IDs and command definitions come from the

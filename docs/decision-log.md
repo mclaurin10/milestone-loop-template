@@ -3,6 +3,41 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-09-05 — Preserve policy provenance in historical test fixtures
+
+The active v2 suite exposed fourteen historical/generic tests that loaded a
+legacy manifest with the live policy. Their setup now reads the original v1
+policy from the same committed commissioning anchor used by generation
+compatibility tests. Existing assertions, identities, and legacy meanings
+remain intact; the active-source test keeps the actual live pair. This is a
+fixture correction within the coherent activation, not a relaxation of the
+production rule rejecting mixed source generations. The repaired active
+generation passes the complete local broad suite and independent receipt
+audit. The candidate execution and fail-closed tier gates remain separate
+acceptance obligations; neither hosted controller success nor shadow
+evidence may replace them. WP6f owns any later performance interpretation.
+
+## 2026-09-04 — WP6e corrected source generation and audited reversal boundary
+
+The formatted request was applied through the real CLI from clean repair
+commit `b03a6cd`; both publication validation and the existing format
+command passed. All three context comparisons retain their complete non-test
+command definitions, and iteration/periodic projections remain identical.
+The source v2 schedule and scope policy are published together with the
+generated manifest and Git-anchored ledger. Generated adopters, exact
+closure, existing scripts, the workflow, and all frozen measurement
+identities remain unchanged.
+
+The source request becomes stale after application. An interrupted
+invocation resumes its exact committed request; reversal requires a new
+request matching the current hashes and chain tip and containing the
+original v1 input/policy bytes. Formatting alone cannot create another
+generation. The first failed uncommitted application remains diagnostic
+evidence outside this source history. No acceptance or readiness gate is
+inferred from these successful publication, formatting, or projection
+checks. Full-candidate prerequisites remain an explicit unresolved scope
+conflict; WP6f interpretation is deferred.
+
 ## 2026-09-04 — WP6e source formatting follows the committed descriptor
 
 An actual v2 publication passed semantic/provenance checks but failed the

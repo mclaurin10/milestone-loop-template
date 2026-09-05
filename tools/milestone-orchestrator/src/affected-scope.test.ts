@@ -9,10 +9,8 @@ import {
   scopeSelectionBytes,
   validateScopeSelection,
 } from "./affected-scope.js";
-import {
-  loadHistoricalVerificationManifest,
-  loadVerificationScopePolicy,
-} from "./config.js";
+import { loadHistoricalVerificationManifest } from "./config.js";
+import { sourceV1ScopePolicyFixture } from "../test/fixtures.js";
 import { buildPackageGraph } from "./package-graph.js";
 import { planVerificationTier } from "./verification-tier.js";
 
@@ -42,7 +40,7 @@ interface ScopeFixture {
 async function setup() {
   const [manifest, policy, graph] = await Promise.all([
     loadHistoricalVerificationManifest(repositoryRoot, "source-benchmark"),
-    loadVerificationScopePolicy(repositoryRoot),
+    sourceV1ScopePolicyFixture(repositoryRoot),
     buildPackageGraph(repositoryRoot),
   ]);
   return { manifest, policy, graph };

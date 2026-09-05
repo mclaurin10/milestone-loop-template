@@ -40,8 +40,10 @@ Verification cost scales with how much a change claims:
 1. **Iteration** (`pnpm verify:iteration`) — the always-run invariant suite
    plus the focused checks selected for the change while a worker iterates.
 2. **Candidate** (`pnpm verify:candidate`) — every candidate-tier command in
-   the verification manifest (format, lint, typecheck, build, fast unit,
-   orchestrator suite, …) against a clean candidate tree.
+   the verification manifest against a clean candidate tree. This source
+   repository schedules invariants first, format/lint/architecture/typecheck/build,
+   then the four canonical owner partitions; scope recommendations may add
+   project checks.
 3. **Milestone** (`pnpm verify:milestone`) — the full milestone-tier command
    set plus the authoritative `pnpm verify` exact closure; this is what an
    integrated milestone must pass.
@@ -73,7 +75,7 @@ commissioned, invariant, generated-adopter, OCI, and exact-runtime CI entry
 points, then compares their normalized union with
 `config/test-ownership.json`. A new, removed, multiply owned, ambiguously
 discovered, or invalid-owner test fails without a receipt. The owner-partition
-work called WP6b in repository history corresponds to intended WP6c. Its shadow
+work called WP6b in repository history corresponds to intended WP6c. The
 commands consume that passing declaration directly:
 `test:partition:controller-runtime`, `test:partition:repository-tooling`,
 `test:partition:adopter-template`, and
@@ -82,9 +84,27 @@ Vitest report(s). `pnpm test:partitions:shadow` requires a clean immutable
 candidate, validates the child receipts, proves the owner partitions are an
 exact disjoint discovery union, deduplicates the intentionally overlapping
 legacy results by normalized file/test identity, and compares disposition and
-failure outcome. This remains a shadow-only candidate surface; the existing
-executors, commissioned tiers, no-argument verifier, and exact-runtime closure
-schedule are unchanged.
+failure outcome. The source v2 schedule commissions each owner once in
+candidate and milestone. Complete canonical partitions subsume the legacy
+unit/fast/migration/orchestrator checks only after the production invariant
+prerequisite is validated. Each partition has a 65-minute tier deadline;
+other focused checks retain 20 minutes. Legacy scripts remain available for
+diagnosis, shadow comparison, and measurements. Scope selection remains
+shadow-only, and exact closure remains the literal no-argument `pnpm verify`.
+
+The source schedule changes through
+`pnpm loop:commission:amend -- --descriptor <committed-file>` from a clean
+attached target-branch checkout. The reviewed source request is
+`tools/milestone-orchestrator/config/wp6e-partition-amendment.json`.
+The operation generates the input, scope policy, manifest, and append-only
+ledger together. Commit all four outputs as one verified generation. A crash
+leaves a pending intent that blocks consumers; resume the same committed
+request with `--resume`. Recovery preserves foreign changes. Reversal needs
+a new committed descriptor with the current hashes and chain tip and the
+original v1 input/policy bytes. The tool regenerates the manifest and extends
+the ledger. Generated adopters retain their own one-shot bootstrap schedule.
+These schedule and provenance checks do not establish candidate or readiness
+success; project-owned checks and trusted execution must still pass.
 
 Intended WP6b adds compact, non-semantic measurements to the legacy unit and
 orchestrator commands and those owner partitions. Each measured command writes

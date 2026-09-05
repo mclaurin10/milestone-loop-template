@@ -1,20 +1,18 @@
 # Current Execution Plan
 
-**Status:** Compatible formatting/no-op repair verified; fresh coherent application next;
-full-candidate prerequisites remain open
-**Updated:** 2026-09-04
-**Owner:** autonomous loop
-**Predecessor:** intended WP6d closed at record-only commit
-`ac4e9a2f43049d446356c2bc00b3f395df33e5b6` (tree
+**Status:** Source v2 locally verified; clean after-state and protected
+hosted gates pending; full-candidate prerequisites remain open **Updated:**
+2026-09-05 **Owner:** autonomous loop **Predecessor:** intended WP6d closed
+at record-only commit `ac4e9a2f43049d446356c2bc00b3f395df33e5b6` (tree
 `db1da52cdf388bd3aadd90b975bf157bb37cbea8`; executable candidate
 `93e03e2ff28d295f38590b7723d5d6b1460eae07`), pushed to `origin/master`.
 Protected exact-runtime run
 `https://github.com/mclaurin10/milestone-loop-template/actions/runs/33434584138`
-passed all five jobs on that closeout commit, which satisfied the WP6d plan's
-final "Next Action" gate. Measurement evidence: hosted matrix run
-`33402460152` (five cold/warm pairs per platform) independently reproduced at
-`C:/w/wp6d-matrix-33402460152` and `C:/w/wp6d-independent-33402460152`; see
-the 2026-08-31 autonomy-log and decision-log entries.
+passed all five jobs on that closeout commit, which satisfied the WP6d
+plan's final "Next Action" gate. Measurement evidence: hosted matrix run
+`33402460152` (five cold/warm pairs per platform) independently reproduced
+at `C:/w/wp6d-matrix-33402460152` and `C:/w/wp6d-independent-33402460152`;
+see the 2026-08-31 autonomy-log and decision-log entries.
 
 ## Objective
 
@@ -30,23 +28,24 @@ amendment, proven by executed before/after tier plans and test inventories,
 and reversible by the same mechanism.
 
 The maintainer approved the reviewed recommendation on 2026-09-04. The
-decision is recorded under `2026-09-04 — WP6e recomposition direction and
-transition requirements approved` in `docs/decision-log.md`. Routine
-implementation choices proceed under `AGENTS.md`; another confirmation is
-not a prerequisite. Approval records the direction, not execution evidence.
-Paths abbreviated as `config/`, `schemas/`, or a TypeScript basename below
-are relative to `tools/milestone-orchestrator/` or its `src/` directory.
+decision is recorded under
+`2026-09-04 — WP6e recomposition direction and transition requirements approved`
+in `docs/decision-log.md`. Routine implementation choices proceed under
+`AGENTS.md`; another confirmation is not a prerequisite. Approval records
+the direction, not execution evidence. Paths abbreviated as `config/`,
+`schemas/`, or a TypeScript basename below are relative to
+`tools/milestone-orchestrator/` or its `src/` directory.
 
-Explicit non-goals: interpreting any timing, stating an improvement, benchmark,
-or cutover-benefit claim, or deciding keep/revert (intended **WP6f**);
-changing `scripts/verify.mjs`, readiness stages, profiles, or the exact
-command; modifying `.github/workflows/exact-runtime-ci.yml`; changing
+Explicit non-goals: interpreting any timing, stating an improvement,
+benchmark, or cutover-benefit claim, or deciding keep/revert (intended
+**WP6f**); changing `scripts/verify.mjs`, readiness stages, profiles, or the
+exact command; modifying `.github/workflows/exact-runtime-ci.yml`; changing
 `benchmark.ts` / commissioned D032 semantics; changing the measurement lane
-catalogue, `TEST_OWNER_IDS`, or the ownership catalogue's owner set; activating
-selector suppression or scope-policy graduation; changing the generated
-adopter schedule (`adopter-package.ts` `focusedCommands()` has no legacy
-duplication); CAL-1; frozen authorities; immutable acceptance; rewriting any
-historical record.
+catalogue, `TEST_OWNER_IDS`, or the ownership catalogue's owner set;
+activating selector suppression or scope-policy graduation; changing the
+generated adopter schedule (`adopter-package.ts` `focusedCommands()` has no
+legacy duplication); CAL-1; frozen authorities; immutable acceptance;
+rewriting any historical record.
 
 ## Goal Constraints
 
@@ -59,19 +58,20 @@ historical record.
   `9dc35e44aacd35e3058895cccc89c43de9ff535ad20a0552c9b8a80b23cb19bf`.
 - `scripts/verify.mjs`, `tools/run-tool-evidence.mjs`,
   `tools/milestone-orchestrator/src/benchmark.ts`,
-  `config/benchmark-matrix.json`, `config/slow-suite-registry.json`, and every
-  existing `package.json` script are unchanged. New scripts are additive only.
+  `config/benchmark-matrix.json`, `config/slow-suite-registry.json`, and
+  every existing `package.json` script are unchanged. New scripts are
+  additive only.
 - The active commissioning input, scope policy, and verification manifest
   change together through the amendment operation of Step 1. A separate
-  amendment descriptor supplies the proposed bytes; the active files are
-  not edited in preparation. The manifest is rendered through the existing
+  amendment descriptor supplies the proposed bytes; the active files are not
+  edited in preparation. The manifest is rendered through the existing
   `manifestFromInput` path. Prior/new input, policy, and manifest hashes,
   chain linkage, and the executed tier-plan diff are recorded.
 - The measurement lane's identity surface is frozen for the whole package so
   WP6f can still revalidate WP6d's retained records at the WP6e head:
   `MEASUREMENT_COMMANDS`, `CHILD_TIMEOUT_MS` (`measurement-lane.ts:53`),
-  `TEST_OWNER_IDS` (`test-ownership.ts:20`), and the lane/statistics schemas.
-  (Catalogue SHA-256 is computed over those values at
+  `TEST_OWNER_IDS` (`test-ownership.ts:20`), and the lane/statistics
+  schemas. (Catalogue SHA-256 is computed over those values at
   `measurement-lane.ts:544-550`; any change would reject every retained lane
   record.)
 - No production trust boundary is weakened: iteration, candidate, and
@@ -86,8 +86,8 @@ historical record.
   test/hook limits, and measurement-lane limits are unchanged. The new bound
   contains the existing 60-minute partition child limit plus setup and
   receipt publication; its command/argv binding and propagation are tested.
-- Historical log entries and retained evidence are never rewritten or edited;
-  corrections and new records are appended.
+- Historical log entries and retained evidence are never rewritten or
+  edited; corrections and new records are appended.
 
 ## Baseline Evidence
 
@@ -102,17 +102,16 @@ historical record.
   - iteration: `test-invariants` (+ explicit focused ids)
   - candidate: `test-invariants`, `test-unit-fast`, `test-orchestrator`,
     `format-check`, `lint`, `lint-architecture`, `typecheck`, `build`
-  - milestone: candidate set + `test-unit-migrations` + nine
-    `domain-*` placeholders + `exact-readiness`
-  - periodic: `exact-readiness` only
-    Tier selection is tag-based (`verification-tier.ts:230-232`); scope
-    recommendations are additive (`:237`, `:243`) and the only existing
-    subsumption rule is `test-unit` ⇒ drop `test-unit-fast` /
-    `test-unit-migrations` (`:238-247`).
+  - milestone: candidate set + `test-unit-migrations` + nine `domain-*`
+    placeholders + `exact-readiness`
+  - periodic: `exact-readiness` only Tier selection is tag-based
+    (`verification-tier.ts:230-232`); scope recommendations are additive
+    (`:237`, `:243`) and the only existing subsumption rule is `test-unit` ⇒
+    drop `test-unit-fast` / `test-unit-migrations` (`:238-247`).
 - **Measured test universe on candidate `93e03e2`** (retained statistics,
-  `testCounts` medians, identical on both platforms):
-  `test:unit:fast` 82 files / 676 tests; `test:unit:migrations` 1 / 32;
-  `test:orchestrator` 82 / 692; `test:partition:controller-runtime` 80 / 688;
+  `testCounts` medians, identical on both platforms): `test:unit:fast` 82
+  files / 676 tests; `test:unit:migrations` 1 / 32; `test:orchestrator` 82 /
+  692; `test:partition:controller-runtime` 80 / 688;
   `test:partition:repository-tooling` 1 / 16;
   `test:partition:adopter-template` 2 / 4;
   `test:partition:trusted-container-fixture` 1 / 1. Complete `test:unit` was
@@ -121,24 +120,24 @@ historical record.
   `fast ∪ orchestrator` = 708 unique tests with 660 executed twice (1,368
   executions); the four partitions are a disjoint cover of 709 tests =
   `test:unit` (708) plus the single OCI fixture case, per the WP6c shadow
-  proof of empty intersections and exact discovery union.
-  These are baseline inventories, not fixed after-state counts: WP6e's new
-  regression tests must be explicitly classified and included. Record their
-  identity delta separately from the schedule change; no baseline test may
-  disappear or change meaning to preserve a count. The exactly-once claim
-  covers the four partition reports; invariant-suite executions are separate
-  prerequisite evidence and may exercise some of the same tests.
-- **Descriptive wall-time medians (Linux / Windows, cold):** `test:unit:fast`
-  3m44s / 30m42s; `test:orchestrator` 3m20s / 30m05s;
+  proof of empty intersections and exact discovery union. These are baseline
+  inventories, not fixed after-state counts: WP6e's new regression tests
+  must be explicitly classified and included. Record their identity delta
+  separately from the schedule change; no baseline test may disappear or
+  change meaning to preserve a count. The exactly-once claim covers the four
+  partition reports; invariant-suite executions are separate prerequisite
+  evidence and may exercise some of the same tests.
+- **Descriptive wall-time medians (Linux / Windows, cold):**
+  `test:unit:fast` 3m44s / 30m42s; `test:orchestrator` 3m20s / 30m05s;
   `partition-controller-runtime` 3m27s / 29m23s; the other three partitions
   total ≈ 41s / 61s. These are cited only to bound runner budgets; they
   support no claim in this plan (WP6f interprets).
-- **Code touchpoints that hard-code the legacy schedule** (all must change in
-  lockstep or the invariant suite / tier planner fails closed):
+- **Code touchpoints that hard-code the legacy schedule** (all must change
+  in lockstep or the invariant suite / tier planner fails closed):
   - `test-ownership.ts:56-61` `REQUIRED_COMMISSIONED_TEST_COMMANDS` and the
     `ENTRYPOINT_CONTRACT_DRIFT` diagnostic at `:904-925`;
-  - `affected-scope.ts:87-106` `AUXILIARY_CHECKS` (checks the scope policy may
-    name without being scheduled: `dependencies`, `test-unit`,
+  - `affected-scope.ts:87-106` `AUXILIARY_CHECKS` (checks the scope policy
+    may name without being scheduled: `dependencies`, `test-unit`,
     `exact-readiness`) and `:108-120` `CHECK_ORDER_PREFIX`;
   - `verification-tier.ts:236-247` subsumption rule;
   - `config/verification-scope-policy.json` `mandatoryChecks` /
@@ -149,12 +148,13 @@ historical record.
     `minItems: 1` from `{iteration, candidate, milestone}` — a retained
     command cannot be tagged with no tier; unscheduled-but-referenced checks
     belong in `AUXILIARY_CHECKS`;
-  - `benchmark.ts:1180` (`narrowed` requires after-runs to exclude `test-unit`
-    and `test-unit-migrations`) and `:1933-1939`
-    `BENCHMARK_BROAD_SAFE_CHECK_IDS` (names `test-unit`, `test-orchestrator`);
-    both remain satisfiable if those ids stay resolvable as auxiliary checks;
-  - `commissioning.ts:548-574` requires every `pnpm` focused command to map to
-    an existing package script (partition scripts exist);
+  - `benchmark.ts:1180` (`narrowed` requires after-runs to exclude
+    `test-unit` and `test-unit-migrations`) and `:1933-1939`
+    `BENCHMARK_BROAD_SAFE_CHECK_IDS` (names `test-unit`,
+    `test-orchestrator`); both remain satisfiable if those ids stay
+    resolvable as auxiliary checks;
+  - `commissioning.ts:548-574` requires every `pnpm` focused command to map
+    to an existing package script (partition scripts exist);
   - partition receipts own `test-partition-report`,
     `test-partition-vitest-report`, and `test-run-summary`
     (`test-partitions.ts:51-52`, `test-run-summary.ts:19`).
@@ -163,13 +163,14 @@ historical record.
   (`verification-tier.ts:325`); this cannot contain the retained Windows
   controller-partition duration or its 60-minute inner limit. The current
   ownership gate requires legacy IDs, and `buildScopeCheckCatalogue` rejects
-  duplicate manifest/auxiliary IDs, so unconditional replacement or auxiliary
-  registration cannot be committed while the v1 manifest remains active.
-  `CommissioningTierPlanSummary` currently reports command counts and exact
-  inclusion, not ordered check IDs; Step 0 must capture those IDs directly
-  from the production planner, and Step 1 must expose them in doctor output.
-  A clean-tree amend command cannot consume an already edited active input;
-  the descriptor/publication workflow below resolves that conflict.
+  duplicate manifest/auxiliary IDs, so unconditional replacement or
+  auxiliary registration cannot be committed while the v1 manifest remains
+  active. `CommissioningTierPlanSummary` currently reports command counts
+  and exact inclusion, not ordered check IDs; Step 0 must capture those IDs
+  directly from the production planner, and Step 1 must expose them in
+  doctor output. A clean-tree amend command cannot consume an already edited
+  active input; the descriptor/publication workflow below resolves that
+  conflict.
 - **Candidate prerequisite caveat.** The root package still declares
   placeholder `verify:dependencies` and `lint:architecture` commands and has
   no `milestoneLoop.productionBuild` declaration. Hosted controller/unit
@@ -181,13 +182,13 @@ historical record.
 - **Generated adopters** commission their own bootstrap schedule
   (`adopter-package.ts:813` → `focusedCommands()`: invariants, format, lint,
   lint-architecture, typecheck, build, `bootstrap-unit`) and their scaffold
-  does not register the `test-ownership` invariant; the recomposition does not
-  propagate to them, but the fresh-adopter smoke remains a hosted gate.
+  does not register the `test-ownership` invariant; the recomposition does
+  not propagate to them, but the fresh-adopter smoke remains a hosted gate.
 - **Docs that describe the schedule and must be updated (living docs, not
-  logs):** `README.md:36-90` (four-tier model; "shadow-only candidate surface…
-  commissioned tiers unchanged"), `CONTRACT.md:64-72` and `:182-196`,
-  `tools/milestone-orchestrator/config/README.md:180` ("These commands are
-  not part of the commissioned tier").
+  logs):** `README.md:36-90` (four-tier model; "shadow-only candidate
+  surface… commissioned tiers unchanged"), `CONTRACT.md:64-72` and
+  `:182-196`, `tools/milestone-orchestrator/config/README.md:180` ("These
+  commands are not part of the commissioned tier").
 - **External review of WP6d code (2026-09-01, two independent read-only
   passes; recorded here so the successor inherits them as known, not
   unknown).** No severe defect, no weakened production boundary, no workflow
@@ -198,14 +199,14 @@ historical record.
   and the standalone `assertMeasurementStatisticsRecord` is shallow — always
   consume statistics through `validateMeasurementStatisticsArtifacts`
   reproduction; (c) summary validator still admits the measured-probe ⇒
-  unavailable-metrics direction and never cross-checks `testBodyTime` against
-  `reports[]`; (d) the lease suite no longer proves the real OS incarnation
-  probe returns a parseable _alive_ observation (a probe regression to
-  "unavailable" would pass the suite while making reused-PID leases
-  unrecoverable); (e) `test-partitions.ts:2196-2221` test-only path should
-  throw rather than write a PASS receipt it later unlinks. Items (c)–(e) are
-  WP6d hardening follow-ups, not WP6e scope; they are listed under Risks with
-  a recommended owner.
+  unavailable-metrics direction and never cross-checks `testBodyTime`
+  against `reports[]`; (d) the lease suite no longer proves the real OS
+  incarnation probe returns a parseable _alive_ observation (a probe
+  regression to "unavailable" would pass the suite while making reused-PID
+  leases unrecoverable); (e) `test-partitions.ts:2196-2221` test-only path
+  should throw rather than write a PASS receipt it later unlinks. Items
+  (c)–(e) are WP6d hardening follow-ups, not WP6e scope; they are listed
+  under Risks with a recommended owner.
 
 ## Steps
 
@@ -215,27 +216,28 @@ historical record.
    complete; inherited full-candidate prerequisites remain non-passing as
    recorded below. No additional routine approval is required.
    - **Target schedule.** Add four focused commands
-     `test-partition-controller-runtime`, `test-partition-repository-tooling`,
-     `test-partition-adopter-template`,
+     `test-partition-controller-runtime`,
+     `test-partition-repository-tooling`, `test-partition-adopter-template`,
      `test-partition-trusted-container-fixture` (argv
      `pnpm test:partition:<owner>`, `expectedArtifactKinds`
-     `["test-partition-report", "test-partition-vitest-report",
-"test-run-summary"]`), tagged `["candidate", "milestone"]`. Remove
-     `test-unit-fast`, `test-unit-migrations`, and `test-orchestrator` from
-     `focusedCommands`; register them as auxiliary checks (tiers `[]`) only
-     when they are absent from the manifest. This preserves valid v1 and
-     historical catalogues without duplicate IDs. They stay resolvable for
-     diagnostics, ordering, and historical benchmark lists. The
-     full orchestrator command remains available for maintainer diagnosis,
-     the measurement lane, the shadow aggregate, and the hosted exact-runtime
-     workflow; exact closure (`pnpm verify` → `test:unit`) remains the
-     authoritative full run in the milestone and periodic tiers. Iteration
-     and periodic tiers are unchanged.
+     `["test-partition-report", "test-partition-vitest-report", "test-run-summary"]`),
+     tagged `["candidate", "milestone"]`. Remove `test-unit-fast`,
+     `test-unit-migrations`, and `test-orchestrator` from `focusedCommands`;
+     register them as auxiliary checks (tiers `[]`) only when they are
+     absent from the manifest. This preserves valid v1 and historical
+     catalogues without duplicate IDs. They stay resolvable for diagnostics,
+     ordering, and historical benchmark lists. The full orchestrator command
+     remains available for maintainer diagnosis, the measurement lane, the
+     shadow aggregate, and the hosted exact-runtime workflow; exact closure
+     (`pnpm verify` → `test:unit`) remains the authoritative full run in the
+     milestone and periodic tiers. Iteration and periodic tiers are
+     unchanged.
    - **Scope policy `v2`.** Translate legacy test IDs through the mapping
      below, union/deduplicate replacements within each row, and preserve all
      non-test checks. Here C = `test-partition-controller-runtime`, R =
-     `test-partition-repository-tooling`, A = `test-partition-adopter-template`,
-     and T = `test-partition-trusted-container-fixture`.
+     `test-partition-repository-tooling`, A =
+     `test-partition-adopter-template`, and T =
+     `test-partition-trusted-container-fixture`.
 
      | Legacy check           | Replacement | Expected baseline identity relation                      |
      | ---------------------- | ----------- | -------------------------------------------------------- |
@@ -266,20 +268,19 @@ historical record.
      | `unknown`                 | C, R, A                                              |
 
      `workspaceChecks` maps `@milestone-loop/orchestrator` to C, A plus its
-     existing typecheck;
-     `milestone-loop-template` maps to C, R, A plus all its existing non-test
-     checks. Prove every complete row is a discovery superset; migrations
-     already accompany `test-unit` in the current rows, so their individual
-     expansion adds nothing to those rows. The two fast-only rows add 32
-     migration tests in this direct mapping.
+     existing typecheck; `milestone-loop-template` maps to C, R, A plus all
+     its existing non-test checks. Prove every complete row is a discovery
+     superset; migrations already accompany `test-unit` in the current rows,
+     so their individual expansion adds nothing to those rows. The two
+     fast-only rows add 32 migration tests in this direct mapping.
 
      T is commissioned in both candidate and milestone regardless of
      recommendations. It is not added to every legacy replacement. Existing
      broad/fail-broad behavior already recommends every candidate-tagged
      command, so broad and unknown changes also recommend T. Preserve that
-     behavior and report its +1 OCI identity separately. For v2 only, replace
-     the broad selector's hard-coded `recommended.add("test-unit")` with
-     C, R, A; otherwise recommendations would still perpetually name a
+     behavior and report its +1 OCI identity separately. For v2 only,
+     replace the broad selector's hard-coded `recommended.add("test-unit")`
+     with C, R, A; otherwise recommendations would still perpetually name a
      subsumed legacy check. Keep the v1/historical selector behavior intact.
      No new trigger taxonomy or scope suppression is introduced.
 
@@ -291,9 +292,9 @@ historical record.
    - **Planner subsumption rule.** In `planVerificationTier`, when all four
      partition ids are in the actual set for candidate or milestone, remove
      `test-unit`, `test-unit-fast`, `test-unit-migrations`, and
-     `test-orchestrator` only after checking the invariant prerequisite.
-     A candidate/milestone plan containing owner partitions must include
-     the canonical `test-invariants` command first; reject missing or
+     `test-orchestrator` only after checking the invariant prerequisite. A
+     candidate/milestone plan containing owner partitions must include the
+     canonical `test-invariants` command first; reject missing or
      substituted prerequisites before executing any child. The source v2
      ownership contract requires all four distinct partition IDs, exact
      owner argv/artifact kinds, and candidate/milestone tags, with no tiered
@@ -317,42 +318,44 @@ historical record.
    - Alternatives to reject with rationale in the entry: hand-editing the
      manifest or coordinated active-input/manifest edits (no verified
      amendment provenance); committing an input/policy/gate mismatch merely
-     to satisfy a clean-tree precondition (invalid intermediate state); keeping
-     `test-orchestrator` tagged `milestone` (re-runs 692 tests beside the
-     partitions and the exact closure with no added proof); leaving the scope
-     policy untouched and relying on the planner alone (recommendations would
-     perpetually name checks the planner removes); tagging retained legacy
-     commands with an empty tier list (schema forbids it); a blanket four-owner
-     policy replacement (changes each recommendation's coverage differently).
+     to satisfy a clean-tree precondition (invalid intermediate state);
+     keeping `test-orchestrator` tagged `milestone` (re-runs 692 tests
+     beside the partitions and the exact closure with no added proof);
+     leaving the scope policy untouched and relying on the planner alone
+     (recommendations would perpetually name checks the planner removes);
+     tagging retained legacy commands with an empty tier list (schema
+     forbids it); a blanket four-owner policy replacement (changes each
+     recommendation's coverage differently).
    - **Before-state pin.** From a clean short-root clone of `ac4e9a2`:
      `pnpm loop:doctor` (retain all diagnostics, including any overall
      NOT_READY, and the commissioning diagnostic's four tier summaries),
-     `pnpm test:invariants`, and `pnpm test:partitions:shadow`
-     (retain the disjoint-cover / exact-union / equivalence proof and the
-     per-partition test identities). Derive and record the exact identity
-     sets: candidate-before executions, unique tests, duplicates; partition
-     union; the set difference versus `test:unit` (expected: exactly the OCI
+     `pnpm test:invariants`, and `pnpm test:partitions:shadow` (retain the
+     disjoint-cover / exact-union / equivalence proof and the per-partition
+     test identities). Derive and record the exact identity sets:
+     candidate-before executions, unique tests, duplicates; partition union;
+     the set difference versus `test:unit` (expected: exactly the OCI
      fixture case). Any other unexplained difference is a stop-and-record
      event. Capture ordered `actualCheckIds` and command definitions by
      invoking the existing production `planVerificationTier` with the
      doctor's fixed `commissioning.ts` fixture context; the current summary
      alone cannot prove the schedule. Retain the procedure and its inputs.
-     Also capture a broad/package-change context and the default CLI context;
-     these can add checks beyond the doctor's fixed scenario.
+     Also capture a broad/package-change context and the default CLI
+     context; these can add checks beyond the doctor's fixed scenario.
 
      Preflight the inherited candidate prerequisites before expensive runs;
      retain truthful NOT_READY/FAIL results from placeholder checks or build
      configuration. Establish a bounded in-scope resolution before claiming
-     the full candidate acceptance is achievable. These are engineering gaps,
-     not a renewed routine-approval gate.
+     the full candidate acceptance is achievable. These are engineering
+     gaps, not a renewed routine-approval gate.
 1. **Tool-owned amendment infrastructure; keep v1 valid.** Add
-   `loop:commission:amend` as an additive script backed by an `amend` mode in
-   the commissioning CLI. Its public input is `--descriptor <file>`, a strict,
-   separately committed request containing the active source paths, proposed
-   input/policy bytes, expected prior file hashes and chain tip, and the
-   decision-log heading. The descriptor never supplies manifest bytes or
-   permits arbitrary output paths. Preparation leaves the active v1 files
-   valid, so the tool can start from a clean, committed target-branch clone.
+   `loop:commission:amend` as an additive script backed by an `amend` mode
+   in the commissioning CLI. Its public input is `--descriptor <file>`, a
+   strict, separately committed request containing the active source paths,
+   proposed input/policy bytes, expected prior file hashes and chain tip,
+   and the decision-log heading. The descriptor never supplies manifest
+   bytes or permits arbitrary output paths. Preparation leaves the active v1
+   files valid, so the tool can start from a clean, committed target-branch
+   clone.
 
    Require an existing valid commissioning, a clean tree, the target branch,
    and HEAD a strict descendant of `commissioning.baseCommit`. Validate the
@@ -374,10 +377,10 @@ historical record.
    are not a multi-file transaction: doctor and tier/controller consumers
    must refuse an incomplete generation. After a crash, resume the same
    recorded operation only when each path matches its expected prior or new
-   bytes; preserve and report foreign changes. A resume accepts only its
-   own recorded dirty paths, while a new operation still requires clean.
-   No implicit Git commit, reset, controller-state adoption, or unrelated
-   file mutation is allowed. An interrupted operation cannot yield PASS.
+   bytes; preserve and report foreign changes. A resume accepts only its own
+   recorded dirty paths, while a new operation still requires clean. No
+   implicit Git commit, reset, controller-state adoption, or unrelated file
+   mutation is allowed. An interrupted operation cannot yield PASS.
 
    Each chain entry records prior/new input, policy, and manifest SHA-256,
    previous entry hash, descriptor hash, decision heading, invocation HEAD
@@ -386,9 +389,9 @@ historical record.
    blobs from a verified commissioned ancestor; do not infer provenance from
    current matching files. Later entries must extend the committed prefix
    without rewriting it, and their prior hashes must equal the preceding
-   tip's new hashes. Preserve prior input/policy bytes for an audited reverse
-   amendment. Bind source paths explicitly; generated adopters have a
-   different commissioning-input path and must remain compatible.
+   tip's new hashes. Preserve prior input/policy bytes for an audited
+   reverse amendment. Bind source paths explicitly; generated adopters have
+   a different commissioning-input path and must remain compatible.
 
    Extend doctor to compare the canonical input render, actual policy bytes,
    active manifest, and chain tip, including the Git anchor/prefix. Reject
@@ -418,16 +421,16 @@ historical record.
    and all scheduling/execution behavior remain unchanged in this increment.
    Focused checks are commissioning, Doctor, and Status; the listed broad
    checks still apply. Amendment descriptor, audit, recovery, and schedule
-   support remain explicit subsequent work.
-   The first focused execution exposed unsupported `prefixItems` in the
-   existing independent JSON Schema evaluator. Extend that test-only evaluator
-   with positional/tail array semantics and explicit malformed-schema
-   regressions; include `config-schema-parity.test.ts` in the affected rerun.
+   support remain explicit subsequent work. The first focused execution
+   exposed unsupported `prefixItems` in the existing independent JSON Schema
+   evaluator. Extend that test-only evaluator with positional/tail array
+   semantics and explicit malformed-schema regressions; include
+   `config-schema-parity.test.ts` in the affected rerun.
 
-2. **Planner, catalogue, gate, and timeout support; keep v1 valid.** Register
-   auxiliary legacy IDs only when the manifest does not commission them;
-   preserve duplicate/definition validation. Add the four partition IDs in
-   canonical owner order after the existing build position in
+2. **Planner, catalogue, gate, and timeout support; keep v1 valid.**
+   Register auxiliary legacy IDs only when the manifest does not commission
+   them; preserve duplicate/definition validation. Add the four partition
+   IDs in canonical owner order after the existing build position in
    `CHECK_ORDER_PREFIX`, retaining the order of other checks. Implement the
    v1/v2 schedule validation, source-v2 broad recommendation mapping,
    prerequisite checks, subsumption, and bounded timeout from Step 0. The
@@ -441,8 +444,9 @@ historical record.
    and a failed invariant starts no partition. Validate every policy matrix
    row, broad augmentation, deterministic order, and the exact timeout sent
    to the provider. Benchmark fixtures must still resolve their historical
-   IDs and retain their existing assertions. Fresh-adopter smoke and generated
-   strict typecheck/lint must pass with the packaged runtime changes.
+   IDs and retain their existing assertions. Fresh-adopter smoke and
+   generated strict typecheck/lint must pass with the packaged runtime
+   changes.
 
 3. **Apply the recomposition as one coherent generation.** Commit the
    reviewed descriptor alongside compatible infrastructure and tests, with
@@ -450,24 +454,26 @@ historical record.
    committed tree, run
    `pnpm loop:commission:amend -- --descriptor <committed-descriptor>`.
    Retain the operation result, complete amendment chain, and commissioning
-   doctor PASS; retain the full doctor's independent overall disposition too.
+   doctor PASS; retain the full doctor's independent overall disposition
+   too.
 
-   For the fixed commissioning fixture, compare ordered schedule projections:
-   candidate adds exactly the four partitions and removes `test-unit-fast`
-   and `test-orchestrator`; milestone adds the four and removes those two
-   plus `test-unit-migrations`. Iteration and periodic command projections
-   are byte-identical; schema/identity metadata are not part of that equality.
-   Independently compare broad and default-CLI contexts, including any
-   subsumed `test-unit` and added `dependencies`, rather than applying the
-   fixed-fixture diff to a different changed-path set.
+   For the fixed commissioning fixture, compare ordered schedule
+   projections: candidate adds exactly the four partitions and removes
+   `test-unit-fast` and `test-orchestrator`; milestone adds the four and
+   removes those two plus `test-unit-migrations`. Iteration and periodic
+   command projections are byte-identical; schema/identity metadata are not
+   part of that equality. Independently compare broad and default-CLI
+   contexts, including any subsumed `test-unit` and added `dependencies`,
+   rather than applying the fixed-fixture diff to a different changed-path
+   set.
 
    Update `README.md`, `CONTRACT.md`, and `config/README.md` for the new
    schedule, diagnostic legacy scripts, descriptor/apply/recovery workflow,
    and timeout. Verify and commit the active input, policy, manifest, and
    chain together. Never publish a commit with just one side of the switch.
 
-4. **Executed after-state proof.** From a clean short-root clone of the
-   Step 3 commit, run `pnpm verify:candidate` with the recorded changed-path
+4. **Executed after-state proof.** From a clean short-root clone of the Step
+   3 commit, run `pnpm verify:candidate` with the recorded changed-path
    context and retain all results and receipts. The controller partition has
    the explicit 65-minute outer bound. A non-passing inherited prerequisite
    remains an unresolved full-candidate acceptance gap.
@@ -480,8 +486,8 @@ historical record.
    prerequisite test executions are accounted separately. No legacy test
    script may run as a scheduled focused check; inspect command argv and
    require the absence of legacy fast/migration/orchestrator report kinds
-   from those command evidence directories. Validate every partition receipt,
-   raw report, and `test-run-summary` artifact.
+   from those command evidence directories. Validate every partition
+   receipt, raw report, and `test-run-summary` artifact.
 
    Reconcile the final inventory to Step 0: retain every baseline identity
    and enumerate WP6e regression additions with their owner. The historical
@@ -494,58 +500,60 @@ historical record.
    are unverified, never relabeled as passing closure evidence.
 
 5. **Fail-closed proofs at the tier boundary.** Focused regressions and one
-   retained real execution each, using isolated committed mutation candidates
-   where cleanliness is required so the intended boundary is reached:
-   (a) an unclassified test file fails
-   `test-invariants` (ownership gate) before any partition runs and the
-   candidate tier issues no PASS receipt; (b) a partition child that exits
-   nonzero or omits its `test-partition-report` fails the candidate tier
-   through command-owned receipt validation; (c) the WP6c omission mutation
-   (`test-partition-cli.ts omission-mutation`) still yields a FAIL proof and no
-   PASS receipt on the recomposed candidate. No production trust boundary
-   may be weakened to make these pass. A dirty-tree rejection is not evidence
-   that the ownership or child-receipt boundary rejected the mutation.
+   retained real execution each, using isolated committed mutation
+   candidates where cleanliness is required so the intended boundary is
+   reached: (a) an unclassified test file fails `test-invariants` (ownership
+   gate) before any partition runs and the candidate tier issues no PASS
+   receipt; (b) a partition child that exits nonzero or omits its
+   `test-partition-report` fails the candidate tier through command-owned
+   receipt validation; (c) the WP6c omission mutation
+   (`test-partition-cli.ts omission-mutation`) still yields a FAIL proof and
+   no PASS receipt on the recomposed candidate. No production trust boundary
+   may be weakened to make these pass. A dirty-tree rejection is not
+   evidence that the ownership or child-receipt boundary rejected the
+   mutation.
 6. **Hosted gate.** Push each candidate commit and require the protected
-   exact-runtime workflow to pass all five jobs (the Windows/Linux controllers
-   run the amended ownership gate; both fresh-adopter smokes exercise the
-   packaged runtime). Record run URLs and archive digests. Optionally
-   dispatch one `wp6-measurement-matrix` run on the final candidate so WP6f
-   has per-command records bound to the recomposed head; WP6e records the
-   run without reading its numbers.
-7. **Closeout.** Update this plan, the autonomy log, and the decision log with
-   exact evidence and the successor handoff: intended WP6f alone computes the
-   schedule-level before/after from WP6d's retained statistics and this
-   package's tier-plan diff, compares it against `config/benchmark-matrix.json`
-   thresholds (`minimumImprovementMs` 10000, `noiseMultiplier` 2,
-   `maximumClosureRegressionMs` 15000) and measured MAD, decides keep or
-   revert (revert = one further amendment restoring the prior input and
-   policy, canonically regenerating the prior manifest, and extending the
-   chain), and owns any performance statement. Preserve v1 support so that
-   reverse amendment passes the same ownership/doctor checks. Leave the
-   tracked tree clean.
+   exact-runtime workflow to pass all five jobs (the Windows/Linux
+   controllers run the amended ownership gate; both fresh-adopter smokes
+   exercise the packaged runtime). Record run URLs and archive digests.
+   Optionally dispatch one `wp6-measurement-matrix` run on the final
+   candidate so WP6f has per-command records bound to the recomposed head;
+   WP6e records the run without reading its numbers.
+7. **Closeout.** Update this plan, the autonomy log, and the decision log
+   with exact evidence and the successor handoff: intended WP6f alone
+   computes the schedule-level before/after from WP6d's retained statistics
+   and this package's tier-plan diff, compares it against
+   `config/benchmark-matrix.json` thresholds (`minimumImprovementMs` 10000,
+   `noiseMultiplier` 2, `maximumClosureRegressionMs` 15000) and measured
+   MAD, decides keep or revert (revert = one further amendment restoring the
+   prior input and policy, canonically regenerating the prior manifest, and
+   extending the chain), and owns any performance statement. Preserve v1
+   support so that reverse amendment passes the same ownership/doctor
+   checks. Leave the tracked tree clean.
 
 ## Acceptance Criteria
 
 - A clean v1 tree accepts a committed amendment descriptor without prior
-  edits to its active input/policy/manifest. A recoverable operation generates
-  those three files and extends the Git-anchored amendment chain. Doctor
-  validates canonical render, active file hashes, chain tip and committed
-  prefix, and rejects individual/coordinated drift or an incomplete
-  generation. Crash and concurrent-start tests preserve exact prior/new
-  states, refuse foreign edits, and resume without fabricating history.
+  edits to its active input/policy/manifest. A recoverable operation
+  generates those three files and extends the Git-anchored amendment chain.
+  Doctor validates canonical render, active file hashes, chain tip and
+  committed prefix, and rejects individual/coordinated drift or an
+  incomplete generation. Crash and concurrent-start tests preserve exact
+  prior/new states, refuse foreign edits, and resume without fabricating
+  history.
 - V1, v2, and an explicit reverse amendment each pass their full schedule
-  contract. An unknown or mixed generation, wrong argv/artifact/tier binding,
-  missing invariant prerequisite, or missing ownership child is rejected.
-  Every intermediate commit remains valid with its active schedule; there
-  is no input-only or gate-only broken transition commit.
+  contract. An unknown or mixed generation, wrong argv/artifact/tier
+  binding, missing invariant prerequisite, or missing ownership child is
+  rejected. Every intermediate commit remains valid with its active
+  schedule; there is no input-only or gate-only broken transition commit.
 - For the fixed commissioning fixture, ordered candidate check IDs are
-  `test-invariants`, `format-check`, `lint`, `lint-architecture`, `typecheck`,
-  `build`, then the four partitions in `TEST_OWNER_IDS` order. Milestone adds
-  the existing nine `domain-*` checks and `exact-readiness` in their current
-  relative order. Iteration/periodic command projections are byte-identical
-  to the Step 0 pin. Doctor exposes enough data to reproduce that exact diff;
-  broad and CLI contexts are checked separately, with their additional
-  checks preserved and documented.
+  `test-invariants`, `format-check`, `lint`, `lint-architecture`,
+  `typecheck`, `build`, then the four partitions in `TEST_OWNER_IDS` order.
+  Milestone adds the existing nine `domain-*` checks and `exact-readiness`
+  in their current relative order. Iteration/periodic command projections
+  are byte-identical to the Step 0 pin. Doctor exposes enough data to
+  reproduce that exact diff; broad and CLI contexts are checked separately,
+  with their additional checks preserved and documented.
 - Policy v2's per-trigger and per-workspace matrix is the tested mapping in
   Step 0. Every direct replacement covers the old discovery set; any added
   identities from owner granularity or broad augmentation are enumerated.
@@ -574,14 +582,14 @@ historical record.
   exact-runtime CI is green on both platforms for every pushed commit.
 - `scripts/verify.mjs`, `run-tool-evidence.mjs`, `benchmark.ts`,
   `benchmark-matrix.json`, `slow-suite-registry.json`, all existing package
-  scripts, `exact-runtime-ci.yml`, `MEASUREMENT_COMMANDS`, `CHILD_TIMEOUT_MS`,
-  `TEST_OWNER_IDS`, and both protected hashes are unchanged; WP6d's retained
-  matrix still reproduces under the WP6e head via
-  `pnpm loop:measurement-statistics --input <merged platform root>
---platform <os> --validate-existing <retained statistics.json>` for both
-  platforms (this revalidates every lane record, receipt, and reduction).
-- No plan, log, record, README, or CONTRACT text added by this package states
-  an improvement, benchmark, cutover-benefit, or readiness claim.
+  scripts, `exact-runtime-ci.yml`, `MEASUREMENT_COMMANDS`,
+  `CHILD_TIMEOUT_MS`, `TEST_OWNER_IDS`, and both protected hashes are
+  unchanged; WP6d's retained matrix still reproduces under the WP6e head via
+  `pnpm loop:measurement-statistics --input <merged platform root> --platform <os> --validate-existing <retained statistics.json>`
+  for both platforms (this revalidates every lane record, receipt, and
+  reduction).
+- No plan, log, record, README, or CONTRACT text added by this package
+  states an improvement, benchmark, cutover-benefit, or readiness claim.
 
 ## Verification
 
@@ -593,20 +601,19 @@ historical record.
   owner; do not freeze final test counts to the earlier baseline.
 - Broad per commit: `pnpm typecheck`, `pnpm lint`, `pnpm format:check`,
   `pnpm test:invariants`, `pnpm test:orchestrator`, `pnpm test:unit`,
-  `git diff --check`, each once from an isolated short-root clone
-  (Windows `C:/w/wp6e-<step>-<command>-<n>` or the isolated task directory on
-  `codex.lab`), using exact Node/pnpm and retaining receipts. Record the host
-  for every execution. All six checks must pass before a commit; either host
-  can establish that complete precommit set. Windows failures remain
+  `git diff --check`, each once from an isolated short-root clone (Windows
+  `C:/w/wp6e-<step>-<command>-<n>` or the isolated task directory on
+  `codex.lab`), using exact Node/pnpm and retaining receipts. Record the
+  host for every execution. All six checks must pass before a commit; either
+  host can establish that complete precommit set. Windows failures remain
   non-passing until actual Windows reruns verify them; the five-job hosted
   gate on the exact pushed commit remains mandatory on both platforms.
 - Schedule-level: `pnpm loop:doctor` and production planner projections
   before and after; descriptor application and an executed reverse-amendment
-  fixture; `pnpm verify:candidate` after; `pnpm test:partitions:shadow` before
-  and after; `pnpm verify -- --stage unit-domain` after;
-  `pnpm loop:measurement-statistics
---validate-existing` over the merged `C:/w/wp6d-matrix-33402460152`
-  platform roots at the final head.
+  fixture; `pnpm verify:candidate` after; `pnpm test:partitions:shadow`
+  before and after; `pnpm verify -- --stage unit-domain` after;
+  `pnpm loop:measurement-statistics --validate-existing` over the merged
+  `C:/w/wp6d-matrix-33402460152` platform roots at the final head.
 - Hosted: exact-runtime CI on both platforms for every pushed commit; one
   optional measurement-matrix dispatch on the final candidate.
 - No visual/headless evidence is required; this package has no rendered
@@ -614,13 +621,14 @@ historical record.
 
 ## Risks and Recovery
 
-- **Amendment scope:** keep the descriptor allowlisted to the existing source
-  input/policy/manifest and the audit record; reuse rendering, validation,
-  containment, and publication helpers. If recovery cannot meet the stated
-  contract, leave implementation incomplete and revise the engineering plan.
-  There is no hand-edit fallback. An audit hash chain does not itself prove
-  who invoked a tool; Git anchors, immutable committed prefixes, command
-  evidence, and independent review define the verification boundary.
+- **Amendment scope:** keep the descriptor allowlisted to the existing
+  source input/policy/manifest and the audit record; reuse rendering,
+  validation, containment, and publication helpers. If recovery cannot meet
+  the stated contract, leave implementation incomplete and revise the
+  engineering plan. There is no hand-edit fallback. An audit hash chain does
+  not itself prove who invoked a tool; Git anchors, immutable committed
+  prefixes, command evidence, and independent review define the verification
+  boundary.
 - **Policy `v2` ripple:** the id appears in the manifest, the commissioning
   input, the policy, and historical decision-log prose (never edited).
   Benchmark fixtures record `policySha256` historically and are unaffected.
@@ -636,13 +644,14 @@ historical record.
   invariant prerequisite before applying the rule, and execution must stop
   on its failure. A test inside an omitted invariant cannot detect its own
   absence; cover this at the planner/runner boundary.
-- **Inherited candidate prerequisites:** dependencies/architecture placeholders
-  and absent production-build configuration can prevent a candidate PASS
-  before any partition starts. Report their exact result and affected
-  context. Do not broaden WP6e into product implementation or remove those
-  checks; full-candidate acceptance remains open until a valid in-scope
-  resolution exists. The unit-domain stage's additional `test:domain`
-  requirement is also distinct from proof that `test:unit` still executes.
+- **Inherited candidate prerequisites:** dependencies/architecture
+  placeholders and absent production-build configuration can prevent a
+  candidate PASS before any partition starts. Report their exact result and
+  affected context. Do not broaden WP6e into product implementation or
+  remove those checks; full-candidate acceptance remains open until a valid
+  in-scope resolution exists. The unit-domain stage's additional
+  `test:domain` requirement is also distinct from proof that `test:unit`
+  still executes.
 - **WP6d hardening follow-ups** (review items c–e in Baseline Evidence) are
   not started here. Recommended owner: a short WP6d.1 record-and-fix
   increment after WP6f, or WP6f's checklist if it dispatches a new matrix:
@@ -669,14 +678,15 @@ historical record.
   untouched. Continue Steps 1–2 as one compatible implementation increment:
   historical statistics validation must bind the retained candidate/source
   while the new receipt identifies the validating checkout; source schedule
-  validation, descriptor and Git-anchored ledger, durable interrupted-publication
-  rejection/recovery, and planner timeout/subsumption support land with v1
-  still active. Use focused production-boundary regressions, then all six
-  broad checks on the exact source snapshot before committing. The frozen
-  measurement identities, active v1 files, existing scripts, and protected
-  authorities remain unchanged during preparation. Candidate PASS is still
-  unavailable through the literal placeholder scripts; no substitute result
-  or scope reduction is authorized by this implementation plan.
+  validation, descriptor and Git-anchored ledger, durable
+  interrupted-publication rejection/recovery, and planner
+  timeout/subsumption support land with v1 still active. Use focused
+  production-boundary regressions, then all six broad checks on the exact
+  source snapshot before committing. The frozen measurement identities,
+  active v1 files, existing scripts, and protected authorities remain
+  unchanged during preparation. Candidate PASS is still unavailable through
+  the literal placeholder scripts; no substitute result or scope reduction
+  is authorized by this implementation plan.
 
 - 2026-09-04 — The complete Linux precommit set passed at
   `/tmp/wp6e-yVASGa/p`, and source validation confirmed exactly the 21
@@ -687,24 +697,25 @@ historical record.
   command/child receipts, all declared artifacts, 15 executable/schema/test
   source hashes, 727 full-unit and 711 orchestrator identities, exactly 19
   classified additions with no lost baseline identity, all 12 same-context
-  projections, 23 protected files, and preserved historical log bytes.
-  The receipt is
-  `artifacts/wp6e-entry-20260904/linux-precommit-audit-2/result.json`.
-  That audit additionally validated the complete serial Windows orchestrator
+  projections, 23 protected files, and preserved historical log bytes. The
+  receipt is
+  `artifacts/wp6e-entry-20260904/linux-precommit-audit-2/result.json`. That
+  audit additionally validated the complete serial Windows orchestrator
   receipt at `C:/w/wp6e-p-orchestrator-3/artifacts/a/`: 711/711 passed with
   exact Linux identity equality. Windows full unit began at
-  `C:/w/wp6e-p-unit-3` after that success and remains pending at this record.
+  `C:/w/wp6e-p-unit-3` after that success and remains pending at this
+  record.
 - 2026-09-04 — Correction to the earlier focused diagnostic claims: its raw
   report observed five passing selected cases, but its command-owned receipt
   declared a zero-byte `stderr.log`, which the production validator rejects.
   It is invalid and cannot support a passing-command claim. The first Linux
-  precommit audit failed on this defect; its procedure and log remain intact.
-  The separately named `audit-linux-precommit-evidence-2.ts` explicitly
-  rejects that receipt and uses the valid, complete Windows orchestrator
-  receipt instead. No retained receipt or empty stream was changed. Actual
-  Doctor/Status CLI receipts were independently checked and remain valid.
-  The unexecuted final Windows audit was updated to reject the malformed
-  optional diagnostic as well; all broad gates remain required.
+  precommit audit failed on this defect; its procedure and log remain
+  intact. The separately named `audit-linux-precommit-evidence-2.ts`
+  explicitly rejects that receipt and uses the valid, complete Windows
+  orchestrator receipt instead. No retained receipt or empty stream was
+  changed. Actual Doctor/Status CLI receipts were independently checked and
+  remain valid. The unexecuted final Windows audit was updated to reject the
+  malformed optional diagnostic as well; all broad gates remain required.
 - 2026-09-04 — Add a complete exact-runtime Linux precommit cohort in an
   isolated clone under `/tmp/wp6e-yVASGa/`, while the serial Windows cohort
   continues unchanged. The active Windows orchestrator run is executing
@@ -722,22 +733,23 @@ historical record.
   `artifacts/wp6e-entry-20260904/verify-projection-cli.ts`. Overall Doctor
   remains `blocked`; this proof validates projection propagation without
   relabeling the inherited readiness gaps. The final independent audit
-  includes both complete CLI reports and compares their projections with
-  the production inspection and pinned baseline context. The serial
+  includes both complete CLI reports and compares their projections with the
+  production inspection and pinned baseline context. The serial
   corrected-source typecheck, lint, formatting, and five invariant commands
   have passed; the orchestrator suite is still running before full unit.
 - 2026-09-04 — Hosted-evidence preparation verified the connected GitHub
   artifact download path against baseline trusted-container artifact
   `9773926944`, whose downloaded ZIP SHA-256 is
-  `d6bae7236b3ad15a4b6fef5543a0439452b5837781240acc73cd22cbcdb6ad3b`.
-  The probe is retained at `C:/w/wp6e-download-probe-ac4-oci.zip`.
+  `d6bae7236b3ad15a4b6fef5543a0439452b5837781240acc73cd22cbcdb6ad3b`. The
+  probe is retained at `C:/w/wp6e-download-probe-ac4-oci.zip`.
   `artifacts/wp6e-entry-20260904/audit-hosted-evidence.ts` is prepared but
-  unexecuted; it requires the future pushed commit, all five successful jobs,
-  digest-verified archives, all controller/adopter receipts and artifacts,
-  exact test-identity equality, and expected real Docker outcomes. Fetch
-  full job metadata through the GitHub fetch API (`jobs?per_page=100`), since
-  the compact jobs wrapper omits the head SHA and job URL. No new commit,
-  push, or hosted result is claimed by this preparation.
+  unexecuted; it requires the future pushed commit, all five successful
+  jobs, digest-verified archives, all controller/adopter receipts and
+  artifacts, exact test-identity equality, and expected real Docker
+  outcomes. Fetch full job metadata through the GitHub fetch API
+  (`jobs?per_page=100`), since the compact jobs wrapper omits the head SHA
+  and job URL. No new commit, push, or hosted result is claimed by this
+  preparation.
 - 2026-09-04 — The isolated five-case Windows diagnosis at `C:/w/wp6e-f5`
   passed all five selected identities with original test and hook limits;
   its 49 filtered-out cases remain explicitly unverified by that diagnostic.
@@ -745,50 +757,51 @@ historical record.
   `artifacts/windows-failed-cases/`. This supports resource contention as a
   possible explanation for the earlier timeouts, but does not establish a
   complete broad-suite PASS. The required six commands now run serially via
-  `artifacts/wp6e-entry-20260904/run-projection-final-serial.ps1`, in separate
-  `C:/w/wp6e-p-{typecheck,lint,format}-4` and
-  `C:/w/wp6e-p-{invariants,orchestrator,unit}-3` clones. Each keeps its owned
-  receipts under `artifacts/a`, with outer `command.log` and `command.exit.txt`.
-  The final audit now names this cohort and compares all 15 changed
-  executable, schema, catalogue, and test files, including the corrected
-  ownership assertion. It separately validates the five-case diagnostic
-  without counting its filtered-out cases as passing.
+  `artifacts/wp6e-entry-20260904/run-projection-final-serial.ps1`, in
+  separate `C:/w/wp6e-p-{typecheck,lint,format}-4` and
+  `C:/w/wp6e-p-{invariants,orchestrator,unit}-3` clones. Each keeps its
+  owned receipts under `artifacts/a`, with outer `command.log` and
+  `command.exit.txt`. The final audit now names this cohort and compares all
+  15 changed executable, schema, catalogue, and test files, including the
+  corrected ownership assertion. It separately validates the five-case
+  diagnostic without counting its filtered-out cases as passing.
 - 2026-09-04 — Both packaging-inclusive Windows broad runs finished with
-  five failures and no passing receipt: orchestrator observed 706/711 passing
-  tests, and full unit observed 722/727. The same canonical ownership test
-  expected the pre-addition file counts; its exact assertions now require
-  81 controller files and 85 total files, accounting for the new classified
-  regression file without changing the owner set or removing a test. The
-  other four failures are the uninterrupted candidate-prepare case, two
-  atomic state-persistence cases, and the remaining-boundaries target
-  integration recovery case. Their durations exceed their existing limits;
-  timeout/resource contention is a hypothesis, not yet a demonstrated cause.
-  The failed reports remain in
-  `C:/w/wp6e-projection-{orchestrator,unit}-2/artifacts/`. A fresh short clone,
-  `C:/w/wp6e-f5`, executes exactly those five identities with verbose and JSON
-  reporters through `artifacts/wp6e-entry-20260904/diagnose-windows-failures.ts`.
-  No competing Windows verification suite is running, and original test and
-  hook deadlines are unchanged. Filtered-out cases remain unverified by this
+  five failures and no passing receipt: orchestrator observed 706/711
+  passing tests, and full unit observed 722/727. The same canonical
+  ownership test expected the pre-addition file counts; its exact assertions
+  now require 81 controller files and 85 total files, accounting for the new
+  classified regression file without changing the owner set or removing a
+  test. The other four failures are the uninterrupted candidate-prepare
+  case, two atomic state-persistence cases, and the remaining-boundaries
+  target integration recovery case. Their durations exceed their existing
+  limits; timeout/resource contention is a hypothesis, not yet a
+  demonstrated cause. The failed reports remain in
+  `C:/w/wp6e-projection-{orchestrator,unit}-2/artifacts/`. A fresh short
+  clone, `C:/w/wp6e-f5`, executes exactly those five identities with verbose
+  and JSON reporters through
+  `artifacts/wp6e-entry-20260904/diagnose-windows-failures.ts`. No competing
+  Windows verification suite is running, and original test and hook
+  deadlines are unchanged. Filtered-out cases remain unverified by this
   diagnostic. Fresh broad runs must follow serially after diagnosis; none of
   the failed, stopped, or earlier source snapshots satisfies that gate.
 - 2026-09-04 — The short-path Linux shadow and independent inventory audit
   passed. The audited root-unit inventory is the executed fast/migration
   union, matched to root-unit discovery: 708 identities. Candidate-before
-  executes 1,368 observations over 708 unique identities, with 660 duplicated
-  identities. The four owner sets are disjoint and contain 709 identities;
-  exactly one is additional to root unit, the OCI fixture case. All 18
-  mandatory/workspace rows preserve their prior coverage; the two fast-only
-  direct mappings add the 32 migration identities as planned. Raw reports,
-  receipts, both Linux attempts, and procedures were exported without changing
-  file bytes. The downloaded archive is
+  executes 1,368 observations over 708 unique identities, with 660
+  duplicated identities. The four owner sets are disjoint and contain 709
+  identities; exactly one is additional to root unit, the OCI fixture case.
+  All 18 mandatory/workspace rows preserve their prior coverage; the two
+  fast-only direct mappings add the 32 migration identities as planned. Raw
+  reports, receipts, both Linux attempts, and procedures were exported
+  without changing file bytes. The downloaded archive is
   `C:/w/wp6e-linux-baseline-evidence.zip`, SHA-256
   `2f6e9ee93ae66b76f4e9dbdecf39bd39c749a474e42e0136d74f8c56e0b5e367`
   (836,086 bytes, 443 files), safely extracted at
-  `C:/w/wp6e-linux-baseline-evidence`. Its inventory audit artifact SHA-256 is
-  `b0a55f87500620728475238ae22a54bf70153af9f83bcd1af29faf250d33e16a`.
-  The separate short-path trusted-container fixture probe also passed its
-  one test and produced a receipt. The duplicate Windows retry at `C:/w/e6b`
-  was intentionally stopped after this complete Linux baseline pin; its
+  `C:/w/wp6e-linux-baseline-evidence`. Its inventory audit artifact SHA-256
+  is `b0a55f87500620728475238ae22a54bf70153af9f83bcd1af29faf250d33e16a`. The
+  separate short-path trusted-container fixture probe also passed its one
+  test and produced a receipt. The duplicate Windows retry at `C:/w/e6b` was
+  intentionally stopped after this complete Linux baseline pin; its
   identified process tree was terminated, follow-up inspection found no
   remaining owned Node processes, and its shell recorded exit 1. It remains
   incomplete, with no passing shadow claim. The two required Windows
@@ -796,56 +809,55 @@ historical record.
   acceptance remains blocked by the independently recorded inherited
   prerequisites.
 - 2026-09-04 — The first Linux shadow also exited 1, at the final
-  `trusted-container-fixture` launcher after all three legacy suites and
-  the controller/repository/adopter partitions had passed. `tsx` could not
+  `trusted-container-fixture` launcher after all three legacy suites and the
+  controller/repository/adopter partitions had passed. `tsx` could not
   create its 111-byte Unix socket path and reported `listen EINVAL` before
   the final partition's tests started. The original command log, ERROR
   manifest, and all earlier child receipts remain under the clone's
   `artifacts/wp6e-step0/shadow/`; no aggregate PASS is claimed.
   `run-remote-baseline-retry.sh` reruns the unchanged literal command with
-  the shorter `artifacts/s` directory (the corresponding socket path is
-  95 bytes), followed by `audit-inventories-retry.ts`. Its log and exit
-  record are `artifacts/wp6e-step0/shadow-retry.log` and `retry.exit.txt`.
-  No source, tests, Git configuration, or deadline was changed. The exporter
+  the shorter `artifacts/s` directory (the corresponding socket path is 95
+  bytes), followed by `audit-inventories-retry.ts`. Its log and exit record
+  are `artifacts/wp6e-step0/shadow-retry.log` and `retry.exit.txt`. No
+  source, tests, Git configuration, or deadline was changed. The exporter
   keeps the first attempt as `failed-shadow/` and the retry as `shadow/`,
   with explicit source-to-archive path mappings and unchanged file bytes.
 - 2026-09-04 — A second independent baseline execution uses the configured
-  Linux host `codex.lab`, in the isolated clean clone
-  `/tmp/wp6e-yVASGa/b` at `ac4e9a2`. No repository source was changed there.
-  The task-local Node `24.18.0` archive was verified against the official
-  SHASUMS256 file (archive SHA-256
-  `55aa7153f9d88f28d765fcdad5ae6945b5c0f98a36881703817e4c450fa76742`);
-  pnpm is exactly `11.15.1`. Preparation, execution, and export procedures
-  are retained under the working repository's
-  `artifacts/wp6e-entry-20260904/`. Doctor and planner captures completed;
-  all five invariant commands passed. The shadow run has passing receipts
-  for legacy-fast and migrations and is still executing. Its independent
-  inventory audit is scheduled in the same runner after shadow success.
-  A separately receipted Windows-side comparison at
-  `artifacts/wp6e-entry-20260904/platform-plan-audit/` already confirms all
-  twelve actual planner projections and all three changed-path contexts
-  exactly equal between the clean Linux and original Windows baselines.
-  The final audit expects a hash-verified export at
+  Linux host `codex.lab`, in the isolated clean clone `/tmp/wp6e-yVASGa/b`
+  at `ac4e9a2`. No repository source was changed there. The task-local Node
+  `24.18.0` archive was verified against the official SHASUMS256 file
+  (archive SHA-256
+  `55aa7153f9d88f28d765fcdad5ae6945b5c0f98a36881703817e4c450fa76742`); pnpm
+  is exactly `11.15.1`. Preparation, execution, and export procedures are
+  retained under the working repository's `artifacts/wp6e-entry-20260904/`.
+  Doctor and planner captures completed; all five invariant commands passed.
+  The shadow run has passing receipts for legacy-fast and migrations and is
+  still executing. Its independent inventory audit is scheduled in the same
+  runner after shadow success. A separately receipted Windows-side
+  comparison at `artifacts/wp6e-entry-20260904/platform-plan-audit/` already
+  confirms all twelve actual planner projections and all three changed-path
+  contexts exactly equal between the clean Linux and original Windows
+  baselines. The final audit expects a hash-verified export at
   `C:/w/wp6e-linux-baseline-evidence`; it revalidates every baseline receipt
   and raw report, mapping only the original absolute repository prefix in
   memory for cross-platform normalization. The Windows retry and final
   Windows regression suites remain running; none is relabeled as passing.
-- 2026-09-04 — The first baseline shadow at `C:/w/wp6e-baseline-1`
-  exited 1 in legacy-fast: 666/676 tests passed and ten failed across
-  commissioning and workspace recovery fixtures. It produced an ERROR
-  manifest and no passing receipt; later shadow children did not execute.
-  All logs and the raw report remain intact. A retained recovery fixture's
-  266-character branch-ref path reproduces normal Git lookup exit 128;
-  the same ref bytes resolve the expected parent commit with the read-only
-  per-command `-c core.longpaths=true` option. The executed diagnostic and
-  its receipt are under `artifacts/wp6e-step0/path-diagnosis/`, with procedure
+- 2026-09-04 — The first baseline shadow at `C:/w/wp6e-baseline-1` exited 1
+  in legacy-fast: 666/676 tests passed and ten failed across commissioning
+  and workspace recovery fixtures. It produced an ERROR manifest and no
+  passing receipt; later shadow children did not execute. All logs and the
+  raw report remain intact. A retained recovery fixture's 266-character
+  branch-ref path reproduces normal Git lookup exit 128; the same ref bytes
+  resolve the expected parent commit with the read-only per-command
+  `-c core.longpaths=true` option. The executed diagnostic and its receipt
+  are under `artifacts/wp6e-step0/path-diagnosis/`, with procedure
   `diagnose-path-length.ts` beside that directory. This proves one failure's
   path-length cause, not resolution of all ten failures or a shadow PASS.
   The unchanged clean baseline is retrying at the much shorter `C:/w/e6b`
   root with `LOOP_VERIFY_COMMAND_ARTIFACT_DIR=artifacts/s`, preserving the
   literal shadow command, scripts, tests, Git defaults, and timeout limits.
-  Its outer log and exit record are `artifacts/shadow.{log,exit.txt}`.
-  Use the new `audit-inventories-retry.ts` procedure in the original baseline
+  Its outer log and exit record are `artifacts/shadow.{log,exit.txt}`. Use
+  the new `audit-inventories-retry.ts` procedure in the original baseline
   clone when the retry completes; it explicitly validates invariant evidence
   from the original clone and shadow evidence from the shorter clone, both
   at `ac4e9a2`. Baseline inventory acceptance remains open. The original
@@ -853,12 +865,12 @@ historical record.
 - 2026-09-04 — The packaging-inclusive snapshot passed the eight adopter
   tests at `C:/w/wp6e-projection-focused-3`, with its command-owned receipt
   and raw-report SHA-256
-  `3dddaac3fe289b9193b94712495388d7d6330c520ebb31199c5f6798c80f5f05`.
-  Final typecheck, lint, and formatting passed in separate
-  `C:/w/wp6e-projection-{typecheck,lint,format}-3` clones. All five invariant
-  commands passed at `C:/w/wp6e-projection-invariants-2`; the existing
-  advisory warm target was missed and is not claimed as met. Fresh full
-  orchestrator and unit executions are running in
+  `3dddaac3fe289b9193b94712495388d7d6330c520ebb31199c5f6798c80f5f05`. Final
+  typecheck, lint, and formatting passed in separate
+  `C:/w/wp6e-projection-{typecheck,lint,format}-3` clones. All five
+  invariant commands passed at `C:/w/wp6e-projection-invariants-2`; the
+  existing advisory warm target was missed and is not claimed as met. Fresh
+  full orchestrator and unit executions are running in
   `C:/w/wp6e-projection-{orchestrator,unit}-2`. The prepared independent
   audit is `artifacts/wp6e-entry-20260904/audit-final-evidence.ts` in the
   working repository; it requires the complete final receipts and the
@@ -866,29 +878,31 @@ historical record.
   helper passed a non-mutating `git push --dry-run origin master`; the
   unauthenticated `gh` CLI is not an available evidence path by itself.
 - 2026-09-04 — Packaging review found the new schema also needed in
-  `adopter-package.ts`'s explicit runtime-file list. The generator now copies
-  it unchanged; the adopter regression checks exact bytes, schema validation
-  of all four projections, and absence of source identity leakage. Its
-  focused run is at `C:/w/wp6e-projection-focused-3` (pending). The prior
-  controller and full-unit runs in `wp6e-projection-{orchestrator,unit}-1`
-  were intentionally terminated after this source change and exited 1;
-  they are retained as superseded/incomplete, never passing evidence.
-  A taskkill race initially reported three descendants already exiting; a
-  follow-up process inspection confirmed all identified processes absent.
-  Fresh full runs are required after the packaging check. The current
-  invariant run at `wp6e-projection-invariants-1` did pass all five commands
-  before this packaging-only change. The preliminary independent audit at
-  `wp6e-projection-focused-2/artifacts/evidence-audit-preliminary/` validated
-  ten focused/static/invariant receipts and every declared artifact and
-  executable source hash for that earlier snapshot. It explicitly excludes
-  the incomplete broad set. No baseline shadow execution was interrupted.
-- 2026-09-04 — The first Step 1 implementation adds
-  `schedule-projection.ts` and its strict published schema, exposes ordered
-  command definitions through commissioning Doctor v2 and Status, and keeps
-  the existing focused-command count semantics. All active scheduling files
-  and package scripts remain unchanged. Nineteen new projection/evaluator
-  regressions are classified under the existing `controller-runtime` owner.
-  The initial focused run at `C:/w/wp6e-projection-focused-1` passed the 42
+  `adopter-package.ts`'s explicit runtime-file list. The generator now
+  copies it unchanged; the adopter regression checks exact bytes, schema
+  validation of all four projections, and absence of source identity
+  leakage. Its focused run is at `C:/w/wp6e-projection-focused-3` (pending).
+  The prior controller and full-unit runs in
+  `wp6e-projection-{orchestrator,unit}-1` were intentionally terminated
+  after this source change and exited 1; they are retained as
+  superseded/incomplete, never passing evidence. A taskkill race initially
+  reported three descendants already exiting; a follow-up process inspection
+  confirmed all identified processes absent. Fresh full runs are required
+  after the packaging check. The current invariant run at
+  `wp6e-projection-invariants-1` did pass all five commands before this
+  packaging-only change. The preliminary independent audit at
+  `wp6e-projection-focused-2/artifacts/evidence-audit-preliminary/`
+  validated ten focused/static/invariant receipts and every declared
+  artifact and executable source hash for that earlier snapshot. It
+  explicitly excludes the incomplete broad set. No baseline shadow execution
+  was interrupted.
+- 2026-09-04 — The first Step 1 implementation adds `schedule-projection.ts`
+  and its strict published schema, exposes ordered command definitions
+  through commissioning Doctor v2 and Status, and keeps the existing
+  focused-command count semantics. All active scheduling files and package
+  scripts remain unchanged. Nineteen new projection/evaluator regressions
+  are classified under the existing `controller-runtime` owner. The initial
+  focused run at `C:/w/wp6e-projection-focused-1` passed the 42
   commissioning/Doctor/Status tests and three projection tests, but 14
   projection schema checks failed because the independent evaluator rejected
   `prefixItems`; that failed run is retained. The test-only evaluator now
@@ -898,14 +912,14 @@ historical record.
   61/61 tests (19 projection/evaluator and 42 configuration-schema cases),
   with a command-owned receipt and raw-report SHA-256
   `5751c069752b8ff604defe32d235e8770d7c01906b66b18f247963496dfc0484`.
-  `artifacts/compare-plans.ts` in that clone executed all twelve same-context
-  projections and confirmed exact ordered command equality to the clean
-  baseline; `artifacts/projection-comparison.json` records the dirty
-  development identity honestly. Typecheck, lint, and format passed on the
-  current source in separate `C:/w/wp6e-projection-{typecheck,lint,format}-2`
-  clones. Those are pre-packaging source observations; the newer entry above
-  records their successor disposition. Commit and hosted verification have
-  not yet run.
+  `artifacts/compare-plans.ts` in that clone executed all twelve
+  same-context projections and confirmed exact ordered command equality to
+  the clean baseline; `artifacts/projection-comparison.json` records the
+  dirty development identity honestly. Typecheck, lint, and format passed on
+  the current source in separate
+  `C:/w/wp6e-projection-{typecheck,lint,format}-2` clones. Those are
+  pre-packaging source observations; the newer entry above records their
+  successor disposition. Commit and hosted verification have not yet run.
 - 2026-09-04 — Continuation reproduced the baseline in the clean clone
   `C:/w/wp6e-baseline-1` at `ac4e9a2`, using Node `24.18.0` and pnpm
   `11.15.1`. Initial user-owned plan/log bytes were preserved under
@@ -913,19 +927,20 @@ historical record.
   Preflight evidence is under the clone's `artifacts/wp6e-step0/preflight/`:
   dependencies and architecture exit 1; build exits 2 with the missing
   production-build declaration. Doctor exits 0 but reports `blocked`, with
-  valid commissioning and three blocks (build, placeholders, missing Docker).
-  Literal `pnpm verify:candidate` exits 3 with `ERROR` at
+  valid commissioning and three blocks (build, placeholders, missing
+  Docker). Literal `pnpm verify:candidate` exits 3 with `ERROR` at
   `artifacts/verification-tiers/verification-tier-candidate-20260904212802252-18692-c6e01282/tier-result.json`;
   the trusted execution provider is unavailable before invariant execution.
-  No fallback provider was used. Full-candidate acceptance remains unresolved.
-  All five standalone invariant commands passed with a command-owned receipt
-  at `artifacts/wp6e-step0/invariants/result.json`. Executed planner captures
-  for commissioning, package-change, and default CLI contexts, their exact
-  inputs, and procedure are retained in `artifacts/wp6e-step0/tier-plans.json`
-  and `capture-plans.ts`. The default CLI context additionally selects three
-  domain checks; it cannot use the fixed commissioning fixture's diff.
-  The same clean clone's shadow execution is still pending; no test-identity
-  equality is claimed from these preliminary results.
+  No fallback provider was used. Full-candidate acceptance remains
+  unresolved. All five standalone invariant commands passed with a
+  command-owned receipt at `artifacts/wp6e-step0/invariants/result.json`.
+  Executed planner captures for commissioning, package-change, and default
+  CLI contexts, their exact inputs, and procedure are retained in
+  `artifacts/wp6e-step0/tier-plans.json` and `capture-plans.ts`. The default
+  CLI context additionally selects three domain checks; it cannot use the
+  fixed commissioning fixture's diff. The same clean clone's shadow
+  execution is still pending; no test-identity equality is claimed from
+  these preliminary results.
 - 2026-09-01 — Plan drafted from repository inspection at `ac4e9a2`; no
   repository mutation beyond this file. Awaiting Step 0 confirmation.
 - 2026-09-04 — Maintainer approved the reviewed recommendation. The Step 0
@@ -933,50 +948,55 @@ historical record.
   compatible descriptor/publication transition, anchored audit chain,
   explicit scope-policy matrix, and invariant-guarded subsumption. Read-only
   inspection also corrected missing doctor check IDs, the selector's broad
-  legacy addition, baseline-versus-final counts, and the unit-stage identity;
-  inherited candidate prerequisites are explicitly unresolved. This is a
-  plan/decision revision only. No baseline execution, amendment implementation,
-  candidate proof, or new hosted result is claimed.
+  legacy addition, baseline-versus-final counts, and the unit-stage
+  identity; inherited candidate prerequisites are explicitly unresolved.
+  This is a plan/decision revision only. No baseline execution, amendment
+  implementation, candidate proof, or new hosted result is claimed.
   Documentation checks passed: `git diff --check`; a read-only Node audit
-  proved all pre-existing decision/autonomy-log bytes and the three protected
-  hashes unchanged and restricted tracked changes to this plan and those
-  two logs. The documentation changes remain uncommitted.
+  proved all pre-existing decision/autonomy-log bytes and the three
+  protected hashes unchanged and restricted tracked changes to this plan and
+  those two logs. The documentation changes remain uncommitted.
 
 ## Next Action
 
-Compatible infrastructure and the original descriptor are committed at
-`4338f47`. Protected run `33944911461` must pass all five jobs before the
-next push; its Windows unit job remains pending at this record. The first
-application on that commit remains uncommitted and preserved in `C:/w/e6-a`
-after the real format gate rejected its input/policy layout. Do not modify
-or publish that failed generation.
+The active v2 generation is locally verified in `C:/w/e6-b`, including the
+historical fixture-policy repair: 55 focused, 770 orchestrator, and 786 root
+tests passed, together with typecheck, lint, format, all five invariants,
+and diff checking. The independent audit is
+`artifacts/wp6e-amendment-dev/active-precommit-audit/` in the main
+workspace; the full cohort is `C:/w/wp6e-active-linux-evidence`. Final
+record-only edits must pass the actual format command and preserve all
+executable/source and committed log-history bytes before committing the four
+generated files, fixture corrections, and living records together.
 
-The compatible formatting/no-op repair is verified on source snapshot 8:
-58 focused, 770 orchestrator, and 786 unit cases, plus typecheck, lint,
-format, all five invariants, and diff checks. Independent source, receipts,
-inventory, frozen-surface, and log-history verification is retained under
-`artifacts/wp6e-amendment-dev/repair-precommit-audit/`. Commit only the
-compatible repair, corrected descriptor, regressions, and living records.
-Push it after the preceding protected run completes; require its own five
-jobs before any further push.
+The compatible infrastructure's five protected jobs passed on `4338f47` (run
+`33944911461`) and their artifacts were independently validated. Repair
+`b03a6cd` is pushed; require all five jobs and their artifact audit on
+`33948310909` before the next master push. The activation needs its own
+exact-commit five-job hosted gate and independent archive/receipt audit.
 
-From a new clean target-branch clone of the repair commit, capture the three
-before-state contexts and run the committed descriptor through the real
-`loop:commission:amend` CLI. Revalidate the operation receipt, generated
-ledger, commissioning Doctor, identical-context ordered plan changes, and
-the real format command. Apply the staged README/CONTRACT/configuration-guide
-updates to that valid generation; revise their formatting/no-op explanation
-to match the repair. The previous application audit and document preparation
-procedures are retained in `C:/w/e6-a/artifacts/` for reuse, with new outputs
-and actual identities. Both retained WP6d platform matrices have already
-passed historical CLI validation on clean `4338f47`; repeat it on the final
-clean candidate as required by acceptance.
+From clean clones of the coherent activation, run the prepared actual
+candidate/Doctor/planner/shadow/unit-domain/omission procedures, retained in
+`artifacts/wp6e-amendment-dev/run-after-state.sh`. Export the complete
+results to `C:/w/wp6e-final-linux-evidence` and run the prepared
+`audit-after-shadow.ts`; it verifies complete raw inventories, summary
+reduction, disjoint ownership, all 708 baseline identities plus classified
+additions, and every policy-row discovery superset. Capture the actual new
+default-CLI context separately from the twelve fixed comparisons. Execute
+isolated committed ownership and missing-child-receipt mutations and retain
+the actual rejection boundary. Repeat both platform historical statistics
+CLI validations from the clean final head. Retain the exact candidate and
+unit-domain dispositions; successful root-unit or shadow receipts do not
+establish the full candidate or domain stage.
 
-Continue Steps 3–6: a complete six-command active-generation cohort, a
-coherent four-file generation commit, clean literal candidate and unit-domain
-attempts, complete shadow/inventory proof, retained mutation boundaries, and
-all five hosted jobs. Full-candidate acceptance remains unresolved because
-the unchanged project placeholders, undeclared production build, and missing
-configured trusted runtime still cannot pass. No focused, shadow, or hosted
-controller result substitutes for that gate. Keep WP6e explicitly incomplete
-where required evidence remains unavailable.
+Post-commit closeout belongs at
+`artifacts/wp6e-amendment-dev/final-closeout/`, with exact commit/tree,
+command identities, archive digests, independent audits, and every remaining
+acceptance gap. The configured trusted runtime is unavailable and the
+unchanged project checks still have placeholders and no declared production
+build. Steps 4 and 5(a)/(b) remain open unless their actual required
+boundaries are reached. Exhaust the safe local evidence paths and preserve
+non-passing outcomes. If these prerequisites still require frozen product
+authority or scope changes, report that narrow blocker; do not mark WP6e
+complete or advance into WP6f interpretation. No readiness/state adoption is
+authorized by these development checks.
