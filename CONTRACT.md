@@ -346,6 +346,22 @@ validation must pass; an owned partial stage is cleaned, and a post-publication
 fault removes only the exact inode and hash that this invocation created. The
 command reports every generated path, byte count, and SHA-256.
 
+The commissioning diagnostic uses `loop-commissioning-doctor.v2`. Each
+`tierPlans` entry is a `verification-schedule-projection.v1` record containing
+the tier, focused `commandCount`, `exactVerificationIncluded`, ordered
+`actualCheckIds`, and ordered command definitions (`id`, `argv`, and
+`expectedArtifactKinds`). The definitions include the final literal
+no-argument `pnpm verify` for milestone and periodic; that closure is excluded
+from `commandCount` and delegates its artifact requirements to the exact
+verifier. The strict JSON schema is
+`tools/milestone-orchestrator/schemas/verification-schedule-projection.schema.json`;
+runtime validation also checks the relationships among IDs, definitions,
+counts, and closure position. Canonical serialization preserves array order
+and omits candidate, timestamp, and policy metadata, allowing comparison of
+the commands planned for the same changed-path context. Operational Doctor
+and lifecycle Status carry these projections unchanged. A projection is a
+read-only planning result and cannot establish successful execution.
+
 The Ski Tycoon configuration at `examples/ski-tycoon/` is a historical worked
 example, not an active or fallback contract. Its strict `worked-example.v1`
 descriptor pins the exact package files, provenance dispositions, schemas,

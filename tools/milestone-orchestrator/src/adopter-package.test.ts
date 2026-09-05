@@ -14,8 +14,10 @@ import {
 } from "./adopter-package.js";
 import { parseAdopterPackageCliArguments } from "./adopter-package-cli.js";
 import { validateJsonSchema202012 } from "../test/json-schema-2020-12.js";
+import { genericCommissioningTierPlans } from "../test/fixtures.js";
 
 const temporaryDirectories: string[] = [];
+const repositoryRoot = resolve(import.meta.dirname, "../../..");
 const definitionPath = freshAdopterDefinitionPath;
 const fixtureCleanupOptions = { recursive: true, force: true } as const;
 const fixtureCleanupRetryCodes = new Set([
@@ -353,6 +355,22 @@ describe("fresh adopter package creation", () => {
       ]),
     ).toEqual({ valid: true, errors: [] });
 
+    const projectionSchemaPath =
+      "tools/milestone-orchestrator/schemas/verification-schedule-projection.schema.json";
+    const generatedProjectionSchema = await readFile(
+      join(outputRoot, projectionSchemaPath),
+    );
+    expect(generatedProjectionSchema).toEqual(
+      await readFile(join(repositoryRoot, projectionSchemaPath)),
+    );
+    for (const projection of genericCommissioningTierPlans())
+      expect(
+        validateJsonSchema202012(
+          JSON.parse(generatedProjectionSchema.toString("utf8")),
+          projection,
+        ),
+      ).toEqual({ valid: true, errors: [] });
+
     const verifier = await readFile(
       join(outputRoot, "scripts/verify.mjs"),
       "utf8",
@@ -420,6 +438,7 @@ describe("fresh adopter package creation", () => {
         "tools/milestone-orchestrator/config/commissioning-input.json",
         "tools/milestone-orchestrator/schemas/model-policy.schema.json",
         "tools/milestone-orchestrator/schemas/orchestrator-config.schema.json",
+        "tools/milestone-orchestrator/schemas/verification-schedule-projection.schema.json",
       ].map((path) => readFile(join(outputRoot, path), "utf8")),
     );
     expect(activeSurface.join("\n")).not.toMatch(

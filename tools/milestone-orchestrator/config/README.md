@@ -219,6 +219,16 @@ commands, exact and reconciliation policies, and all four tier plans. It
 derives the manifest timestamp from the base commit, publishes validated bytes
 without clobber, reports path/bytes/SHA-256, and never regenerates authority.
 
+Commissioning Doctor v2 exposes a `verification-schedule-projection.v1` for
+each tier. Its ordered check IDs and command definitions come from the
+production tier planner; milestone and periodic include their exact closure.
+The existing `commandCount` counts focused commands only. The projection
+schema and runtime relationship checks reject inconsistent records; Status
+preserves the same data. Compare command projections using identical
+changed-path contexts: package changes and the default CLI Git range can
+select additional checks beyond the commissioning fixture. These diagnostic
+records do not change the active schedule or prove execution success.
+
 The manifest's `focusedCommands` define the check catalogue (id, argv, tiers,
 expected artifact kinds), and its target branch, invariant, scope,
 exact-verification, protected-path, and reconciliation identities fail closed

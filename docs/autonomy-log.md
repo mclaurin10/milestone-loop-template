@@ -3,6 +3,147 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-09-04 — WP6e baseline pinned and ordered schedule projection verified
+
+**Outcome.** The first bounded Step 1 increment exposes the production
+planner's ordered check IDs, argv, and expected artifact kinds through
+commissioning Doctor v2 and lifecycle Status. A strict versioned projection
+schema and runtime validator preserve focused-count and exact-closure
+semantics. Canonical comparisons retain array order and omit candidate,
+timestamp, and policy metadata. Generated adopters receive the schema through
+the existing runtime-file allowlist. Nineteen new regression identities are
+classified under the existing controller owner; exact catalogue file-count
+assertions now include that file. The active v1 input, policy, manifest,
+package scripts, execution rules, protected workflow, measurement identities,
+and frozen authorities are unchanged. No amendment or schedule transition is
+implemented, and no performance benefit or readiness is claimed.
+
+**Baseline.** Clean `ac4e9a2f43049d446356c2bc00b3f395df33e5b6` executions on
+`codex.lab` at `/tmp/wp6e-yVASGa/b` passed invariants, the complete partition
+shadow, and an independent inventory audit. Root-unit discovery matches the
+executed fast/migration union of 708 identities; this is not a separate
+baseline `test:unit` invocation. Candidate-before contains 1,368 executions,
+708 unique identities, and 660 duplicated identities. The four disjoint
+owners cover 709 identities; the sole extra is the OCI fixture case. Every
+one of the 18 mandatory/workspace replacement rows retains its prior
+coverage; the two fast-only direct rows add the 32 migration identities.
+All four production tier plans were captured in three distinct changed-path
+contexts. Windows/Linux baseline planner projections match for each context.
+
+The verified baseline export is at `C:/w/wp6e-linux-baseline-evidence`, with
+ZIP SHA-256
+`2f6e9ee93ae66b76f4e9dbdecf39bd39c749a474e42e0136d74f8c56e0b5e367`.
+Its inventory artifact SHA-256 is
+`b0a55f87500620728475238ae22a54bf70153af9f83bcd1af29faf250d33e16a`.
+The plan retains the exact procedures, failed attempts, and archive mappings.
+Windows baseline shadow failed ten cases under a long artifact root; one
+retained Git ref independently reproduced a 266-character path limitation.
+The first Linux shadow failed before its final fixture because its Unix
+socket path was too long. A shorter-path Linux run passed unchanged commands,
+tests, Git defaults, and limits. The duplicate Windows baseline retry was
+stopped and remains incomplete. None of those earlier runs is a shadow PASS.
+
+**Verification.** Node `24.18.0` and pnpm `11.15.1` were used throughout.
+The complete precommit cohort in `/tmp/wp6e-yVASGa/p` passed `pnpm typecheck`,
+`pnpm lint`, `pnpm format:check`, `pnpm test:invariants`,
+`pnpm test:orchestrator`, `pnpm test:unit`, and `git diff --check`, with
+command-owned receipts. Source fingerprints stayed unchanged. The exported
+101-file evidence bundle at `C:/w/wp6e-linux-projection-evidence` has ZIP
+SHA-256 `183d13f7632df5016ca8ea2e34e8e8135bf80af8ab6e0ae9ae8f325657d3b387`.
+The retained runner/export procedures are in
+`artifacts/wp6e-entry-20260904/`.
+
+Independent audit `audit-linux-precommit-evidence-2.ts` passed, with its
+receipt at `artifacts/wp6e-entry-20260904/linux-precommit-audit-2/result.json`.
+It revalidated the 11 Linux command/child receipts and their artifacts,
+15 executable/schema/catalogue/test source hashes, 727 full-unit identities,
+711 orchestrator identities, all baseline identities plus exactly 19 new
+tests, all 12 same-context command projections, 23 protected files, and
+preserved log history. It independently revalidated the imported baseline
+receipts/reports and the real CLI projection evidence. Actual `pnpm
+loop:doctor` and `pnpm loop:status` at `C:/w/wp6e-p-typecheck-4` expose the
+same four projections and leave working-tree status unchanged; their valid
+receipt and full reports are in `artifacts/cli/`. Doctor remains `blocked`.
+
+Windows static checks and invariants also passed in separate short clones.
+The serial orchestrator run at `C:/w/wp6e-p-orchestrator-3` passed 711/711
+tests; its receipt and exact identity equality with Linux were independently
+validated by the precommit audit. The serial full unit run at
+`C:/w/wp6e-p-unit-3` is the remaining local Windows execution at this record.
+All broad failures and superseded runs remain retained. Earlier concurrent
+orchestrator/unit runs each failed four cases beyond their original limits
+and a stale ownership-count assertion; the count assertion was repaired,
+and the complete serial orchestrator now passes with limits unchanged.
+
+The earlier five-case diagnostic observed five passing cases, but its receipt
+declared a zero-byte stderr artifact and is invalid. The first independent
+Linux audit caught that defect and failed; both that procedure/output and
+the malformed diagnostic receipt remain intact. The successor audit
+explicitly rejects it and uses the valid complete Windows orchestrator
+receipt instead. No empty log was padded, no retained receipt was edited,
+and no filtered-out case was counted as passing. The initial projection
+schema parity failure was fixed by implementing strict positional/tail
+`prefixItems` support in the test-only evaluator; subsequent broad suites
+exercise those regressions and the adopter packaging assertions.
+
+**Checkpoint and next gate.** Prepare the cohesive commit titled
+`Expose ordered verification schedule projections`; its exact identity is
+available from Git history. Require all five jobs of the protected exact-
+runtime workflow on that pushed commit, then independently audit the
+downloaded archive digests, receipts, raw reports, generated bootstrap
+browser proof, and real Docker outcomes. The prepared hosted audit is
+`artifacts/wp6e-entry-20260904/audit-hosted-evidence.ts`. Finish and audit the
+remaining serial Windows run without reusing failed evidence. Preserve the
+untracked roadmap and initial plan/log history. Then continue Step 1's
+descriptor, anchored audit chain, and recoverable publication; Steps 2–7
+remain open. Inherited dependencies/architecture placeholders, missing
+production-build configuration, and the local trusted-provider gap still
+prevent full-candidate/readiness acceptance and remain non-passing.
+
+
+## 2026-09-04 — WP6e approval recorded and execution plan revised
+
+**Outcome.** The maintainer approved the reviewed Step 0 recommendation.
+The plan now records the decision, removes the routine-confirmation pause,
+and specifies five requirements before the schedule can change: a scoped
+65-minute partition timeout; a compatible v1/v2 descriptor/publication
+transition; an anchored amendment chain covering input, policy, and manifest;
+explicit per-trigger/workspace scope mappings; and planner/runner enforcement
+of the invariant prerequisite. The decision log records the rationale and
+supersedes the earlier lack of an amendment path without rewriting history.
+This completes the documentation revision, not WP6e implementation or its
+baseline evidence pin.
+
+**Inspection.** Read `PROJECT_GOAL.md`, `AGENTS.md`, `.agent/PLANS.md`, the
+active plan, recent logs, and the affected commissioning, planner, selector,
+package, and verifier definitions. `git status --short --branch` showed
+`master` at `ac4e9a2f43049d446356c2bc00b3f395df33e5b6` (tree
+`db1da52cdf388bd3aadd90b975bf157bb37cbea8`), with the draft plan already
+modified and the protected roadmap untracked. `Get-FileHash -Algorithm
+SHA256` confirmed the immutable lock, exact-runtime workflow, and protected
+roadmap remain at their recorded hashes ending `33050`, `19bf`, and `93b1`.
+No hosted state was refreshed and no retained performance record was
+reinterpreted.
+
+Inspection found additional evidence requirements: doctor currently returns
+tier counts without the ordered IDs needed for an exact diff; broad selector
+logic still adds `test-unit`; and final test counts must account for newly
+added regressions. The plan now captures these explicitly. It also records
+the inherited dependencies/architecture placeholders, absent production-build
+declaration, and the actual `unit-domain` stage's additional `test:domain`
+requirement as execution gaps, not passing verification.
+
+**Verification and remaining work.** `git diff --check` passed. A read-only
+`node -e` audit compared the prior log headers and full historical bodies
+against `git show HEAD:<path>` and proved all pre-existing bytes unchanged;
+it also rechecked the three protected SHA-256 values and limited tracked
+changes to the plan and these two logs. No product tests, baseline clone
+executions, amendment, or new CI run occurred in this documentation increment.
+Changes are uncommitted. Next: preflight
+the candidate prerequisites and pin Step 0 planner/ownership/shadow evidence
+from a clean clone, then begin compatible amendment infrastructure. Steps
+1–7 and every WP6e execution acceptance criterion remain open.
+
 ## 2026-08-31 — WP6d hosted matrix completed and independently reproduced
 
 **Outcome.** Test-only repair commit

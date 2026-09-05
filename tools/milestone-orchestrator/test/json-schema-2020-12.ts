@@ -45,6 +45,7 @@ const SUPPORTED_KEYWORDS = new Set([
   "maxItems",
   "uniqueItems",
   "items",
+  "prefixItems",
   "contains",
   "minContains",
   "maxContains",
@@ -107,6 +108,15 @@ function assertSupportedSchema(value: unknown, path: string): void {
     assertSupportedSchema(additional, `${path}/additionalProperties`);
   const items = schema["items"];
   if (items !== undefined) assertSupportedSchema(items, `${path}/items`);
+  const prefixItems = schema["prefixItems"];
+  if (prefixItems !== undefined) {
+    const members = schemaArray(prefixItems, `${path}/prefixItems`);
+    if (members.length === 0)
+      throw new Error(`${path}/prefixItems must not be empty.`);
+    members.forEach((member, index) =>
+      assertSupportedSchema(member, `${path}/prefixItems/${index}`),
+    );
+  }
   const contains = schema["contains"];
   if (contains !== undefined)
     assertSupportedSchema(contains, `${path}/contains`);
@@ -498,16 +508,27 @@ function evaluate(
         );
     }
     const items = schema["items"];
-    if (items !== undefined)
-      instance.forEach((value, index) => {
-        errors.push(
-          ...evaluate(items, value, {
-            ...context,
-            instancePath: childPath(context.instancePath, String(index)),
-            schemaPath: `${context.schemaPath}/items`,
-          }),
-        );
-      });
+    const prefixItems =
+      schema["prefixItems"] === undefined
+        ? []
+        : schemaArray(
+            schema["prefixItems"],
+            `${context.schemaPath}/prefixItems`,
+          );
+    instance.forEach((value, index) => {
+      const positional = index < prefixItems.length;
+      const itemSchema = positional ? prefixItems[index] : items;
+      if (itemSchema === undefined) return;
+      errors.push(
+        ...evaluate(itemSchema, value, {
+          ...context,
+          instancePath: childPath(context.instancePath, String(index)),
+          schemaPath: positional
+            ? `${context.schemaPath}/prefixItems/${index}`
+            : `${context.schemaPath}/items`,
+        }),
+      );
+    });
     const contains = schema["contains"];
     if (contains !== undefined) {
       const count = instance.filter(

@@ -44,6 +44,7 @@ import {
 } from "./protected-roots.js";
 import { createMilestoneRecord } from "./milestone-state.js";
 import {
+  genericCommissioningTierPlans,
   validConfig,
   validProposal,
   validReconciliationRecord,
@@ -231,7 +232,7 @@ const pinnedImageDigest = `sha256:${"e".repeat(64)}`;
 
 function readyCommissioningDiagnostic(): CommissioningDoctorDiagnostic {
   return {
-    schemaVersion: "loop-commissioning-doctor.v1",
+    schemaVersion: "loop-commissioning-doctor.v2",
     diagnostic: "loop-commissioning",
     status: "PASS",
     readOnly: true,
@@ -250,13 +251,7 @@ function readyCommissioningDiagnostic(): CommissioningDoctorDiagnostic {
     immutableContractLockSha256: "d".repeat(64),
     invariantSuiteId: "generic-invariants.v1",
     scopePolicyId: "generic-scope.v1",
-    tierPlans: ["iteration", "candidate", "milestone", "periodic"].map(
-      (tier) => ({
-        tier: tier as "iteration" | "candidate" | "milestone" | "periodic",
-        commandCount: 1,
-        exactVerificationIncluded: tier === "milestone" || tier === "periodic",
-      }),
-    ),
+    tierPlans: genericCommissioningTierPlans(),
   };
 }
 
@@ -406,6 +401,9 @@ describe("read-only orchestrator doctor", () => {
       "autonomousIntegrationEligibility",
     ]);
     expect(doctorExitCode(diagnostic, false)).toBe(0);
+    expect(diagnostic.checks.commissioning.tierPlans).toEqual(
+      genericCommissioningTierPlans(),
+    );
     expect(doctorExitCode(diagnostic, true)).toBe(0);
     const serialized = JSON.stringify(diagnostic);
     expect(serialized).not.toContain("never-print-this-local-secret");

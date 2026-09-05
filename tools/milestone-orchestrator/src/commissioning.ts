@@ -37,7 +37,6 @@ import {
   type CommissioningInput,
   type VerificationManifest,
   type VerificationProfile,
-  type VerificationTier,
 } from "./contracts.js";
 import { inspectReadinessLifecycle } from "./orchestrator.js";
 import {
@@ -52,11 +51,15 @@ import {
   resolveVerificationManifestProfile,
 } from "./verification-manifest.js";
 import { planVerificationTier } from "./verification-tier.js";
+import {
+  projectVerificationSchedule,
+  type VerificationScheduleProjection,
+} from "./schedule-projection.js";
 
 export const COMMISSIONING_RESULT_SCHEMA_VERSION =
   "loop-commissioning-result.v1" as const;
 export const COMMISSIONING_DOCTOR_SCHEMA_VERSION =
-  "loop-commissioning-doctor.v1" as const;
+  "loop-commissioning-doctor.v2" as const;
 export { IMMUTABLE_CONTRACT_LOCK_PATH } from "./authority-anchor.js";
 
 const READINESS_MARKER_PATH =
@@ -85,11 +88,7 @@ interface CommissioningContext {
   readonly tierPlans: readonly CommissioningTierPlanSummary[];
 }
 
-export interface CommissioningTierPlanSummary {
-  readonly tier: VerificationTier;
-  readonly commandCount: number;
-  readonly exactVerificationIncluded: boolean;
-}
+export type CommissioningTierPlanSummary = VerificationScheduleProjection;
 
 export interface CommissioningDoctorDiagnostic {
   readonly schemaVersion: typeof COMMISSIONING_DOCTOR_SCHEMA_VERSION;
@@ -621,12 +620,13 @@ async function constructTierPlans(input: {
       },
       protectedAuthorityPaths: input.protectedPaths,
     });
-    results.push({
-      tier,
-      commandCount: plan.commands.length,
-      exactVerificationIncluded:
-        plan.actualCheckIds.includes("exact-readiness"),
-    });
+    results.push(
+      projectVerificationSchedule({
+        tier,
+        plan,
+        exactVerificationArgv: input.manifest.exactVerification.argv,
+      }),
+    );
   }
   return results;
 }

@@ -15,6 +15,7 @@ import {
 import {
   inspectCommissionedRepository,
   type CommissioningDoctorDiagnostic,
+  type CommissioningTierPlanSummary,
 } from "./commissioning.js";
 import {
   inspectCandidatePrepareOperation,
@@ -201,11 +202,7 @@ interface DoctorChecks {
     readonly immutableContractLockSha256: string | null;
     readonly invariantSuiteId: string | null;
     readonly scopePolicyId: string | null;
-    readonly tierPlans: readonly {
-      readonly tier: "iteration" | "candidate" | "milestone" | "periodic";
-      readonly commandCount: number;
-      readonly exactVerificationIncluded: boolean;
-    }[];
+    readonly tierPlans: readonly CommissioningTierPlanSummary[];
   };
   readonly productionBuild: DoctorCheckBase & {
     readonly configured: boolean;

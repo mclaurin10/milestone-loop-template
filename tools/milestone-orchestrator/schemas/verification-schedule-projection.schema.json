@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://milestone-loop.local/schemas/verification-schedule-projection.schema.json",
+  "title": "Verification schedule projection",
+  "description": "Ordered planned command definitions. Runtime validation additionally binds commandCount, actualCheckIds, command order, and final closure placement.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "tier",
+    "commandCount",
+    "exactVerificationIncluded",
+    "actualCheckIds",
+    "commands"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "verification-schedule-projection.v1" },
+    "tier": { "enum": ["iteration", "candidate", "milestone", "periodic"] },
+    "commandCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991,
+      "description": "Focused command count; excludes the exact closure."
+    },
+    "exactVerificationIncluded": { "type": "boolean" },
+    "actualCheckIds": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/nonBlankString" }
+    },
+    "commands": { "type": "array", "items": { "$ref": "#/$defs/command" } }
+  },
+  "$defs": {
+    "nonBlankString": { "type": "string", "pattern": "\\S" },
+    "command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "argv", "expectedArtifactKinds"],
+      "properties": {
+        "id": { "$ref": "#/$defs/nonBlankString" },
+        "argv": {
+          "type": "array",
+          "minItems": 2,
+          "prefixItems": [{ "enum": ["pnpm", "node", "git"] }],
+          "items": { "$ref": "#/$defs/nonBlankString" }
+        },
+        "expectedArtifactKinds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/nonBlankString" }
+        }
+      },
+      "if": { "properties": { "id": { "const": "exact-readiness" } } },
+      "then": {
+        "properties": {
+          "argv": { "const": ["pnpm", "verify"] },
+          "expectedArtifactKinds": { "maxItems": 0 }
+        }
+      },
+      "else": { "properties": { "expectedArtifactKinds": { "minItems": 1 } } }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "tier": { "enum": ["iteration", "candidate"] } }
+      },
+      "then": {
+        "properties": {
+          "exactVerificationIncluded": { "const": false },
+          "actualCheckIds": {
+            "not": { "contains": { "const": "exact-readiness" } }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "exactVerificationIncluded": { "const": true },
+          "actualCheckIds": { "contains": { "const": "exact-readiness" } }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "tier": { "const": "periodic" } } },
+      "then": {
+        "properties": {
+          "commandCount": { "const": 0 },
+          "actualCheckIds": { "maxItems": 1 },
+          "commands": { "minItems": 1, "maxItems": 1 }
+        }
+      }
+    }
+  ]
+}

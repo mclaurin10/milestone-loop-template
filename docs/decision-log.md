@@ -3,6 +3,154 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-09-04 — WP6e canonical schedule projection and diagnostic compatibility
+
+**Decision.** Expose a versioned, read-only projection of the existing
+production tier planner before implementing the amendment operation.
+`verification-schedule-projection.v1` includes the tier, ordered check IDs,
+ordered command argv and expected artifact kinds, the existing focused
+command count, and exact-closure inclusion. The exact closure is represented
+as the final literal `pnpm verify` command, with no focused-command artifact
+kinds, and is excluded from the focused count. Canonical comparisons preserve
+array order and omit candidate, policy, and timestamp metadata. Callers must
+compare projections from the same changed-path context.
+
+The runtime validator rejects unknown fields, malformed definitions,
+duplicates, inconsistent IDs/order/counts, and altered closure semantics.
+The published Draft 2020-12 schema checks structural constraints; runtime
+validation additionally checks relationships across arrays and counts. The
+test-only schema evaluator now implements `prefixItems` and validates its
+prefix/tail behavior, while continuing to reject unsupported keywords and
+malformed schemas. This addresses an observed unsupported-keyword failure
+without loosening the projection schema.
+
+**Compatibility.** The commissioning diagnostic becomes
+`loop-commissioning-doctor.v2`. Lifecycle Doctor and Status retain their
+outer versions and propagate the richer, explicitly versioned nested
+projections. Generated adopters receive the same projection schema through
+the runtime-file allowlist; a packaging regression validates its exact bytes
+and all four tier projections. The initial commissioning result and its
+one-shot publication behavior remain intact. This diagnostic version does
+not activate the proposed source schedule or scope-policy v2.
+
+**Alternatives and scope.** Counts alone cannot prove an ordered schedule
+diff. Comparing complete tier results would couple a schedule comparison to
+unrelated candidate identity and policy metadata. Sorting command arrays
+would erase execution-order changes. The separate projection avoids those
+problems and follows the actual production planner. The 19 new regression
+identities belong to the existing controller owner; the canonical file-count
+assertions increase by one without changing the owner set. The active
+commissioning input, policy, manifest, package scripts, protected workflow,
+measurement identities, and frozen authorities are preserved. Descriptor,
+anchored amendment history, recoverable publication, and schedule cutover
+remain subsequent WP6e work.
+
+
+## 2026-09-04 — WP6e recomposition direction and transition requirements approved
+
+**Decision and authority.** The maintainer approved the reviewed WP6e
+recommendation: commission the four canonical owner partitions in candidate
+and milestone; retain the legacy scripts as diagnostic, shadow, measurement,
+and hosted entry points; and apply the schedule through an audited amendment.
+The active plan records the implementation requirements below. Its former
+routine-confirmation pause is removed in accordance with the autonomous
+decision boundary in `AGENTS.md`. This approval establishes direction; all
+baseline, implementation, execution, and hosted acceptance evidence remains
+to be produced.
+
+The 2026-08-15 one-shot commissioning decision remains the rule for initial
+creation. This decision adds a distinct, controlled amendment path for an
+existing commissioning, superseding the earlier absence of such a path.
+Commissioning identity, frozen authorities, the protected exact-runtime
+workflow, exact no-argument verification, and measurement identities retain
+their existing constraints. Historical decisions are preserved as written.
+
+**Schedule and policy.** Candidate and milestone commission
+`controller-runtime`, `repository-tooling`, `adopter-template`, and
+`trusted-container-fixture` exactly once as focused partition commands. V2
+has no tiered legacy test command. Legacy IDs remain resolvable as auxiliary
+checks only when absent from the active manifest, preserving the existing
+duplicate-ID rejection and valid v1/historical catalogues.
+
+Scope-policy v2 uses explicit owner mappings: `test-unit` becomes controller,
+repository, and adopter; `test-orchestrator` becomes controller and adopter;
+fast becomes the three root owners; migrations becomes controller. The plan
+enumerates every trigger and workspace row and requires a discovery-superset
+proof. Current migration rows also require full unit, so their union does not
+expand; the two fast-only direct mappings add the 32 baseline migration
+tests. The OCI owner is a required commissioned command and is recommended by
+existing broad/fail-broad augmentation; it is not silently added to every
+direct legacy replacement. Source-v2 broad recommendation also replaces the
+hard-coded `test-unit` addition with the three root owners. V1/historical
+behavior and deferred shadow-only policy remain separately testable.
+
+**Prerequisite and timeout.** Candidate/milestone partition schedules require
+the canonical invariant command first and the production ownership child in
+its registry. Check those premises before applying subsumption; then stop
+execution on any prerequisite failure. Validate complete generation,
+partition IDs, owner argv, artifact kinds, and tier tags rather than accepting
+the presence of four arbitrary names. Each canonical partition receives a
+65-minute outer tier timeout, containing its existing 60-minute inner limit
+plus setup/publication. Other focused tier commands retain 20 minutes; exact,
+measurement, and individual test/hook deadlines retain their existing values.
+Test the timeout actually supplied to the execution provider.
+
+**Publication and audit.** A separately committed, strict amendment
+descriptor supplies proposed input/policy bytes, expected current hashes and
+chain tip, and this decision heading. The active files remain valid v1 while
+compatible infrastructure and v1/v2-aware guards land. A clean target-branch
+invocation validates current and proposed generations, renders the manifest
+through `manifestFromInput`, stages exact bytes, and records recovery intent
+before replacing any active file. Input, policy, manifest, and amendment
+record form one recoverable operation; incomplete generations are refused
+by doctor and consumers. Resume only recorded prior/new states and preserve
+foreign changes. Publish no broken intermediate commit and perform no
+implicit Git or controller-state adoption.
+
+The append-only amendment chain binds prior/new hashes for all three active
+files, descriptor identity, previous entry hash, invocation HEAD/tree,
+ordered tier plans/diff, and decision heading. Anchor its initial generation
+to real commissioned Git blobs, validate its committed prefix, and compare
+the live files with its tip. Tests cover individual/coordinated edits,
+ledger deletion or truncation, publication crashes, concurrent attempts,
+and recovery. Hashes establish repository consistency and audit continuity;
+they do not independently authenticate an actor capable of rewriting all
+repository history. Reversal restores prior input and policy, regenerates
+the manifest, and appends another entry; it never truncates the ledger.
+
+**Evidence corrections.** Current doctor tier summaries expose counts but
+not ordered check IDs. Capture a baseline through the production planner
+and extend the diagnostic before depending on exact per-tier diffs. Compare
+identical changed-path contexts and command projections; metadata schemas
+and broad recommendations can differ. Historical 708-root/709-with-OCI
+counts are baseline observations. New WP6e regressions must be classified
+and their added identities enumerated; final counts must not be forced back
+to the baseline. Exactly-once evidence is scoped to the four partition
+reports, with prerequisite invariant executions accounted separately.
+
+The repository still has candidate-facing dependencies/architecture
+placeholders and no production-build declaration. The readiness unit stage
+is `unit-domain` and also requests `test:domain`. These inherited conditions
+must be preflighted and reported accurately; a root-unit report or hosted
+controller pass cannot establish a candidate or complete unit-domain PASS.
+They do not authorize skipped checks, product implementation outside WP6e,
+or any reduction of the frozen acceptance contract.
+
+**Alternatives rejected.** A repeated maintainer-confirmation gate for
+routine reversible engineering; an unconditional v2 ownership expectation
+before v2 publication; an input-only commit that breaks doctor; coordinated
+manual input/manifest edits validated only against each other; independent
+file replacements described as a transaction without recovery; a blanket
+four-owner policy replacement; widening all deadlines; and relying on a
+possibly omitted invariant to establish its own presence. Each either
+conflicts with the autonomous contract or leaves a concrete validation gap.
+
+**Affected files and next action.** This decision updates only
+`.agent/current-exec-plan.md`, this log, and `docs/autonomy-log.md`.
+Implementation has not started. Pin Step 0 in a clean short-root clone of
+`ac4e9a2`, beginning with candidate prerequisites and exact planner
+projections, then implement the compatible amendment infrastructure.
+
 ## 2026-08-31 — WP6d closes on reproduced evidence without interpretation
 
 **Decision.** Accept WP6d's hosted execution surface only after all ten

@@ -190,6 +190,13 @@ measurement claim.
    state-owned exact verification. Docker or Podman presence alone is never
    reported as trusted readiness.
 
+   Commissioning tier diagnostics include a versioned schedule projection:
+   ordered `actualCheckIds` and each command's `argv` and
+   `expectedArtifactKinds`. Milestone and periodic projections include the
+   final literal `pnpm verify`; `commandCount` retains its focused-command
+   meaning and excludes that closure. Status preserves the same projections.
+   They describe planned commands, not evidence that those commands passed.
+
    Ordinary Doctor remains an inspectable diagnostic and exits zero after it
    emits a complete `ready` or `blocked` result. `--strict` emits the same JSON
    and exits 2 when any operational blocker exists; warnings keep autonomous

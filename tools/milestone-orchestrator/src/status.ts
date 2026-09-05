@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { isAbsolute, relative, resolve } from "node:path";
 
 import { DEFAULT_CONFIG_PATH, loadConfigForInspection } from "./config.js";
+import type { CommissioningTierPlanSummary } from "./commissioning.js";
 import type {
   ExecutionProviderIdentity,
   MilestoneRecord,
@@ -95,11 +96,7 @@ interface StatusCommissioning {
     readonly immutableContractLockSha256: string;
     readonly invariantSuiteId: string;
     readonly scopePolicyId: string;
-    readonly tierPlans: readonly {
-      readonly tier: "iteration" | "candidate" | "milestone" | "periodic";
-      readonly commandCount: number;
-      readonly exactVerificationIncluded: boolean;
-    }[];
+    readonly tierPlans: readonly CommissioningTierPlanSummary[];
   } | null;
 }
 

@@ -8,6 +8,7 @@ import {
   PREVIOUS_MILESTONE_SCHEMA_VERSION,
   REQUIRED_PROTECTED_PATHS,
   VERIFICATION_MANIFEST_SCHEMA_VERSION,
+  VERIFICATION_TIERS,
   type MilestoneProposal,
   type OrchestratorConfig,
   type OrchestratorState,
@@ -23,6 +24,39 @@ import type {
   CandidateCommandExecutor,
   CandidateExecutionProvider,
 } from "../src/execution-provider.js";
+import type { VerificationScheduleProjection } from "../src/schedule-projection.js";
+
+export function genericCommissioningTierPlans(): readonly VerificationScheduleProjection[] {
+  return VERIFICATION_TIERS.map((tier) => {
+    const exactVerificationIncluded =
+      tier === "milestone" || tier === "periodic";
+    const commands =
+      tier === "periodic"
+        ? []
+        : [
+            {
+              id: "test-invariants",
+              argv: ["pnpm", "test:invariants"],
+              expectedArtifactKinds: ["invariant-suite-report"],
+            },
+          ];
+    const commandCount = commands.length;
+    if (exactVerificationIncluded)
+      commands.push({
+        id: "exact-readiness",
+        argv: ["pnpm", "verify"],
+        expectedArtifactKinds: [],
+      });
+    return {
+      schemaVersion: "verification-schedule-projection.v1",
+      tier,
+      commandCount,
+      exactVerificationIncluded,
+      actualCheckIds: commands.map((command) => command.id),
+      commands,
+    };
+  });
+}
 
 export function trustedTestExecutionProviderIdentity(): ExecutionProviderIdentity {
   return executionProviderIdentity({

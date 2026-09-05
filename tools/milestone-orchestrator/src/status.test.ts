@@ -34,6 +34,7 @@ import {
   type WorkspaceCreateRecoveryInspection,
 } from "./workspace-create.js";
 import {
+  genericCommissioningTierPlans,
   validConfig,
   validProposal,
   validReconciliationRecord,
@@ -157,7 +158,7 @@ function treeInventory(root: string): readonly string[] {
 
 function readyCommissioning(head: string): CommissioningDoctorDiagnostic {
   return {
-    schemaVersion: "loop-commissioning-doctor.v1",
+    schemaVersion: "loop-commissioning-doctor.v2",
     diagnostic: "loop-commissioning",
     status: "PASS",
     readOnly: true,
@@ -176,13 +177,7 @@ function readyCommissioning(head: string): CommissioningDoctorDiagnostic {
     immutableContractLockSha256: "3".repeat(64),
     invariantSuiteId: "status-invariants.v1",
     scopePolicyId: "status-scope.v1",
-    tierPlans: ["iteration", "candidate", "milestone", "periodic"].map(
-      (tier) => ({
-        tier: tier as "iteration" | "candidate" | "milestone" | "periodic",
-        commandCount: 2,
-        exactVerificationIncluded: tier === "milestone" || tier === "periodic",
-      }),
-    ),
+    tierPlans: genericCommissioningTierPlans(),
   };
 }
 
@@ -607,6 +602,9 @@ describe("expanded status diagnostic", () => {
       nextAction: { command: "pnpm loop:plan" },
     });
     expect(result.operational.issues).toEqual([]);
+    expect(result.commissioning.record?.tierPlans).toEqual(
+      genericCommissioningTierPlans(),
+    );
     expect(result.deferred.workspaceCleanups).toEqual([
       expect.objectContaining({
         milestoneId: "status-completed",

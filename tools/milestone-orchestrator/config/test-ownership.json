@@ -63,6 +63,7 @@
         "tools/milestone-orchestrator/src/retry-policy.test.ts",
         "tools/milestone-orchestrator/src/reviewer.test.ts",
         "tools/milestone-orchestrator/src/safety-demonstration.test.ts",
+        "tools/milestone-orchestrator/src/schedule-projection.test.ts",
         "tools/milestone-orchestrator/src/schema.test.ts",
         "tools/milestone-orchestrator/src/state-generation-store.test.ts",
         "tools/milestone-orchestrator/src/state-store.test.ts",

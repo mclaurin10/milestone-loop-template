@@ -22,7 +22,10 @@ import {
   type VerificationProfile,
 } from "./contracts.js";
 import { buildCanonicalProtectedSet } from "./protected-roots.js";
-import { validConfig } from "../test/fixtures.js";
+import {
+  genericCommissioningTierPlans,
+  validConfig,
+} from "../test/fixtures.js";
 
 const temporaryDirectories: string[] = [];
 const ACTIVE_MANIFEST_PATH = ".agent/verification-manifest.json";
@@ -393,6 +396,12 @@ describe("deterministic repository commissioning", () => {
           .filter((plan) => plan.exactVerificationIncluded)
           .map((plan) => plan.tier),
       ).toEqual(["milestone", "periodic"]);
+      expect(result.postGenerationDoctor.schemaVersion).toBe(
+        "loop-commissioning-doctor.v2",
+      );
+      expect(result.postGenerationDoctor.tierPlans).toEqual(
+        genericCommissioningTierPlans(),
+      );
       expect(manifestBytes.toString("utf8")).not.toMatch(
         /d-?0?31|d-?0?32|ski[ -]?tycoon/i,
       );
