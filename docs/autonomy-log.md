@@ -3,6 +3,60 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-09-04 — WP6e projection hosted checkpoint and remaining verification gaps
+
+**Committed checkpoint.** `2a6e49828dbb29e59addcc1889342245dc42bb3f`, tree
+`47825d47f1fffa5925bb2d032557c5fbcb7a78cc`, was pushed normally. Exact-runtime
+CI run `https://github.com/mclaurin10/milestone-loop-template/actions/runs/33934052224`
+passed all five jobs. Both platform controllers passed all 727 unit and 711
+orchestrator cases. Independent hosted verification is retained in
+`artifacts/wp6e-entry-20260904/hosted-audit/`, produced by
+`audit-hosted-evidence.ts` over `C:/w/wp6e-ci-33934052224`. It checks full
+run/job/artifact metadata, five archive digests, 22 controller receipts, 20
+generated-adopter receipts and browser proofs, and a real Docker fixture
+receipt plus all six containment cases. The archive SHA-256 values are:
+
+- controller Linux: `f74283042d079ba29e1051150002ad8ccc0bd58837e25be8b99c75935077e911`
+- controller Windows: `94598fd1068a870b4a01ebe438f86eeec9558a7d17f3c69022df9056d167a568`
+- adopter Linux: `53e68b645cd00c6e0c1b9429c0172549b83228a1aa4c2b6779ed40ad80cd94a3`
+- adopter Windows: `5399f9f49a1506f1bf104436d9a17f2020eecf7105088df4b5b95a92d024c4bc`
+- trusted container: `bc59b66e7d2bbc1dfca087c324b568312bc1ff3f902ae711b26e8a91e451d09e`
+
+**Retained local failure.** The serial `C:/w/wp6e-p-unit-3` full unit command
+exited 1 with 726/727 passing and no pending cases. Its worked-example
+cross-link drift case failed at the unchanged five-second limit with
+Vitest's generic `STACK_TRACE_ERROR`. The test and production validator are
+byte-identical to baseline. The complete ten-case file then passed in both
+baseline and current clones using the production measurement probe and
+unchanged deadlines. Both diagnostic receipts were independently validated;
+the procedure is `artifacts/wp6e-entry-20260904/diagnose-worked-example.ts`.
+This suggests a transient timeout but does not establish its cause or turn
+the failed full attempt into a pass. A fresh, clean `2a6e498` full-unit retry
+is pending in `C:/w/wp6e-p-unit-4`; its recorded procedure is
+`run-windows-unit-4.ps1`. The final Windows audit must consume that complete
+result and retain prior failed and invalid-receipt attempts separately.
+
+**Historical CLI compatibility.** Both prescribed historical statistics
+revalidation commands were executed from clean exact-runtime `2a6e498` at
+`C:/w/wp6e-stats-1` and exited 1 with
+`Measurement matrix candidate differs from expectation.` The original
+records identify `93e03e2`; `measurement-statistics-cli.ts` instead supplies
+the caller's current commit to the production validator. Logs, exit records,
+and ERROR manifests are retained under that clone's
+`artifacts/wp6d-revalidation-{linux,windows}*`. The procedure is
+`artifacts/wp6e-entry-20260904/run-historical-revalidation.ps1`. An earlier
+shell attempt could not open its output log because the artifacts directory
+did not yet exist, so it did not invoke either validation command. No
+historical record or measurement implementation was changed. The active
+plan now carries this reproduced compatibility gap as unresolved.
+
+**Handoff.** The projection has a passing hosted checkpoint, while amendment,
+recovery, v2 support, recomposition, and remaining acceptance stay open. The
+updated records will be committed with unchanged executable bytes; the
+active plan assigns final exact-record-commit CI, the Windows retry audit,
+and a completion-ineligible closeout receipt to post-commit verification.
+No performance or readiness claim is made.
+
 ## 2026-09-04 — WP6e baseline pinned and ordered schedule projection verified
 
 **Outcome.** The first bounded Step 1 increment exposes the production
