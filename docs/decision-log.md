@@ -3,6 +3,38 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-09-05 — Require retained raw OCI artifacts for the runtime foundation
+
+The initial real WSL matrix reached all six required dispositions, yet its
+normal aggregate's build and Vitest files disappeared during candidate
+cleanup. A passing aggregate plus retained hashes cannot support independent
+inspection of absent bytes. Keep that first run as incomplete evidence and
+repair the matrix's retention boundary using the existing quota-enforcing,
+link-rejecting, exclusive artifact publisher. Compare both source and retained
+inventories to the executor's actual exported inventory before cleanup.
+
+Preserve the fixture, cases, image recipe and production executor policy. The
+repair changes only matrix evidence retention and adds three regressions in
+the existing owner file. A second full OCI run is justified by the observed
+defect; it is not an automatic full source/native-platform dispatch. Record
+both costs, immutable image reuse, raw artifacts and negative audit outcomes.
+
+Use the package-declared pnpm executable and a persistent task-local Linux
+directory; /tmp setup evidence was unavailable after a WSL restart. Preserve
+the existing engine and normally resolved Linux store, whose candidate mount
+is read-only. A working local WSL runtime is not native Windows proof or an
+authorization to run untrusted controllers on a personal host. Disposable
+qualification-host suitability and authenticated read-only producer/consumer
+evidence delivery still need their own real workflow increment.
+
+The source build remains truthfully NOT_READY under the unchanged legacy
+package declaration. Source release build implementation, authority activation,
+exact readiness, independent reconciliation and the separate live human gate
+remain outside this runtime foundation. Its frozen staged tree and actual
+patch are retained explicitly; later documentation cannot promote it to an
+exact committed no-argument source-readiness result.
+
+
 ## 2026-09-05 — Approve r2 scope and preserve a bounded implementation handoff
 
 The maintainer explicitly approved the immediately preceding ORCH-AUTH-01 r2

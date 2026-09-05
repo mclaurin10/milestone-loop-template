@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0.0",
+  "stageId": "orch-auth-runtime-audit",
+  "commandId": "ORCH-AUTH-01-A-retained-evidence",
+  "status": "PASS",
+  "checks": [
+    {
+      "id": "SOURCE-RUNTIME",
+      "summary": "Exact source Git objects, fixture tree, clean/frozen source mode, Linux controller, Node/pnpm and real Docker identities agree.",
+      "status": "PASS"
+    },
+    {
+      "id": "IMAGE-POLICY",
+      "summary": "Actual immutable image inspection matches the tracked pinned recipe, exact package versions and unchanged resource limits.",
+      "status": "PASS"
+    },
+    {
+      "id": "SIX-CASES",
+      "summary": "All existing cases reached their required normal/adversarial boundaries with exact containment hashes, effective policy, retained artifacts and disposal evidence.",
+      "status": "PASS"
+    },
+    {
+      "id": "RAW-CHILD-EVIDENCE",
+      "summary": "The real normal command receipt, aggregate, raw build and Vitest bytes remain inspectable after cleanup and match every declared hash and fixture identity.",
+      "status": "PASS"
+    },
+    {
+      "id": "CLEANUP",
+      "summary": "Both matrix-owned disposal checks and separate post-run Docker observations show zero surviving owned containers or volumes.",
+      "status": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "runtime-audit.json",
+      "kind": "orch-auth-runtime-audit",
+      "bytes": 13589,
+      "sha256": "f9678f147d591b0f87941eed707968b4408917e2c9d348bbe7a23ab3dceceed5"
+    }
+  ]
+}

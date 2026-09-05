@@ -1,0 +1,265 @@
+{
+  "schemaVersion": "orch-auth-01-a-closeout.v1",
+  "status": "PASS",
+  "claim": "bounded local Linux runtime increment only",
+  "completionEligible": false,
+  "source": {
+    "mode": "frozen-index",
+    "head": "2ec1d253ffe26b6051c68abb545a8cddef417984",
+    "headTree": "7ae1542586eeea382c46b5a38064f56f632d3e11",
+    "candidateTree": "73050cad83ec0f312498792c47bd55bff5bea060",
+    "stagedPathCount": 3,
+    "stagedPathsSha256": "8bc0236c8b18f616681af6810fa719d6f4fc9a2d111bc48ed5206b1cd8e684be"
+  },
+  "runtimeReceiptSha256": "e7d79c1a0034948f624f8aee3f1f736cba8a91e692878da358de0dcaf17f4bc7",
+  "receipts": [
+    {
+      "directory": "handoff-audit",
+      "stage": "authority-handoff-integrity",
+      "command": "ORCH-AUTH-01-handoff-audit",
+      "sha256": "c94c864b7dbec4bafecebc2834caccc67172ed9f5cf2cddfc7f1329dada33862",
+      "artifacts": 1
+    },
+    {
+      "directory": "contract-integrity-entry",
+      "stage": "invariant-suite",
+      "command": "contract-integrity",
+      "sha256": "3c32d13a85a67da5b0759372916669050b892750f5057cb2ed85cae40db04fc9",
+      "artifacts": 1
+    },
+    {
+      "directory": "focused",
+      "stage": "orch-auth-01-a",
+      "command": "oci-evidence-focused",
+      "sha256": "7d6d716efe189b6920d905226513ed42922637b2dc1f94f185f7d97f9d1f742d",
+      "artifacts": 4
+    },
+    {
+      "directory": "checks/test-invariants",
+      "stage": "invariant-suite",
+      "command": "test:invariants",
+      "sha256": "c5a29b7393bca9e1736201923b0910aeca96addd72bb9afdff10cd9b98f109b2",
+      "artifacts": 1
+    },
+    {
+      "directory": "checks/test-invariants/entries/fail-closed-evidence",
+      "stage": "invariant-suite",
+      "command": "fail-closed-evidence",
+      "sha256": "1c3b41345f90678fff380d0e3ac163d25be7e26ab317724999bdd5250c4b27a8",
+      "artifacts": 1
+    },
+    {
+      "directory": "checks/test-invariants/entries/orchestrator-policy-integrity",
+      "stage": "invariant-suite",
+      "command": "orchestrator-policy-integrity",
+      "sha256": "84064b3510521fa9fb0f23804484280b4a23d0be4c31283ed51e273487c1cd05",
+      "artifacts": 1
+    },
+    {
+      "directory": "checks/test-invariants/entries/orchestrator-schema-integrity",
+      "stage": "invariant-suite",
+      "command": "orchestrator-schema-integrity",
+      "sha256": "839dbe21057f42ee02d66e22cfb6d949f4f23e9c183f7419bd14635cddf8b072",
+      "artifacts": 1
+    },
+    {
+      "directory": "checks/test-invariants/entries/protected-integrity",
+      "stage": "invariant-suite",
+      "command": "protected-integrity",
+      "sha256": "7c330f4399d39b7319d2041362351d7248109f720ad814e5c507862f2ec245c6",
+      "artifacts": 1
+    },
+    {
+      "directory": "checks/test-invariants/entries/test-ownership",
+      "stage": "invariant-suite",
+      "command": "test-ownership",
+      "sha256": "6e58cece4a9123a88a40101cdfb86594879e5e33d5fa2cdc7c604a73c5ca901e",
+      "artifacts": 1
+    },
+    {
+      "directory": "checks/typecheck",
+      "stage": "typecheck",
+      "command": "typecheck",
+      "sha256": "9f82968955bdedc8ef3678c3a327ccf7901a68104ed736495a12dd60912f23ca",
+      "artifacts": 1
+    },
+    {
+      "directory": "checks/lint",
+      "stage": "format-lint",
+      "command": "lint",
+      "sha256": "489cc94a28ec96c9aaba5ecdc6d23b2e41c0edcd707881676592d2ce1c2d91fa",
+      "artifacts": 1
+    },
+    {
+      "directory": "checks/format-check",
+      "stage": "format-lint",
+      "command": "format:check",
+      "sha256": "892d6e2fa4067484c68b4d95bb5e6cf6fd3c285b691a4db54b7ea3c0751ece62",
+      "artifacts": 1
+    }
+  ],
+  "focusedTests": 24,
+  "archives": [
+    {
+      "name": "linux-evidence.tar.gz",
+      "bytes": 16808,
+      "sha256": "2a7c8214598c255a802ac52bdfae345425f97de7ecf10f47678d5c3814f5b51a"
+    },
+    {
+      "name": "linux-retained-evidence.tar.gz",
+      "bytes": 15828,
+      "sha256": "c8cd9b12a898a09edd5f9a243e7b351e2c4f78255c734060cd5e043cd6fc1be2"
+    },
+    {
+      "name": "supporting-evidence.tar.gz",
+      "bytes": 33965,
+      "sha256": "2e69ebf7635b0b90a41e7aba05a6c8bfcaf73ad7dbce2cebeb58a78f32a9da0a"
+    }
+  ],
+  "preserved": [
+    {
+      "path": "PROJECT_GOAL.md",
+      "bytes": 2921,
+      "sha256": "72b08d4132159866cceba7f19c54a5484d1acf2a142e5e6285903d0a3a231b88"
+    },
+    {
+      "path": "evals/ACCEPTANCE.md",
+      "bytes": 1980,
+      "sha256": "84d2027a4196a2446ca7d519025f0cacac2c0576c65bb6d8590c111b1a267dba"
+    },
+    {
+      "path": "evals/acceptance-manifest.json",
+      "bytes": 3377,
+      "sha256": "365e452dcc770e99a9689d3a36b74660f7ec3c4c25c298f9eee4ea20b18a001c"
+    },
+    {
+      "path": "evals/HIDDEN_VALIDATION_PROTOCOL.md",
+      "bytes": 1012,
+      "sha256": "89628e97a8a535ea3fc4771c273efc7f79b0d1881695aa0c513ab552486f1673"
+    },
+    {
+      "path": "evals/immutable-contract-lock.json",
+      "bytes": 1363,
+      "sha256": "d1166088b00c54af65e8654188adc58a3cabd9d7908820809fe66af28c933050"
+    },
+    {
+      "path": "AGENTS.md",
+      "bytes": 9773,
+      "sha256": "bcafb1252cc8934d362300457dd1998c6b8a3fb5c52fc50340c653e758c44147"
+    },
+    {
+      "path": "CONTRACT.md",
+      "bytes": 47416,
+      "sha256": "ab0b9df07d30cabe51c6decfdee9d1c2cbe8604cb1ed36632bc5cb419f6d15b3"
+    },
+    {
+      "path": ".agent/readiness-profile-activated.json",
+      "bytes": 238,
+      "sha256": "2d5d6628e31343dcfde01b4cadd1ff0891eb2abd3197e3018bc766d104077dc2"
+    },
+    {
+      "path": ".agent/verification-manifest.json",
+      "bytes": 7730,
+      "sha256": "0550adb7dfa8570649e384e3f928ef005f664f66e10ab3090730057e5ab73682"
+    },
+    {
+      "path": ".agent/completed/verification-manifest-amendments.json",
+      "bytes": 88200,
+      "sha256": "a11322a36258c821a80c24f112e7d2a76abfcf522122cb92b6d3392e62f0fc11"
+    },
+    {
+      "path": "package.json",
+      "bytes": 5801,
+      "sha256": "d11bebb220c30802ff0178ad581a7479507e1b2dbe77a94a04e0113882a6406d"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "bytes": 60467,
+      "sha256": "154f9b86ae26bf839a51c2de1eed204397f7c54cf9dcf870320c881c3aa5c181"
+    },
+    {
+      "path": "scripts/verify.mjs",
+      "bytes": 49619,
+      "sha256": "62e35639d0f230ca514b8548a11023fe0082f4e970b979f19cb48cd4f68511b1"
+    },
+    {
+      "path": "tools/run-tool-evidence.mjs",
+      "bytes": 16188,
+      "sha256": "bb5792cf56c0836122b4aa3617afcc33b440bff3df3e8a721228d559a85d08d2"
+    },
+    {
+      "path": "tools/milestone-orchestrator/config/default.json",
+      "bytes": 3239,
+      "sha256": "f273433a1fb74d8724426104781c3c6dc28660044c14365f64bd7661da8abf5b"
+    },
+    {
+      "path": "tools/milestone-orchestrator/config/source-commissioning-input.json",
+      "bytes": 7127,
+      "sha256": "8df3be45f6581a6826d9cb6697a2ae4e7ebd57eddae7b9cec7e6df18dc1f4fd5"
+    },
+    {
+      "path": "tools/milestone-orchestrator/config/verification-scope-policy.json",
+      "bytes": 5773,
+      "sha256": "5ce01baa2844389beb0cd4651ced4acf044d1163211937a9a768a626c86c46d6"
+    },
+    {
+      "path": "tools/milestone-orchestrator/config/invariant-suite.json",
+      "bytes": 3148,
+      "sha256": "d56cb441134b7e8780d0824cb80b2546d01f3d1860ed710a10e93c74c80622bb"
+    },
+    {
+      "path": "tools/milestone-orchestrator/config/benchmark-matrix.json",
+      "bytes": 2226,
+      "sha256": "e002bfa7ee73d87cb51a9d7c5ed8488ebd11e232d11421dc4ccf25e3591eb5f3"
+    },
+    {
+      "path": "tools/milestone-orchestrator/config/slow-suite-registry.json",
+      "bytes": 155,
+      "sha256": "04e27df9dd8cb4b699d42b680e20452227a57be9ddd07cff5ffe58a23da09d4c"
+    },
+    {
+      "path": ".github/workflows/exact-runtime-ci.yml",
+      "bytes": 6606,
+      "sha256": "9dc35e44aacd35e3058895cccc89c43de9ff535ad20a0552c9b8a80b23cb19bf"
+    },
+    {
+      "path": ".github/workflows/wp6-measurement-matrix.yml",
+      "bytes": 6912,
+      "sha256": "8927c647b8c7ed3ca041fbc85ae2f8d5d1361ccc83b997df13d2ab6314fc783b"
+    },
+    {
+      "path": "Implementation-ready improvement plan 8-5-26.txt",
+      "bytes": 78574,
+      "sha256": "53ea98fb1cb880163a02d3b1d9365963e3fe891025ae3630f00bd4c9232293b1"
+    }
+  ],
+  "negative": [
+    {
+      "name": "entry-audit",
+      "disposition": "ERROR",
+      "failure": "Error: ENOENT: no such file or directory, realpath 'C:\\Dev\\loop-extraction\\milestone-loop-template\\artifacts\\orch-auth-01-a\\entry-run\\artifacts\\oa1\\matrix\\cases\\normal\\workspace-artifacts'"
+    },
+    {
+      "name": "tampered-audit",
+      "disposition": "ERROR",
+      "failure": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    fileCount: 3,\n    files: [\n      {\n        bytes: 35,\n...\n      {\n+       bytes: 915,\n-       bytes: 914,\n        path: 'vitest-report.json',\n+       sha256: '6ef6c24ef515be5fb1972705d463bb07b8012cf4f70ae6675fbf68ac41096eca'\n-       sha256: '22217e3e97dcd4b4b34802bae509a28baadb4b92de3df009eda08244f5dc5258'\n      }\n    ],\n    schemaVersion: '1.0.0',\n+   totalBytes: 1739\n-   totalBytes: 1738\n  }\n"
+    }
+  ],
+  "costs": {
+    "producers": 2,
+    "purpose": "initial OCI runtime qualification and one repair-driven rerun",
+    "matrixDurationsMs": [
+      44259,
+      52863
+    ],
+    "imageBuilds": 0,
+    "hostedDispatches": 0
+  },
+  "sourceBuild": {
+    "status": "NOT_READY",
+    "exitCode": 2,
+    "message": "milestoneLoop.productionBuild is not declared in package.json.",
+    "passingReceipt": false
+  },
+  "nextIncrement": "One real public workflow with an intended rejection, disposable qualification-host suitability and authenticated read-only producer/consumer evidence handoff; inspect native Windows feasibility early."
+}

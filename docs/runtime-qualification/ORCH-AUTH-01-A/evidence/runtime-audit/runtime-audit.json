@@ -1,0 +1,377 @@
+{
+  "schemaVersion": "orch-auth-01-a-runtime-audit.v1",
+  "status": "PASS",
+  "claim": "local WSL Linux OCI runtime qualification with inspectable fixture evidence",
+  "observedAt": "2026-09-05T21:08:31.582Z",
+  "completionEligible": false,
+  "sourceReadiness": false,
+  "nativeWindowsQualified": false,
+  "activationPerformed": false,
+  "source": {
+    "mode": "frozen-index",
+    "head": "2ec1d253ffe26b6051c68abb545a8cddef417984",
+    "headTree": "7ae1542586eeea382c46b5a38064f56f632d3e11",
+    "candidateTree": "73050cad83ec0f312498792c47bd55bff5bea060",
+    "stagedPathCount": 3,
+    "stagedPathsSha256": "8bc0236c8b18f616681af6810fa719d6f4fc9a2d111bc48ed5206b1cd8e684be"
+  },
+  "controller": {
+    "platform": "linux",
+    "nodeVersion": "v24.18.0",
+    "pnpmVersion": "11.15.1",
+    "runtime": "docker",
+    "runtimeVersion": "29.1.3"
+  },
+  "image": {
+    "baseImage": "node:24.18.0-bookworm@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059",
+    "imageId": "sha256:e405e2790e743243dd669f8e58eeaff6c585df3cbc77e9a4316a7f07b4e2eaad",
+    "inputHash": "0392ec049d9c168fdefb9ab22fe38f9127953639aa96701a6369fa10ed9556a3",
+    "tag": "milestone-loop-executor:0392ec049d9c168fdefb9ab22fe38f91",
+    "reused": true,
+    "buildInvocations": 0
+  },
+  "matrix": {
+    "path": "artifacts/oa2/matrix",
+    "bytes": 6785,
+    "sha256": "1d0d60378a1182161df559a2e3765041f9880ed20c8137734d1a76d8c25121e2",
+    "durationMs": 52863
+  },
+  "checks": [
+    {
+      "id": "SOURCE-RUNTIME",
+      "summary": "Exact source Git objects, fixture tree, clean/frozen source mode, Linux controller, Node/pnpm and real Docker identities agree."
+    },
+    {
+      "id": "IMAGE-POLICY",
+      "summary": "Actual immutable image inspection matches the tracked pinned recipe, exact package versions and unchanged resource limits."
+    },
+    {
+      "id": "SIX-CASES",
+      "summary": "All existing cases reached their required normal/adversarial boundaries with exact containment hashes, effective policy, retained artifacts and disposal evidence."
+    },
+    {
+      "id": "RAW-CHILD-EVIDENCE",
+      "summary": "The real normal command receipt, aggregate, raw build and Vitest bytes remain inspectable after cleanup and match every declared hash and fixture identity."
+    },
+    {
+      "id": "CLEANUP",
+      "summary": "Both matrix-owned disposal checks and separate post-run Docker observations show zero surviving owned containers or volumes."
+    }
+  ],
+  "containments": [
+    {
+      "id": "normal",
+      "status": "PASS",
+      "sha256": "dd85ab48a9d75032d44f11cc52e8e5d099abf36f4656da1c85587f3527e9688b",
+      "fixtureCandidate": {
+        "commit": "85ef812741e8a4803d986603ceaee3e3b2496d2f",
+        "tree": "737992b526cc6eacb4a3f1d2586d69f755782186"
+      },
+      "publishedArtifacts": 3
+    },
+    {
+      "id": "boundary",
+      "status": "PASS",
+      "sha256": "66501af00bc71c312715b42931231d346daa3cd289595501f74ed557e7c59343",
+      "fixtureCandidate": {
+        "commit": "f4aae8898fafa61cea8fee2fd7d5b64b7999b93d",
+        "tree": "737992b526cc6eacb4a3f1d2586d69f755782186"
+      },
+      "publishedArtifacts": 0
+    },
+    {
+      "id": "artifact-link",
+      "status": "ERROR",
+      "sha256": "61c24036add55376ea9f0b993162927b9abdd3c5183f55b5dca3ac96ef44b7a4",
+      "fixtureCandidate": {
+        "commit": "1186437fd2810c5490e2c64e346d785b85308a7b",
+        "tree": "737992b526cc6eacb4a3f1d2586d69f755782186"
+      },
+      "publishedArtifacts": 0
+    },
+    {
+      "id": "artifact-quota",
+      "status": "ERROR",
+      "sha256": "db3b732a85f94e773db4959d42830b7c2a9861178c8333cc8eb0b06ebd11ee7d",
+      "fixtureCandidate": {
+        "commit": "4540c765f5cc9a2ca54e84a8b446f4968901431d",
+        "tree": "737992b526cc6eacb4a3f1d2586d69f755782186"
+      },
+      "publishedArtifacts": 0
+    },
+    {
+      "id": "output-flood",
+      "status": "ERROR",
+      "sha256": "47dc6464b1bd41adef9be74c2700d846ca1d1f8347da39f802b8b59eb261b0e9",
+      "fixtureCandidate": {
+        "commit": "e5f8c8ed57709a9c6ab09228288f5c4ef51293e8",
+        "tree": "737992b526cc6eacb4a3f1d2586d69f755782186"
+      },
+      "publishedArtifacts": 0
+    },
+    {
+      "id": "hang",
+      "status": "TIMEOUT",
+      "sha256": "5800d9feb2854021884dbb2dcc9cc5bdcac4d281b4fc9dd739aaf26a4e2405eb",
+      "fixtureCandidate": {
+        "commit": "f77dc37aa2d9575563abac5b8a696ff4a092035e",
+        "tree": "737992b526cc6eacb4a3f1d2586d69f755782186"
+      },
+      "publishedArtifacts": 0
+    }
+  ],
+  "normalReceipt": {
+    "sha256": "790627427c4bb1915b823b9b682575681793038c19e14153a703b1950b03d183",
+    "bytes": 508,
+    "artifacts": [
+      {
+        "path": "C:\\Dev\\loop-extraction\\milestone-loop-template\\artifacts\\orch-auth-01-a\\retained-run\\artifacts\\oa2\\matrix\\cases\\normal\\evidence\\aggregate-proof.json",
+        "kind": "oci-fixture-aggregate",
+        "bytes": 789,
+        "sha256": "7c567f3f3859448e6c0870ad9d89c9b686227d0f1c673e54b4389f94474870ef"
+      }
+    ]
+  },
+  "inventory": {
+    "schemaVersion": "1.0.0",
+    "fileCount": 47,
+    "totalBytes": 116339,
+    "files": [
+      {
+        "path": "containers-after.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "image-inspect.json",
+        "bytes": 2755,
+        "sha256": "9d931242e7cf5f989b939fc11cb24554d425184087003859a43e20afdbfba94e"
+      },
+      {
+        "path": "matrix-exit-code.txt",
+        "bytes": 2,
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+      },
+      {
+        "path": "matrix-finished.txt",
+        "bytes": 26,
+        "sha256": "f88562e86571ef9dd7111ba5cc68be1cdce7c571d7dd33eedc528664ad1f7453"
+      },
+      {
+        "path": "matrix-started.txt",
+        "bytes": 26,
+        "sha256": "0edfd0b05df0dcb28946d81d6648e906763897918ee84ace74e261ff89f48fe8"
+      },
+      {
+        "path": "matrix.log",
+        "bytes": 461,
+        "sha256": "709f094b3e918255d45e1fa2fdf982af50bd08ddba819ed54ea4fec5b842c411"
+      },
+      {
+        "path": "matrix/cases/artifact-link/logs/artifact-link.containment.json",
+        "bytes": 9281,
+        "sha256": "61c24036add55376ea9f0b993162927b9abdd3c5183f55b5dca3ac96ef44b7a4"
+      },
+      {
+        "path": "matrix/cases/artifact-link/logs/artifact-link.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "matrix/cases/artifact-link/logs/artifact-link.stdout.log",
+        "bytes": 370,
+        "sha256": "651d340b20c6b362ab253b7335f33e9ce888e3ba471e8a3d9f6c9db0f24cb950"
+      },
+      {
+        "path": "matrix/cases/artifact-quota/logs/artifact-quota.containment.json",
+        "bytes": 9254,
+        "sha256": "db3b732a85f94e773db4959d42830b7c2a9861178c8333cc8eb0b06ebd11ee7d"
+      },
+      {
+        "path": "matrix/cases/artifact-quota/logs/artifact-quota.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "matrix/cases/artifact-quota/logs/artifact-quota.stdout.log",
+        "bytes": 374,
+        "sha256": "f9da5190eaab06bc793024c5343f0eb7ca5f474beac7f322e20b64cb7c0adcb8"
+      },
+      {
+        "path": "matrix/cases/boundary/evidence/boundary.json",
+        "bytes": 476,
+        "sha256": "4b8532ccceda46b82f42918b495eac6fb0349a9fa3e7889e432a16acf3ba2620"
+      },
+      {
+        "path": "matrix/cases/boundary/logs/boundary.containment.json",
+        "bytes": 10142,
+        "sha256": "66501af00bc71c312715b42931231d346daa3cd289595501f74ed557e7c59343"
+      },
+      {
+        "path": "matrix/cases/boundary/logs/boundary.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "matrix/cases/boundary/logs/boundary.stdout.log",
+        "bytes": 370,
+        "sha256": "dffd7a247195f712aa7a4fbe19a39f5cb6a1af8205fd70dfec44c8a7235a2944"
+      },
+      {
+        "path": "matrix/cases/hang/evidence/child.json",
+        "bytes": 11,
+        "sha256": "c3985a1301a466e953112ab51ec9f0881d402c96fcbdef636f9ea9a4c2ffa9c8"
+      },
+      {
+        "path": "matrix/cases/hang/logs/hang.containment.json",
+        "bytes": 10077,
+        "sha256": "5800d9feb2854021884dbb2dcc9cc5bdcac4d281b4fc9dd739aaf26a4e2405eb"
+      },
+      {
+        "path": "matrix/cases/hang/logs/hang.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "matrix/cases/hang/logs/hang.stdout.log",
+        "bytes": 339,
+        "sha256": "f4919e376931ee8c32342ed9a0eea84fe8ea620beff96f21a3c1968c1b5f0732"
+      },
+      {
+        "path": "matrix/cases/normal/evidence/aggregate-proof.json",
+        "bytes": 789,
+        "sha256": "7c567f3f3859448e6c0870ad9d89c9b686227d0f1c673e54b4389f94474870ef"
+      },
+      {
+        "path": "matrix/cases/normal/evidence/result.json",
+        "bytes": 508,
+        "sha256": "790627427c4bb1915b823b9b682575681793038c19e14153a703b1950b03d183"
+      },
+      {
+        "path": "matrix/cases/normal/logs/normal.containment.json",
+        "bytes": 10837,
+        "sha256": "dd85ab48a9d75032d44f11cc52e8e5d099abf36f4656da1c85587f3527e9688b"
+      },
+      {
+        "path": "matrix/cases/normal/logs/normal.stderr.log",
+        "bytes": 26,
+        "sha256": "9bd181b08c9e915168ea4a6072e4fcb2e8dcac7ed73f4593770e49e7b9589b4b"
+      },
+      {
+        "path": "matrix/cases/normal/logs/normal.stdout.log",
+        "bytes": 369,
+        "sha256": "8743d08561948afc90144de28cfa494a9381c5464feb14aaae0dea43511b086f"
+      },
+      {
+        "path": "matrix/cases/normal/workspace-artifacts/build-report.json",
+        "bytes": 35,
+        "sha256": "1a32e51419e395ee9c7fe6d0b30c1f124e3ad5f773de48165b574a4b73ba0233"
+      },
+      {
+        "path": "matrix/cases/normal/workspace-artifacts/oci-fixture-result.json",
+        "bytes": 789,
+        "sha256": "7c567f3f3859448e6c0870ad9d89c9b686227d0f1c673e54b4389f94474870ef"
+      },
+      {
+        "path": "matrix/cases/normal/workspace-artifacts/vitest-report.json",
+        "bytes": 914,
+        "sha256": "22217e3e97dcd4b4b34802bae509a28baadb4b92de3df009eda08244f5dc5258"
+      },
+      {
+        "path": "matrix/cases/output-flood/logs/output-flood.containment.json",
+        "bytes": 9668,
+        "sha256": "47dc6464b1bd41adef9be74c2700d846ca1d1f8347da39f802b8b59eb261b0e9"
+      },
+      {
+        "path": "matrix/cases/output-flood/logs/output-flood.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "matrix/cases/output-flood/logs/output-flood.stdout.log",
+        "bytes": 28733,
+        "sha256": "363c0ddea8d3b3fd49ff00c5bfc177eb2b4aba43253f9a757bcf00b94871f78d"
+      },
+      {
+        "path": "matrix/result.json",
+        "bytes": 6785,
+        "sha256": "1d0d60378a1182161df559a2e3765041f9880ed20c8137734d1a76d8c25121e2"
+      },
+      {
+        "path": "setup/docker-info.txt",
+        "bytes": 1270,
+        "sha256": "5966c98e243575a49f0a28c0e6c690a7ade8e86fade02559f8a98b60ec1c1148"
+      },
+      {
+        "path": "setup/docker-version.txt",
+        "bytes": 700,
+        "sha256": "28ce21512e8b8a2f9651423694c735a6a215384bcb88a4d086abc4a308f1e14d"
+      },
+      {
+        "path": "setup/inputs-sha256.txt",
+        "bytes": 301,
+        "sha256": "c23ce56879853f95607acc313c73e743903c328a52c3b6a26593045014b53681"
+      },
+      {
+        "path": "setup/kernel.txt",
+        "bytes": 138,
+        "sha256": "5320ad1804355877e0470676e9a9a53c29f956b7a8138c578d9faeaa22e93cf7"
+      },
+      {
+        "path": "setup/pnpm-store-path.txt",
+        "bytes": 41,
+        "sha256": "0e451533d91b9c19b198b6a2a39462286dcfbc78ee21cd4c59a85444fc490f72"
+      },
+      {
+        "path": "setup/run-retained-matrix.sh",
+        "bytes": 3061,
+        "sha256": "afff34651fdcb766b9c77de2e3342f5f6a876e1b612fe9f33501afc55b220ef5"
+      },
+      {
+        "path": "setup/socket.txt",
+        "bytes": 16,
+        "sha256": "a486227c7623ecb7dd2a067e2c0161b583c6aa2e642d17d0aac6cf696930fb6b"
+      },
+      {
+        "path": "setup/source-head.txt",
+        "bytes": 82,
+        "sha256": "8044e492da82675765620729f398b52e9d07e7411112f8336127e84405fc1c2e"
+      },
+      {
+        "path": "setup/source-status-before.txt",
+        "bytes": 191,
+        "sha256": "d31f97b9cfb1ff76ed59abfa01df49637c147a544af002de7c0db7b49461323a"
+      },
+      {
+        "path": "setup/source-tree.txt",
+        "bytes": 41,
+        "sha256": "044a060272102cbc6aeec45f09d4ecc1ea9c74282164995ce45f72c41c19dd62"
+      },
+      {
+        "path": "setup/source.patch",
+        "bytes": 6220,
+        "sha256": "a2bb49293b83b8a61a71c939ddca6d238f54cb71d38bcb3e69ce9874fa4d736b"
+      },
+      {
+        "path": "setup/toolchain.json",
+        "bytes": 547,
+        "sha256": "c72500735c3948497cb9141c0bac4c201b47f218f207f38776064219aa17138b"
+      },
+      {
+        "path": "setup/user.txt",
+        "bytes": 123,
+        "sha256": "a3f18d9a31f130877e2453e22a3143aaef437ba831df2b1220f4a6582975dc7c"
+      },
+      {
+        "path": "source-status-after-matrix.txt",
+        "bytes": 191,
+        "sha256": "d31f97b9cfb1ff76ed59abfa01df49637c147a544af002de7c0db7b49461323a"
+      },
+      {
+        "path": "volumes-after.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ]
+  }
+}

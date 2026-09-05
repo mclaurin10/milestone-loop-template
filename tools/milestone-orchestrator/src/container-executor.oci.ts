@@ -36,6 +36,7 @@ import {
   resolveControllerPnpmStorePath,
 } from "./container-executor.js";
 import { createCandidateExecutionProvider } from "./execution-provider.js";
+import { retainOciWorkspaceArtifacts } from "./container-matrix-evidence.js";
 import { superviseCommand, type SupervisedExit } from "./process-supervisor.js";
 import { safeAgentEnvironment } from "./redaction.js";
 import { assertOrchestratorConfig } from "./schema.js";
@@ -617,11 +618,20 @@ async function executeCase(input: {
   assertions.push("candidate source hash unchanged");
 
   if (input.id === "normal") {
-    const aggregatePath = join(
-      candidate.root,
-      "artifacts",
-      "oci-fixture-result.json",
-    );
+    const retainedWorkspace = join(caseRoot, "workspace-artifacts");
+    await retainOciWorkspaceArtifacts({
+      sourceRoot: join(candidate.root, "artifacts"),
+      destinationRoot: retainedWorkspace,
+      expectedInventory: objectValue(
+        containment.report["artifacts"],
+        "Containment artifacts",
+      )["publishedWorkspace"],
+      limits: {
+        maximumFiles: OCI_RESOURCE_LIMITS_V1.maximumArtifactFiles,
+        maximumBytes: OCI_RESOURCE_LIMITS_V1.maximumArtifactBytes,
+      },
+    });
+    const aggregatePath = join(retainedWorkspace, "oci-fixture-result.json");
     const aggregate = objectValue(
       JSON.parse(await readFile(aggregatePath, "utf8")) as unknown,
       "OCI aggregate result",
@@ -662,6 +672,7 @@ async function executeCase(input: {
       "build/typecheck/Vitest/read-only Git passed",
       "command-owned receipt independently validated",
       "exact Node/pnpm pins observed",
+      "raw workspace artifacts retained and hash-validated before cleanup",
     );
   } else if (input.id === "boundary") {
     for (const protectedFile of protectedFiles)

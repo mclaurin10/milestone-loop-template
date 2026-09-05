@@ -19,9 +19,60 @@ import {
   inventoryContainerArtifacts,
   publishContainerArtifacts,
 } from "./container-artifacts.js";
+import { retainOciWorkspaceArtifacts } from "./container-matrix-evidence.js";
 
 const roots: string[] = [];
 const limits = { maximumFiles: 4, maximumBytes: 32 };
+
+describe("OCI matrix evidence retention", () => {
+  it("preserves exact raw reports after the temporary candidate is removed", async () => {
+    const source = await root("oci-retention-source-");
+    const destination = await root("oci-retention-destination-");
+    await writeFile(join(source, "build-report.json"), '{"status":"PASS"}\n');
+    await writeFile(join(source, "vitest-report.json"), '{"tests":1}\n');
+    const expectedInventory = await inventoryContainerArtifacts(source, limits);
+    await retainOciWorkspaceArtifacts({
+      sourceRoot: source,
+      destinationRoot: destination,
+      expectedInventory,
+      limits,
+    });
+    await rm(source, { recursive: true });
+    expect(await inventoryContainerArtifacts(destination, limits)).toEqual(
+      expectedInventory,
+    );
+    expect(
+      await readFile(join(destination, "vitest-report.json"), "utf8"),
+    ).toBe('{"tests":1}\n');
+  });
+
+  it.each(["missing", "tampered"])(
+    "rejects a %s raw report against its actual executor inventory",
+    async (mode) => {
+      const source = await root("oci-retention-source-");
+      const destination = await root("oci-retention-destination-");
+      const report = join(source, "vitest-report.json");
+      await writeFile(report, '{"tests":1}\n');
+      const expectedInventory = await inventoryContainerArtifacts(
+        source,
+        limits,
+      );
+      if (mode === "missing") await rm(report);
+      else await writeFile(report, '{"tests":0}\n');
+      await expect(
+        retainOciWorkspaceArtifacts({
+          sourceRoot: source,
+          destinationRoot: destination,
+          expectedInventory,
+          limits,
+        }),
+      ).rejects.toThrow("differ from the containment inventory");
+      expect(
+        (await inventoryContainerArtifacts(destination, limits)).fileCount,
+      ).toBe(0);
+    },
+  );
+});
 
 afterEach(async () => {
   for (const root of roots.splice(0))

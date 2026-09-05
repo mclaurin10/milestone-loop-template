@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0.0",
+  "manifestId": "manual-ORCH-AUTH-01-A-retained-evidence-20260905210828827-4296-93d37a50",
+  "stageId": "orch-auth-runtime-audit",
+  "commandId": "ORCH-AUTH-01-A-retained-evidence",
+  "displayCommand": "C:\\w\\node-v24.18.0-win-x64\\node.exe C:\\Dev\\loop-extraction\\milestone-loop-template\\docs\\runtime-qualification\\ORCH-AUTH-01-A\\audit-runtime.ts artifacts/orch-auth-01-a/retained-run artifacts/oa2/matrix 2ec1d253ffe26b6051c68abb545a8cddef417984 73050cad83ec0f312498792c47bd55bff5bea060 artifacts/orch-auth-01-a/retained-audit",
+  "status": "PASS",
+  "candidate": {
+    "gitCommit": "2ec1d253ffe26b6051c68abb545a8cddef417984",
+    "gitTree": "73050cad83ec0f312498792c47bd55bff5bea060",
+    "workingTreeDirty": true
+  },
+  "receipt": {
+    "path": "result.json",
+    "sha256": "e7d79c1a0034948f624f8aee3f1f736cba8a91e692878da358de0dcaf17f4bc7",
+    "bytes": 1491
+  },
+  "declaredArtifacts": {
+    "count": 1,
+    "bytes": 13589,
+    "declarations": [
+      {
+        "path": "runtime-audit.json",
+        "kind": "orch-auth-runtime-audit",
+        "bytes": 13589,
+        "sha256": "f9678f147d591b0f87941eed707968b4408917e2c9d348bbe7a23ab3dceceed5"
+      }
+    ]
+  },
+  "telemetry": {
+    "runId": null,
+    "manifestPath": null
+  },
+  "citationClass": "uncited-at-creation",
+  "durableCitations": {
+    "trackedPaths": [],
+    "controllerStateReferences": [],
+    "activeReconciliationReference": null
+  },
+  "createdAt": "2026-09-05T21:08:28.827Z",
+  "finishedAt": "2026-09-05T21:08:31.759Z",
+  "failureClassification": null
+}

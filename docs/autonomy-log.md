@@ -3,6 +3,59 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-09-05 — ORCH-AUTH-01-A: qualify the local Linux OCI runtime and retain raw evidence
+
+Continued the approved r2 handoff from 2ec1d25. Exact Node/pnpm reproduced the
+committed handoff audit (98 files/five historical receipts) and the fresh
+13-check protected-integrity receipt. A standalone Linux clone at
+/home/duncan/oa1-CKn8x9/src uses task-local Node 24.18.0 and pnpm 11.15.1,
+frozen root dependencies and a separately hydrated exact OCI fixture store.
+Docker 29.1.3 was neither replaced nor reconfigured. Initial installer failure
+selected pnpm.cjs rather than the package-declared pnpm.mjs; the corrected
+launcher and persistent Linux task directory retain the actual setup records.
+
+The unchanged six-case OCI matrix reached every expected outcome, but the
+independent audit reproduced missing raw build/Vitest reports after temporary
+candidate cleanup. The narrow repair retains exported workspace evidence with
+the existing bounded publisher, compares its complete size/hash inventory to
+the actual executor record, and verifies the retained copy before cleanup.
+Three regressions cover post-cleanup persistence, missing reports and tampering.
+No case, fixture, policy, image recipe, limit or source authority was weakened.
+
+The repaired complete matrix passed at the real frozen source tree
+73050cad83ec0f312498792c47bd55bff5bea060 on HEAD 2ec1d25. Its source.patch is
+retained for exact reconstruction. Normal/boundary passed; artifact link,
+quota and output flood returned their expected ERRORs; the evidenced stubborn
+descendant timed out and was removed. All six containment reports, normal
+command receipt, raw build and Vitest artifacts, effective policy and separate
+zero-survivor observations passed independent inspection. A one-byte mutation
+of the retained Vitest report was rejected without a PASS receipt.
+
+The curated raw archives, successful runtime receipt/report and receipt-owning
+closeout are under docs/runtime-qualification/ORCH-AUTH-01-A/evidence/;
+README.md and audit-runtime.ts document and reproduce the claim. Development
+originals remain under artifacts/orch-auth-01-a/. Matrix runs took 44,259 and
+52,863 ms, reused immutable image e405e279...e2eaad and performed zero image
+builds or hosted dispatches. The first run remains incomplete for raw evidence;
+the second qualifies this local Linux runtime only. Later record paths differ
+from the tested tree; production source/test bytes remain identical to it.
+
+All 24 focused tests passed. The invariant aggregate and its five entries,
+typecheck, lint and format passed with independently validated receipts.
+pnpm build returned exit 2 / NOT_READY because the unchanged live legacy
+package has no productionBuild declaration; no source build or readiness pass
+is asserted. Full candidate owner coverage, native Windows qualification,
+isolated qualification-host suitability, authenticated evidence delivery,
+source migration, live human acceptance and state adoption remain incomplete.
+The next bounded increment must inspect and prove one public workflow with a
+correct rejection and trusted handoff; inspect Windows feasibility early.
+
+Commit identity: the scoped commit containing this entry, discoverable through
+git log. The roadmap, sealed approval packages, prior log bytes, active
+authority/lock/commissioning/ledger, readiness marker, scripts and protected CI
+remain preserved. No source controller state or private refs were initialized.
+
+
 ## 2026-09-05 — ORCH-AUTH-01 r2 approved; fresh-session handoff prepared
 
 The maintainer's direct “Proposal approved.” message authorizes ORCH-AUTH-01
