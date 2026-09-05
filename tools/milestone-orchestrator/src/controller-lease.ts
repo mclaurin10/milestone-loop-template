@@ -12,7 +12,12 @@ import {
 import { exclusiveWriteSerialized } from "./state-store.js";
 
 export type ControllerLeaseOperation =
-  "run" | "plan" | "canary" | "reconcile" | "retention-apply";
+  | "run"
+  | "plan"
+  | "canary"
+  | "reconcile"
+  | "retention-apply"
+  | "commission-amend";
 
 export interface ControllerLeaseHooks {
   readonly afterObservedExisting?: (observation: {
@@ -53,6 +58,7 @@ const OPERATIONS = new Set<ControllerLeaseOperation>([
   "canary",
   "reconcile",
   "retention-apply",
+  "commission-amend",
 ]);
 function serializeJson(value: unknown): string {
   return `${JSON.stringify(value, null, 2)}\n`;
@@ -326,6 +332,11 @@ export class ControllerLease {
     readonly hooks?: ControllerLeaseHooks;
   }): Promise<ControllerLease> {
     const repositoryRoot = resolve(input.repositoryRoot);
+    if (input.operation !== "commission-amend") {
+      const { assertNoPendingAmendment } =
+        await import("./commissioning-audit.js");
+      await assertNoPendingAmendment(repositoryRoot);
+    }
     const path = await ensureLegacyGuard(repositoryRoot, input.statePath);
     const store = new GitPrivateRefStore(repositoryRoot, CONTROLLER_LEASE_REF);
     const owner: ControllerLeaseOwner = {

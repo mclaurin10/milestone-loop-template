@@ -448,6 +448,7 @@ export interface VerificationTestCounts {
 export interface VerificationTierCommandRecord {
   readonly id: string;
   readonly argv: readonly string[];
+  readonly timeoutMs?: number;
   readonly status: "PASS" | "NOT_READY" | "FAIL" | "ERROR" | "TIMEOUT";
   readonly exitCode: number | null;
   readonly signal: string | null;

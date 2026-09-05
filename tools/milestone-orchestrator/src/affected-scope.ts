@@ -1,5 +1,11 @@
 import { createHash } from "node:crypto";
 import { isAbsolute } from "node:path";
+import {
+  LEGACY_TEST_COMMANDS,
+  PARTITION_CHECK_IDS,
+  ROOT_PARTITION_CHECK_IDS,
+  sourceScheduleGeneration,
+} from "./source-schedule.js";
 
 import {
   SCOPE_TRIGGER_CLASSES,
@@ -113,6 +119,7 @@ const CHECK_ORDER_PREFIX = [
   "lint-architecture",
   "typecheck",
   "build",
+  ...PARTITION_CHECK_IDS,
   "test-unit",
   "test-unit-fast",
   "test-unit-migrations",
@@ -178,7 +185,14 @@ export function buildScopeCheckCatalogue(
   manifest: VerificationCommandManifest,
 ): ScopeCheckCatalogue {
   const byId = new Map<string, ScopeCheckDefinition>();
-  for (const command of [...manifest.focusedCommands, ...AUXILIARY_CHECKS]) {
+  const legacyAuxiliaries = LEGACY_TEST_COMMANDS.filter(
+    ({ id }) => !manifest.focusedCommands.some((command) => command.id === id),
+  ).map((command) => ({ ...command, tiers: [] }));
+  for (const command of [
+    ...manifest.focusedCommands,
+    ...AUXILIARY_CHECKS,
+    ...legacyAuxiliaries,
+  ]) {
     if (byId.has(command.id))
       throw new Error(`Scope check catalogue repeats ${command.id}.`);
     byId.set(command.id, {
@@ -408,7 +422,9 @@ export function recommendAffectedScope(input: {
   ) {
     for (const entry of catalogue.entries)
       if (entry.tiers.includes("candidate")) recommended.add(entry.id);
-    recommended.add("test-unit");
+    if (sourceScheduleGeneration(input.manifest, input.policy) === "v2") {
+      for (const id of ROOT_PARTITION_CHECK_IDS) recommended.add(id);
+    } else recommended.add("test-unit");
   }
   const fullClosureCheckIds = orderScopeCheckIds(
     [

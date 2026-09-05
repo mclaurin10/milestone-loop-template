@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://milestone-loop.invalid/schemas/commissioning-amendment-request.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "paths",
+    "expected",
+    "proposed",
+    "decisionHeading"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "verification-manifest-amendment-request.v1"
+    },
+    "paths": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["input", "policy", "manifest"],
+      "properties": {
+        "input": {
+          "const": "tools/milestone-orchestrator/config/source-commissioning-input.json"
+        },
+        "policy": {
+          "const": "tools/milestone-orchestrator/config/verification-scope-policy.json"
+        },
+        "manifest": {
+          "const": ".agent/verification-manifest.json"
+        }
+      }
+    },
+    "expected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hashes", "chainTip"],
+      "properties": {
+        "hashes": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["input", "policy", "manifest"],
+          "properties": {
+            "input": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "policy": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "manifest": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        },
+        "chainTip": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "proposed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["input", "policy"],
+      "properties": {
+        "input": {
+          "type": "string",
+          "minLength": 1
+        },
+        "policy": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "decisionHeading": {
+      "const": "2026-09-04 — WP6e recomposition direction and transition requirements approved"
+    }
+  }
+}

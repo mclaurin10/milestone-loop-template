@@ -1,14 +1,97 @@
 import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
+import { writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 
 import {
   commissionRepository,
   renderCommissioningResult,
 } from "./commissioning.js";
+import { amendCommissionedRepository } from "./commissioning-amendment.js";
+import {
+  evidenceContext,
+  writeReceipt,
+  writeManualEvidenceFailure,
+} from "../../evidence.mjs";
 
 export interface CommissioningCliArguments {
   readonly inputPath: string;
+}
+
+export interface AmendmentCliArguments {
+  readonly mode: "amend";
+  readonly descriptorPath: string;
+  readonly resume: boolean;
+}
+
+export function parseAmendmentCliArguments(
+  values: readonly string[],
+): AmendmentCliArguments {
+  const args = values[0] === "--" ? values.slice(1) : values;
+  let descriptorPath: string | undefined;
+  let resume = false;
+  for (let index = 0; index < args.length; index += 1) {
+    const option = args[index];
+    if (option === "--resume" && !resume) resume = true;
+    else if (option === "--descriptor" && !descriptorPath) {
+      descriptorPath = args[++index];
+      if (!descriptorPath || descriptorPath.startsWith("--"))
+        throw new Error("--descriptor requires one file path.");
+    } else throw new Error(`Unknown or repeated amendment option: ${option}.`);
+  }
+  if (!descriptorPath)
+    throw new Error("Amendment requires --descriptor <file>.");
+  return { mode: "amend", descriptorPath, resume };
+}
+
+export async function runAmendmentCli(
+  args: AmendmentCliArguments,
+  repositoryRoot = commissioningRepositoryRoot(),
+): Promise<number> {
+  const context = await evidenceContext(
+    "commissioning-amendment",
+    "loop:commission:amend",
+  );
+  try {
+    const result = await amendCommissionedRepository({
+      repositoryRoot,
+      descriptorPath: args.descriptorPath,
+      resume: args.resume,
+    });
+    await writeFile(
+      resolve(context.artifactDirectory, "amendment-report.json"),
+      `${JSON.stringify(result, null, 2)}\n`,
+      { flag: "wx" },
+    );
+    await writeReceipt(
+      context,
+      [
+        {
+          id: "git-anchored-generation",
+          summary:
+            "The complete input, policy, manifest, descriptor, and append-only Git-anchored generation passed production validation.",
+        },
+        {
+          id: "publication-complete",
+          summary:
+            "Every staged byte is published, the pending operation is absent, and commissioning Doctor passed.",
+        },
+      ],
+      [
+        {
+          path: "amendment-report.json",
+          kind: "commissioning-amendment-report",
+        },
+      ],
+    );
+    process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+    return 0;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    await writeManualEvidenceFailure(context, { kind: "product", message });
+    process.stderr.write(`Commissioning amendment failed: ${message}\n`);
+    return 1;
+  }
 }
 
 export function parseCommissioningCliArguments(
@@ -61,6 +144,10 @@ export async function runCommissioningCli(
 
 async function main(): Promise<number> {
   try {
+    if (process.argv[2] === "amend")
+      return await runAmendmentCli(
+        parseAmendmentCliArguments(process.argv.slice(3)),
+      );
     return await runCommissioningCli(
       parseCommissioningCliArguments(process.argv.slice(2)),
     );

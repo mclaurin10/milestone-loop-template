@@ -3,6 +3,57 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-09-04 — WP6e compatible amendment implementation under verification
+
+The projection checkpoint's retained post-commit closeout is complete at
+`da8f6c93450dca352895722b6b40c72193b0c2d7`. Its Windows retry passed 727 unit
+cases, and hosted run `33938071620` passed all five jobs. The receipt and
+independent audits remain under `artifacts/wp6e-entry-20260904/closeout/`,
+`windows-final-audit-2/`, and `hosted-record-audit/`.
+
+The compatible amendment implementation adds the committed-descriptor CLI,
+Git-anchored generation ledger, recoverable publication, v1/v2 schedule and
+policy support, guarded partition subsumption, and command-bound timeouts.
+The prepared descriptor is
+`tools/milestone-orchestrator/config/wp6e-partition-amendment.json`; preparation
+has left all three active v1 files unchanged. New regression files are
+classified under the existing controller owner. Existing package scripts,
+the exact-runtime workflow, frozen authorities, and measurement identities
+remain unchanged; `loop:commission:amend` is additive.
+
+Exact-runtime Linux focused run 1 passed 95 cases at
+`/tmp/wp6e-amend-URWNk0/c/artifacts/f1/`. Run 2 passed 192 of 193 cases and
+failed the generated-adopter lint boundary: unsafe-finally and unused-variable
+defects in the new modules. Those defects were repaired without changing the
+test. Run 3 passed all 195 cases across eleven complete test files, including
+the generated-adopter typecheck/lint boundary. Its independently validated
+command-owned receipt SHA-256 is
+`a5762460c23bd73a6d38347fb800e09d8f644da002b1a12c44de18223e49ecc1`
+at `/tmp/wp6e-amend-URWNk0/c/artifacts/f3/result.json`. Procedures and source
+snapshots are under `artifacts/wp6e-amendment-dev/`; failed runs remain retained.
+Local exact-runtime lint also passed at `artifacts/wp6e-amendment-dev/lint-2/`.
+The expanded source snapshot 5 focused run passed 236/236 cases, including
+staged-file crash recovery, ownership, partition, and benchmark regressions.
+The first broad invariant run exposed a noncanonical ownership file order;
+the sorted catalogue correction retained all owners and files. Failed source
+snapshots and reports remain available.
+
+The corrected complete Linux cohort at `/tmp/e6i-oq5WCU/artifacts/broad2/`
+passed typecheck, lint, format, all five invariants, 768 orchestrator tests,
+784 unit tests, and diff checks. The source snapshot and artifact export
+are independently validated by
+`artifacts/wp6e-amendment-dev/precommit-audit/evidence-audit.json` and its
+command-owned receipt. Export archive
+`C:/w/wp6e-compatible-linux-evidence.zip` SHA-256:
+`8afd1598ca8fbb629235d0124df8629b9262f75f7dc1f6e83d1e2cf47a8fd66e`.
+The audit validates all 11 broad/child receipts and artifacts, preserves the
+previous 727 test identities, and enumerates 57 controller-owned additions.
+It also verifies frozen files, every existing script, original log history,
+unchanged active v1 generation, and commissioning Doctor PASS. This is dirty
+development evidence with completion eligibility false. Commit/hosted
+evidence, historical CLI revalidation, and actual amendment application remain
+subsequent work. WP6e is not closed by this record.
+
 ## 2026-09-04 — WP6e projection hosted checkpoint and remaining verification gaps
 
 **Committed checkpoint.** `2a6e49828dbb29e59addcc1889342245dc42bb3f`, tree

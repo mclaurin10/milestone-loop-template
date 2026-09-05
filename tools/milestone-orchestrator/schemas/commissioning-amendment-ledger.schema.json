@@ -1,0 +1,461 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://milestone-loop.invalid/schemas/commissioning-amendment-ledger.schema.json",
+  "$defs": {
+    "nonBlankString": {
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "argv", "expectedArtifactKinds"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonBlankString"
+        },
+        "argv": {
+          "type": "array",
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "enum": ["pnpm", "node", "git"]
+            }
+          ],
+          "items": {
+            "$ref": "#/$defs/nonBlankString"
+          }
+        },
+        "expectedArtifactKinds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/nonBlankString"
+          }
+        }
+      },
+      "if": {
+        "properties": {
+          "id": {
+            "const": "exact-readiness"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "argv": {
+            "const": ["pnpm", "verify"]
+          },
+          "expectedArtifactKinds": {
+            "maxItems": 0
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "expectedArtifactKinds": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    "projection": {
+      "title": "Verification schedule projection",
+      "description": "Ordered planned command definitions. Runtime validation additionally binds commandCount, actualCheckIds, command order, and final closure placement.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "tier",
+        "commandCount",
+        "exactVerificationIncluded",
+        "actualCheckIds",
+        "commands"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "verification-schedule-projection.v1"
+        },
+        "tier": {
+          "enum": ["iteration", "candidate", "milestone", "periodic"]
+        },
+        "commandCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "Focused command count; excludes the exact closure."
+        },
+        "exactVerificationIncluded": {
+          "type": "boolean"
+        },
+        "actualCheckIds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/nonBlankString"
+          }
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/command"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "tier": {
+                "enum": ["iteration", "candidate"]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "exactVerificationIncluded": {
+                "const": false
+              },
+              "actualCheckIds": {
+                "not": {
+                  "contains": {
+                    "const": "exact-readiness"
+                  }
+                }
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "exactVerificationIncluded": {
+                "const": true
+              },
+              "actualCheckIds": {
+                "contains": {
+                  "const": "exact-readiness"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "tier": {
+                "const": "periodic"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "commandCount": {
+                "const": 0
+              },
+              "actualCheckIds": {
+                "maxItems": 1
+              },
+              "commands": {
+                "minItems": 1,
+                "maxItems": 1
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "paths", "anchor", "entries"],
+  "properties": {
+    "schemaVersion": {
+      "const": "verification-manifest-amendments.v1"
+    },
+    "paths": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["input", "policy", "manifest"],
+      "properties": {
+        "input": {
+          "const": "tools/milestone-orchestrator/config/source-commissioning-input.json"
+        },
+        "policy": {
+          "const": "tools/milestone-orchestrator/config/verification-scope-policy.json"
+        },
+        "manifest": {
+          "const": ".agent/verification-manifest.json"
+        }
+      }
+    },
+    "anchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commit", "tree", "generation"],
+      "properties": {
+        "commit": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "tree": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "generation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["files", "hashes"],
+          "properties": {
+            "files": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["input", "policy", "manifest"],
+              "properties": {
+                "input": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "policy": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "manifest": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "hashes": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["input", "policy", "manifest"],
+              "properties": {
+                "input": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "policy": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "manifest": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "ordinal",
+          "previousEntrySha256",
+          "descriptorPath",
+          "descriptorSha256",
+          "decisionHeading",
+          "invocation",
+          "prior",
+          "next",
+          "beforePlans",
+          "afterPlans",
+          "diff",
+          "contentSha256"
+        ],
+        "properties": {
+          "ordinal": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "previousEntrySha256": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "descriptorPath": {
+            "type": "string",
+            "minLength": 1
+          },
+          "descriptorSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "decisionHeading": {
+            "const": "2026-09-04 — WP6e recomposition direction and transition requirements approved"
+          },
+          "invocation": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["headCommit", "headTree", "branch"],
+            "properties": {
+              "headCommit": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{40}$"
+              },
+              "headTree": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{40}$"
+              },
+              "branch": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "prior": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["files", "hashes"],
+            "properties": {
+              "files": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["input", "policy", "manifest"],
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "policy": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "manifest": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "hashes": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["input", "policy", "manifest"],
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "policy": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "manifest": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  }
+                }
+              }
+            }
+          },
+          "next": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["files", "hashes"],
+            "properties": {
+              "files": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["input", "policy", "manifest"],
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "policy": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "manifest": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "hashes": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["input", "policy", "manifest"],
+                "properties": {
+                  "input": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "policy": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "manifest": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  }
+                }
+              }
+            }
+          },
+          "beforePlans": {
+            "type": "array",
+            "minItems": 4,
+            "maxItems": 4,
+            "items": {
+              "$ref": "#/$defs/projection"
+            }
+          },
+          "afterPlans": {
+            "type": "array",
+            "minItems": 4,
+            "maxItems": 4,
+            "items": {
+              "$ref": "#/$defs/projection"
+            }
+          },
+          "diff": {
+            "type": "array",
+            "minItems": 4,
+            "maxItems": 4,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["tier", "added", "removed"],
+              "properties": {
+                "tier": {
+                  "enum": ["iteration", "candidate", "milestone", "periodic"]
+                },
+                "added": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "removed": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          },
+          "contentSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,7 +1,7 @@
 # Current Execution Plan
 
-**Status:** Projection checkpoint passes exact-commit hosted CI; final local
-Windows retry pending; historical CLI compatibility gap reproduced; amendment open
+**Status:** Compatible amendment implementation verified; commit and coherent application next;
+historical CLI revalidation and full-candidate prerequisites remain open
 **Updated:** 2026-09-04
 **Owner:** autonomous loop
 **Predecessor:** intended WP6d closed at record-only commit
@@ -659,6 +659,25 @@ historical record.
 
 ## Progress and Evidence
 
+- 2026-09-04 — Resume inspected `da8f6c9` and the retained post-commit
+  closeout at `artifacts/wp6e-entry-20260904/closeout/`. The Windows retry
+  exited zero with 727 passing cases; `windows-final-audit-2` and
+  `hosted-record-audit` underpin the checkpoint closeout. The latter records
+  all five successful jobs on exact record commit `da8f6c9`, run
+  `33938071620`. The older Next Action is stale on those completed items.
+  Tracked files were clean on entry; the protected untracked roadmap remains
+  untouched. Continue Steps 1–2 as one compatible implementation increment:
+  historical statistics validation must bind the retained candidate/source
+  while the new receipt identifies the validating checkout; source schedule
+  validation, descriptor and Git-anchored ledger, durable interrupted-publication
+  rejection/recovery, and planner timeout/subsumption support land with v1
+  still active. Use focused production-boundary regressions, then all six
+  broad checks on the exact source snapshot before committing. The frozen
+  measurement identities, active v1 files, existing scripts, and protected
+  authorities remain unchanged during preparation. Candidate PASS is still
+  unavailable through the literal placeholder scripts; no substitute result
+  or scope reduction is authorized by this implementation plan.
+
 - 2026-09-04 — The complete Linux precommit set passed at
   `/tmp/wp6e-yVASGa/p`, and source validation confirmed exactly the 21
   intended changed/new files with unchanged captured bytes. Its 101-file
@@ -925,61 +944,34 @@ historical record.
 
 ## Next Action
 
-The projection implementation is committed and pushed at
-`2a6e49828dbb29e59addcc1889342245dc42bb3f` (tree
-`47825d47f1fffa5925bb2d032557c5fbcb7a78cc`). All five protected exact-runtime
-jobs passed in run `33934052224`. Its independently validated artifacts are
-at `C:/w/wp6e-ci-33934052224`; the passing aggregate audit and receipt are at
-`artifacts/wp6e-entry-20260904/hosted-audit/`. Both controllers passed 727 unit
-and 711 orchestrator cases. The audit validates all five archive digests,
-22 controller receipts, 20 generated-adopter receipts, and one real Docker
-fixture receipt. These are projection-checkpoint results, not WP6e completion.
+The projection checkpoint is closed on `da8f6c9`, with exact-record-commit
+hosted run `33938071620` and the retained closeout receipt under
+`artifacts/wp6e-entry-20260904/closeout/`. Do not repeat its completed retry
+or record commit.
 
-The serial Windows unit attempt in `C:/w/wp6e-p-unit-3` failed 1 of 727
-cases: the existing worked-example cross-link drift test reached its original
-five-second limit with Vitest's generic `STACK_TRACE_ERROR`. Both baseline
-and current complete ten-case diagnostics passed with the production
-measurement probe and unchanged deadlines; a transient timeout is suspected,
-but its root cause is not established. The failed attempt is non-passing.
-Its replacement runs the literal full `pnpm test:unit` in a fresh clean clone
-at `C:/w/wp6e-p-unit-4`; the runner and log are
-`artifacts/wp6e-entry-20260904/run-windows-unit-4.ps1` and
-`windows-unit-4.log`. Finish that run, then execute
-`artifacts/wp6e-entry-20260904/audit-final-evidence.ts` with output directory
-`artifacts/wp6e-entry-20260904/windows-final-audit`. The audit explicitly
-retains the failed attempt and rejects the earlier malformed `wp6e-f5`
-receipt; neither is included in passing evidence.
+Compatible Steps 1–2 are implemented with the active v1 input, policy, and
+manifest unchanged. The separately prepared source-v2 descriptor is
+`tools/milestone-orchestrator/config/wp6e-partition-amendment.json`.
+Source snapshot 5 passed 236 focused tests and the complete six-command
+Linux cohort (768 orchestrator / 784 unit tests). Independent source and
+artifact verification is retained under
+`artifacts/wp6e-amendment-dev/precommit-audit/`; it validates all 11 receipts,
+preserves the prior 727-test inventory, classifies the 57 additions, and
+checks every protected surface. Earlier failed reports remain retained.
+Inspect the final diff and commit only the compatible infrastructure,
+descriptor, regressions, and records.
+Then push normally and require all five protected exact-runtime jobs on that
+commit before any subsequent push can cancel that gate.
 
-The prescribed WP6d historical CLI revalidation also has an observed gap.
-From clean exact-runtime `2a6e498` at `C:/w/wp6e-stats-1`, both platform
-invocations of `pnpm loop:measurement-statistics --input <merged-root>
---platform <os> --validate-existing <retained-statistics.json>` exited 1:
-`Measurement matrix candidate differs from expectation.` Retained records
-identify `93e03e2`; the CLI binds its expectation to the current HEAD. The
-commands, logs, and ERROR manifests are retained at that clone's
-`artifacts/wp6d-revalidation-{linux,windows}*`; the procedure is
-`artifacts/wp6e-entry-20260904/run-historical-revalidation.ps1`. This is an
-unresolved CLI compatibility requirement, not permission to regenerate old
-statistics, change their identities, or interpret their numbers. Resolve the
-historical validation path within the frozen measurement contract before
-claiming the corresponding WP6e acceptance criterion.
-
-Commit these updated operational records as
-`Record projection checkpoint verification and remaining gaps` and push
-normally. On resume, inspect history first and do not duplicate that commit.
-Require all five protected jobs on the exact record commit. Download all five
-artifacts into `C:/w/wp6e-ci-<run-id>`, verify archive digests, fetch full
-run/job/artifact metadata, and execute the retained `audit-hosted-evidence.ts`
-with that root, commit, tree, run ID, and the Linux precommit audit report.
-Use `artifacts/wp6e-entry-20260904/hosted-record-audit` for its receipt. After
-that gate and the Windows audit, execute `close-projection-checkpoint.ts`
-with the record commit, tree, run ID, and `hosted-record-audit`; retain its
-completion-ineligible receipt under `artifacts/wp6e-entry-20260904/closeout`.
-Post-commit receipts own these final observations; no additional record-only
-commit is needed merely to record its own hosted result.
-
-Then continue Step 1's descriptor, Git-anchored generation audit, and
-recoverable publication with v1 still active. No amendment command or schedule
-transition exists yet; the rest of Step 1 and Steps 2–7 remain open.
-Full-candidate/readiness acceptance retains the inherited prerequisites and
-does not justify changing protected scripts or requesting routine approval.
+From a clean clone of the compatible commit, run the committed descriptor
+through `pnpm loop:commission:amend -- --descriptor
+ tools/milestone-orchestrator/config/wp6e-partition-amendment.json`. The CLI
+must produce a valid amendment receipt and commissioning Doctor PASS, while
+full Doctor retains its separate readiness disposition. Continue Steps 3–7,
+including clean candidate and unit-domain attempts, full shadow/inventory
+proof, mutation evidence, and exact-commit hosted verification. Validate the
+retained historical statistics through the repaired CLI on both platforms.
+Do not infer a candidate PASS from focused, shadow, or hosted controller tests.
+The placeholder scripts, missing production-build declaration, and unavailable
+configured trusted execution remain the recorded full-candidate prerequisites;
+no scope reduction or substitute passing result is authorized.

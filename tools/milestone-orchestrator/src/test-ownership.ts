@@ -7,7 +7,15 @@ import {
   EXACT_RUNTIME_WORKFLOW_PATH,
   validateExactRuntimeWorkflow,
 } from "../ci/exact-runtime-workflow-contract.js";
-import { loadInvariantSuiteRegistry } from "./config.js";
+import {
+  loadActiveVerificationManifest,
+  loadInvariantSuiteRegistry,
+  loadVerificationScopePolicy,
+} from "./config.js";
+import {
+  assertPartitionPrerequisite,
+  sourceScheduleGeneration,
+} from "./source-schedule.js";
 import { runCommand } from "./command-runner.js";
 import { discoverUnitTestFiles } from "./invariant-suite.js";
 
@@ -52,13 +60,6 @@ const REQUIRED_ROOT_SCRIPTS = {
   "test:oci-container":
     "tsx tools/milestone-orchestrator/src/container-executor.oci.ts",
 } as const;
-
-const REQUIRED_COMMISSIONED_TEST_COMMANDS = [
-  "test-invariants",
-  "test-unit-fast",
-  "test-unit-migrations",
-  "test-orchestrator",
-] as const;
 
 export interface TestOwnershipDiagnostic {
   readonly code: string;
@@ -890,38 +891,37 @@ async function validateEntrypointContracts(input: {
     );
   }
 
-  const activeManifest = JSON.parse(
-    await readFile(
-      resolve(input.repositoryRoot, ".agent/verification-manifest.json"),
-      "utf8",
-    ),
-  ) as {
-    readonly focusedCommands?: readonly {
-      readonly id?: unknown;
-      readonly argv?: unknown;
-    }[];
-  };
-  const commissionedCommands = (activeManifest.focusedCommands ?? [])
-    .filter(
-      (command): command is { readonly id: string; readonly argv?: unknown } =>
-        typeof command.id === "string" &&
-        REQUIRED_COMMISSIONED_TEST_COMMANDS.includes(
-          command.id as (typeof REQUIRED_COMMISSIONED_TEST_COMMANDS)[number],
-        ),
-    )
-    .map((command) => command.id)
-    .sort(compareStrings);
-  const expectedCommissionedCommands = [
-    ...REQUIRED_COMMISSIONED_TEST_COMMANDS,
-  ].sort(compareStrings);
-  if (!sameStrings(commissionedCommands, expectedCommissionedCommands))
+  let commissionedCommands: readonly string[] = [];
+  try {
+    const activeManifest = await loadActiveVerificationManifest(
+      input.repositoryRoot,
+    );
+    commissionedCommands = activeManifest.value.focusedCommands
+      .filter(({ id }) => id.startsWith("test-"))
+      .map(({ id }) => id)
+      .sort(compareStrings);
+    const scope = await loadVerificationScopePolicy(input.repositoryRoot);
+    const generation = sourceScheduleGeneration(
+      activeManifest.value,
+      scope.value,
+    );
+    if (!generation)
+      throw new Error(
+        "Source ownership requires a complete source schedule generation.",
+      );
+    if (generation === "v2") {
+      const registry = await loadInvariantSuiteRegistry(input.repositoryRoot);
+      assertPartitionPrerequisite(activeManifest.value, registry.value);
+    }
+  } catch (error) {
     diagnostics.push(
       diagnostic(
         "ENTRYPOINT_CONTRACT_DRIFT",
-        `Active commissioned test commands must be ${expectedCommissionedCommands.join(", ")}; observed ${commissionedCommands.join(", ")}.`,
+        `Active commissioned test command contract failed: ${error instanceof Error ? error.message : String(error)}`,
         ".agent/verification-manifest.json",
       ),
     );
+  }
 
   const candidatePartitionFiles = await discoverUnitTestFiles(
     input.repositoryRoot,

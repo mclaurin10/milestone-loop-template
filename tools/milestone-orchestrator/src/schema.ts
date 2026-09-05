@@ -1,5 +1,10 @@
 import { createHash } from "node:crypto";
 import { isAbsolute, resolve } from "node:path";
+import {
+  PARTITION_COMMANDS,
+  PARTITION_TIMEOUT_MS,
+  FOCUSED_TIMEOUT_MS,
+} from "./source-schedule.js";
 
 import {
   AGENT_INVOCATION_SCHEMA_VERSION,
@@ -3764,8 +3769,18 @@ export function validateVerificationTierResult(
         hasOnlyKeys(testCounts, ["suites", "tests"]) &&
         countsValid(testCounts["suites"]) &&
         countsValid(testCounts["tests"]));
+    const partitionCommand = PARTITION_COMMANDS.find(
+      ({ id }) => id === command["id"],
+    );
+    const validTimeout = partitionCommand
+      ? command["timeoutMs"] === PARTITION_TIMEOUT_MS &&
+        JSON.stringify(command["argv"]) ===
+          JSON.stringify(partitionCommand.argv)
+      : command["timeoutMs"] === undefined ||
+        command["timeoutMs"] === FOCUSED_TIMEOUT_MS;
     if (
-      !hasOnlyKeys(command, commandKeys) ||
+      !hasOnlyKeys(command, [...commandKeys, "timeoutMs"]) ||
+      !validTimeout ||
       commandKeys.some((key) => !(key in command)) ||
       !nonEmptyString(command["id"]) ||
       commandIds.has(String(command["id"])) ||

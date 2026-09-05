@@ -66,6 +66,8 @@ const runtimeRootFiles = [
   "tools/milestone-orchestrator/schemas/model-policy.schema.json",
   "tools/milestone-orchestrator/schemas/orchestrator-config.schema.json",
   "tools/milestone-orchestrator/schemas/verification-schedule-projection.schema.json",
+  "tools/milestone-orchestrator/schemas/commissioning-amendment-request.schema.json",
+  "tools/milestone-orchestrator/schemas/commissioning-amendment-ledger.schema.json",
   "tools/milestone-orchestrator/src/test-run-probe.cjs",
   "tools/milestone-orchestrator/tsconfig.json",
   "tsconfig.base.json",

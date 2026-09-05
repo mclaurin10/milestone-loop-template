@@ -3,6 +3,58 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-09-04 — WP6e compatible amendment generation and recovery implementation
+
+The source amendment accepts only the original Git-anchored v1 bytes or the
+reviewed deterministic v2 transformation. Its separately committed descriptor
+supplies exact input and policy text, prior hashes, chain tip, and the approved
+decision heading. The manifest always comes from `manifestFromInput`; there is
+no descriptor field for an output manifest or arbitrary publication paths.
+The original source commissioning is anchored to commit
+`345591818b220964618dc4e80cce3c0e0213783c`. Every ledger entry binds its
+descriptor in the invocation commit, prior/next bytes and hashes, ordered tier
+projections, and the preceding entry. Validation checks all committed prefixes,
+including deletion history. A reverse amendment restores the anchor's exact
+input/policy bytes and extends the ledger.
+
+Publication uses the existing controller mutation lease and an exclusive,
+fsynced intent containing all staged bytes before any active replacement.
+Each replacement rechecks HEAD, branch, index, descriptor, intent, and all
+prior/new file states. Doctor, active manifest consumers, and ordinary
+controller mutation leases reject a pending operation. Recovery preserves
+foreign edits and accepts only the same committed request and invocation.
+The lease does not adopt controller state or commit any Git work. Generated
+adopters retain their separate commissioning input and bootstrap schedule.
+
+The planner keeps v1 compatible, exposes absent legacy commands as auxiliary
+checks, and validates v2's complete owner definitions before subsumption.
+Partitions require the original invariant package entry point, canonical
+invariant command, and production ownership registry child. Only those four
+canonical owner commands receive 3,900,000 ms; unrelated focused commands
+retain 1,200,000 ms. The selected bound is retained in tier records. Historical
+records remain readable; partition records require the canonical timeout/argv
+binding. The policy matrix remains shadow-only with graduation deferred.
+
+Historical measurement revalidation now reproduces retained candidate/source
+identity from all lane artifacts instead of binding those artifacts to the
+validating checkout. An explicit source constraint still applies. Creation
+continues to bind the current clean exact-runtime candidate, and the new
+validation receipt identifies the checkout that performed the reproduction.
+The measurement catalogue, lane deadlines, statistics implementation, and
+measurement schemas are unchanged. The retained matrix still requires an
+executed CLI revalidation after the compatible commit; no such outcome is
+asserted here.
+
+Focused regressions cover clean v1, v2 and reverse publication, every
+publication boundary, concurrent starts, foreign edits, descriptor/Git drift,
+ledger deletion/truncation, canonical prerequisites, schedule/policy mapping,
+timeouts at the provider boundary, and historical statistics expectations.
+The complete corrected broad cohort passed and its source-bound receipt audit
+is recorded in the autonomy log. The actual source amendment remains pending. The candidate prerequisite conflict remains open:
+the plan requires candidate PASS while retaining project-owned placeholder
+scripts and an undeclared production build. This decision does not remove
+those checks or amend that acceptance requirement.
+
 ## 2026-09-04 — WP6e canonical schedule projection and diagnostic compatibility
 
 **Decision.** Expose a versioned, read-only projection of the existing

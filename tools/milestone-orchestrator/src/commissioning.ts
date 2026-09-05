@@ -286,7 +286,7 @@ async function readContainedRegularFile(
   return readRegularFile(absolute, label);
 }
 
-function canonicalManifestBytes(manifest: VerificationManifest): Buffer {
+export function canonicalManifestBytes(manifest: VerificationManifest): Buffer {
   return Buffer.from(`${JSON.stringify(manifest, null, 2)}\n`, "utf8");
 }
 
@@ -544,7 +544,7 @@ async function validateImmutableContractLock(
   return anchor.immutableContractLockSha256;
 }
 
-async function assertFocusedPackageCommands(
+export async function assertFocusedPackageCommands(
   repositoryRoot: string,
   manifest: VerificationManifest,
 ): Promise<void> {
@@ -572,7 +572,7 @@ async function assertFocusedPackageCommands(
   }
 }
 
-function assertCanonicalProtectedFloor(
+export function assertCanonicalProtectedFloor(
   manifest: VerificationManifest,
   canonicalProtectedPaths: readonly string[],
 ): void {
@@ -589,7 +589,7 @@ function assertCanonicalProtectedFloor(
     );
 }
 
-async function constructTierPlans(input: {
+export async function constructTierPlans(input: {
   readonly repositoryRoot: string;
   readonly manifest: VerificationManifest;
   readonly scopePolicy: Awaited<ReturnType<typeof loadVerificationScopePolicy>>;
@@ -631,7 +631,7 @@ async function constructTierPlans(input: {
   return results;
 }
 
-function manifestFromInput(
+export function manifestFromInput(
   input: CommissioningInput,
   createdAt: string,
 ): VerificationManifest {

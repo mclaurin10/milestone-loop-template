@@ -17,7 +17,10 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { validateJsonSchema202012 } from "../test/json-schema-2020-12.js";
 import { runCommand } from "./command-runner.js";
 import type { CommandExecutionSummary } from "./contracts.js";
-import { parseMeasurementStatisticsCliArguments } from "./measurement-statistics-cli.js";
+import {
+  measurementStatisticsExpectation,
+  parseMeasurementStatisticsCliArguments,
+} from "./measurement-statistics-cli.js";
 import {
   buildMeasurementStatistics,
   calculateMeasurementIntegerDistribution,
@@ -320,6 +323,64 @@ afterAll(async () => {
 });
 
 describe("WP6 deterministic measurement statistics", () => {
+  it("revalidates historical statistics independently of the validating checkout while constraining new measurements", async () => {
+    const laterIdentity = {
+      gitCommit: "c".repeat(40),
+      gitTree: "d".repeat(40),
+    };
+    const historical = parseMeasurementStatisticsCliArguments([
+      "--input",
+      matrixRoot,
+      "--platform",
+      fixturePlatformId,
+      "--validate-existing",
+      statisticsPath,
+    ]);
+    const expectation = measurementStatisticsExpectation(
+      historical,
+      laterIdentity,
+    );
+    expect(expectation.candidate).toBeUndefined();
+    expect(expectation.executionContext).toBeUndefined();
+    await expect(
+      validateMeasurementStatisticsArtifacts({
+        statisticsPath,
+        inputRoot: matrixRoot,
+        expectation: { ...expectation, selectedCommandIds: ["legacy-fast"] },
+      }),
+    ).resolves.toEqual(statisticsRecord);
+    const fresh = measurementStatisticsExpectation(
+      { ...historical, validateExistingPath: null },
+      laterIdentity,
+    );
+    expect(fresh.candidate).toEqual({
+      ...laterIdentity,
+      workingTreeDirty: false,
+    });
+    await expect(
+      validateMeasurementStatisticsArtifacts({
+        statisticsPath,
+        inputRoot: matrixRoot,
+        expectation: { ...fresh, selectedCommandIds: ["legacy-fast"] },
+      }),
+    ).rejects.toThrow(/candidate differs/);
+    const boundSource = measurementStatisticsExpectation(
+      {
+        ...historical,
+        sourceGithubRunId: "123",
+        sourceGithubRunAttempt: 1,
+        sourceGithubJob: "fixture",
+      },
+      laterIdentity,
+    );
+    await expect(
+      validateMeasurementStatisticsArtifacts({
+        statisticsPath,
+        inputRoot: matrixRoot,
+        expectation: { ...boundSource, selectedCommandIds: ["legacy-fast"] },
+      }),
+    ).rejects.toThrow(/execution context differs/);
+  });
   it("computes exact odd-sample median, range, and median absolute deviation", () => {
     expect(
       calculateMeasurementIntegerDistribution(

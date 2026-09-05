@@ -43,6 +43,13 @@ import {
   type CandidateExecutionProvider,
 } from "./execution-provider.js";
 import { executionProviderIdentitiesEqual } from "./execution-provider-identity.js";
+import {
+  assertPartitionPrerequisite,
+  focusedCommandTimeout,
+  PARTITION_CHECK_IDS,
+  sourceScheduleGeneration,
+  SUBSUMED_TEST_IDS,
+} from "./source-schedule.js";
 import { parseVitestCounts } from "./invariant-suite.js";
 import { buildPackageGraph } from "./package-graph.js";
 import { redactSensitiveText } from "./redaction.js";
@@ -202,6 +209,7 @@ export async function planVerificationTier(input: {
   readonly focusedCheckIds?: readonly string[];
   readonly protectedAuthorityPaths?: readonly string[];
 }): Promise<VerificationTierPlan> {
+  sourceScheduleGeneration(input.manifest, input.scopePolicy);
   const [packageGraph] = await Promise.all([
     buildPackageGraph(input.repositoryRoot),
   ]);
@@ -247,6 +255,28 @@ export async function planVerificationTier(input: {
     }
   } else if (input.tier === "periodic") {
     actual.clear();
+  }
+  if (
+    (input.tier === "candidate" || input.tier === "milestone") &&
+    PARTITION_CHECK_IDS.some((id) => actual.has(id))
+  ) {
+    const invariant = await loadInvariantSuiteRegistry(input.repositoryRoot);
+    assertPartitionPrerequisite(input.manifest, invariant.value);
+    const rootPackage = JSON.parse(
+      await readFile(resolve(input.repositoryRoot, "package.json"), "utf8"),
+    ) as { readonly scripts?: Readonly<Record<string, unknown>> };
+    if (
+      rootPackage.scripts?.["test:invariants"] !==
+      "tsx tools/milestone-orchestrator/src/verification-cli.ts invariants"
+    )
+      throw new Error(
+        "Owner partitions require the production invariant package entry point.",
+      );
+    if (!actual.has("test-invariants"))
+      throw new Error("Partition plan omitted its invariant prerequisite.");
+    if (PARTITION_CHECK_IDS.every((id) => actual.has(id))) {
+      for (const id of SUBSUMED_TEST_IDS) actual.delete(id);
+    }
   }
   if (input.tier === "milestone" || input.tier === "periodic")
     actual.add(EXACT_CHECK_ID);
@@ -317,12 +347,13 @@ export async function tierCommandRecord(input: {
   const directoryName = `${String(input.index + 1).padStart(2, "0")}-${input.command.id.replaceAll(/[^A-Za-z0-9._-]/g, "-")}`;
   const commandRoot = resolve(input.runRoot, "commands", directoryName);
   const evidenceRoot = resolve(commandRoot, "evidence");
+  const timeoutMs = focusedCommandTimeout(input.command);
   let execution = await input.executionProvider.execute(
     commandFromPlan(input.command),
     {
       workingDirectory: input.repositoryRoot,
       artifactDirectory: resolve(commandRoot, "logs"),
-      timeoutMs: DEFAULT_COMMAND_TIMEOUT_MS,
+      timeoutMs,
       extraEnvironment: {
         LOOP_VERIFY_STAGE_ID: `verification-tier-${input.tier}`,
         LOOP_VERIFY_COMMAND_ID: input.command.id,
@@ -402,6 +433,7 @@ export async function tierCommandRecord(input: {
   return {
     id: input.command.id,
     argv: input.command.argv,
+    timeoutMs,
     status: evidenceFailure ? "ERROR" : execution.status,
     exitCode: execution.exitCode,
     signal: execution.signal,

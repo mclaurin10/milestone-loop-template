@@ -16,6 +16,7 @@ import {
   MEASUREMENT_STATISTICS_NAME,
   validateMeasurementStatisticsArtifacts,
   type MeasurementStatisticsPlatform,
+  type MeasurementStatisticsExpectation,
 } from "./measurement-statistics.js";
 
 const STAGE_ID = "wp6-measurement-statistics";
@@ -114,6 +115,40 @@ export function parseMeasurementStatisticsCliArguments(
   };
 }
 
+export function measurementStatisticsExpectation(
+  args: MeasurementStatisticsCliArguments,
+  identity: { readonly gitCommit: string; readonly gitTree: string },
+): MeasurementStatisticsExpectation {
+  const executionContext = args.sourceGithubRunId
+    ? {
+        provider: "github-actions" as const,
+        githubRunId: args.sourceGithubRunId,
+        githubRunAttempt: args.sourceGithubRunAttempt!,
+        githubJob: args.sourceGithubJob!,
+      }
+    : {
+        provider: "local-validation" as const,
+        githubRunId: null,
+        githubRunAttempt: null,
+        githubJob: null,
+      };
+  // Reproduction validates the retained identity across every lane and receipt.
+  // Historical evidence belongs to its measured candidate, while the new
+  // command receipt identifies the checkout doing the validation.
+  return {
+    platformId: args.platformId,
+    pairCount: MEASUREMENT_MATRIX_PAIR_COUNT,
+    ...(!args.validateExistingPath
+      ? {
+          candidate: { ...identity, workingTreeDirty: false as const },
+          executionContext,
+        }
+      : args.sourceGithubRunId
+        ? { executionContext }
+        : {}),
+  };
+}
+
 export async function runMeasurementStatisticsCli(
   values: readonly string[] = process.argv.slice(2),
 ): Promise<number> {
@@ -141,29 +176,10 @@ export async function runMeasurementStatisticsCli(
       throw new Error(
         "Measurement statistics require a clean exact-runtime candidate identity.",
       );
-    const executionContext = args.sourceGithubRunId
-      ? {
-          provider: "github-actions" as const,
-          githubRunId: args.sourceGithubRunId,
-          githubRunAttempt: args.sourceGithubRunAttempt!,
-          githubJob: args.sourceGithubJob!,
-        }
-      : {
-          provider: "local-validation" as const,
-          githubRunId: null,
-          githubRunAttempt: null,
-          githubJob: null,
-        };
-    const expectation = {
-      platformId: args.platformId,
-      pairCount: MEASUREMENT_MATRIX_PAIR_COUNT,
-      candidate: {
-        gitCommit: identity.gitCommit,
-        gitTree: identity.gitTree,
-        workingTreeDirty: false as const,
-      },
-      executionContext,
-    };
+    const expectation = measurementStatisticsExpectation(args, {
+      gitCommit: identity.gitCommit,
+      gitTree: identity.gitTree,
+    });
     const statisticsPath = resolve(
       context.artifactDirectory,
       MEASUREMENT_STATISTICS_NAME,

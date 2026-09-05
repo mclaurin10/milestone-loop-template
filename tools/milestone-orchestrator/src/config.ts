@@ -165,6 +165,10 @@ export async function loadActiveVerificationManifest(
     readonly packageDefaultProfile: VerificationProfile;
   }
 > {
+  const { assertActiveCommissioningAudit } =
+    await import("./commissioning-audit.js");
+  if (existsSync(resolve(repositoryRoot, ".git")))
+    await assertActiveCommissioningAudit(repositoryRoot);
   const [manifest, packageProfile] = await Promise.all([
     loadVerificationManifest(repositoryRoot, requestedPath),
     loadPackageDefaultVerificationProfile(repositoryRoot),

@@ -284,6 +284,117 @@
     },
     "command": {
       "type": "object",
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "timeoutMs": { "enum": [1200000, 3900000] },
+              "id": {
+                "const": "test-partition-controller-runtime"
+              }
+            },
+            "required": ["id"]
+          },
+          "then": {
+            "required": ["timeoutMs"],
+            "properties": {
+              "timeoutMs": {
+                "const": 3900000
+              },
+              "argv": {
+                "const": ["pnpm", "test:partition:controller-runtime"]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "id": {
+                "const": "test-partition-repository-tooling"
+              }
+            },
+            "required": ["id"]
+          },
+          "then": {
+            "required": ["timeoutMs"],
+            "properties": {
+              "timeoutMs": {
+                "const": 3900000
+              },
+              "argv": {
+                "const": ["pnpm", "test:partition:repository-tooling"]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "id": {
+                "const": "test-partition-adopter-template"
+              }
+            },
+            "required": ["id"]
+          },
+          "then": {
+            "required": ["timeoutMs"],
+            "properties": {
+              "timeoutMs": {
+                "const": 3900000
+              },
+              "argv": {
+                "const": ["pnpm", "test:partition:adopter-template"]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "id": {
+                "const": "test-partition-trusted-container-fixture"
+              }
+            },
+            "required": ["id"]
+          },
+          "then": {
+            "required": ["timeoutMs"],
+            "properties": {
+              "timeoutMs": {
+                "const": 3900000
+              },
+              "argv": {
+                "const": ["pnpm", "test:partition:trusted-container-fixture"]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "id": {
+                "not": {
+                  "enum": [
+                    "test-partition-controller-runtime",
+                    "test-partition-repository-tooling",
+                    "test-partition-adopter-template",
+                    "test-partition-trusted-container-fixture"
+                  ]
+                }
+              }
+            },
+            "required": ["id"]
+          },
+          "then": {
+            "properties": {
+              "timeoutMs": {
+                "const": 1200000
+              }
+            }
+          }
+        }
+      ],
       "additionalProperties": false,
       "required": [
         "id",
