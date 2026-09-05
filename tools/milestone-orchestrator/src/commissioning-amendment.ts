@@ -16,6 +16,7 @@ import {
   AMENDMENT_PATHS,
   AMENDMENT_PENDING_PATH,
   GENERATION_KEYS,
+  amendmentContentEqual,
   amendmentEntryHash,
   amendmentEqual,
   amendmentGit,
@@ -511,7 +512,7 @@ export async function amendCommissionedRepository(input: {
         ).toString("utf8"),
       });
       assertAllowedGeneration(audit.anchor.generation, next);
-      if (amendmentEqual(next, audit.generation))
+      if (amendmentContentEqual(next, audit.generation))
         throw new Error("Amendment no-op is refused.");
       const beforePlans = await generationPlans(
         root,

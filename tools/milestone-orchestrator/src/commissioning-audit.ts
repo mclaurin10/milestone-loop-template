@@ -328,13 +328,34 @@ export function assertAllowedGeneration(
 ): void {
   const parsed = parseSourceGeneration(generation);
   const version = sourceScheduleGeneration(parsed.manifest, parsed.policy);
-  if (
-    !version ||
-    !amendmentEqual(generation, expectedSourceGeneration(anchor, version))
-  )
+  const expected = version ? expectedSourceGeneration(anchor, version) : null;
+  // The committed request and ledger bind exact source text. Formatting may
+  // differ for v2, but every parsed field and canonical manifest must equal
+  // the reviewed transformation. Reversal restores the exact original bytes.
+  const permitted =
+    expected &&
+    (version === "v1"
+      ? amendmentEqual(generation, expected)
+      : amendmentEqual(parsed.input, parseSourceGeneration(expected).input) &&
+        amendmentEqual(parsed.policy, parseSourceGeneration(expected).policy) &&
+        generation.files.manifest === expected.files.manifest);
+  if (!permitted)
     throw new Error(
       "Amendment changes fields outside the reviewed source schedule and policy.",
     );
+}
+
+export function amendmentContentEqual(
+  left: SourceGeneration,
+  right: SourceGeneration,
+): boolean {
+  const parsedLeft = parseSourceGeneration(left);
+  const parsedRight = parseSourceGeneration(right);
+  return (
+    amendmentEqual(parsedLeft.input, parsedRight.input) &&
+    amendmentEqual(parsedLeft.policy, parsedRight.policy) &&
+    amendmentEqual(parsedLeft.manifest, parsedRight.manifest)
+  );
 }
 
 export function amendmentPlanDiff(
@@ -483,7 +504,7 @@ function validateLedger(
       throw new Error("Amendment ledger hash chain is invalid.");
     assertAllowedGeneration(anchor.generation, entry.prior);
     assertAllowedGeneration(anchor.generation, entry.next);
-    if (amendmentEqual(entry.prior, entry.next))
+    if (amendmentContentEqual(entry.prior, entry.next))
       throw new Error("Amendment ledger contains a no-op.");
     amendmentGit(
       root,

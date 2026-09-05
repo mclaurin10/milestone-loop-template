@@ -3,6 +3,71 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-09-04 — WP6e active-generation format regression and repair
+
+Compatible commit `4338f47c8c7abbdc02ac96725c121742bce8c4e3` (tree
+`0b5ff97bfa731c0bc02b571843e998144308e4cd`) was pushed normally. Protected
+run `33944911461` has passed Linux controller, both adopter jobs, and Docker;
+the Windows controller remains pending at this record.
+
+In clean exact-runtime Windows clone `C:/w/e6-a`, both retained WP6d platform
+records passed `loop:measurement-statistics --validate-existing`. Receipts
+are under `artifacts/wp6e-historical-{linux,windows}/`, and copied statistics
+are byte-identical to the retained independent matrix records. The real
+committed descriptor application then passed at `artifacts/wp6e-amendment/`,
+producing commissioning Doctor PASS and ledger entry
+`a07fcd351a5e521b288eb5ccc2db832a742818173f1d6458fb7dc136aa0ae5f3`.
+The independent `artifacts/wp6e-application-audit.ts` procedure validated
+that receipt, complete generation, historical receipts, and all twelve
+same-context tier projections; its receipt is under
+`artifacts/wp6e-application-audit/`. These results remain application
+evidence only, and the generation has not been committed.
+
+The Linux copy `/tmp/e6a-Ymzn2r` passed typecheck and lint but failed the
+unchanged format command on generated input/policy JSON. Evidence is retained
+at `artifacts/broad2/f2.log`, `artifacts/f2/`, and the original source
+snapshot `C:/w/e6-a/artifacts/active-source.{json,tar}`. Both files used
+valid expanded JSON arrays that the existing formatter would compact. No
+active files were manually repaired and no failed generation was published.
+
+A new full-file regression reproduced the defect by applying formatter-valid
+descriptor text; the pre-fix run failed at the original byte-only v2 predicate
+under `/tmp/e6a-Ymzn2r/artifacts/fr/`. The repair formats proposed descriptor
+text with the existing pinned formatter and validates all parsed v2 fields
+against the exact reviewed transformation. Descriptor/ledger hashes still
+bind every actual byte; canonical manifest output and byte-exact v1 reversal
+remain required. This does not permit a field, schedule, policy, or provenance
+change. Focused and complete broad verification of the repair are pending.
+The source checkout remains valid v1. The preserved failed clone is diagnostic
+evidence; a subsequent application must start from a new clean repair commit.
+
+The formatting-only request regression initially reproduced an incorrect
+successful amendment (36 passed / 1 failed) under
+`/tmp/e6a-Ymzn2r/artifacts/fnr/`. The first attempted guard still compared
+the parsed result's raw-generation wrapper; snapshot 7's full orchestrator
+run retained that one failure (769/770 passed) at
+`/tmp/e6g-9O7vuV/artifacts/o2/`. The guard now compares only parsed input,
+policy, and manifest fields in both publication and ledger validation.
+Failure archives remain under `artifacts/wp6e-amendment-dev/`, including
+`format-noop-guard-failure.tar.gz` (SHA-256
+`76e5194c5647b43a1fdafdb3a37ec3eeabe55b9bc916cbb921fbd44a173798f9`).
+
+Final source snapshot 8 passed all 58 focused cases and the complete six-command
+Linux cohort at `/tmp/e6h-9w91Pt`: typecheck, lint, format, all five invariants,
+770 orchestrator tests, 786 unit tests, and diff checks. The focused receipt
+SHA-256 is
+`8909a1b21328bff9213b3430c45e6c4c840efc5e2d62cda32121bf1f44a28a28`.
+The independent source/artifact audit is
+`artifacts/wp6e-amendment-dev/repair-precommit-audit/evidence-audit.json`;
+it validates all 11 broad/child receipts plus the focused receipt, preserves
+all 784 compatible-checkpoint identities, classifies the two new controller
+regressions, and verifies every protected surface and committed log history.
+Archive `C:/w/wp6e-repair-linux-evidence.zip` SHA-256 is
+`1d5d73fc625ee8cb1bfaa61355df824f5402a84327eb3309936578389f4aacf7`.
+This is verified compatible-v1 development evidence, with completion
+eligibility false. Commit the repair before a fresh source amendment; retain
+all five exact-runtime gates for every pushed candidate. WP6e remains open.
+
 ## 2026-09-04 — WP6e compatible amendment implementation under verification
 
 The projection checkpoint's retained post-commit closeout is complete at

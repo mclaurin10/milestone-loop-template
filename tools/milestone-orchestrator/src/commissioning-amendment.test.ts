@@ -10,6 +10,7 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { check, format } from "prettier";
 
 import { validateJsonSchema202012 } from "../test/json-schema-2020-12.js";
 import { amendCommissionedRepository } from "./commissioning-amendment.js";
@@ -117,6 +118,57 @@ async function apply(
 }
 
 describe("Git-anchored source commissioning amendments", () => {
+  it("refuses formatting-only amendments without adding a ledger entry", async () => {
+    const root = await fixture();
+    await apply(root);
+    commit(root, "Publish original-layout source-v2 fixture");
+    const before = await inspectSourceAmendmentAudit(root);
+    const descriptor = await descriptorFor(root, "v2");
+    const proposed = {
+      input: await format(descriptor.proposed.input, { parser: "json" }),
+      policy: await format(descriptor.proposed.policy, { parser: "json" }),
+    };
+    expect(proposed.input).not.toBe(before.generation.files.input);
+    await textFile(
+      root,
+      DESCRIPTOR,
+      amendmentJson({ ...descriptor, proposed }),
+    );
+    commit(root, "Prepare formatting-only amendment fixture");
+    await expect(apply(root)).rejects.toThrow(/no-op/u);
+    const after = await inspectSourceAmendmentAudit(root);
+    expect(after.generation).toEqual(before.generation);
+    expect(after.ledgerText).toBe(before.ledgerText);
+    expect(await readAmendmentFile(root, AMENDMENT_PENDING_PATH)).toBeNull();
+  }, 30_000);
+
+  it("publishes formatter-compliant descriptor bytes without changing the approved content", async () => {
+    const root = await fixture();
+    const descriptor = await descriptorFor(root, "v2");
+    const options = { parser: "json" } as const;
+    const proposed = {
+      input: await format(descriptor.proposed.input, options),
+      policy: await format(descriptor.proposed.policy, options),
+    };
+    expect(proposed).not.toEqual(descriptor.proposed);
+    await textFile(
+      root,
+      DESCRIPTOR,
+      amendmentJson({ ...descriptor, proposed }),
+    );
+    commit(root, "Prepare formatted source-v2 descriptor");
+    const result = await apply(root);
+    expect(result.status).toBe("PASS");
+    for (const key of ["input", "policy"] as const) {
+      const bytes = await readFile(resolve(root, AMENDMENT_PATHS[key]), "utf8");
+      expect(bytes).toBe(proposed[key]);
+      expect(await check(bytes, options)).toBe(true);
+      expect(JSON.parse(bytes)).toEqual(JSON.parse(descriptor.proposed[key]));
+    }
+    commit(root, "Publish formatted coherent generation");
+    expect((await inspectCommissionedRepository(root)).status).toBe("PASS");
+  }, 30_000);
+
   it("applies a committed descriptor to clean v1 and reverses by extending the ledger", async () => {
     const root = await fixture();
     const before = await inspectSourceAmendmentAudit(root);

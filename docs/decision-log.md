@@ -3,6 +3,27 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-09-04 — WP6e source formatting follows the committed descriptor
+
+An actual v2 publication passed semantic/provenance checks but failed the
+existing format command because proposed input/policy text came from plain
+`JSON.stringify`. Preserve that failed application. Prepare the descriptor
+using the pinned repository JSON formatter; the tool continues to publish
+its exact committed text. V2 approval compares every parsed input/policy field
+to the reviewed transformation and requires the same canonical manifest.
+Whitespace and key layout have no authority to alter a value. Hashes and
+descriptor/provenance validation still bind exact stored text, including each
+historical generation. Original v1 reversal remains byte-exact.
+
+This keeps formatting out of the synchronous production audit and avoids a
+second formatter implementation. No formatter rule, test, package script,
+active file, protected authority, or acceptance criterion is relaxed. The
+new regression applies formatted text, checks the real published files with
+the installed formatter, compares parsed content, commits the coherent
+generation, and invokes commissioning Doctor again. Publication and ledger validation also
+reject semantically identical generations, so formatting-only requests cannot
+create no-op entries. A separate regression exercises that rejected request.
+
 ## 2026-09-04 — WP6e compatible amendment generation and recovery implementation
 
 The source amendment accepts only the original Git-anchored v1 bytes or the

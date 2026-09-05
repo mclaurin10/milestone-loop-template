@@ -1,7 +1,7 @@
 # Current Execution Plan
 
-**Status:** Compatible amendment implementation verified; commit and coherent application next;
-historical CLI revalidation and full-candidate prerequisites remain open
+**Status:** Compatible formatting/no-op repair verified; fresh coherent application next;
+full-candidate prerequisites remain open
 **Updated:** 2026-09-04
 **Owner:** autonomous loop
 **Predecessor:** intended WP6d closed at record-only commit
@@ -944,34 +944,39 @@ historical record.
 
 ## Next Action
 
-The projection checkpoint is closed on `da8f6c9`, with exact-record-commit
-hosted run `33938071620` and the retained closeout receipt under
-`artifacts/wp6e-entry-20260904/closeout/`. Do not repeat its completed retry
-or record commit.
+Compatible infrastructure and the original descriptor are committed at
+`4338f47`. Protected run `33944911461` must pass all five jobs before the
+next push; its Windows unit job remains pending at this record. The first
+application on that commit remains uncommitted and preserved in `C:/w/e6-a`
+after the real format gate rejected its input/policy layout. Do not modify
+or publish that failed generation.
 
-Compatible Steps 1–2 are implemented with the active v1 input, policy, and
-manifest unchanged. The separately prepared source-v2 descriptor is
-`tools/milestone-orchestrator/config/wp6e-partition-amendment.json`.
-Source snapshot 5 passed 236 focused tests and the complete six-command
-Linux cohort (768 orchestrator / 784 unit tests). Independent source and
-artifact verification is retained under
-`artifacts/wp6e-amendment-dev/precommit-audit/`; it validates all 11 receipts,
-preserves the prior 727-test inventory, classifies the 57 additions, and
-checks every protected surface. Earlier failed reports remain retained.
-Inspect the final diff and commit only the compatible infrastructure,
-descriptor, regressions, and records.
-Then push normally and require all five protected exact-runtime jobs on that
-commit before any subsequent push can cancel that gate.
+The compatible formatting/no-op repair is verified on source snapshot 8:
+58 focused, 770 orchestrator, and 786 unit cases, plus typecheck, lint,
+format, all five invariants, and diff checks. Independent source, receipts,
+inventory, frozen-surface, and log-history verification is retained under
+`artifacts/wp6e-amendment-dev/repair-precommit-audit/`. Commit only the
+compatible repair, corrected descriptor, regressions, and living records.
+Push it after the preceding protected run completes; require its own five
+jobs before any further push.
 
-From a clean clone of the compatible commit, run the committed descriptor
-through `pnpm loop:commission:amend -- --descriptor
- tools/milestone-orchestrator/config/wp6e-partition-amendment.json`. The CLI
-must produce a valid amendment receipt and commissioning Doctor PASS, while
-full Doctor retains its separate readiness disposition. Continue Steps 3–7,
-including clean candidate and unit-domain attempts, full shadow/inventory
-proof, mutation evidence, and exact-commit hosted verification. Validate the
-retained historical statistics through the repaired CLI on both platforms.
-Do not infer a candidate PASS from focused, shadow, or hosted controller tests.
-The placeholder scripts, missing production-build declaration, and unavailable
-configured trusted execution remain the recorded full-candidate prerequisites;
-no scope reduction or substitute passing result is authorized.
+From a new clean target-branch clone of the repair commit, capture the three
+before-state contexts and run the committed descriptor through the real
+`loop:commission:amend` CLI. Revalidate the operation receipt, generated
+ledger, commissioning Doctor, identical-context ordered plan changes, and
+the real format command. Apply the staged README/CONTRACT/configuration-guide
+updates to that valid generation; revise their formatting/no-op explanation
+to match the repair. The previous application audit and document preparation
+procedures are retained in `C:/w/e6-a/artifacts/` for reuse, with new outputs
+and actual identities. Both retained WP6d platform matrices have already
+passed historical CLI validation on clean `4338f47`; repeat it on the final
+clean candidate as required by acceptance.
+
+Continue Steps 3–6: a complete six-command active-generation cohort, a
+coherent four-file generation commit, clean literal candidate and unit-domain
+attempts, complete shadow/inventory proof, retained mutation boundaries, and
+all five hosted jobs. Full-candidate acceptance remains unresolved because
+the unchanged project placeholders, undeclared production build, and missing
+configured trusted runtime still cannot pass. No focused, shadow, or hosted
+controller result substitutes for that gate. Keep WP6e explicitly incomplete
+where required evidence remains unavailable.
