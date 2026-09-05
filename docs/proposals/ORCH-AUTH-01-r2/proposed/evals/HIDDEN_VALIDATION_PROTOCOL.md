@@ -1,0 +1,9 @@
+# Validation Custody and Claim Scope
+
+This source authority is part of `milestone-loop-orchestrator-source.v1` and replaces the source placeholder hidden-product protocol through an explicit human revision. It does not revise any generated adopter's authority.
+
+1. The source contract uses a public, enumerated orchestration scenario corpus. It has no hidden product-seed success-rate gate. No source command may claim that a downstream benchmark, visible seed pool, hidden seed pool, or catastrophic-integrity gate passed.
+2. Hidden downstream values remain outside this repository, logs, artifacts, prompts, and telemetry under the downstream human custodian. Agents must not request, reveal, invent, or brute-force them. Public synthetic custody fixtures are labeled synthetic and contain no real held-out values.
+3. Downstream hidden validation remains human-triggered through its designated procedure. `hiddenValidationEnabled` remains false unless that procedure and its explicit authorization exist; the configured cooldown remains enforced. A source test cannot enable hidden validation in a real adopter. Qualification must verify refusal of unauthorized requests and safe redaction using synthetic inputs.
+4. Accepted downstream records identify their own authority, candidate, scope, and aggregate gate results without seed values. Missing, mismatched, stale, or unauthenticated records are non-passing. Source qualification only checks the transport/custody rules and never imports a downstream PASS as source or other-project completion.
+5. A downstream hidden-validation failure remains an acceptance defect under that product's authority and never lowers its gates. The legacy source protocol, original gate IDs, thresholds, and calibration state remain preserved in the immutable legacy epoch snapshot; retirement from source scope is not a successful historical evaluation.

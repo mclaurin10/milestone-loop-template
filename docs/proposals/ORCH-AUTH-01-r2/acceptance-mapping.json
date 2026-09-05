@@ -1,0 +1,1399 @@
+{
+  "schemaVersion": "orch-authority-mapping.v1",
+  "legacyManifestSha256": "365e452dcc770e99a9689d3a36b74660f7ec3c4c25c298f9eee4ea20b18a001c",
+  "legacyIds": [
+    {
+      "oldId": "AUTO-01",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-STATIC-01",
+        "ORCH-BUILD-01",
+        "ORCH-ADOPT-01",
+        "ORCH-VERIFY-01"
+      ],
+      "explanation": "Source automated outcome gains real distribution/public workflows; downstream AUTO remains independently owned."
+    },
+    {
+      "oldId": "PLAY-01",
+      "disposition": "retired-from-source",
+      "newIds": [
+        "ORCH-PLAN-01",
+        "ORCH-REVIEW-01"
+      ],
+      "explanation": "Gameplay bot success ceases to apply to source. Developer-agent mechanics and live human workflow are new requirements, not equivalent gameplay evidence."
+    },
+    {
+      "oldId": "VIS-01",
+      "disposition": "scope-split",
+      "newIds": [
+        "ORCH-ADOPT-01"
+      ],
+      "explanation": "Real generated-bootstrap browser evidence stays required as compatibility; source game rendering is retired, downstream visual completion remains separate."
+    },
+    {
+      "oldId": "PERF-GATE-01",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-BOUNDS-01"
+      ],
+      "explanation": "Source resource/deadline enforcement replaces undefined source product-performance workloads; no frame-time or WP6 improvement equivalence."
+    },
+    {
+      "oldId": "REPLAY-01",
+      "disposition": "scope-split",
+      "newIds": [
+        "ORCH-STATE-01",
+        "ORCH-ADOPT-01"
+      ],
+      "explanation": "Source canonical controller parity and generated bootstrap Node/replay/Worker parity are separate mandatory observations."
+    },
+    {
+      "oldId": "SAVE-01",
+      "disposition": "scope-split",
+      "newIds": [
+        "ORCH-STATE-01",
+        "ORCH-RECOVERY-01",
+        "ORCH-ADOPT-01"
+      ],
+      "explanation": "Controller durable state/recovery replaces source gameplay saves; adopter bootstrap continuation remains separately proved."
+    },
+    {
+      "oldId": "FAULT-01",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-RECOVERY-01",
+        "ORCH-CONTAIN-01",
+        "ORCH-RECONCILE-01",
+        "ORCH-RETENTION-01"
+      ],
+      "explanation": "Replace undefined source product fault chains with all enumerated real orchestration boundaries; no old chain is marked passed."
+    },
+    {
+      "oldId": "METRIC-01",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-METRIC-COVERAGE"
+      ],
+      "explanation": "Undefined one core outcome becomes all twelve requirements/eight domains; this defines the source product, not a historical success."
+    },
+    {
+      "oldId": "METRIC-02",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-METRIC-COVERAGE"
+      ],
+      "explanation": "Provisional content breadth 4 becomes eight mandatory orchestration domains; original value/freeze retained in legacy snapshot."
+    },
+    {
+      "oldId": "METRIC-03",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-METRIC-NEGATIVE",
+        "ORCH-METRIC-INTEGRITY"
+      ],
+      "explanation": "Provisional 0.99 reliability becomes 16/16 family plus all variant outcomes and zero integrity violations. No statistical 99% claim."
+    },
+    {
+      "oldId": "METRIC-04",
+      "disposition": "retired-from-source",
+      "newIds": [
+        "ORCH-METRIC-BOUNDS"
+      ],
+      "explanation": "Provisional 16.6 product performance number has no source frame-time meaning. Existing enforceable resource limits are a different property."
+    },
+    {
+      "oldId": "BOT-01",
+      "disposition": "retired-from-source",
+      "newIds": [
+        "ORCH-PLAN-01",
+        "ORCH-REVIEW-01"
+      ],
+      "explanation": "Original minimum 1 gameplay outcome not a source requirement. No substitution of a developer agent for a product bot."
+    },
+    {
+      "oldId": "BOT-02",
+      "disposition": "retired-from-source",
+      "newIds": [
+        "ORCH-STATE-01"
+      ],
+      "explanation": "Original provisional sustain minimum 1 retired from source; persistent controller operation is newly specified, not equivalent."
+    },
+    {
+      "oldId": "BOT-03",
+      "disposition": "retired-from-source",
+      "newIds": [
+        "ORCH-RECOVERY-01"
+      ],
+      "explanation": "Original provisional product-bot recovery minimum 1 retired from source; real controller recovery is separately specified."
+    },
+    {
+      "oldId": "CHAIN-01",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-RECOVERY-01"
+      ],
+      "explanation": "Original unnamed product chain retained historically; enumerate all workspace/checkpoint/integration boundary variants."
+    },
+    {
+      "oldId": "CHAIN-02",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-RECONCILE-01",
+        "ORCH-RETENTION-01"
+      ],
+      "explanation": "Original unnamed chain retained historically; real reconciliation and approved retention/cleanup define new source outcomes."
+    },
+    {
+      "oldId": "SEED-BENCH-01",
+      "disposition": "retired-from-source",
+      "newIds": [
+        "ORCH-METRIC-COVERAGE",
+        "ORCH-METRIC-INTEGRITY"
+      ],
+      "explanation": "Original minimum 1, success rate 1 and zero catastrophic failures remain historical/downstream; source uses named workflows, not game seeds."
+    },
+    {
+      "oldId": "SEED-VISIBLE-01",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-METRIC-NEGATIVE",
+        "ORCH-METRIC-INTEGRITY"
+      ],
+      "explanation": "Original provisional 13/16 visible game runs replaced in source by all sixteen named negative families/all variants per platform. No gameplay equivalence."
+    },
+    {
+      "oldId": "SEED-HIDDEN-01",
+      "disposition": "retired-from-source",
+      "newIds": [],
+      "explanation": "Original 16/20 hidden-game success gate is not a source gate. Preserve exact legacy thresholds and downstream custody; no new source hidden-generalization claim."
+    },
+    {
+      "oldId": "SEED-HIDDEN-INTEGRITY-01",
+      "disposition": "scope-split",
+      "newIds": [
+        "ORCH-METRIC-INTEGRITY",
+        "ORCH-EVIDENCE-01"
+      ],
+      "explanation": "Zero source integrity violations required; downstream hidden integrity/custody remains independently enforced with no value disclosure."
+    },
+    {
+      "oldId": "verify_full",
+      "disposition": "preserved-command-new-source-semantics",
+      "newIds": [
+        "verify_source_full"
+      ],
+      "explanation": "Literal pnpm verify preserved; source-only registry newly scoped/anchored. Legacy bootstrap/downstream registry remains unchanged."
+    },
+    {
+      "oldId": "HARNESS-PROFILE-01",
+      "disposition": "preserved-safeguard-new-scope",
+      "newIds": [
+        "ORCH-PROFILE-01"
+      ],
+      "explanation": "Keep only bootstrap/readiness, default readiness and one-way marker; bootstrap never autonomous readiness."
+    },
+    {
+      "oldId": "AUTONOMOUS-READINESS-01",
+      "disposition": "new-scoped-gate",
+      "newIds": [
+        "ORCH-AUTONOMOUS-READINESS-01"
+      ],
+      "explanation": "Source gate gets an explicit ID/scope and all-of immutable requirements; no pass inheritance or old-epoch closure."
+    },
+    {
+      "oldId": "HUMAN-ACCEPT-01",
+      "disposition": "preserved-safeguard-new-scope",
+      "newIds": [
+        "ORCH-HUMAN-ACCEPT-01"
+      ],
+      "explanation": "Explicit human acceptance remains required, now of the source release/operator workflow; machine cannot supply it."
+    }
+  ],
+  "legacyManifestLeaves": [
+    {
+      "pointer": "/schemaVersion",
+      "value": "1.0.0",
+      "oldRequirementId": null,
+      "disposition": "new-source-schema-and-title",
+      "newIds": [],
+      "explanation": "Replace placeholder metadata with explicit source contract/epoch/scope; legacy metadata retained."
+    },
+    {
+      "pointer": "/title",
+      "value": "Example Project acceptance manifest (placeholder)",
+      "oldRequirementId": null,
+      "disposition": "new-source-schema-and-title",
+      "newIds": [],
+      "explanation": "Replace placeholder metadata with explicit source contract/epoch/scope; legacy metadata retained."
+    },
+    {
+      "pointer": "/validationLayers/0/id",
+      "value": "AUTO-01",
+      "oldRequirementId": "AUTO-01",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-STATIC-01",
+        "ORCH-BUILD-01",
+        "ORCH-ADOPT-01",
+        "ORCH-VERIFY-01"
+      ],
+      "explanation": "Source automated outcome gains real distribution/public workflows; downstream AUTO remains independently owned."
+    },
+    {
+      "pointer": "/validationLayers/0/required",
+      "value": true,
+      "oldRequirementId": "AUTO-01",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-STATIC-01",
+        "ORCH-BUILD-01",
+        "ORCH-ADOPT-01",
+        "ORCH-VERIFY-01"
+      ],
+      "explanation": "Source automated outcome gains real distribution/public workflows; downstream AUTO remains independently owned."
+    },
+    {
+      "pointer": "/validationLayers/0/name",
+      "value": "Automated verification",
+      "oldRequirementId": "AUTO-01",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-STATIC-01",
+        "ORCH-BUILD-01",
+        "ORCH-ADOPT-01",
+        "ORCH-VERIFY-01"
+      ],
+      "explanation": "Source automated outcome gains real distribution/public workflows; downstream AUTO remains independently owned."
+    },
+    {
+      "pointer": "/validationLayers/1/id",
+      "value": "PLAY-01",
+      "oldRequirementId": "PLAY-01",
+      "disposition": "retired-from-source",
+      "newIds": [
+        "ORCH-PLAN-01",
+        "ORCH-REVIEW-01"
+      ],
+      "explanation": "Gameplay bot success ceases to apply to source. Developer-agent mechanics and live human workflow are new requirements, not equivalent gameplay evidence."
+    },
+    {
+      "pointer": "/validationLayers/1/required",
+      "value": true,
+      "oldRequirementId": "PLAY-01",
+      "disposition": "retired-from-source",
+      "newIds": [
+        "ORCH-PLAN-01",
+        "ORCH-REVIEW-01"
+      ],
+      "explanation": "Gameplay bot success ceases to apply to source. Developer-agent mechanics and live human workflow are new requirements, not equivalent gameplay evidence."
+    },
+    {
+      "pointer": "/validationLayers/1/name",
+      "value": "Bot playtesting",
+      "oldRequirementId": "PLAY-01",
+      "disposition": "retired-from-source",
+      "newIds": [
+        "ORCH-PLAN-01",
+        "ORCH-REVIEW-01"
+      ],
+      "explanation": "Gameplay bot success ceases to apply to source. Developer-agent mechanics and live human workflow are new requirements, not equivalent gameplay evidence."
+    },
+    {
+      "pointer": "/validationLayers/2/id",
+      "value": "VIS-01",
+      "oldRequirementId": "VIS-01",
+      "disposition": "scope-split",
+      "newIds": [
+        "ORCH-ADOPT-01"
+      ],
+      "explanation": "Real generated-bootstrap browser evidence stays required as compatibility; source game rendering is retired, downstream visual completion remains separate."
+    },
+    {
+      "pointer": "/validationLayers/2/required",
+      "value": true,
+      "oldRequirementId": "VIS-01",
+      "disposition": "scope-split",
+      "newIds": [
+        "ORCH-ADOPT-01"
+      ],
+      "explanation": "Real generated-bootstrap browser evidence stays required as compatibility; source game rendering is retired, downstream visual completion remains separate."
+    },
+    {
+      "pointer": "/validationLayers/2/name",
+      "value": "Rendered evidence",
+      "oldRequirementId": "VIS-01",
+      "disposition": "scope-split",
+      "newIds": [
+        "ORCH-ADOPT-01"
+      ],
+      "explanation": "Real generated-bootstrap browser evidence stays required as compatibility; source game rendering is retired, downstream visual completion remains separate."
+    },
+    {
+      "pointer": "/validationLayers/3/id",
+      "value": "PERF-GATE-01",
+      "oldRequirementId": "PERF-GATE-01",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-BOUNDS-01"
+      ],
+      "explanation": "Source resource/deadline enforcement replaces undefined source product-performance workloads; no frame-time or WP6 improvement equivalence."
+    },
+    {
+      "pointer": "/validationLayers/3/required",
+      "value": true,
+      "oldRequirementId": "PERF-GATE-01",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-BOUNDS-01"
+      ],
+      "explanation": "Source resource/deadline enforcement replaces undefined source product-performance workloads; no frame-time or WP6 improvement equivalence."
+    },
+    {
+      "pointer": "/validationLayers/3/name",
+      "value": "Performance budgets",
+      "oldRequirementId": "PERF-GATE-01",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-BOUNDS-01"
+      ],
+      "explanation": "Source resource/deadline enforcement replaces undefined source product-performance workloads; no frame-time or WP6 improvement equivalence."
+    },
+    {
+      "pointer": "/validationLayers/4/id",
+      "value": "REPLAY-01",
+      "oldRequirementId": "REPLAY-01",
+      "disposition": "scope-split",
+      "newIds": [
+        "ORCH-STATE-01",
+        "ORCH-ADOPT-01"
+      ],
+      "explanation": "Source canonical controller parity and generated bootstrap Node/replay/Worker parity are separate mandatory observations."
+    },
+    {
+      "pointer": "/validationLayers/4/required",
+      "value": true,
+      "oldRequirementId": "REPLAY-01",
+      "disposition": "scope-split",
+      "newIds": [
+        "ORCH-STATE-01",
+        "ORCH-ADOPT-01"
+      ],
+      "explanation": "Source canonical controller parity and generated bootstrap Node/replay/Worker parity are separate mandatory observations."
+    },
+    {
+      "pointer": "/validationLayers/4/name",
+      "value": "Determinism and replay",
+      "oldRequirementId": "REPLAY-01",
+      "disposition": "scope-split",
+      "newIds": [
+        "ORCH-STATE-01",
+        "ORCH-ADOPT-01"
+      ],
+      "explanation": "Source canonical controller parity and generated bootstrap Node/replay/Worker parity are separate mandatory observations."
+    },
+    {
+      "pointer": "/validationLayers/5/id",
+      "value": "SAVE-01",
+      "oldRequirementId": "SAVE-01",
+      "disposition": "scope-split",
+      "newIds": [
+        "ORCH-STATE-01",
+        "ORCH-RECOVERY-01",
+        "ORCH-ADOPT-01"
+      ],
+      "explanation": "Controller durable state/recovery replaces source gameplay saves; adopter bootstrap continuation remains separately proved."
+    },
+    {
+      "pointer": "/validationLayers/5/required",
+      "value": true,
+      "oldRequirementId": "SAVE-01",
+      "disposition": "scope-split",
+      "newIds": [
+        "ORCH-STATE-01",
+        "ORCH-RECOVERY-01",
+        "ORCH-ADOPT-01"
+      ],
+      "explanation": "Controller durable state/recovery replaces source gameplay saves; adopter bootstrap continuation remains separately proved."
+    },
+    {
+      "pointer": "/validationLayers/5/name",
+      "value": "Persistence integrity",
+      "oldRequirementId": "SAVE-01",
+      "disposition": "scope-split",
+      "newIds": [
+        "ORCH-STATE-01",
+        "ORCH-RECOVERY-01",
+        "ORCH-ADOPT-01"
+      ],
+      "explanation": "Controller durable state/recovery replaces source gameplay saves; adopter bootstrap continuation remains separately proved."
+    },
+    {
+      "pointer": "/validationLayers/6/id",
+      "value": "FAULT-01",
+      "oldRequirementId": "FAULT-01",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-RECOVERY-01",
+        "ORCH-CONTAIN-01",
+        "ORCH-RECONCILE-01",
+        "ORCH-RETENTION-01"
+      ],
+      "explanation": "Replace undefined source product fault chains with all enumerated real orchestration boundaries; no old chain is marked passed."
+    },
+    {
+      "pointer": "/validationLayers/6/required",
+      "value": true,
+      "oldRequirementId": "FAULT-01",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-RECOVERY-01",
+        "ORCH-CONTAIN-01",
+        "ORCH-RECONCILE-01",
+        "ORCH-RETENTION-01"
+      ],
+      "explanation": "Replace undefined source product fault chains with all enumerated real orchestration boundaries; no old chain is marked passed."
+    },
+    {
+      "pointer": "/validationLayers/6/name",
+      "value": "Operational fault chains",
+      "oldRequirementId": "FAULT-01",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-RECOVERY-01",
+        "ORCH-CONTAIN-01",
+        "ORCH-RECONCILE-01",
+        "ORCH-RETENTION-01"
+      ],
+      "explanation": "Replace undefined source product fault chains with all enumerated real orchestration boundaries; no old chain is marked passed."
+    },
+    {
+      "pointer": "/completionMetrics/0/id",
+      "value": "METRIC-01",
+      "oldRequirementId": "METRIC-01",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-METRIC-COVERAGE"
+      ],
+      "explanation": "Undefined one core outcome becomes all twelve requirements/eight domains; this defines the source product, not a historical success."
+    },
+    {
+      "pointer": "/completionMetrics/0/name",
+      "value": "Core outcome completion",
+      "oldRequirementId": "METRIC-01",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-METRIC-COVERAGE"
+      ],
+      "explanation": "Undefined one core outcome becomes all twelve requirements/eight domains; this defines the source product, not a historical success."
+    },
+    {
+      "pointer": "/completionMetrics/0/thresholds/0/freeze",
+      "value": "IMMUTABLE",
+      "oldRequirementId": "METRIC-01",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-METRIC-COVERAGE"
+      ],
+      "explanation": "Undefined one core outcome becomes all twelve requirements/eight domains; this defines the source product, not a historical success."
+    },
+    {
+      "pointer": "/completionMetrics/0/thresholds/0/value",
+      "value": 1,
+      "oldRequirementId": "METRIC-01",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-METRIC-COVERAGE"
+      ],
+      "explanation": "Undefined one core outcome becomes all twelve requirements/eight domains; this defines the source product, not a historical success."
+    },
+    {
+      "pointer": "/completionMetrics/1/id",
+      "value": "METRIC-02",
+      "oldRequirementId": "METRIC-02",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-METRIC-COVERAGE"
+      ],
+      "explanation": "Provisional content breadth 4 becomes eight mandatory orchestration domains; original value/freeze retained in legacy snapshot."
+    },
+    {
+      "pointer": "/completionMetrics/1/name",
+      "value": "Content breadth floor",
+      "oldRequirementId": "METRIC-02",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-METRIC-COVERAGE"
+      ],
+      "explanation": "Provisional content breadth 4 becomes eight mandatory orchestration domains; original value/freeze retained in legacy snapshot."
+    },
+    {
+      "pointer": "/completionMetrics/1/thresholds/0/freeze",
+      "value": "CAL-1_PROVISIONAL",
+      "oldRequirementId": "METRIC-02",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-METRIC-COVERAGE"
+      ],
+      "explanation": "Provisional content breadth 4 becomes eight mandatory orchestration domains; original value/freeze retained in legacy snapshot."
+    },
+    {
+      "pointer": "/completionMetrics/1/thresholds/0/value",
+      "value": 4,
+      "oldRequirementId": "METRIC-02",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-METRIC-COVERAGE"
+      ],
+      "explanation": "Provisional content breadth 4 becomes eight mandatory orchestration domains; original value/freeze retained in legacy snapshot."
+    },
+    {
+      "pointer": "/completionMetrics/2/id",
+      "value": "METRIC-03",
+      "oldRequirementId": "METRIC-03",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-METRIC-NEGATIVE",
+        "ORCH-METRIC-INTEGRITY"
+      ],
+      "explanation": "Provisional 0.99 reliability becomes 16/16 family plus all variant outcomes and zero integrity violations. No statistical 99% claim."
+    },
+    {
+      "pointer": "/completionMetrics/2/name",
+      "value": "Reliability floor",
+      "oldRequirementId": "METRIC-03",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-METRIC-NEGATIVE",
+        "ORCH-METRIC-INTEGRITY"
+      ],
+      "explanation": "Provisional 0.99 reliability becomes 16/16 family plus all variant outcomes and zero integrity violations. No statistical 99% claim."
+    },
+    {
+      "pointer": "/completionMetrics/2/thresholds/0/freeze",
+      "value": "CAL-1_PROVISIONAL",
+      "oldRequirementId": "METRIC-03",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-METRIC-NEGATIVE",
+        "ORCH-METRIC-INTEGRITY"
+      ],
+      "explanation": "Provisional 0.99 reliability becomes 16/16 family plus all variant outcomes and zero integrity violations. No statistical 99% claim."
+    },
+    {
+      "pointer": "/completionMetrics/2/thresholds/0/value",
+      "value": 0.99,
+      "oldRequirementId": "METRIC-03",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-METRIC-NEGATIVE",
+        "ORCH-METRIC-INTEGRITY"
+      ],
+      "explanation": "Provisional 0.99 reliability becomes 16/16 family plus all variant outcomes and zero integrity violations. No statistical 99% claim."
+    },
+    {
+      "pointer": "/completionMetrics/3/id",
+      "value": "METRIC-04",
+      "oldRequirementId": "METRIC-04",
+      "disposition": "retired-from-source",
+      "newIds": [
+        "ORCH-METRIC-BOUNDS"
+      ],
+      "explanation": "Provisional 16.6 product performance number has no source frame-time meaning. Existing enforceable resource limits are a different property."
+    },
+    {
+      "pointer": "/completionMetrics/3/name",
+      "value": "Performance budget",
+      "oldRequirementId": "METRIC-04",
+      "disposition": "retired-from-source",
+      "newIds": [
+        "ORCH-METRIC-BOUNDS"
+      ],
+      "explanation": "Provisional 16.6 product performance number has no source frame-time meaning. Existing enforceable resource limits are a different property."
+    },
+    {
+      "pointer": "/completionMetrics/3/thresholds/0/freeze",
+      "value": "CAL-1_PROVISIONAL",
+      "oldRequirementId": "METRIC-04",
+      "disposition": "retired-from-source",
+      "newIds": [
+        "ORCH-METRIC-BOUNDS"
+      ],
+      "explanation": "Provisional 16.6 product performance number has no source frame-time meaning. Existing enforceable resource limits are a different property."
+    },
+    {
+      "pointer": "/completionMetrics/3/thresholds/0/value",
+      "value": 16.6,
+      "oldRequirementId": "METRIC-04",
+      "disposition": "retired-from-source",
+      "newIds": [
+        "ORCH-METRIC-BOUNDS"
+      ],
+      "explanation": "Provisional 16.6 product performance number has no source frame-time meaning. Existing enforceable resource limits are a different property."
+    },
+    {
+      "pointer": "/botRequirements/0/id",
+      "value": "BOT-01",
+      "oldRequirementId": "BOT-01",
+      "disposition": "retired-from-source",
+      "newIds": [
+        "ORCH-PLAN-01",
+        "ORCH-REVIEW-01"
+      ],
+      "explanation": "Original minimum 1 gameplay outcome not a source requirement. No substitution of a developer agent for a product bot."
+    },
+    {
+      "pointer": "/botRequirements/0/name",
+      "value": "Bot reaches the core outcome",
+      "oldRequirementId": "BOT-01",
+      "disposition": "retired-from-source",
+      "newIds": [
+        "ORCH-PLAN-01",
+        "ORCH-REVIEW-01"
+      ],
+      "explanation": "Original minimum 1 gameplay outcome not a source requirement. No substitution of a developer agent for a product bot."
+    },
+    {
+      "pointer": "/botRequirements/0/threshold/freeze",
+      "value": "IMMUTABLE",
+      "oldRequirementId": "BOT-01",
+      "disposition": "retired-from-source",
+      "newIds": [
+        "ORCH-PLAN-01",
+        "ORCH-REVIEW-01"
+      ],
+      "explanation": "Original minimum 1 gameplay outcome not a source requirement. No substitution of a developer agent for a product bot."
+    },
+    {
+      "pointer": "/botRequirements/0/threshold/minimum",
+      "value": 1,
+      "oldRequirementId": "BOT-01",
+      "disposition": "retired-from-source",
+      "newIds": [
+        "ORCH-PLAN-01",
+        "ORCH-REVIEW-01"
+      ],
+      "explanation": "Original minimum 1 gameplay outcome not a source requirement. No substitution of a developer agent for a product bot."
+    },
+    {
+      "pointer": "/botRequirements/1/id",
+      "value": "BOT-02",
+      "oldRequirementId": "BOT-02",
+      "disposition": "retired-from-source",
+      "newIds": [
+        "ORCH-STATE-01"
+      ],
+      "explanation": "Original provisional sustain minimum 1 retired from source; persistent controller operation is newly specified, not equivalent."
+    },
+    {
+      "pointer": "/botRequirements/1/name",
+      "value": "Bot sustains operation",
+      "oldRequirementId": "BOT-02",
+      "disposition": "retired-from-source",
+      "newIds": [
+        "ORCH-STATE-01"
+      ],
+      "explanation": "Original provisional sustain minimum 1 retired from source; persistent controller operation is newly specified, not equivalent."
+    },
+    {
+      "pointer": "/botRequirements/1/threshold/freeze",
+      "value": "CAL-1_PROVISIONAL",
+      "oldRequirementId": "BOT-02",
+      "disposition": "retired-from-source",
+      "newIds": [
+        "ORCH-STATE-01"
+      ],
+      "explanation": "Original provisional sustain minimum 1 retired from source; persistent controller operation is newly specified, not equivalent."
+    },
+    {
+      "pointer": "/botRequirements/1/threshold/minimum",
+      "value": 1,
+      "oldRequirementId": "BOT-02",
+      "disposition": "retired-from-source",
+      "newIds": [
+        "ORCH-STATE-01"
+      ],
+      "explanation": "Original provisional sustain minimum 1 retired from source; persistent controller operation is newly specified, not equivalent."
+    },
+    {
+      "pointer": "/botRequirements/2/id",
+      "value": "BOT-03",
+      "oldRequirementId": "BOT-03",
+      "disposition": "retired-from-source",
+      "newIds": [
+        "ORCH-RECOVERY-01"
+      ],
+      "explanation": "Original provisional product-bot recovery minimum 1 retired from source; real controller recovery is separately specified."
+    },
+    {
+      "pointer": "/botRequirements/2/name",
+      "value": "Bot recovers from faults",
+      "oldRequirementId": "BOT-03",
+      "disposition": "retired-from-source",
+      "newIds": [
+        "ORCH-RECOVERY-01"
+      ],
+      "explanation": "Original provisional product-bot recovery minimum 1 retired from source; real controller recovery is separately specified."
+    },
+    {
+      "pointer": "/botRequirements/2/threshold/freeze",
+      "value": "CAL-1_PROVISIONAL",
+      "oldRequirementId": "BOT-03",
+      "disposition": "retired-from-source",
+      "newIds": [
+        "ORCH-RECOVERY-01"
+      ],
+      "explanation": "Original provisional product-bot recovery minimum 1 retired from source; real controller recovery is separately specified."
+    },
+    {
+      "pointer": "/botRequirements/2/threshold/minimum",
+      "value": 1,
+      "oldRequirementId": "BOT-03",
+      "disposition": "retired-from-source",
+      "newIds": [
+        "ORCH-RECOVERY-01"
+      ],
+      "explanation": "Original provisional product-bot recovery minimum 1 retired from source; real controller recovery is separately specified."
+    },
+    {
+      "pointer": "/operationalChains/0",
+      "value": "CHAIN-01",
+      "oldRequirementId": "CHAIN-01",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-RECOVERY-01"
+      ],
+      "explanation": "Original unnamed product chain retained historically; enumerate all workspace/checkpoint/integration boundary variants."
+    },
+    {
+      "pointer": "/operationalChains/1",
+      "value": "CHAIN-02",
+      "oldRequirementId": "CHAIN-02",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-RECONCILE-01",
+        "ORCH-RETENTION-01"
+      ],
+      "explanation": "Original unnamed chain retained historically; real reconciliation and approved retention/cleanup define new source outcomes."
+    },
+    {
+      "pointer": "/seedSets/benchmark/gateId",
+      "value": "SEED-BENCH-01",
+      "oldRequirementId": "SEED-BENCH-01",
+      "disposition": "retired-from-source",
+      "newIds": [
+        "ORCH-METRIC-COVERAGE",
+        "ORCH-METRIC-INTEGRITY"
+      ],
+      "explanation": "Original minimum 1, success rate 1 and zero catastrophic failures remain historical/downstream; source uses named workflows, not game seeds."
+    },
+    {
+      "pointer": "/seedSets/benchmark/minimumSuccesses",
+      "value": 1,
+      "oldRequirementId": "SEED-BENCH-01",
+      "disposition": "retired-from-source",
+      "newIds": [
+        "ORCH-METRIC-COVERAGE",
+        "ORCH-METRIC-INTEGRITY"
+      ],
+      "explanation": "Original minimum 1, success rate 1 and zero catastrophic failures remain historical/downstream; source uses named workflows, not game seeds."
+    },
+    {
+      "pointer": "/seedSets/benchmark/requiredSuccessRate",
+      "value": 1,
+      "oldRequirementId": "SEED-BENCH-01",
+      "disposition": "retired-from-source",
+      "newIds": [
+        "ORCH-METRIC-COVERAGE",
+        "ORCH-METRIC-INTEGRITY"
+      ],
+      "explanation": "Original minimum 1, success rate 1 and zero catastrophic failures remain historical/downstream; source uses named workflows, not game seeds."
+    },
+    {
+      "pointer": "/seedSets/benchmark/requireZeroCatastrophicIntegrityFailures",
+      "value": true,
+      "oldRequirementId": "SEED-BENCH-01",
+      "disposition": "retired-from-source",
+      "newIds": [
+        "ORCH-METRIC-COVERAGE",
+        "ORCH-METRIC-INTEGRITY"
+      ],
+      "explanation": "Original minimum 1, success rate 1 and zero catastrophic failures remain historical/downstream; source uses named workflows, not game seeds."
+    },
+    {
+      "pointer": "/seedSets/benchmark/freeze",
+      "value": "IMMUTABLE",
+      "oldRequirementId": "SEED-BENCH-01",
+      "disposition": "retired-from-source",
+      "newIds": [
+        "ORCH-METRIC-COVERAGE",
+        "ORCH-METRIC-INTEGRITY"
+      ],
+      "explanation": "Original minimum 1, success rate 1 and zero catastrophic failures remain historical/downstream; source uses named workflows, not game seeds."
+    },
+    {
+      "pointer": "/seedSets/visibleDevelopment/gateId",
+      "value": "SEED-VISIBLE-01",
+      "oldRequirementId": "SEED-VISIBLE-01",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-METRIC-NEGATIVE",
+        "ORCH-METRIC-INTEGRITY"
+      ],
+      "explanation": "Original provisional 13/16 visible game runs replaced in source by all sixteen named negative families/all variants per platform. No gameplay equivalence."
+    },
+    {
+      "pointer": "/seedSets/visibleDevelopment/requiredRuns",
+      "value": 16,
+      "oldRequirementId": "SEED-VISIBLE-01",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-METRIC-NEGATIVE",
+        "ORCH-METRIC-INTEGRITY"
+      ],
+      "explanation": "Original provisional 13/16 visible game runs replaced in source by all sixteen named negative families/all variants per platform. No gameplay equivalence."
+    },
+    {
+      "pointer": "/seedSets/visibleDevelopment/minimumSuccesses",
+      "value": 13,
+      "oldRequirementId": "SEED-VISIBLE-01",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-METRIC-NEGATIVE",
+        "ORCH-METRIC-INTEGRITY"
+      ],
+      "explanation": "Original provisional 13/16 visible game runs replaced in source by all sixteen named negative families/all variants per platform. No gameplay equivalence."
+    },
+    {
+      "pointer": "/seedSets/visibleDevelopment/requireZeroCatastrophicIntegrityFailures",
+      "value": true,
+      "oldRequirementId": "SEED-VISIBLE-01",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-METRIC-NEGATIVE",
+        "ORCH-METRIC-INTEGRITY"
+      ],
+      "explanation": "Original provisional 13/16 visible game runs replaced in source by all sixteen named negative families/all variants per platform. No gameplay equivalence."
+    },
+    {
+      "pointer": "/seedSets/visibleDevelopment/freeze",
+      "value": "CAL-1_PROVISIONAL",
+      "oldRequirementId": "SEED-VISIBLE-01",
+      "disposition": "semantic-replacement",
+      "newIds": [
+        "ORCH-METRIC-NEGATIVE",
+        "ORCH-METRIC-INTEGRITY"
+      ],
+      "explanation": "Original provisional 13/16 visible game runs replaced in source by all sixteen named negative families/all variants per platform. No gameplay equivalence."
+    },
+    {
+      "pointer": "/seedSets/hidden/successGateId",
+      "value": "SEED-HIDDEN-01",
+      "oldRequirementId": "SEED-HIDDEN-01",
+      "disposition": "retired-from-source",
+      "newIds": [],
+      "explanation": "Original 16/20 hidden-game success gate is not a source gate. Preserve exact legacy thresholds and downstream custody; no new source hidden-generalization claim."
+    },
+    {
+      "pointer": "/seedSets/hidden/integrityGateId",
+      "value": "SEED-HIDDEN-INTEGRITY-01",
+      "oldRequirementId": "SEED-HIDDEN-INTEGRITY-01",
+      "disposition": "scope-split",
+      "newIds": [
+        "ORCH-METRIC-INTEGRITY",
+        "ORCH-EVIDENCE-01"
+      ],
+      "explanation": "Zero source integrity violations required; downstream hidden integrity/custody remains independently enforced with no value disclosure."
+    },
+    {
+      "pointer": "/seedSets/hidden/requiredRuns",
+      "value": 20,
+      "oldRequirementId": "SEED-HIDDEN-01",
+      "disposition": "retired-from-source",
+      "newIds": [],
+      "explanation": "Original 16/20 hidden-game success gate is not a source gate. Preserve exact legacy thresholds and downstream custody; no new source hidden-generalization claim."
+    },
+    {
+      "pointer": "/seedSets/hidden/minimumSuccesses",
+      "value": 16,
+      "oldRequirementId": "SEED-HIDDEN-01",
+      "disposition": "retired-from-source",
+      "newIds": [],
+      "explanation": "Original 16/20 hidden-game success gate is not a source gate. Preserve exact legacy thresholds and downstream custody; no new source hidden-generalization claim."
+    },
+    {
+      "pointer": "/seedSets/hidden/valuesInRepository",
+      "value": false,
+      "oldRequirementId": "SEED-HIDDEN-01",
+      "disposition": "retired-from-source",
+      "newIds": [],
+      "explanation": "Original 16/20 hidden-game success gate is not a source gate. Preserve exact legacy thresholds and downstream custody; no new source hidden-generalization claim."
+    },
+    {
+      "pointer": "/seedSets/hidden/requireZeroCatastrophicIntegrityFailures",
+      "value": true,
+      "oldRequirementId": "SEED-HIDDEN-INTEGRITY-01",
+      "disposition": "scope-split",
+      "newIds": [
+        "ORCH-METRIC-INTEGRITY",
+        "ORCH-EVIDENCE-01"
+      ],
+      "explanation": "Zero source integrity violations required; downstream hidden integrity/custody remains independently enforced with no value disclosure."
+    },
+    {
+      "pointer": "/seedSets/hidden/freeze",
+      "value": "CAL-1_PROVISIONAL",
+      "oldRequirementId": "SEED-HIDDEN-01",
+      "disposition": "retired-from-source",
+      "newIds": [],
+      "explanation": "Original 16/20 hidden-game success gate is not a source gate. Preserve exact legacy thresholds and downstream custody; no new source hidden-generalization claim."
+    },
+    {
+      "pointer": "/plannedCommandSurface/commands/0/id",
+      "value": "verify_full",
+      "oldRequirementId": "verify_full",
+      "disposition": "preserved-command-new-source-semantics",
+      "newIds": [
+        "verify_source_full"
+      ],
+      "explanation": "Literal pnpm verify preserved; source-only registry newly scoped/anchored. Legacy bootstrap/downstream registry remains unchanged."
+    },
+    {
+      "pointer": "/plannedCommandSurface/commands/0/plannedCommand",
+      "value": "pnpm verify",
+      "oldRequirementId": "verify_full",
+      "disposition": "preserved-command-new-source-semantics",
+      "newIds": [
+        "verify_source_full"
+      ],
+      "explanation": "Literal pnpm verify preserved; source-only registry newly scoped/anchored. Legacy bootstrap/downstream registry remains unchanged."
+    },
+    {
+      "pointer": "/plannedCommandSurface/profileContract/additiveRequirementId",
+      "value": "HARNESS-PROFILE-01",
+      "oldRequirementId": "HARNESS-PROFILE-01",
+      "disposition": "preserved-safeguard-new-scope",
+      "newIds": [
+        "ORCH-PROFILE-01"
+      ],
+      "explanation": "Keep only bootstrap/readiness, default readiness and one-way marker; bootstrap never autonomous readiness."
+    },
+    {
+      "pointer": "/plannedCommandSurface/profileContract/bootstrapIsAutonomousReadinessEvidence",
+      "value": false,
+      "oldRequirementId": "HARNESS-PROFILE-01",
+      "disposition": "preserved-safeguard-new-scope",
+      "newIds": [
+        "ORCH-PROFILE-01"
+      ],
+      "explanation": "Keep only bootstrap/readiness, default readiness and one-way marker; bootstrap never autonomous readiness."
+    },
+    {
+      "pointer": "/plannedCommandSurface/profileContract/requiredDefaultProfileForAutonomousReadiness",
+      "value": "readiness",
+      "oldRequirementId": "HARNESS-PROFILE-01",
+      "disposition": "preserved-safeguard-new-scope",
+      "newIds": [
+        "ORCH-PROFILE-01"
+      ],
+      "explanation": "Keep only bootstrap/readiness, default readiness and one-way marker; bootstrap never autonomous readiness."
+    },
+    {
+      "pointer": "/plannedCommandSurface/profileContract/profileOwner",
+      "value": "package.json#milestoneLoop.verification.defaultProfile",
+      "oldRequirementId": "HARNESS-PROFILE-01",
+      "disposition": "preserved-safeguard-new-scope",
+      "newIds": [
+        "ORCH-PROFILE-01"
+      ],
+      "explanation": "Keep only bootstrap/readiness, default readiness and one-way marker; bootstrap never autonomous readiness."
+    },
+    {
+      "pointer": "/readinessGate/id",
+      "value": "AUTONOMOUS-READINESS-01",
+      "oldRequirementId": "AUTONOMOUS-READINESS-01",
+      "disposition": "new-scoped-gate",
+      "newIds": [
+        "ORCH-AUTONOMOUS-READINESS-01"
+      ],
+      "explanation": "Source gate gets an explicit ID/scope and all-of immutable requirements; no pass inheritance or old-epoch closure."
+    },
+    {
+      "pointer": "/readinessGate/aggregation",
+      "value": "all",
+      "oldRequirementId": "AUTONOMOUS-READINESS-01",
+      "disposition": "new-scoped-gate",
+      "newIds": [
+        "ORCH-AUTONOMOUS-READINESS-01"
+      ],
+      "explanation": "Source gate gets an explicit ID/scope and all-of immutable requirements; no pass inheritance or old-epoch closure."
+    },
+    {
+      "pointer": "/readinessGate/compensationBetweenRequirementsAllowed",
+      "value": false,
+      "oldRequirementId": "AUTONOMOUS-READINESS-01",
+      "disposition": "new-scoped-gate",
+      "newIds": [
+        "ORCH-AUTONOMOUS-READINESS-01"
+      ],
+      "explanation": "Source gate gets an explicit ID/scope and all-of immutable requirements; no pass inheritance or old-epoch closure."
+    },
+    {
+      "pointer": "/readinessGate/requirements/0",
+      "value": "all_validation_layers_pass",
+      "oldRequirementId": "AUTONOMOUS-READINESS-01",
+      "disposition": "new-scoped-gate",
+      "newIds": [
+        "ORCH-AUTONOMOUS-READINESS-01"
+      ],
+      "explanation": "Source gate gets an explicit ID/scope and all-of immutable requirements; no pass inheritance or old-epoch closure."
+    },
+    {
+      "pointer": "/readinessGate/requirements/1",
+      "value": "all_completion_metrics_pass",
+      "oldRequirementId": "AUTONOMOUS-READINESS-01",
+      "disposition": "new-scoped-gate",
+      "newIds": [
+        "ORCH-AUTONOMOUS-READINESS-01"
+      ],
+      "explanation": "Source gate gets an explicit ID/scope and all-of immutable requirements; no pass inheritance or old-epoch closure."
+    },
+    {
+      "pointer": "/readinessGate/requirements/2",
+      "value": "all_bot_requirements_pass",
+      "oldRequirementId": "AUTONOMOUS-READINESS-01",
+      "disposition": "new-scoped-gate",
+      "newIds": [
+        "ORCH-AUTONOMOUS-READINESS-01"
+      ],
+      "explanation": "Source gate gets an explicit ID/scope and all-of immutable requirements; no pass inheritance or old-epoch closure."
+    },
+    {
+      "pointer": "/readinessGate/requirements/3",
+      "value": "all_seed_gates_pass",
+      "oldRequirementId": "AUTONOMOUS-READINESS-01",
+      "disposition": "new-scoped-gate",
+      "newIds": [
+        "ORCH-AUTONOMOUS-READINESS-01"
+      ],
+      "explanation": "Source gate gets an explicit ID/scope and all-of immutable requirements; no pass inheritance or old-epoch closure."
+    },
+    {
+      "pointer": "/readinessGate/requirements/4",
+      "value": "all_operational_chains_pass",
+      "oldRequirementId": "AUTONOMOUS-READINESS-01",
+      "disposition": "new-scoped-gate",
+      "newIds": [
+        "ORCH-AUTONOMOUS-READINESS-01"
+      ],
+      "explanation": "Source gate gets an explicit ID/scope and all-of immutable requirements; no pass inheritance or old-epoch closure."
+    },
+    {
+      "pointer": "/humanAcceptanceGate/id",
+      "value": "HUMAN-ACCEPT-01",
+      "oldRequirementId": "HUMAN-ACCEPT-01",
+      "disposition": "preserved-safeguard-new-scope",
+      "newIds": [
+        "ORCH-HUMAN-ACCEPT-01"
+      ],
+      "explanation": "Explicit human acceptance remains required, now of the source release/operator workflow; machine cannot supply it."
+    },
+    {
+      "pointer": "/humanAcceptanceGate/aggregation",
+      "value": "all",
+      "oldRequirementId": "HUMAN-ACCEPT-01",
+      "disposition": "preserved-safeguard-new-scope",
+      "newIds": [
+        "ORCH-HUMAN-ACCEPT-01"
+      ],
+      "explanation": "Explicit human acceptance remains required, now of the source release/operator workflow; machine cannot supply it."
+    },
+    {
+      "pointer": "/humanAcceptanceGate/requirements/0",
+      "value": "scripted_human_review_pass",
+      "oldRequirementId": "HUMAN-ACCEPT-01",
+      "disposition": "preserved-safeguard-new-scope",
+      "newIds": [
+        "ORCH-HUMAN-ACCEPT-01"
+      ],
+      "explanation": "Explicit human acceptance remains required, now of the source release/operator workflow; machine cannot supply it."
+    }
+  ],
+  "goalSections": [
+    {
+      "section": "1",
+      "oldMeaning": "Placeholder software/completion purpose",
+      "newMeaning": "Source distribution/controller, source machine and human gates; three distinct scopes"
+    },
+    {
+      "section": "2",
+      "oldMeaning": "Placeholder vision",
+      "newMeaning": "Maintainer public lifecycle and truthful diagnostics"
+    },
+    {
+      "section": "3",
+      "oldMeaning": "Placeholder systems/breadth",
+      "newMeaning": "Eight named domains plus release/adopter/parity/resource outcomes"
+    },
+    {
+      "section": "4",
+      "oldMeaning": "Placeholder technical/toolchain/simulation",
+      "newMeaning": "Existing exact pins and containment; source controller parity distinct from adopter simulation"
+    },
+    {
+      "section": "5",
+      "oldMeaning": "Autonomous milestone loop",
+      "newMeaning": "Preserve bounded increments, isolation, review and fail-closed integration"
+    },
+    {
+      "section": "6",
+      "oldMeaning": "Product determinism/seeds",
+      "newMeaning": "Source canonical state plus explicit retirement of source product seed gates; downstream custody unchanged"
+    },
+    {
+      "section": "7",
+      "oldMeaning": "One-time calibration/provisional metrics",
+      "newMeaning": "All source values human-revision-only; original CAL-1 unused state preserved"
+    },
+    {
+      "section": "8",
+      "oldMeaning": "AUTONOMOUS and HUMAN gates",
+      "newMeaning": "New source-scoped gates; AND/no-compensation and explicit human preserved"
+    },
+    {
+      "section": "9",
+      "oldMeaning": "Placeholder non-goals",
+      "newMeaning": "Exclude unrelated product, statistical/game/performance claims and WP6 scope changes"
+    },
+    {
+      "section": "10",
+      "oldMeaning": "Human-only immutable authority",
+      "newMeaning": "Exact approval digest, linked epoch snapshots, strict ancestry and recoverable migration"
+    }
+  ],
+  "commands": [
+    {
+      "oldCommand": "benchmark:bot",
+      "oldDefinition": null,
+      "disposition": "legacy/downstream behavior preserved; not scheduled as source product proof",
+      "sourceReplacement": null
+    },
+    {
+      "oldCommand": "benchmark:visible-seeds",
+      "oldDefinition": null,
+      "disposition": "legacy/downstream behavior preserved; not scheduled as source product proof",
+      "sourceReplacement": null
+    },
+    {
+      "oldCommand": "build",
+      "oldDefinition": "tsx tools/run-tool-evidence.mjs build",
+      "disposition": "existing command preserved; scope-specific registry/evidence checked",
+      "sourceReplacement": null
+    },
+    {
+      "oldCommand": "format:check",
+      "oldDefinition": "tsx tools/run-tool-evidence.mjs format",
+      "disposition": "existing command preserved; scope-specific registry/evidence checked",
+      "sourceReplacement": null
+    },
+    {
+      "oldCommand": "lint",
+      "oldDefinition": "tsx tools/run-tool-evidence.mjs lint",
+      "disposition": "existing command preserved; scope-specific registry/evidence checked",
+      "sourceReplacement": null
+    },
+    {
+      "oldCommand": "lint:architecture",
+      "oldDefinition": "node tools/placeholder-check.mjs lint:architecture",
+      "disposition": "new source schedule uses lint:source-architecture; old definition unchanged",
+      "sourceReplacement": "lint:source-architecture"
+    },
+    {
+      "oldCommand": "pnpm verify",
+      "oldDefinition": null,
+      "disposition": "same spelling, new source-only scoped registry",
+      "sourceReplacement": null
+    },
+    {
+      "oldCommand": "test:domain",
+      "oldDefinition": null,
+      "disposition": "legacy/downstream behavior preserved; not scheduled as source product proof",
+      "sourceReplacement": "test:orchestration-domain"
+    },
+    {
+      "oldCommand": "test:unit",
+      "oldDefinition": "tsx tools/run-tool-evidence.mjs test",
+      "disposition": "existing command preserved; scope-specific registry/evidence checked",
+      "sourceReplacement": null
+    },
+    {
+      "oldCommand": "typecheck",
+      "oldDefinition": "tsx tools/run-tool-evidence.mjs typecheck",
+      "disposition": "existing command preserved; scope-specific registry/evidence checked",
+      "sourceReplacement": null
+    },
+    {
+      "oldCommand": "verify:acceptance",
+      "oldDefinition": null,
+      "disposition": "legacy/downstream behavior preserved; not scheduled as source product proof",
+      "sourceReplacement": null
+    },
+    {
+      "oldCommand": "verify:bootstrap:browser",
+      "oldDefinition": null,
+      "disposition": "existing command preserved; scope-specific registry/evidence checked",
+      "sourceReplacement": null
+    },
+    {
+      "oldCommand": "verify:bootstrap:persistence",
+      "oldDefinition": null,
+      "disposition": "existing command preserved; scope-specific registry/evidence checked",
+      "sourceReplacement": null
+    },
+    {
+      "oldCommand": "verify:bootstrap:simulation",
+      "oldDefinition": null,
+      "disposition": "existing command preserved; scope-specific registry/evidence checked",
+      "sourceReplacement": null
+    },
+    {
+      "oldCommand": "verify:browser",
+      "oldDefinition": null,
+      "disposition": "legacy/downstream behavior preserved; not scheduled as source product proof",
+      "sourceReplacement": null
+    },
+    {
+      "oldCommand": "verify:browser-diagnostics",
+      "oldDefinition": null,
+      "disposition": "legacy/downstream behavior preserved; not scheduled as source product proof",
+      "sourceReplacement": null
+    },
+    {
+      "oldCommand": "verify:dependencies",
+      "oldDefinition": "node tools/placeholder-check.mjs verify:dependencies",
+      "disposition": "new source schedule uses verify:source-dependencies; old definition unchanged",
+      "sourceReplacement": "verify:source-dependencies"
+    },
+    {
+      "oldCommand": "verify:determinism",
+      "oldDefinition": null,
+      "disposition": "legacy/downstream behavior preserved; not scheduled as source product proof",
+      "sourceReplacement": null
+    },
+    {
+      "oldCommand": "verify:domain-browser",
+      "oldDefinition": "node tools/placeholder-check.mjs verify:domain-browser",
+      "disposition": "legacy/downstream behavior preserved; not scheduled as source product proof",
+      "sourceReplacement": "test:orchestration-domain"
+    },
+    {
+      "oldCommand": "verify:domain-construction-standard",
+      "oldDefinition": "node tools/placeholder-check.mjs verify:domain-construction-standard",
+      "disposition": "legacy/downstream behavior preserved; not scheduled as source product proof",
+      "sourceReplacement": "test:orchestration-domain"
+    },
+    {
+      "oldCommand": "verify:domain-development",
+      "oldDefinition": "node tools/placeholder-check.mjs verify:domain-development",
+      "disposition": "legacy/downstream behavior preserved; not scheduled as source product proof",
+      "sourceReplacement": "test:orchestration-domain"
+    },
+    {
+      "oldCommand": "verify:domain-entitlement",
+      "oldDefinition": "node tools/placeholder-check.mjs verify:domain-entitlement",
+      "disposition": "legacy/downstream behavior preserved; not scheduled as source product proof",
+      "sourceReplacement": "test:orchestration-domain"
+    },
+    {
+      "oldCommand": "verify:domain-entitlement-standard",
+      "oldDefinition": "node tools/placeholder-check.mjs verify:domain-entitlement-standard",
+      "disposition": "legacy/downstream behavior preserved; not scheduled as source product proof",
+      "sourceReplacement": "test:orchestration-domain"
+    },
+    {
+      "oldCommand": "verify:domain-networks",
+      "oldDefinition": "node tools/placeholder-check.mjs verify:domain-networks",
+      "disposition": "legacy/downstream behavior preserved; not scheduled as source product proof",
+      "sourceReplacement": "test:orchestration-domain"
+    },
+    {
+      "oldCommand": "verify:domain-planning",
+      "oldDefinition": "node tools/placeholder-check.mjs verify:domain-planning",
+      "disposition": "legacy/downstream behavior preserved; not scheduled as source product proof",
+      "sourceReplacement": "test:orchestration-domain"
+    },
+    {
+      "oldCommand": "verify:domain-resources",
+      "oldDefinition": "node tools/placeholder-check.mjs verify:domain-resources",
+      "disposition": "legacy/downstream behavior preserved; not scheduled as source product proof",
+      "sourceReplacement": "test:orchestration-domain"
+    },
+    {
+      "oldCommand": "verify:domain-simulation",
+      "oldDefinition": "node tools/placeholder-check.mjs verify:domain-simulation",
+      "disposition": "legacy/downstream behavior preserved; not scheduled as source product proof",
+      "sourceReplacement": "test:orchestration-domain"
+    },
+    {
+      "oldCommand": "verify:headless",
+      "oldDefinition": null,
+      "disposition": "legacy/downstream behavior preserved; not scheduled as source product proof",
+      "sourceReplacement": null
+    },
+    {
+      "oldCommand": "verify:parity",
+      "oldDefinition": null,
+      "disposition": "legacy/downstream behavior preserved; not scheduled as source product proof",
+      "sourceReplacement": null
+    },
+    {
+      "oldCommand": "verify:performance",
+      "oldDefinition": null,
+      "disposition": "legacy/downstream behavior preserved; not scheduled as source product proof",
+      "sourceReplacement": null
+    },
+    {
+      "oldCommand": "verify:replay",
+      "oldDefinition": null,
+      "disposition": "legacy/downstream behavior preserved; not scheduled as source product proof",
+      "sourceReplacement": null
+    },
+    {
+      "oldCommand": "verify:save",
+      "oldDefinition": null,
+      "disposition": "legacy/downstream behavior preserved; not scheduled as source product proof",
+      "sourceReplacement": null
+    },
+    {
+      "oldCommand": "verify:visual",
+      "oldDefinition": null,
+      "disposition": "legacy/downstream behavior preserved; not scheduled as source product proof",
+      "sourceReplacement": null
+    }
+  ],
+  "additionalRules": [
+    {
+      "old": "CAL-1 open_not_started, completedCount 0, maximumCount 1",
+      "disposition": "retained verbatim in legacy snapshot; not consumed; all new source fields human-revision-only"
+    },
+    {
+      "old": "Hidden protocol rules 1-4",
+      "disposition": "custody, no disclosure/bruteforce, human trigger, cooldown, aggregate-only transport and failure semantics preserved for downstream; source product hidden gate retired"
+    },
+    {
+      "old": "All original acceptance tests and legacy schemas",
+      "disposition": "keep assertions and original epoch fixtures executable; add source scoped tests instead of rewriting old expectations"
+    },
+    {
+      "old": "All original package scripts",
+      "disposition": "unchanged definitions; new source schedule uses additive real source commands; downstream/generated schedules remain distinct"
+    },
+    {
+      "old": "Bootstrap/readiness and marker history",
+      "disposition": "unchanged one-way rule, no third profile and no completion override"
+    },
+    {
+      "old": "WP6e/WP6f",
+      "disposition": "unchanged scope/evidence; no completion or optimization claim from migration"
+    }
+  ]
+}

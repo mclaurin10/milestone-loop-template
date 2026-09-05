@@ -1,0 +1,114 @@
+{
+  "schemaVersion": "human-authority-approval-record.v1",
+  "revisionId": "ORCH-AUTH-01",
+  "proposalRevision": "r2",
+  "status": "APPROVED",
+  "recordedAt": "2026-09-05T20:38:11.105235+00:00",
+  "source": {
+    "kind": "direct-maintainer-message",
+    "threadId": "01a06f9b-0953-73b2-ae67-06e37d884e4e",
+    "turnId": "01a07344-cedf-7562-9ca4-8f5af8586c39",
+    "quote": "Proposal approved.",
+    "targetResolution": "The immediately preceding assistant response linked ORCH-AUTH-01 r2 as the review target; this direct approval applies to that unchanged normative digest.",
+    "machineGrantedApproval": false,
+    "standaloneRecordAuthenticatesHuman": false
+  },
+  "approvedContentDigest": "53d38a2c2038cd9c5ffc240275043709d23dd33a81237e3d12018a38a8378108",
+  "packageIntegrityDigestAtApproval": "2db01416302e24f3bda9d1991f44a1ac05b8ef5fad70b09c18bc4f037d267a2c",
+  "reviewManifestPath": "docs/proposals/ORCH-AUTH-01-r2/review-manifest.json",
+  "reviewManifestSha256": "4e234f7e667eb57ec22c0ef86245bcd8975cd4ff2a2fa14dee397b5830cd4d6e",
+  "baselineCommit": "e590e38c32de2b5baa7423f66bbd8a0230b61839",
+  "baselineTree": "b8f3879fa26fb5a54f2b0daa0f062d94d52bc3f9",
+  "contractId": "milestone-loop-orchestrator-source.v1",
+  "authorityEpoch": "orch-template.v1",
+  "normativeFiles": [
+    {
+      "path": "ACCEPTANCE-MAPPING.md",
+      "bytes": 8571,
+      "sha256": "63307c7adec709be675c15bf59b5ca8b17655c2f6b0a824035fb363dd8efc2b0",
+      "role": "normative-contract"
+    },
+    {
+      "path": "APPROVAL-SCOPE.md",
+      "bytes": 2518,
+      "sha256": "2c3eb767ed56017e779a927c182bea8546516d3464254d366fba11f53ba71ecd",
+      "role": "normative-contract"
+    },
+    {
+      "path": "TRANSITION-CONTRACT.md",
+      "bytes": 3751,
+      "sha256": "8722ce48a23f86534f8d69973943e09fa77333415164ecdd436a4427fd2b16b0",
+      "role": "normative-contract"
+    },
+    {
+      "path": "acceptance-mapping.json",
+      "bytes": 54258,
+      "sha256": "d02359632eeec9f599e9333eed2c688dda6c36b380da1757a7dcd82f8fb3b109",
+      "role": "normative-contract"
+    },
+    {
+      "path": "approval-scope.json",
+      "bytes": 954,
+      "sha256": "38978d7892b6346364e78463a7040ca06c1f92882f4912c26ef29a63568f6dc7",
+      "role": "normative-contract"
+    },
+    {
+      "path": "proposed/AGENTS.md",
+      "bytes": 10203,
+      "sha256": "de2d4ae4826b5a8c274f690dc37c14bafdd2b77716765ac5d765c69422c59fee",
+      "role": "normative-contract"
+    },
+    {
+      "path": "proposed/CONTRACT.md",
+      "bytes": 50862,
+      "sha256": "6c4b333dc61ba06dd5e4eea2ce340812e40332235e30015a4ae5eb0fb76614f5",
+      "role": "normative-contract"
+    },
+    {
+      "path": "proposed/PROJECT_GOAL.md",
+      "bytes": 11759,
+      "sha256": "ed33d9d8f4bef40176935342bc1076da8458c7832a031a44350edce02960fbd2",
+      "role": "normative-contract"
+    },
+    {
+      "path": "proposed/evals/ACCEPTANCE.md",
+      "bytes": 19765,
+      "sha256": "fef789b4470f9b4cd2041fb26703ba38b6802cbc5f86b95b753cab6c7d02ae29",
+      "role": "normative-contract"
+    },
+    {
+      "path": "proposed/evals/HIDDEN_VALIDATION_PROTOCOL.md",
+      "bytes": 1891,
+      "sha256": "c3d33f3737c3f02ef031c5eb0f033796894403e1c7781225e8f425c3e2ce31d1",
+      "role": "normative-contract"
+    },
+    {
+      "path": "proposed/evals/acceptance-manifest.json",
+      "bytes": 19314,
+      "sha256": "d0d9c67937a4f00321f2d3d0feb3ed9e4a6dbfe0d91605e6cadc1936b467a316",
+      "role": "normative-contract"
+    },
+    {
+      "path": "proposed/evals/immutable-contract-lock.json",
+      "bytes": 1859,
+      "sha256": "b6ffe83401af6cecfede9756f414abef5a7162ba773f892b6feeaa1d6ee336e2",
+      "role": "normative-contract"
+    },
+    {
+      "path": "proposed/qualification-target-contract.json",
+      "bytes": 3029,
+      "sha256": "8f62e1f1a38eac89ebae0f34ad7807429005a88da8ea4e29fe25b00bd0b4cf71",
+      "role": "normative-contract"
+    }
+  ],
+  "authorization": {
+    "stagedImplementationOfApprovedRevision": true,
+    "activationRequiresApprovedTransitionSafeguards": true,
+    "conformingAdvisoryChangesNeedRenewedAuthorityApproval": false,
+    "normativeChangesNeedNewHumanApproval": true,
+    "humanProductAcceptanceGranted": false,
+    "wp6eCompletionOrWp6fInterpretationGranted": false,
+    "stateAdoptionGrantedByThisRecord": false
+  },
+  "activationStatus": "NOT_APPLIED"
+}

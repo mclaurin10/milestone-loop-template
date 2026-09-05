@@ -1,0 +1,206 @@
+{
+  "schemaVersion": "orch-source-command-proposal.v2",
+  "status": "proposed-not-implemented",
+  "packageAdditions": {
+    "scripts": {
+      "loop:authority:migrate": "tsx tools/milestone-orchestrator/src/authority-migration-cli.ts",
+      "build:production": "node tools/source-release.mjs build",
+      "verify:source-dependencies": "node tools/source-release.mjs dependencies",
+      "lint:source-architecture": "tsx tools/milestone-orchestrator/src/source-qualification-cli.ts architecture",
+      "test:orchestration-domain": "tsx tools/milestone-orchestrator/src/source-qualification-cli.ts domain",
+      "verify:source-parity": "tsx tools/milestone-orchestrator/src/source-qualification-cli.ts parity",
+      "verify:adopter-bootstrap": "tsx tools/milestone-orchestrator/src/source-qualification-cli.ts adopter",
+      "verify:source-bounds": "tsx tools/milestone-orchestrator/src/source-qualification-cli.ts bounds",
+      "verify:source-acceptance": "tsx tools/milestone-orchestrator/src/source-qualification-cli.ts evaluate"
+    },
+    "milestoneLoop": {
+      "verification": {
+        "defaultProfile": "readiness",
+        "contractId": "milestone-loop-orchestrator-source.v1"
+      },
+      "productionBuild": {
+        "script": "build:production",
+        "outputRoots": [
+          "dist"
+        ]
+      }
+    }
+  },
+  "sourceStages": [
+    {
+      "id": "environment",
+      "scripts": [
+        "verify:source-dependencies"
+      ],
+      "acceptanceIds": [
+        "ORCH-STATIC-01"
+      ],
+      "required": true
+    },
+    {
+      "id": "contract-integrity",
+      "scripts": [
+        "test:invariants"
+      ],
+      "acceptanceIds": [
+        "ORCH-STATIC-01",
+        "ORCH-VERIFY-01"
+      ],
+      "required": true
+    },
+    {
+      "id": "format-lint",
+      "scripts": [
+        "format:check",
+        "lint",
+        "lint:source-architecture"
+      ],
+      "acceptanceIds": [
+        "ORCH-STATIC-01"
+      ],
+      "required": true
+    },
+    {
+      "id": "typecheck",
+      "scripts": [
+        "typecheck"
+      ],
+      "acceptanceIds": [
+        "ORCH-STATIC-01"
+      ],
+      "required": true
+    },
+    {
+      "id": "production-build",
+      "scripts": [
+        "build"
+      ],
+      "acceptanceIds": [
+        "ORCH-BUILD-01"
+      ],
+      "required": true
+    },
+    {
+      "id": "unit",
+      "scripts": [
+        "test:unit"
+      ],
+      "acceptanceIds": [
+        "ORCH-STATIC-01"
+      ],
+      "required": true
+    },
+    {
+      "id": "orchestration-domain",
+      "scripts": [
+        "test:orchestration-domain"
+      ],
+      "acceptanceIds": [
+        "ORCH-PLAN-01",
+        "ORCH-VERIFY-01",
+        "ORCH-REVIEW-01",
+        "ORCH-STATE-01",
+        "ORCH-RECOVERY-01",
+        "ORCH-RECONCILE-01",
+        "ORCH-RETENTION-01",
+        "ORCH-CONTAIN-01"
+      ],
+      "required": true
+    },
+    {
+      "id": "orchestration-parity",
+      "scripts": [
+        "verify:source-parity"
+      ],
+      "acceptanceIds": [
+        "ORCH-STATE-01"
+      ],
+      "required": true
+    },
+    {
+      "id": "adopter-bootstrap",
+      "scripts": [
+        "verify:adopter-bootstrap"
+      ],
+      "acceptanceIds": [
+        "ORCH-ADOPT-01"
+      ],
+      "required": true
+    },
+    {
+      "id": "resource-bounds",
+      "scripts": [
+        "verify:source-bounds"
+      ],
+      "acceptanceIds": [
+        "ORCH-BOUNDS-01"
+      ],
+      "required": true
+    },
+    {
+      "id": "source-acceptance",
+      "scripts": [
+        "verify:source-acceptance"
+      ],
+      "acceptanceIds": [
+        "ORCH-STATIC-01",
+        "ORCH-BUILD-01",
+        "ORCH-ADOPT-01",
+        "ORCH-PLAN-01",
+        "ORCH-VERIFY-01",
+        "ORCH-REVIEW-01",
+        "ORCH-STATE-01",
+        "ORCH-RECOVERY-01",
+        "ORCH-RECONCILE-01",
+        "ORCH-RETENTION-01",
+        "ORCH-CONTAIN-01",
+        "ORCH-BOUNDS-01"
+      ],
+      "required": true
+    }
+  ],
+  "candidateScriptOrder": [
+    "test:invariants",
+    "verify:source-dependencies",
+    "format:check",
+    "lint",
+    "lint:source-architecture",
+    "typecheck",
+    "build",
+    "test:partition:controller-runtime",
+    "test:partition:repository-tooling",
+    "test:partition:adopter-template",
+    "test:partition:trusted-container-fixture"
+  ],
+  "preserveExistingPackageScriptDefinitions": true,
+  "existingDownstreamAndBootstrapRegistries": "unchanged",
+  "sourceCommissioningIdentity": "milestone-loop-orchestrator-source.v1",
+  "sourcePolicyId": "milestone-loop-source-scope-policy.v1",
+  "migrationOnly": true,
+  "documentRole": "advisory-implementation",
+  "normativeCadence": "proposed/evals/acceptance-manifest.json#verificationCadence",
+  "additionalCandidateChecks": {
+    "selection": "explicit-affected-boundary-cases",
+    "completionEligible": false,
+    "automaticFullPlatformDispatch": false
+  },
+  "fullQualificationScriptOrder": [
+    "verify:source-dependencies",
+    "test:invariants",
+    "format:check",
+    "lint",
+    "lint:source-architecture",
+    "typecheck",
+    "build",
+    "test:unit",
+    "test:orchestration-domain",
+    "verify:source-parity",
+    "verify:adopter-bootstrap",
+    "verify:source-bounds",
+    "verify:source-acceptance"
+  ],
+  "productionBuildCadence": {
+    "candidate": "one real payload build and bounded external executable smoke",
+    "fullQualification": "two independent clean builds per native platform, full detached install/generate/commission consumer and complete adopter proofs"
+  }
+}

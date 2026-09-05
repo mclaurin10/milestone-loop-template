@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0.0",
+  "manifestId": "manual-contract-integrity-20260905204250800-22224-54db1779",
+  "stageId": "invariant-suite",
+  "commandId": "contract-integrity",
+  "displayCommand": "C:\\w\\node-v24.18.0-win-x64\\node.exe C:\\Dev\\loop-extraction\\milestone-loop-template\\tools\\milestone-orchestrator\\src\\verification-cli.ts contract-integrity",
+  "status": "PASS",
+  "candidate": {
+    "gitCommit": "e590e38c32de2b5baa7423f66bbd8a0230b61839",
+    "gitTree": "b8f3879fa26fb5a54f2b0daa0f062d94d52bc3f9",
+    "workingTreeDirty": true
+  },
+  "receipt": {
+    "path": "result.json",
+    "sha256": "182e11c057c0bb6a581cd947874b95bd6f1d2d42a78c032fd5840a0f9edf2efc",
+    "bytes": 763
+  },
+  "declaredArtifacts": {
+    "count": 1,
+    "bytes": 3531,
+    "declarations": [
+      {
+        "path": "contract-integrity-report.json",
+        "kind": "contract-integrity-report",
+        "bytes": 3531,
+        "sha256": "ea92c6cdbd4f64cfb868df3aa1469e19ee3623f1ddbdb5532c4f6347c741ea11"
+      }
+    ]
+  },
+  "telemetry": {
+    "runId": null,
+    "manifestPath": null
+  },
+  "citationClass": "uncited-at-creation",
+  "durableCitations": {
+    "trackedPaths": [],
+    "controllerStateReferences": [],
+    "activeReconciliationReference": null
+  },
+  "createdAt": "2026-09-05T20:42:50.800Z",
+  "finishedAt": "2026-09-05T20:42:52.241Z",
+  "failureClassification": null
+}

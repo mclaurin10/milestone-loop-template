@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "2.0.0",
+  "authorityEpoch": "orch-template.v1",
+  "authoritySnapshotPrefix": "evals/authority-epochs/orch-template.v1/root",
+  "approvalRecordPath": "evals/authority-revisions/ORCH-AUTH-01/approval.json",
+  "origin": {
+    "legacyEpoch": "legacy-source.v1",
+    "legacyAuthorityBaseCommit": "0f4ab3e5ef39bda07d6e77356ad53fca9136cdd5",
+    "legacyLockSnapshotPath": "evals/authority-epochs/legacy-source.v1/root/evals/immutable-contract-lock.json",
+    "legacyLockSha256": "d1166088b00c54af65e8654188adc58a3cabd9d7908820809fe66af28c933050"
+  },
+  "calibrationPolicy": {
+    "kind": "human-revision-only",
+    "provisionalFields": [],
+    "legacyTransitionConsumed": false
+  },
+  "files": [
+    {
+      "path": "PROJECT_GOAL.md",
+      "changeClass": "HUMAN_REVISION_ONLY",
+      "epochBaselineSha256": "ed33d9d8f4bef40176935342bc1076da8458c7832a031a44350edce02960fbd2",
+      "activeSha256": "ed33d9d8f4bef40176935342bc1076da8458c7832a031a44350edce02960fbd2"
+    },
+    {
+      "path": "evals/ACCEPTANCE.md",
+      "changeClass": "HUMAN_REVISION_ONLY",
+      "epochBaselineSha256": "fef789b4470f9b4cd2041fb26703ba38b6802cbc5f86b95b753cab6c7d02ae29",
+      "activeSha256": "fef789b4470f9b4cd2041fb26703ba38b6802cbc5f86b95b753cab6c7d02ae29"
+    },
+    {
+      "path": "evals/acceptance-manifest.json",
+      "changeClass": "HUMAN_REVISION_ONLY",
+      "epochBaselineSha256": "d0d9c67937a4f00321f2d3d0feb3ed9e4a6dbfe0d91605e6cadc1936b467a316",
+      "activeSha256": "d0d9c67937a4f00321f2d3d0feb3ed9e4a6dbfe0d91605e6cadc1936b467a316"
+    },
+    {
+      "path": "evals/HIDDEN_VALIDATION_PROTOCOL.md",
+      "changeClass": "HUMAN_REVISION_ONLY",
+      "epochBaselineSha256": "c3d33f3737c3f02ef031c5eb0f033796894403e1c7781225e8f425c3e2ce31d1",
+      "activeSha256": "c3d33f3737c3f02ef031c5eb0f033796894403e1c7781225e8f425c3e2ce31d1"
+    }
+  ]
+}

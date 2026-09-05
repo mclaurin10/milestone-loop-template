@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "source-qualification-target-proposal.v1",
+  "status": "proposed-not-implemented",
+  "contractId": "milestone-loop-source-qualification-target.v1",
+  "claimScope": "source-qualification-target",
+  "defaultProfile": "readiness",
+  "authoritySelection": "independently commissioned and anchored before worker invocation",
+  "product": {
+    "stateFile": "message.json",
+    "stateSchema": {"message": "nonempty UTF-8 string of at most 128 bytes; no other keys"},
+    "canonicalEncoding": "UTF-8 JSON.stringify({message:value}) followed by one LF",
+    "initialDefault": "initial",
+    "milestoneDefault": "reviewed",
+    "show": "node message.mjs show prints the validated message followed by one LF, exits zero, and preserves the state file",
+    "set": "node message.mjs set <value> validates the existing record and the sole supplied value, atomically replaces the canonical record and exits zero with no stdout",
+    "invalid": "missing/extra arguments, unknown command, empty value, value over 128 UTF-8 bytes, missing/corrupt/extra-key state all exit nonzero with a diagnostic and preserve any existing state bytes",
+    "build": "validate default state and copy CLI plus canonical default data into an absent dist root; execute dist/message.mjs from outside the source checkout"
+  },
+  "requirements": [
+    {"id":"TARGET-STATIC-01","outcome":"exact runtime/frozen dependencies and all declared static/regression checks pass"},
+    {"id":"TARGET-BUILD-01","outcome":"real clean build and external built CLI use succeed; an omitted CLI or invalid default fails"},
+    {"id":"TARGET-SHOW-01","outcome":"show prints the exact declared default/current value and newline without modifying state"},
+    {"id":"TARGET-SET-01","outcome":"valid single-byte and multibyte values including the 128-byte boundary publish canonical JSON atomically"},
+    {"id":"TARGET-INVALID-01","outcome":"every declared invalid case including 129-byte input rejects and preserves existing bytes"},
+    {"id":"TARGET-PERSIST-01","outcome":"a new process observes the exact last accepted value; interrupted replacement leaves exact old or new valid bytes"},
+    {"id":"TARGET-EVIDENCE-01","outcome":"every successful child owns a validated receipt bound to exact authority/candidate/runtime and actual artifacts"}
+  ],
+  "readinessGate": {
+    "id": "TARGET-READINESS-01",
+    "aggregation": "all",
+    "requirements": ["TARGET-STATIC-01","TARGET-BUILD-01","TARGET-SHOW-01","TARGET-SET-01","TARGET-INVALID-01","TARGET-PERSIST-01","TARGET-EVIDENCE-01"],
+    "requiresCleanCommittedExactDefaultVerification": true,
+    "waivesNoIntegrationSafeguard": true
+  },
+  "claimBoundaries": {
+    "onlyNamedDisposableQualificationTarget": true,
+    "sourceGateInheritance": false,
+    "adopterBootstrapInheritance": false,
+    "unrelatedDownstreamGateInheritance": false,
+    "originalFixtureAuthorityChanged": false,
+    "specialApprovalOrIntegrationBypass": false,
+    "sourceHumanAcceptanceStillRequiresLiveRolesAndMaintainer": true
+  }
+}

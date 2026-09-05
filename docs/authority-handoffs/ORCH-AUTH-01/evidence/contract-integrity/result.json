@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0.0",
+  "stageId": "invariant-suite",
+  "commandId": "contract-integrity",
+  "status": "PASS",
+  "checks": [
+    {
+      "id": "shared-contract-integrity",
+      "summary": "All 13 checks passed through the controller-owned evaluator shared with scripts/verify.mjs.",
+      "status": "PASS"
+    },
+    {
+      "id": "completion-ineligible-adapter",
+      "summary": "This invariant adapter is explicitly completion-ineligible and cannot replace exact pnpm verify evidence.",
+      "status": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "contract-integrity-report.json",
+      "kind": "contract-integrity-report",
+      "bytes": 3531,
+      "sha256": "ea92c6cdbd4f64cfb868df3aa1469e19ee3623f1ddbdb5532c4f6347c741ea11"
+    }
+  ]
+}

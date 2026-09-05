@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0.0",
+  "manifestId": "manual-ORCH-AUTH-01-document-audit-20260905182105747-15564-2968d32d",
+  "stageId": "authority-proposal-integrity",
+  "commandId": "ORCH-AUTH-01-document-audit",
+  "displayCommand": "C:\\w\\node-v24.18.0-win-x64\\node.exe C:\\Dev\\loop-extraction\\milestone-loop-template\\docs\\proposals\\ORCH-AUTH-01\\verify-proposal.ts",
+  "status": "PASS",
+  "candidate": {
+    "gitCommit": "e590e38c32de2b5baa7423f66bbd8a0230b61839",
+    "gitTree": "b8f3879fa26fb5a54f2b0daa0f062d94d52bc3f9",
+    "workingTreeDirty": true
+  },
+  "receipt": {
+    "path": "result.json",
+    "sha256": "5f392cd51b5e186fc17c507eac8f98ad2eee4abb6b3ce21b79145704f3ffacb5",
+    "bytes": 3163
+  },
+  "declaredArtifacts": {
+    "count": 2,
+    "bytes": 9752,
+    "declarations": [
+      {
+        "path": "proposal-audit.json",
+        "kind": "authority-proposal-audit",
+        "bytes": 3833,
+        "sha256": "b49f21517b46ddd62fc2ecd6f345db20e2a3c616b0e7f15384a4117e75123442"
+      },
+      {
+        "path": "review-manifest.json",
+        "kind": "authority-proposal-content-manifest",
+        "bytes": 5919,
+        "sha256": "ed01a70f7db1b53504fd0e7a5ae0e81f6655d0cfbe9243ed457e0b23e644706a"
+      }
+    ]
+  },
+  "telemetry": {
+    "runId": null,
+    "manifestPath": null
+  },
+  "citationClass": "uncited-at-creation",
+  "durableCitations": {
+    "trackedPaths": [],
+    "controllerStateReferences": [],
+    "activeReconciliationReference": null
+  },
+  "createdAt": "2026-09-05T18:21:05.747Z",
+  "finishedAt": "2026-09-05T18:21:08.055Z",
+  "failureClassification": null
+}

@@ -1,0 +1,314 @@
+{
+  "schemaVersion": "authority-proposal-review.v2",
+  "proposalRevision": "r2",
+  "payload": {
+    "schemaVersion": "authority-proposal-approval.v2",
+    "revisionId": "ORCH-AUTH-01",
+    "status": "PROPOSED_NOT_APPROVED",
+    "baselineCommit": "e590e38c32de2b5baa7423f66bbd8a0230b61839",
+    "baselineTree": "b8f3879fa26fb5a54f2b0daa0f062d94d52bc3f9",
+    "contractId": "milestone-loop-orchestrator-source.v1",
+    "authorityEpoch": "orch-template.v1",
+    "digestAlgorithm": "sha256(JSON.stringify(payload), UTF-8)",
+    "files": [
+      {
+        "path": "ACCEPTANCE-MAPPING.md",
+        "bytes": 8571,
+        "sha256": "63307c7adec709be675c15bf59b5ca8b17655c2f6b0a824035fb363dd8efc2b0",
+        "role": "normative-contract"
+      },
+      {
+        "path": "APPROVAL-SCOPE.md",
+        "bytes": 2518,
+        "sha256": "2c3eb767ed56017e779a927c182bea8546516d3464254d366fba11f53ba71ecd",
+        "role": "normative-contract"
+      },
+      {
+        "path": "TRANSITION-CONTRACT.md",
+        "bytes": 3751,
+        "sha256": "8722ce48a23f86534f8d69973943e09fa77333415164ecdd436a4427fd2b16b0",
+        "role": "normative-contract"
+      },
+      {
+        "path": "acceptance-mapping.json",
+        "bytes": 54258,
+        "sha256": "d02359632eeec9f599e9333eed2c688dda6c36b380da1757a7dcd82f8fb3b109",
+        "role": "normative-contract"
+      },
+      {
+        "path": "approval-scope.json",
+        "bytes": 954,
+        "sha256": "38978d7892b6346364e78463a7040ca06c1f92882f4912c26ef29a63568f6dc7",
+        "role": "normative-contract"
+      },
+      {
+        "path": "proposed/AGENTS.md",
+        "bytes": 10203,
+        "sha256": "de2d4ae4826b5a8c274f690dc37c14bafdd2b77716765ac5d765c69422c59fee",
+        "role": "normative-contract"
+      },
+      {
+        "path": "proposed/CONTRACT.md",
+        "bytes": 50862,
+        "sha256": "6c4b333dc61ba06dd5e4eea2ce340812e40332235e30015a4ae5eb0fb76614f5",
+        "role": "normative-contract"
+      },
+      {
+        "path": "proposed/PROJECT_GOAL.md",
+        "bytes": 11759,
+        "sha256": "ed33d9d8f4bef40176935342bc1076da8458c7832a031a44350edce02960fbd2",
+        "role": "normative-contract"
+      },
+      {
+        "path": "proposed/evals/ACCEPTANCE.md",
+        "bytes": 19765,
+        "sha256": "fef789b4470f9b4cd2041fb26703ba38b6802cbc5f86b95b753cab6c7d02ae29",
+        "role": "normative-contract"
+      },
+      {
+        "path": "proposed/evals/HIDDEN_VALIDATION_PROTOCOL.md",
+        "bytes": 1891,
+        "sha256": "c3d33f3737c3f02ef031c5eb0f033796894403e1c7781225e8f425c3e2ce31d1",
+        "role": "normative-contract"
+      },
+      {
+        "path": "proposed/evals/acceptance-manifest.json",
+        "bytes": 19314,
+        "sha256": "d0d9c67937a4f00321f2d3d0feb3ed9e4a6dbfe0d91605e6cadc1936b467a316",
+        "role": "normative-contract"
+      },
+      {
+        "path": "proposed/evals/immutable-contract-lock.json",
+        "bytes": 1859,
+        "sha256": "b6ffe83401af6cecfede9756f414abef5a7162ba773f892b6feeaa1d6ee336e2",
+        "role": "normative-contract"
+      },
+      {
+        "path": "proposed/qualification-target-contract.json",
+        "bytes": 3029,
+        "sha256": "8f62e1f1a38eac89ebae0f34ad7807429005a88da8ea4e29fe25b00bd0b4cf71",
+        "role": "normative-contract"
+      }
+    ]
+  },
+  "contentDigest": "53d38a2c2038cd9c5ffc240275043709d23dd33a81237e3d12018a38a8378108",
+  "packagePayload": {
+    "schemaVersion": "authority-proposal-package.v2",
+    "revisionId": "ORCH-AUTH-01",
+    "proposalRevision": "r2",
+    "contentDigest": "53d38a2c2038cd9c5ffc240275043709d23dd33a81237e3d12018a38a8378108",
+    "files": [
+      {
+        "path": "ACCEPTANCE-MAPPING.md",
+        "bytes": 8571,
+        "sha256": "63307c7adec709be675c15bf59b5ca8b17655c2f6b0a824035fb363dd8efc2b0",
+        "role": "normative-contract"
+      },
+      {
+        "path": "APPROVAL-SCOPE.md",
+        "bytes": 2518,
+        "sha256": "2c3eb767ed56017e779a927c182bea8546516d3464254d366fba11f53ba71ecd",
+        "role": "normative-contract"
+      },
+      {
+        "path": "CHECK-DESIGN.md",
+        "bytes": 12009,
+        "sha256": "93c67f6a17b30fe2282a1a1f3427b71d777a0b9c02e4e9fe9e23e56203491ff3",
+        "role": "advisory-implementation"
+      },
+      {
+        "path": "EXECUTION-PLAN.md",
+        "bytes": 6692,
+        "sha256": "3fbcbefb4ac45ce84d446581246b9c6bb3b61b8f77c7e2e51560bc35e3de04a1",
+        "role": "advisory-implementation"
+      },
+      {
+        "path": "MIGRATION.md",
+        "bytes": 3012,
+        "sha256": "a2cbbc373054fd5370cfdc70a5f3abed9e06c100fc8f30bb0fb15610f1f6e194",
+        "role": "advisory-implementation"
+      },
+      {
+        "path": "QUALIFICATION-FIXTURES.md",
+        "bytes": 5241,
+        "sha256": "9953a7254a1c89504644a16235921936bcd015cc73484ab661c30626b047b17a",
+        "role": "advisory-implementation"
+      },
+      {
+        "path": "QUALIFICATION-PROTOCOL.md",
+        "bytes": 3658,
+        "sha256": "db2d068729d5fa910499a15865db8aa7bc2f0f89b430bce35707f971f2193a9e",
+        "role": "advisory-implementation"
+      },
+      {
+        "path": "README.md",
+        "bytes": 4103,
+        "sha256": "365dbb19f1759e8cfff0bb9a3d73fc15fdb4884e8ed44ced4661848f8128c46e",
+        "role": "advisory-implementation"
+      },
+      {
+        "path": "REVISION-NOTES.md",
+        "bytes": 3218,
+        "sha256": "48de2ba8d1ab757d7b93eb55942f3570fa69591b06a64a8ae9e241129e6e43bc",
+        "role": "advisory-implementation"
+      },
+      {
+        "path": "RUNTIME.md",
+        "bytes": 3239,
+        "sha256": "ce0c3a827643a68dfb494f92cf44d66d6ba6d479e9f1671781642ae2729d9488",
+        "role": "advisory-implementation"
+      },
+      {
+        "path": "TRANSITION-CONTRACT.md",
+        "bytes": 3751,
+        "sha256": "8722ce48a23f86534f8d69973943e09fa77333415164ecdd436a4427fd2b16b0",
+        "role": "normative-contract"
+      },
+      {
+        "path": "VERIFICATION-CADENCE.md",
+        "bytes": 3539,
+        "sha256": "ed630eee38521b1cdc4107c072457d5b936f02680d79410d093482007b120f91",
+        "role": "advisory-implementation"
+      },
+      {
+        "path": "acceptance-mapping.json",
+        "bytes": 54258,
+        "sha256": "d02359632eeec9f599e9333eed2c688dda6c36b380da1757a7dcd82f8fb3b109",
+        "role": "normative-contract"
+      },
+      {
+        "path": "approval-scope.json",
+        "bytes": 954,
+        "sha256": "38978d7892b6346364e78463a7040ca06c1f92882f4912c26ef29a63568f6dc7",
+        "role": "normative-contract"
+      },
+      {
+        "path": "author-proposal.mjs",
+        "bytes": 1675,
+        "sha256": "0287a301a15966926e8aaa6a63ed1a8b1f300253323527065ed17d7d06cf5d32",
+        "role": "reproduction-tool"
+      },
+      {
+        "path": "baseline-index.json",
+        "bytes": 4784,
+        "sha256": "680fa46649d1e6d2c5a19facc27550ceda6540ee6ffc1a36cc1aa011da84d4a8",
+        "role": "historical-reference"
+      },
+      {
+        "path": "baseline/PROJECT_GOAL.md",
+        "bytes": 2921,
+        "sha256": "72b08d4132159866cceba7f19c54a5484d1acf2a142e5e6285903d0a3a231b88",
+        "role": "historical-reference"
+      },
+      {
+        "path": "baseline/evals/ACCEPTANCE.md",
+        "bytes": 1980,
+        "sha256": "84d2027a4196a2446ca7d519025f0cacac2c0576c65bb6d8590c111b1a267dba",
+        "role": "historical-reference"
+      },
+      {
+        "path": "baseline/evals/HIDDEN_VALIDATION_PROTOCOL.md",
+        "bytes": 1012,
+        "sha256": "89628e97a8a535ea3fc4771c273efc7f79b0d1881695aa0c513ab552486f1673",
+        "role": "historical-reference"
+      },
+      {
+        "path": "baseline/evals/acceptance-manifest.json",
+        "bytes": 3377,
+        "sha256": "365e452dcc770e99a9689d3a36b74660f7ec3c4c25c298f9eee4ea20b18a001c",
+        "role": "historical-reference"
+      },
+      {
+        "path": "baseline/evals/immutable-contract-lock.json",
+        "bytes": 1363,
+        "sha256": "d1166088b00c54af65e8654188adc58a3cabd9d7908820809fe66af28c933050",
+        "role": "historical-reference"
+      },
+      {
+        "path": "exact-authority.diff",
+        "bytes": 81693,
+        "sha256": "45ca4ccfb38e43b94f2a4e45c1867856ff12da6c753f11a804b06bd1e2b8203a",
+        "role": "advisory-implementation"
+      },
+      {
+        "path": "prior-review-manifest.json",
+        "bytes": 5919,
+        "sha256": "ed01a70f7db1b53504fd0e7a5ae0e81f6655d0cfbe9243ed457e0b23e644706a",
+        "role": "historical-reference"
+      },
+      {
+        "path": "proposal-review.ts",
+        "bytes": 3133,
+        "sha256": "52ebb542b0a54dfb83cb09c084c2fedfcc0b49fd8ca78a90bd36e2829e90d195",
+        "role": "reproduction-tool"
+      },
+      {
+        "path": "proposed/AGENTS.md",
+        "bytes": 10203,
+        "sha256": "de2d4ae4826b5a8c274f690dc37c14bafdd2b77716765ac5d765c69422c59fee",
+        "role": "normative-contract"
+      },
+      {
+        "path": "proposed/CONTRACT.md",
+        "bytes": 50862,
+        "sha256": "6c4b333dc61ba06dd5e4eea2ce340812e40332235e30015a4ae5eb0fb76614f5",
+        "role": "normative-contract"
+      },
+      {
+        "path": "proposed/PROJECT_GOAL.md",
+        "bytes": 11759,
+        "sha256": "ed33d9d8f4bef40176935342bc1076da8458c7832a031a44350edce02960fbd2",
+        "role": "normative-contract"
+      },
+      {
+        "path": "proposed/evals/ACCEPTANCE.md",
+        "bytes": 19765,
+        "sha256": "fef789b4470f9b4cd2041fb26703ba38b6802cbc5f86b95b753cab6c7d02ae29",
+        "role": "normative-contract"
+      },
+      {
+        "path": "proposed/evals/HIDDEN_VALIDATION_PROTOCOL.md",
+        "bytes": 1891,
+        "sha256": "c3d33f3737c3f02ef031c5eb0f033796894403e1c7781225e8f425c3e2ce31d1",
+        "role": "normative-contract"
+      },
+      {
+        "path": "proposed/evals/acceptance-manifest.json",
+        "bytes": 19314,
+        "sha256": "d0d9c67937a4f00321f2d3d0feb3ed9e4a6dbfe0d91605e6cadc1936b467a316",
+        "role": "normative-contract"
+      },
+      {
+        "path": "proposed/evals/immutable-contract-lock.json",
+        "bytes": 1859,
+        "sha256": "b6ffe83401af6cecfede9756f414abef5a7162ba773f892b6feeaa1d6ee336e2",
+        "role": "normative-contract"
+      },
+      {
+        "path": "proposed/qualification-target-contract.json",
+        "bytes": 3029,
+        "sha256": "8f62e1f1a38eac89ebae0f34ad7807429005a88da8ea4e29fe25b00bd0b4cf71",
+        "role": "normative-contract"
+      },
+      {
+        "path": "proposed/source-command-contract.json",
+        "bytes": 5466,
+        "sha256": "522e498c140bc57b520569d8e91e0ab5330320b14c8e5557ad3d5f0508830032",
+        "role": "advisory-implementation"
+      },
+      {
+        "path": "revision-baseline.json",
+        "bytes": 5889,
+        "sha256": "316b67c9ec6c09313dbafd9f2e97d96cdede9f292473e298dc6ba283b916cd41",
+        "role": "historical-reference"
+      },
+      {
+        "path": "verify-proposal.ts",
+        "bytes": 31659,
+        "sha256": "b8ef9da94e0e4450a430b3eeeb64cf9eb6ba0070819e3b4b2a76af44bf9b4300",
+        "role": "reproduction-tool"
+      }
+    ]
+  },
+  "packageIntegrityDigest": "2db01416302e24f3bda9d1991f44a1ac05b8ef5fad70b09c18bc4f037d267a2c"
+}

@@ -1,0 +1,176 @@
+{
+  "schemaVersion": "orch-proposal-revision-baseline.v1",
+  "revisionId": "ORCH-AUTH-01",
+  "priorProposalRevision": "r1",
+  "nextProposalRevision": "r2",
+  "priorDirectory": "docs/proposals/ORCH-AUTH-01",
+  "priorContentDigest": "333bb70e0db13459304a9051fcbd862a567d7debf62bb6d6ebfc5c6c22a1011a",
+  "priorReviewManifestSha256": "ed01a70f7db1b53504fd0e7a5ae0e81f6655d0cfbe9243ed457e0b23e644706a",
+  "files": [
+    {
+      "path": "acceptance-mapping.json",
+      "bytes": 54258,
+      "sha256": "d02359632eeec9f599e9333eed2c688dda6c36b380da1757a7dcd82f8fb3b109"
+    },
+    {
+      "path": "ACCEPTANCE-MAPPING.md",
+      "bytes": 8571,
+      "sha256": "63307c7adec709be675c15bf59b5ca8b17655c2f6b0a824035fb363dd8efc2b0"
+    },
+    {
+      "path": "audit/manifest.json",
+      "bytes": 1590,
+      "sha256": "2c00107722cb6e3e34cc33749493903c679e1b6f67aade323292ff560c011572"
+    },
+    {
+      "path": "audit/proposal-audit.json",
+      "bytes": 3833,
+      "sha256": "b49f21517b46ddd62fc2ecd6f345db20e2a3c616b0e7f15384a4117e75123442"
+    },
+    {
+      "path": "audit/result.json",
+      "bytes": 3163,
+      "sha256": "5f392cd51b5e186fc17c507eac8f98ad2eee4abb6b3ce21b79145704f3ffacb5"
+    },
+    {
+      "path": "audit/review-manifest.json",
+      "bytes": 5919,
+      "sha256": "ed01a70f7db1b53504fd0e7a5ae0e81f6655d0cfbe9243ed457e0b23e644706a"
+    },
+    {
+      "path": "author-proposal.mjs",
+      "bytes": 35576,
+      "sha256": "5bcec01cf785241bfffc98793c409ac845743883b94eea4722fd83f32937ffba"
+    },
+    {
+      "path": "baseline-index.json",
+      "bytes": 4784,
+      "sha256": "680fa46649d1e6d2c5a19facc27550ceda6540ee6ffc1a36cc1aa011da84d4a8"
+    },
+    {
+      "path": "baseline/evals/acceptance-manifest.json",
+      "bytes": 3377,
+      "sha256": "365e452dcc770e99a9689d3a36b74660f7ec3c4c25c298f9eee4ea20b18a001c"
+    },
+    {
+      "path": "baseline/evals/ACCEPTANCE.md",
+      "bytes": 1980,
+      "sha256": "84d2027a4196a2446ca7d519025f0cacac2c0576c65bb6d8590c111b1a267dba"
+    },
+    {
+      "path": "baseline/evals/HIDDEN_VALIDATION_PROTOCOL.md",
+      "bytes": 1012,
+      "sha256": "89628e97a8a535ea3fc4771c273efc7f79b0d1881695aa0c513ab552486f1673"
+    },
+    {
+      "path": "baseline/evals/immutable-contract-lock.json",
+      "bytes": 1363,
+      "sha256": "d1166088b00c54af65e8654188adc58a3cabd9d7908820809fe66af28c933050"
+    },
+    {
+      "path": "baseline/PROJECT_GOAL.md",
+      "bytes": 2921,
+      "sha256": "72b08d4132159866cceba7f19c54a5484d1acf2a142e5e6285903d0a3a231b88"
+    },
+    {
+      "path": "CHECK-DESIGN.md",
+      "bytes": 11251,
+      "sha256": "89c68e144b7ce8fb60db779596ce9e868c9152260a1e3fec362ef34de6fe8326"
+    },
+    {
+      "path": "exact-authority.diff",
+      "bytes": 77116,
+      "sha256": "7acfca5146effcd0e568827327569473894955b7edee4718310a6c58c6d9e26a"
+    },
+    {
+      "path": "EXECUTION-PLAN.md",
+      "bytes": 4922,
+      "sha256": "d3a7c5b2edd1178e763db32ce3e97f5a47459f0d210dee171d7fce33ee4ae36f"
+    },
+    {
+      "path": "MIGRATION.md",
+      "bytes": 12871,
+      "sha256": "5c7c8901af7b423ced77f9dbcf4b43f47508985a15e407dc4bc85edf834c1ea4"
+    },
+    {
+      "path": "proposal-audit.json",
+      "bytes": 3833,
+      "sha256": "b49f21517b46ddd62fc2ecd6f345db20e2a3c616b0e7f15384a4117e75123442"
+    },
+    {
+      "path": "proposed/AGENTS.md",
+      "bytes": 9627,
+      "sha256": "25b83d64cb0d9089e53d0cf10e51d483efa79b87356a8227a3a63f27b09f40a9"
+    },
+    {
+      "path": "proposed/CONTRACT.md",
+      "bytes": 50273,
+      "sha256": "6ae475c564854081b2eae710d80b43b37a9bcd065c7d640664bd1ffc0bbaf6b1"
+    },
+    {
+      "path": "proposed/evals/acceptance-manifest.json",
+      "bytes": 19464,
+      "sha256": "6852c58ce0a71f70a7cac700f7bc0966297ad49fe4baae8a3a004cd4ae1f27e9"
+    },
+    {
+      "path": "proposed/evals/ACCEPTANCE.md",
+      "bytes": 17256,
+      "sha256": "b135acb7fc0af4d3e85a4c2d68ab14e15f5ec9bd7e0453eb31cfa8ec0a1b6382"
+    },
+    {
+      "path": "proposed/evals/HIDDEN_VALIDATION_PROTOCOL.md",
+      "bytes": 1891,
+      "sha256": "c3d33f3737c3f02ef031c5eb0f033796894403e1c7781225e8f425c3e2ce31d1"
+    },
+    {
+      "path": "proposed/evals/immutable-contract-lock.json",
+      "bytes": 1859,
+      "sha256": "11d5c3a1eace68bbc0352829dcdda3a8870df421e23377dbf4e25ffa1ef47f9e"
+    },
+    {
+      "path": "proposed/PROJECT_GOAL.md",
+      "bytes": 10698,
+      "sha256": "8787907ad353e63ffe266ec5ad83bd20cdbe51e202c9affe533770c97e99dc06"
+    },
+    {
+      "path": "proposed/qualification-target-contract.json",
+      "bytes": 3029,
+      "sha256": "8f62e1f1a38eac89ebae0f34ad7807429005a88da8ea4e29fe25b00bd0b4cf71"
+    },
+    {
+      "path": "proposed/source-command-contract.json",
+      "bytes": 4657,
+      "sha256": "98ba34460fa5104224a2fc96f47dbd8548b392068dd421e1b0560f2070c41143"
+    },
+    {
+      "path": "QUALIFICATION-FIXTURES.md",
+      "bytes": 5155,
+      "sha256": "934b2f82a16723030f7eab1d0493995f3f37ae4dca851dbfe4533bbf2f9fe160"
+    },
+    {
+      "path": "QUALIFICATION-PROTOCOL.md",
+      "bytes": 6319,
+      "sha256": "ecb2c04c2d8df0fec00cc720513e4a10ab081135ad5c085e84b75c321de61922"
+    },
+    {
+      "path": "README.md",
+      "bytes": 7277,
+      "sha256": "8f4202f345fbdb8a610106e5d86026429d6c0ae017c53805ccff9d52975d607f"
+    },
+    {
+      "path": "review-manifest.json",
+      "bytes": 5919,
+      "sha256": "ed01a70f7db1b53504fd0e7a5ae0e81f6655d0cfbe9243ed457e0b23e644706a"
+    },
+    {
+      "path": "RUNTIME.md",
+      "bytes": 3239,
+      "sha256": "ce0c3a827643a68dfb494f92cf44d66d6ba6d479e9f1671781642ae2729d9488"
+    },
+    {
+      "path": "verify-proposal.ts",
+      "bytes": 23767,
+      "sha256": "9f3164fa46163b17a116a85da07165e995b4e088ca6e0a7f67d08acfd3a3a9a4"
+    }
+  ]
+}

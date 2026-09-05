@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "1.0.0",
+  "stageId": "authority-proposal-integrity",
+  "commandId": "ORCH-AUTH-01-document-audit",
+  "status": "PASS",
+  "checks": [
+    {
+      "id": "ACTIVE-UNCHANGED",
+      "summary": "Exact HEAD/tree and all 26 protected file hashes match inspection; no tracked/index changes, only the proposal and protected pre-existing roadmap are untracked.",
+      "status": "PASS"
+    },
+    {
+      "id": "LEGACY-BYTES",
+      "summary": "Four authority files and original lock are preserved byte-for-byte; original active/baseline hashes and unused CAL-1 state agree.",
+      "status": "PASS"
+    },
+    {
+      "id": "ACCEPTANCE-MAPPING",
+      "summary": "All 24 legacy IDs, all 87 exact JSON leaf values and all ten goal sections have explicit dispositions; all replacement IDs exist.",
+      "status": "PASS"
+    },
+    {
+      "id": "COMMAND-MAPPING",
+      "summary": "All 33 directly declared aggregate/domain-placeholder commands retain exact old definitions; nine proposed scripts are additive and source scheduling has its own anchored contract.",
+      "status": "PASS"
+    },
+    {
+      "id": "WORKFLOW-COVERAGE",
+      "summary": "Twelve outcomes, eight domains, sixteen mandatory failure families and eleven stages are internally consistent; all references resolve and all four partitions remain once with invariants first.",
+      "status": "PASS"
+    },
+    {
+      "id": "METRICS-AND-PINS",
+      "summary": "Fixed coverage/failure/build/resource metrics match the proposed outcomes and current pins; no provisional source field or legacy calibration use is introduced.",
+      "status": "PASS"
+    },
+    {
+      "id": "CLAIM-BOUNDARIES",
+      "summary": "Source machine/human gates, generated bootstrap, downstream completion and the bounded target remain separate; human approval, real provider/native platforms and fail-closed eligibility are required by the proposal.",
+      "status": "PASS"
+    },
+    {
+      "id": "EPOCH-LOCK",
+      "summary": "The proposed lock binds exactly the four new authority bytes and the preserved old lock/base; no approval or active new epoch exists.",
+      "status": "PASS"
+    },
+    {
+      "id": "SUPPORTING-DIFF",
+      "summary": "AGENTS retains its operating/safety text except the declared shared-rule sentence; CONTRACT is an insertion-only change; the seven-file unified diff exactly matches proposed bytes.",
+      "status": "PASS"
+    },
+    {
+      "id": "CONTENT-SEAL",
+      "summary": "All proposed JSON parses, review links resolve, and the sorted review inventory binds each normative/historical/reproduction file with its actual size and SHA-256; audit/status outputs are excluded to avoid self-reference.",
+      "status": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "proposal-audit.json",
+      "kind": "authority-proposal-audit",
+      "bytes": 3833,
+      "sha256": "b49f21517b46ddd62fc2ecd6f345db20e2a3c616b0e7f15384a4117e75123442"
+    },
+    {
+      "path": "review-manifest.json",
+      "kind": "authority-proposal-content-manifest",
+      "bytes": 5919,
+      "sha256": "ed01a70f7db1b53504fd0e7a5ae0e81f6655d0cfbe9243ed457e0b23e644706a"
+    }
+  ]
+}

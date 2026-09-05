@@ -1,0 +1,140 @@
+{
+  "schemaVersion": "orch-authority-proposal-baseline.v1",
+  "status": "observed-not-approved",
+  "commit": "e590e38c32de2b5baa7423f66bbd8a0230b61839",
+  "tree": "b8f3879fa26fb5a54f2b0daa0f062d94d52bc3f9",
+  "authorityBaseCommit": "0f4ab3e5ef39bda07d6e77356ad53fca9136cdd5",
+  "scheduleAnchorCommit": "345591818b220964618dc4e80cce3c0e0213783c",
+  "files": [
+    {
+      "path": "PROJECT_GOAL.md",
+      "bytes": 2921,
+      "sha256": "72b08d4132159866cceba7f19c54a5484d1acf2a142e5e6285903d0a3a231b88"
+    },
+    {
+      "path": "evals/ACCEPTANCE.md",
+      "bytes": 1980,
+      "sha256": "84d2027a4196a2446ca7d519025f0cacac2c0576c65bb6d8590c111b1a267dba"
+    },
+    {
+      "path": "evals/acceptance-manifest.json",
+      "bytes": 3377,
+      "sha256": "365e452dcc770e99a9689d3a36b74660f7ec3c4c25c298f9eee4ea20b18a001c"
+    },
+    {
+      "path": "evals/HIDDEN_VALIDATION_PROTOCOL.md",
+      "bytes": 1012,
+      "sha256": "89628e97a8a535ea3fc4771c273efc7f79b0d1881695aa0c513ab552486f1673"
+    },
+    {
+      "path": "evals/immutable-contract-lock.json",
+      "bytes": 1363,
+      "sha256": "d1166088b00c54af65e8654188adc58a3cabd9d7908820809fe66af28c933050"
+    },
+    {
+      "path": "AGENTS.md",
+      "bytes": 9773,
+      "sha256": "bcafb1252cc8934d362300457dd1998c6b8a3fb5c52fc50340c653e758c44147"
+    },
+    {
+      "path": "CONTRACT.md",
+      "bytes": 47416,
+      "sha256": "ab0b9df07d30cabe51c6decfdee9d1c2cbe8604cb1ed36632bc5cb419f6d15b3"
+    },
+    {
+      "path": ".agent/current-exec-plan.md",
+      "bytes": 66462,
+      "sha256": "2c4e09426e27ccf8449a10458e67cfd97efbd567bb8604d4693d334fe926537b"
+    },
+    {
+      "path": ".agent/readiness-profile-activated.json",
+      "bytes": 238,
+      "sha256": "2d5d6628e31343dcfde01b4cadd1ff0891eb2abd3197e3018bc766d104077dc2"
+    },
+    {
+      "path": ".agent/verification-manifest.json",
+      "bytes": 7730,
+      "sha256": "0550adb7dfa8570649e384e3f928ef005f664f66e10ab3090730057e5ab73682"
+    },
+    {
+      "path": ".agent/completed/verification-manifest-amendments.json",
+      "bytes": 88200,
+      "sha256": "a11322a36258c821a80c24f112e7d2a76abfcf522122cb92b6d3392e62f0fc11"
+    },
+    {
+      "path": "package.json",
+      "bytes": 5801,
+      "sha256": "d11bebb220c30802ff0178ad581a7479507e1b2dbe77a94a04e0113882a6406d"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "bytes": 60467,
+      "sha256": "154f9b86ae26bf839a51c2de1eed204397f7c54cf9dcf870320c881c3aa5c181"
+    },
+    {
+      "path": "scripts/verify.mjs",
+      "bytes": 49619,
+      "sha256": "62e35639d0f230ca514b8548a11023fe0082f4e970b979f19cb48cd4f68511b1"
+    },
+    {
+      "path": "tools/run-tool-evidence.mjs",
+      "bytes": 16188,
+      "sha256": "bb5792cf56c0836122b4aa3617afcc33b440bff3df3e8a721228d559a85d08d2"
+    },
+    {
+      "path": "tools/milestone-orchestrator/config/default.json",
+      "bytes": 3239,
+      "sha256": "f273433a1fb74d8724426104781c3c6dc28660044c14365f64bd7661da8abf5b"
+    },
+    {
+      "path": "tools/milestone-orchestrator/config/source-commissioning-input.json",
+      "bytes": 7127,
+      "sha256": "8df3be45f6581a6826d9cb6697a2ae4e7ebd57eddae7b9cec7e6df18dc1f4fd5"
+    },
+    {
+      "path": "tools/milestone-orchestrator/config/verification-scope-policy.json",
+      "bytes": 5773,
+      "sha256": "5ce01baa2844389beb0cd4651ced4acf044d1163211937a9a768a626c86c46d6"
+    },
+    {
+      "path": "tools/milestone-orchestrator/config/invariant-suite.json",
+      "bytes": 3148,
+      "sha256": "d56cb441134b7e8780d0824cb80b2546d01f3d1860ed710a10e93c74c80622bb"
+    },
+    {
+      "path": "tools/milestone-orchestrator/config/benchmark-matrix.json",
+      "bytes": 2226,
+      "sha256": "e002bfa7ee73d87cb51a9d7c5ed8488ebd11e232d11421dc4ccf25e3591eb5f3"
+    },
+    {
+      "path": "tools/milestone-orchestrator/config/slow-suite-registry.json",
+      "bytes": 155,
+      "sha256": "04e27df9dd8cb4b699d42b680e20452227a57be9ddd07cff5ffe58a23da09d4c"
+    },
+    {
+      "path": ".github/workflows/exact-runtime-ci.yml",
+      "bytes": 6606,
+      "sha256": "9dc35e44aacd35e3058895cccc89c43de9ff535ad20a0552c9b8a80b23cb19bf"
+    },
+    {
+      "path": ".github/workflows/wp6-measurement-matrix.yml",
+      "bytes": 6912,
+      "sha256": "8927c647b8c7ed3ca041fbc85ae2f8d5d1361ccc83b997df13d2ab6314fc783b"
+    },
+    {
+      "path": "docs/autonomy-log.md",
+      "bytes": 357542,
+      "sha256": "1ff6c3ea8ee8eea99b90bd4a140bba708988224d3be81a6930a581f186e08058"
+    },
+    {
+      "path": "docs/decision-log.md",
+      "bytes": 128861,
+      "sha256": "f349ab768e7784fff582e1e77a9b4f36a21bd09c6d214b90b23a4c4e4fabe23a"
+    },
+    {
+      "path": "Implementation-ready improvement plan 8-5-26.txt",
+      "bytes": 78574,
+      "sha256": "53ea98fb1cb880163a02d3b1d9365963e3fe891025ae3630f00bd4c9232293b1"
+    }
+  ]
+}

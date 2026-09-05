@@ -3,6 +3,44 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-09-05 — Approve r2 scope and preserve a bounded implementation handoff
+
+The maintainer explicitly approved the immediately preceding ORCH-AUTH-01 r2
+review target with “Proposal approved.” Its normative digest is
+`53d38a2c2038cd9c5ffc240275043709d23dd33a81237e3d12018a38a8378108`;
+its reviewed package integrity digest is
+`2db01416302e24f3bda9d1991f44a1ac05b8ef5fad70b09c18bc4f037d267a2c`.
+The approval record binds the actual task/turn and exact inventory. The
+agent transcribes supplied human authority; it does not invent approval,
+assert a cryptographic signature or mark the separate human product gate
+passed. The maintainer/control-plane validation and all approved transition
+safeguards still apply to the later migration.
+
+Keep the sealed proposal bytes unchanged and record approval separately so
+historical hashes remain reproducible. Store the sealed packages as Git
+binary assets to prevent text normalization and automatic merging; use their
+exact manifests and supplied authority diff for review. The initial import
+whitespace diagnostics are retained and all new editable files keep normal
+checks. This changes no production formatting or acceptance rule. Conforming implementation notes can
+evolve without renewed approval of unchanged normative outcomes, public
+contracts and safety/cadence boundaries. This does not allow a plan or
+candidate record to redefine authority. Root authority and commissioning
+remain on their coherent legacy generation until compatible readers,
+strict-ancestor inert snapshots and recoverable publication are implemented.
+
+The user highlighted heavy verification costs and then steered to a fresh
+session. First prove the existing WSL engine through the real OCI fixture;
+next prove one public workflow/rejection and trusted evidence handoff before
+expanding the full qualification matrix. Candidate-support evidence does not
+replace required exact closure, native Windows qualification or live human
+acceptance. No new per-commit full-release trigger or CI change is introduced.
+
+Archive the old WP6e living plan byte-for-byte, preserve all historical logs
+and evidence, and use the current plan plus the handoff guide as the next
+session's operational entry point. The source remains e590e38 plus a
+record-only handoff commit; no controller state is initialized/adopted. WP6e
+and WP6f retain their original incomplete/provenance boundaries.
+
 ## 2026-09-05 — Preserve policy provenance in historical test fixtures
 
 The active v2 suite exposed fourteen historical/generic tests that loaded a

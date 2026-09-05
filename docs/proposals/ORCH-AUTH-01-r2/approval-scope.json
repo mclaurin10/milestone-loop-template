@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "authority-approval-scope.v1",
+  "revisionId": "ORCH-AUTH-01",
+  "normativePaths": [
+    "ACCEPTANCE-MAPPING.md",
+    "APPROVAL-SCOPE.md",
+    "TRANSITION-CONTRACT.md",
+    "acceptance-mapping.json",
+    "approval-scope.json",
+    "proposed/AGENTS.md",
+    "proposed/CONTRACT.md",
+    "proposed/PROJECT_GOAL.md",
+    "proposed/evals/ACCEPTANCE.md",
+    "proposed/evals/HIDDEN_VALIDATION_PROTOCOL.md",
+    "proposed/evals/acceptance-manifest.json",
+    "proposed/evals/immutable-contract-lock.json",
+    "proposed/qualification-target-contract.json"
+  ],
+  "changesRequiringHumanApproval": [
+    "normative-file-bytes-or-classification",
+    "product-outcome-or-public-contract",
+    "safety-trust-claim-cadence-or-transition-boundary"
+  ],
+  "conformingAdvisoryChangesRequire": "fresh-conformance-audit-and-package-integrity-inventory",
+  "advisoryMayOverrideNormative": false,
+  "packageIntegrityDigestAuthorizesAuthority": false
+}

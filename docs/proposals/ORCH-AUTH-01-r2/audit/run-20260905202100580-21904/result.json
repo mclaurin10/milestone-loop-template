@@ -1,0 +1,87 @@
+{
+  "schemaVersion": "1.0.0",
+  "stageId": "authority-proposal-integrity",
+  "commandId": "ORCH-AUTH-01-r2-document-audit",
+  "status": "PASS",
+  "checks": [
+    {
+      "id": "ACTIVE-UNCHANGED",
+      "summary": "Exact HEAD/tree and all 26 protected file hashes match inspection; no tracked/index changes, only the proposal and protected pre-existing roadmap are untracked.",
+      "status": "PASS"
+    },
+    {
+      "id": "PRIOR-REVIEW-PRESERVED",
+      "summary": "All 33 original proposal files, the exact r1 seal, original receipt and artifacts remain unchanged. User agreement is refinement direction only.",
+      "status": "PASS"
+    },
+    {
+      "id": "LEGACY-BYTES",
+      "summary": "Four authority files and original lock are preserved byte-for-byte; original active/baseline hashes and unused CAL-1 state agree.",
+      "status": "PASS"
+    },
+    {
+      "id": "ACCEPTANCE-MAPPING",
+      "summary": "All 24 legacy IDs, all 87 exact JSON leaf values and all ten goal sections have explicit dispositions; all replacement IDs exist.",
+      "status": "PASS"
+    },
+    {
+      "id": "COMMAND-MAPPING",
+      "summary": "All 33 directly declared aggregate/domain-placeholder commands retain exact old definitions; nine proposed scripts are additive and source scheduling has its own anchored contract.",
+      "status": "PASS"
+    },
+    {
+      "id": "WORKFLOW-COVERAGE",
+      "summary": "Twelve outcomes, eight domains, sixteen mandatory failure families and eleven stages are internally consistent; all references resolve and all four partitions remain once with invariants first.",
+      "status": "PASS"
+    },
+    {
+      "id": "COST-CADENCE",
+      "summary": "Candidate keeps its floor and focused supporting checks without automatic full-matrix dispatch. All r1 final outcomes/metrics/faults/platforms and integration safeguards remain; future dispatches must record purpose and actual cost.",
+      "status": "PASS"
+    },
+    {
+      "id": "METRICS-AND-PINS",
+      "summary": "Fixed coverage/failure/build/resource metrics match the proposed outcomes and current pins; no provisional source field or legacy calibration use is introduced.",
+      "status": "PASS"
+    },
+    {
+      "id": "CLAIM-BOUNDARIES",
+      "summary": "Source machine/human gates, generated bootstrap, downstream completion and the bounded target remain separate; human approval, real provider/native platforms and fail-closed eligibility are required by the proposal.",
+      "status": "PASS"
+    },
+    {
+      "id": "EPOCH-LOCK",
+      "summary": "The proposed lock binds exactly the four new authority bytes and the preserved old lock/base; no approval or active new epoch exists.",
+      "status": "PASS"
+    },
+    {
+      "id": "SUPPORTING-DIFF",
+      "summary": "AGENTS retains its operating/safety text except the declared shared-rule sentence; CONTRACT is an insertion-only change; the seven-file unified diff exactly matches proposed bytes.",
+      "status": "PASS"
+    },
+    {
+      "id": "APPROVAL-SCOPE",
+      "summary": "Normative-only approval and full package integrity are separate. Five finite mutation cases prove advisory changes affect only package integrity; normative changes, missing/reclassified normative files and classification changes cannot use advisory refresh.",
+      "status": "PASS"
+    },
+    {
+      "id": "CONTENT-SEAL",
+      "summary": "All proposed JSON parses and review links resolve. The approval digest binds normative files; the separate package digest inventories normative, historical, advisory and reproduction files with actual sizes and hashes. Only generated manifests/audit outputs are excluded to avoid self-reference.",
+      "status": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "proposal-audit.json",
+      "kind": "authority-proposal-audit",
+      "bytes": 5053,
+      "sha256": "f4922e106b9aad1544a4bc29e4444e7b732528329b236cdf6b2a10611fb1c793"
+    },
+    {
+      "path": "review-manifest.json",
+      "kind": "authority-proposal-content-manifest",
+      "bytes": 11080,
+      "sha256": "4e234f7e667eb57ec22c0ef86245bcd8975cd4ff2a2fa14dee397b5830cd4d6e"
+    }
+  ]
+}

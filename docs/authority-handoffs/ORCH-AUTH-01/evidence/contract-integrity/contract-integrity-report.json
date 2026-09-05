@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "contract-integrity-report.v1",
+  "status": "PASS",
+  "completionEligible": false,
+  "completionIneligibilityReason": "independent-invariant-adapter",
+  "owner": {
+    "path": "tools/milestone-orchestrator/src/contract-integrity.ts",
+    "authoritativeVerifierConsumer": "scripts/verify.mjs"
+  },
+  "startedAt": "2026-09-05T20:42:51.490Z",
+  "finishedAt": "2026-09-05T20:42:52.150Z",
+  "durationMs": 660,
+  "counts": {
+    "total": 13,
+    "pass": 13,
+    "fail": 0,
+    "notReady": 0
+  },
+  "checkIdentityValid": true,
+  "expectedCheckIds": [
+    "immutable-contract-lock-hash",
+    "immutable-contract-lock-schema",
+    "immutable-contract-hashes",
+    "manifest-json",
+    "required-validation-layers",
+    "required-bot-requirements",
+    "complete-normative-id-set",
+    "threshold-freeze-coverage",
+    "seed-and-integrity-gates",
+    "authoritative-command",
+    "readiness-profile-contract",
+    "readiness-aggregation",
+    "acceptance-prose-bot-aggregation"
+  ],
+  "checks": [
+    {
+      "id": "immutable-contract-lock-hash",
+      "status": "PASS",
+      "message": "Immutable contract lock exactly matches the commissioned strict-ancestor authority base.",
+      "details": {
+        "baseCommit": "0f4ab3e5ef39bda07d6e77356ad53fca9136cdd5",
+        "sha256": "d1166088b00c54af65e8654188adc58a3cabd9d7908820809fe66af28c933050",
+        "bytes": 1363
+      }
+    },
+    {
+      "id": "immutable-contract-lock-schema",
+      "status": "PASS",
+      "message": "Immutable contract lock has the required schema, lifecycle, and complete authority-file set."
+    },
+    {
+      "id": "immutable-contract-hashes",
+      "status": "PASS",
+      "message": "Frozen authority bytes match both their lock hashes and commissioned Git-base bytes."
+    },
+    {
+      "id": "manifest-json",
+      "status": "PASS",
+      "message": "Acceptance manifest is valid JSON."
+    },
+    {
+      "id": "required-validation-layers",
+      "status": "PASS",
+      "message": "The commissioned authority-base validation-layer IDs are present, unique, and required."
+    },
+    {
+      "id": "required-bot-requirements",
+      "status": "PASS",
+      "message": "All commissioned authority-base bot requirements are present."
+    },
+    {
+      "id": "complete-normative-id-set",
+      "status": "PASS",
+      "message": "Manifest retains the commissioned authority-base requirement counts and 22 unique normative IDs."
+    },
+    {
+      "id": "threshold-freeze-coverage",
+      "status": "PASS",
+      "message": "All 10 authority-base threshold objects retain their commissioned freeze classes."
+    },
+    {
+      "id": "seed-and-integrity-gates",
+      "status": "PASS",
+      "message": "Benchmark, visible, hidden, custody, and zero-catastrophic-integrity seed rules match the commissioned authority base."
+    },
+    {
+      "id": "authoritative-command",
+      "status": "PASS",
+      "message": "Manifest authoritative command is pnpm verify."
+    },
+    {
+      "id": "readiness-profile-contract",
+      "status": "PASS",
+      "message": "The manifest must reject bootstrap as readiness evidence and require the package-default readiness profile."
+    },
+    {
+      "id": "readiness-aggregation",
+      "status": "PASS",
+      "message": "Readiness must remain all-requirements, non-compensating AUTONOMOUS-READINESS-01."
+    },
+    {
+      "id": "acceptance-prose-bot-aggregation",
+      "status": "PASS",
+      "message": "Acceptance prose exactly matches the commissioned authority-base bytes."
+    }
+  ]
+}

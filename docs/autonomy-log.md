@@ -3,6 +3,55 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-09-05 — ORCH-AUTH-01 r2 approved; fresh-session handoff prepared
+
+The maintainer's direct “Proposal approved.” message authorizes ORCH-AUTH-01
+r2 at normative digest
+`53d38a2c2038cd9c5ffc240275043709d23dd33a81237e3d12018a38a8378108`.
+The separate transcription is
+`evals/authority-revisions/ORCH-AUTH-01/approval.json`; the sealed r1/r2
+proposal packages retain all original review bytes and preparation status.
+Approval is settled for that unchanged scope. It is neither live product
+acceptance nor automatic authority activation or state adoption.
+
+The user then asked about a fresh session. The living plan now specifies the
+first bounded WSL runtime qualification increment; the byte-exact prior
+WP6e plan is retained at `.agent/history/wp6e-e590e38.md`. The resume guide is
+`docs/authority-handoffs/ORCH-AUTH-01/README.md`. The package-specific Git
+binary attributes preserve sealed bytes and prevent automatic text merging.
+The first import audit retained whitespace diagnostics confined to those
+already-sealed payloads; their literal diff context, blank lines and CRLF
+inventory remain intact. Editable files keep normal text checks and
+executable/source rules are untouched.
+
+Preparation-state proposal recheck passed all thirteen groups at
+`docs/proposals/ORCH-AUTH-01-r2/audit/run-20260905203403713-21436/` before
+recording the separate approval. The new handoff audit validates the actual
+staged/committed file inventory, approved digest, five retained proposal
+receipts and unchanged live execution/authority bytes. Fresh receipts are
+under `artifacts/orch-auth-01-handoff/`. The staged audit passed at
+`run-20260905204508347-7576/result.json`; the production contract-integrity
+command passed all thirteen checks and its independently validated evidence
+is committed under `docs/authority-handoffs/ORCH-AUTH-01/evidence/contract-integrity/`.
+Recheck the final staged inventory before commit and the committed identity
+afterward. No broad product or CI suite is
+required for this record-only checkpoint, and none is claimed. The exact
+checkpoint identity is in Git history and its final document-audit receipt.
+
+Read-only WSL preflight confirmed Docker Engine 29.1.3 accessible to UID 1000
+through root:docker socket 0660. Linux Node is absent and the discovered pnpm
+path is Windows-hosted. No installation, Docker reconfiguration, pinned-image
+build or OCI matrix was run. The next session must qualify the real Linux
+fixture and preserve its distinction from native Windows evidence.
+
+WP6e's e590e38 final closeout is already retained at
+`artifacts/wp6e-amendment-dev/final-closeout/`: all five activation CI jobs
+passed (run 33951754449), with independently validated artifacts; actual
+candidate and 5(a)/(b) tier boundaries remain unresolved. The prior plan's
+pending hosted wording is historical. This approved source transition does
+not retroactively complete WP6e or permit WP6f interpretation. All prior logs,
+frozen live files, commissioning history and user roadmap remain intact.
+
 ## 2026-09-05 — WP6e active generation verified; final execution gates pending
 
 The corrected v2 application remains the actual tool-owned publication from

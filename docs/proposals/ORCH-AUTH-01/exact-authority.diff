@@ -1,0 +1,1176 @@
+diff --git "a/C:\\Dev\\loop-extraction\\milestone-loop-template\\PROJECT_GOAL.md" "b/C:\\Dev\\loop-extraction\\milestone-loop-template\\docs\\proposals\\ORCH-AUTH-01\\proposed\\PROJECT_GOAL.md"
+index 8aa6215..42f0775 100644
+--- "a/C:\\Dev\\loop-extraction\\milestone-loop-template\\PROJECT_GOAL.md"
++++ "b/C:\\Dev\\loop-extraction\\milestone-loop-template\\docs\\proposals\\ORCH-AUTH-01\\proposed\\PROJECT_GOAL.md"
+@@ -1,72 +1,69 @@
+-# Example Project
++# Milestone Orchestrator and Template
+ 
+-## Autonomous Goal Specification (placeholder authority)
++## 1. Purpose and Completion Contract
+ 
+-> **This file is the template's placeholder authority document.** Replace its
+-> content with your project's frozen goal, then record its hash in
+-> `evals/immutable-contract-lock.json`. Keep the section skeleton: the loop's
+-> planner, worker, and reviewer read this file first, and its name is
+-> configured at `project.authorityFile` in
+-> `tools/milestone-orchestrator/config/default.json`.
++This repository's product is a reusable milestone orchestrator and project-template distribution. Its users are maintainers who commission a repository, request a bounded change, inspect verification and independent review, recover interrupted operations, and integrate only an eligible exact candidate.
+ 
+-## 1. Purpose and Completion Contract
++The source acceptance contract is `milestone-loop-orchestrator-source.v1`, with claim scope `orchestrator-template`. `evals/acceptance-manifest.json` and `evals/ACCEPTANCE.md` define all required outcomes. `ORCH-AUTONOMOUS-READINESS-01` means the exact source release has passed its machine qualification and is ready for human acceptance. Product acceptance additionally requires `ORCH-HUMAN-ACCEPT-01`. No plan, log, unit-test count, bootstrap pass, or narrower verification command substitutes for either gate.
+ 
+-Describe, in frozen terms, what finished software this repository must
+-produce. Completion is defined exclusively by the acceptance contract in
+-`evals/` plus the readiness gate below; nothing in `.agent/`, docs, or plans
+-may amend it.
++There are three independent claim scopes. Source qualification evaluates this distribution and controller. A generated adopter's bootstrap evaluates that adopter's technical scaffold under its own authority. Downstream product completion evaluates that adopter's implemented product, including any domain, bot, seed, visual, performance, persistence, and human requirements its authority declares. Evidence may be linked across scopes but may not inherit a passing gate or change its owner.
+ 
+ ## 2. Product Vision
+ 
+-Describe the product: who uses it, the core outcome it delivers, and the
+-design pillars an autonomous developer must preserve while making local
+-decisions.
++Deliver a portable, inspectable development loop with truthful diagnostics and a recoverable lifecycle. The normal path is definition -> generation -> installation -> commissioning -> planning -> isolated implementation -> candidate verification -> independent review -> fast-forward integration -> durable state publication -> bounded cleanup. External changes use explicit reconciliation. Evidence retention uses preview and recorded approval.
++
++The product must make failures actionable without concealing them. A maintainer must be able to resume from repository records and validated evidence without conversation history. Product identity is the reusable controller/template; no downstream application is required in this source repository.
+ 
+ ## 3. Required Systems and Content Breadth
+ 
+-Enumerate the systems the finished product must contain and any minimum
+-breadth counts. These are the categories the vertical-spine keyword policy
+-(`project.verticalSpine`) guards against bundling into a single milestone.
++Qualification must exercise all eight orchestration domains: proposal/scope validation; candidate verification and evidence; independent review and integration; canonical state/lease persistence; interrupted-operation recovery; external reconciliation; approved retention/cleanup; and execution containment. Generation/bootstrap compatibility, reproducible distribution build, cross-platform canonical parity, resource bounds, and operator acceptance are additional required outcomes.
++
++Every domain has a real successful public workflow and a deliberately failing boundary case. The acceptance manifest enumerates sixteen required failure scenarios. All must produce the expected disposition on both supported controller platforms. A test of a validator alone cannot replace an execution of the production boundary whose behavior is claimed. No existing regression identity may disappear as a side effect of this authority revision.
+ 
+ ## 4. Technical Architecture and Toolchain
+ 
+-Pin the stack, the deterministic simulation/rendering separation (if any),
+-and the exact toolchain versions. The verification harness enforces exact
+-Node and pnpm pins from `package.json`.
++Retain the current Node.js/TypeScript/ES-module workspace and exact Node `24.18.0`, pnpm `11.15.1`, TypeScript `5.9.3`, and Vitest `4.1.10` pins. Other package and model-policy pins remain governed by the committed lockfile and policy. This revision authorizes no dependency upgrade or model-policy change.
++
++Supported controller qualification platforms are native Windows and Linux, with Windows Server 2022 and Ubuntu 24.04 as reference environments. Preserve the existing hosted lanes and add real workflow qualification on suitably isolated hosts. WSL 2 Ubuntu may provide local Linux execution; it does not substitute for native Windows qualification. Trusted candidate execution uses the existing Docker/OCI provider with a verified immutable image digest and its enforced filesystem, network, privilege, process, and resource policies. Candidate containers receive no Docker socket or host credentials. Local diagnostic execution is explicitly ineligible for integration.
++
++Keep production rules shared by public commands and acceptance drivers. Source state determinism concerns canonical controller transitions and recovery. The generated bootstrap retains its shared Node/replay/Chromium Worker kernel, persistence, and rendered browser evidence. Downstream simulation rules remain the downstream product's responsibility.
+ 
+ ## 5. Autonomous Development Mandate
+ 
+-Development proceeds through the autonomous milestone loop: one bounded,
+-objectively verified milestone at a time, planned against this document,
+-implemented in an isolated clone, machine-verified through
+-`scripts/verify.mjs` and the tiered verification commands, and independently
+-reviewed before integration.
++Use one bounded, independently reviewable increment at a time. Preserve Planner, Worker, and Reviewer separation, protected trust roots, worker path limits, isolated standalone candidate clones, exact commit/tree identity fencing, command-owned receipts, artifact hashes, independent structured review, and fast-forward-only integration. A worker cannot modify its verifier/controller/authority or supply its own integration approval.
++
++Canonical state publication and leases must resist concurrent writers. Operation intents must precede filesystem/ref mutations and survive crashes. Recovery may adopt only the recorded exact prior/new state; foreign changes remain preserved and diagnosed. Retention and cleanup stay contained and approval-bound. External reconciliation preserves old state bytes and continuous commit history and requires fresh exact verification and independent review before adoption.
+ 
+ ## 6. Determinism, Validation, and Seeds
+ 
+-State the determinism requirements (fixed-tick rules, replay, save/load
+-parity) and the seed policy, including any hidden validation seeds whose
+-values must never enter this repository (`evals/HIDDEN_VALIDATION_PROTOCOL.md`).
++Use fixed public workflow inputs and actual subprocess/Git/filesystem/container boundaries for source qualification. Canonical semantic traces must agree across repeated runs and platforms; volatile telemetry is retained separately and cannot authorize transitions. Inputs and outputs identify both the source controller candidate and each fixture candidate.
++
++Deterministic role-transport fixtures may supply proposals, patches and independently evaluated review decisions, but may not manufacture controller state, passing receipts, the controller's acceptance of a review, sandbox attestations, or integrated refs. Their use is explicitly recorded and proves controller mechanics only. Human acceptance additionally exercises the real configured agent transport with independent roles.
++
++This source contract has no product bot benchmark or random/hidden product seed success gate. The old thresholds are retired from source applicability by this explicit human revision, not declared passed or equivalent to workflow checks. Existing adopter reference authorities and hidden-seed custody controls remain unchanged. `evals/HIDDEN_VALIDATION_PROTOCOL.md` defines source handling of downstream validation requests without authorizing their execution.
+ 
+ ## 7. Completion Metrics and One-Time Calibration
+ 
+-The frozen completion metrics live in `evals/acceptance-manifest.json`.
+-Provisionally calibrated thresholds may be adjusted exactly once (`CAL-1`),
+-after which every threshold is immutable.
++All source metrics are immutable: all eight domains and twelve machine requirements covered; all sixteen failure scenarios correct on each supported platform; zero integrity violations; two independent clean distribution builds per platform with equal portable payload inventories; and complete enforcement of the existing finite execution/resource limits. Finite qualification does not establish a 99% field reliability estimate or a general agent-success rate.
++
++No source threshold is provisional and this revision does not consume CAL-1. The original epoch's calibration record and zero-use state are preserved byte-for-byte. Generated adopters retain the calibration policy in their own authority. Any source threshold or interpretation change requires another explicit human revision.
+ 
+ ## 8. Autonomous Readiness Gate and Human Verification
+ 
+-`AUTONOMOUS-READINESS-01` aggregates every required validation layer with no
+-compensation between requirements. A human acceptance pass
+-(`HUMAN-ACCEPT-01`) follows the machine gate and is never replaced by it.
++Only a clean committed exact source candidate, default `readiness` profile, matching authority epoch, literal no-argument `pnpm verify`, complete required stages, valid command-owned evidence, attested trusted execution, and both supported-platform qualifications can support `ORCH-AUTONOMOUS-READINESS-01`. All required outcomes aggregate with logical AND; no compensation, skipped checks, unavailable stages, stale receipts, or focused/profile overrides count as passing completion.
++
++`ORCH-HUMAN-ACCEPT-01` requires an operator to use the released artifact, run the real configured agent workflow in a disposable adopter, inspect a successful integration and a rejected/stale candidate, resume an interrupted operation, and approve the resulting evidence and diagnostics. A model cannot mark this gate passed on the human's behalf. Until then the source is machine-qualified only. A human acceptance defect returns to the normal repair loop.
++
++The source's permanent readiness marker remains present and its history remains checked. Generated bootstrap success does not grant source readiness, autonomous integration, or downstream completion. Source machine/human gates do not grant any downstream product gate.
+ 
+ ## 9. Explicit Non-Goals
+ 
+-List what this project must not build, so scope pressure has a frozen
+-boundary.
++Do not implement an unrelated downstream product, redefine product bots as developer agents, reinterpret game/frame-time thresholds as controller timings, claim field reliability from a finite fixture corpus, or promise arbitrary application correctness. Do not cache exact completion evidence, enable scope suppression without its separate graduation, replace standalone clones with weaker isolation, merge worker and reviewer roles, or relax trusted execution.
++
++This authority revision is separate from WP6e/WP6f. Their archived inputs, baseline commitments, evidence, scopes, and incomplete dispositions remain unchanged. New-epoch qualification cannot retroactively complete WP6e, validate a historical optimization, or decide WP6f's keep/revert question. Any later continuation must explicitly address its original remaining gates and changed provenance without relabeling old evidence.
+ 
+ ## 10. Authority and Change Control
+ 
+-This document and the original evaluation contract are immutable except
+-through explicit human revision. `evals/immutable-contract-lock.json` records
+-their baseline and active hashes; a mismatch is a blocking contract defect.
++These four source authority documents and their approved epoch are frozen. Only explicit human approval of the exact revision content digest can authorize a new epoch. A plan, calibration, schedule amendment, filename change, or regenerated hash cannot do so.
++
++The versioned immutable lock preserves the original lock and baseline hashes and binds the new epoch's exact bytes. Its authority snapshot must be anchored in a real strict-ancestor Git commit. A separate approval-bound, recoverable authority/commissioning migration records old/new hashes, old/new baseline commits, exact approved scope, ledger linkage, and every generated file. Pending or mixed generations block consumers. Original commissioning/amendment history is preserved, never reset. Human approval authorizes the named revision only; it cannot be inferred from repository prose or invented by the agent.
+diff --git "a/C:\\Dev\\loop-extraction\\milestone-loop-template\\evals\\ACCEPTANCE.md" "b/C:\\Dev\\loop-extraction\\milestone-loop-template\\docs\\proposals\\ORCH-AUTH-01\\proposed\\evals\\ACCEPTANCE.md"
+index 4136151..cbd30f6 100644
+--- "a/C:\\Dev\\loop-extraction\\milestone-loop-template\\evals\\ACCEPTANCE.md"
++++ "b/C:\\Dev\\loop-extraction\\milestone-loop-template\\docs\\proposals\\ORCH-AUTH-01\\proposed\\evals\\ACCEPTANCE.md"
+@@ -1,45 +1,62 @@
+-# Acceptance Contract (placeholder)
+-
+-> Replace with your project's frozen acceptance prose, then freeze it via
+-> `evals/immutable-contract-lock.json`. The machine-readable twin of this
+-> document is `evals/acceptance-manifest.json`; the two must agree.
+-
+-## Required validation layers
+-
+-Autonomous readiness (`AUTONOMOUS-READINESS-01`) requires every layer below
+-to pass, with no compensation between requirements:
+-
+-- `AUTO-01` — automated verification: format, lint, typecheck, build, unit,
+-  domain, and integration suites all pass through `pnpm verify`.
+-- `PLAY-01` — bot playtesting: user-action-only bots reach the required
+-  outcomes on the frozen benchmark and visible seed pools, and
+-  `BOT-01` through `BOT-03` pass.
+-- `VIS-01` — rendered evidence: the production build runs in the supported
+-  browser with captured screenshots, traces, and diagnostics.
+-- `PERF-GATE-01` — performance: the fixed reference workloads meet their
+-  frozen budgets.
+-- `REPLAY-01` — determinism: fresh, replayed, and production-worker runs
+-  produce canonical, byte-identical checkpoints.
+-- `SAVE-01` — persistence: save/load round trips converge and corrupted
+-  saves are atomically rejected.
+-- `FAULT-01` — operational faults: the required fault chains (`CHAIN-01`,
+-  `CHAIN-02`) recover through production rules.
+-
+-## Completion metrics
+-
+-The frozen completion metrics are `METRIC-01` through `METRIC-04` as defined
+-in the manifest, each with its frozen threshold.
+-
+-## Seed pools
+-
+-- Benchmark seeds: every run must succeed (`SEED-BENCH-01`).
+-- Visible development seeds: at least 13 of 16 runs succeed
+-  (`SEED-VISIBLE-01`).
+-- Hidden seeds: at least 16 of 20 runs succeed (`SEED-HIDDEN-01`), with zero
+-  catastrophic integrity failures (`SEED-HIDDEN-INTEGRITY-01`); hidden seed
+-  values never enter the repository.
+-
+-## Human acceptance
+-
+-After the machine gate passes, a human performs the scripted acceptance
+-review (`HUMAN-ACCEPT-01`). Machine evidence never substitutes for it.
++# Source Orchestrator/Template Acceptance
++
++Contract: `milestone-loop-orchestrator-source.v1`. Authority epoch: `orch-template.v1`. Claim scope: `orchestrator-template`. The machine-readable twin is `evals/acceptance-manifest.json`.
++
++## Evidence rules and gates
++
++Every required observation is tied to the exact source commit/tree, authority/lock/manifest hashes, run ID, platform, runtime, command argv, and execution-provider identity. Workflow evidence separately identifies the disposable fixture/adopter commit and authority; those identities must never be substituted for the source identity. Every successful child command owns a validated receipt with nonempty required artifacts, sizes, and SHA-256 hashes. Verification independently checks those artifacts and the actual before/after Git, state, process, and filesystem observations. Exit zero, a unit-test report, a self-asserted status, or a fabricated sandbox identity is insufficient.
++
++The public command handlers and shared production controller perform all transitions. Workflow drivers may set up fresh repositories and supply deterministic, separately executed role responses. They must not seed a completed state, mutate private refs as the supposed operation, generate fake child receipts, accept a review on the worker's behalf, or override isolation/eligibility guards. Each scenario reports whether its role transport is deterministic or live. Unit/regression tests remain mandatory supporting evidence but cannot replace the workflow observations below.
++
++`ORCH-AUTONOMOUS-READINESS-01` requires all twelve machine requirements, all metrics, all sixteen negative scenarios, both supported platforms, the exact no-argument source verification gate, and no identity/authority drift. Source artifact eligibility is scoped to this source contract only. Missing, unavailable, skipped, flaky, timed-out, or mismatched evidence remains non-passing. An expected rejection is a successful negative scenario only when the intended boundary actually executes, rejects for the specified reason, and leaves the specified state intact; an earlier missing-runtime failure cannot satisfy it.
++
++`ORCH-HUMAN-ACCEPT-01` follows machine readiness and requires the live operator workflow below. All gates use logical AND without averaging or compensation. No migration or proposal-integrity report is a product acceptance receipt.
++
++## Required machine outcomes
++
++| ID | Real workflow and passing outcome | Required evidence and negative control |
++| --- | --- | --- |
++| ORCH-STATIC-01 | In an isolated clean checkout, install exact frozen workspace dependencies and verify the actual graph, package-manager/runtime pins, formatting, lint, strict typechecking, and every discovered regression test. Analyze actual imports and executable entrypoints against the controller/worker/evidence/adapter boundary allowlist. | Lock/store/installed-graph report, import-edge report, raw test inventories, receipts. A corrupted dependency/undeclared import and an unknown test must fail; a nonempty output directory or successful install alone does not prove graph correctness. |
++| ORCH-BUILD-01 | `pnpm build` invokes the declared `build:production` and emits the portable release payload described below. Two independent clean builds per platform yield byte-identical payload inventories. From a detached extraction with the original checkout inaccessible, install its frozen dependencies and run its shipped CLI to generate and commission a new adopter. | Build argv and clean-clone report; sorted payload path/size/hash inventory; archive digest; extraction/install/generation/commissioning transcripts and receipts. Missing schema, stale output, absolute-source import, output escape, symlink/junction, or missing runtime file must fail. |
++| ORCH-ADOPT-01 | Exercise `loop:template:create`, frozen installation, `loop:commission`, the commissioning commit, literal generated `pnpm verify`, and `loop:template:prove` for two adopter definitions on Windows and Linux. Definitions differ in project/package IDs and target branch; one destination contains spaces. Generated goal/lock/profile/history belong to that adopter. | Generated file inventories, authority/base/commissioning identities, real bootstrap build/test/save/replay/Node/Worker evidence and Chromium screenshots/trace/diagnostics. Recommissioning, wrong authority, or omitted asset must reject. The source report links the generated bootstrap result as a compatibility sub-result and never upgrades its scope. |
++| ORCH-PLAN-01 | Through the production plan handler, admit one bounded proposal, preserve the protected floor, and reject an overbroad/protected/invalid proposal before a worker starts. Doctor and Status report the actual disposition and next action without mutating state. | Proposal JSON, policy/schema results, before/after state and refs, role invocation log and CLI diagnostic output. Valid IDs with malicious paths must not bypass semantic scope validation. |
++| ORCH-VERIFY-01 | Freeze a real modified candidate in a standalone clone and execute the commissioned candidate tier through the attested provider. Validate every receipt and raw artifact, canonical invariant first, all four owner partitions once, legacy subsumption only with its prerequisite, and fresh exact closure when required. | Tier plan/results, ownership discovery, partition inventories, command/timeout/provider records, source/fixture identity chain and final identity fence. Missing/forged/foreign/stale evidence and unclassified tests reject at the actual boundary; no integration follows. Hidden-validation authorization/custody is tested only with public synthetic records. |
++| ORCH-REVIEW-01 | The real review/integration handlers first refuse a rejected or stale review, then accept an independently produced structured review bound to the exact verified candidate and fast-forward only that candidate. Worker/reviewer processes and allowed inputs are separate. | Reviewer identity/input/diff record; structured decision; candidate verification; target ref transition; canonical completed state and cleanup intent. A worker-authored approval, review for another commit, or diverged target must not integrate. Deterministic role adapters establish mechanics; live quality is reserved for human acceptance. |
++| ORCH-STATE-01 | Persist actual lifecycle transitions through canonical generations; restart the controller and resume. Two synchronized same-generation writers produce exactly one successor. A contended lease has one owner. Repeat fixed logical inputs twice on both platforms and compare semantic state/decision traces. | Exact prior/current state bytes/hashes and private refs, generation/CAS/lease observations, restart traces and cross-platform comparison. Corrupt state, stale-generation writes, reused process identities and wrong candidates must not be adopted. Volatile telemetry is retained separately; normalization must never erase different decisions, scopes, artifact hashes, or success/failure. |
++| ORCH-RECOVERY-01 | Kill the owning process immediately before and after each durable publication boundary of workspace creation, candidate checkpoint preparation, target integration, cleanup, and approved retention. Resume via the production resume/recovery handlers. Exercise unamended v1, active v2, and reverse-amendment recovery compatibility. | Fault-point manifest, subprocess termination evidence, intent bytes, exact prior/new file/ref identities, resumed final state and equality to uninterrupted semantics. Every reachable publication boundary is enumerated by a checked-in registry; an unregistered added boundary fails discovery. Foreign files/refs remain untouched and diagnosed. |
++| ORCH-RECONCILE-01 | Perform a real external commit range in a disposable commissioned target and invoke `loop:reconcile`/status. Preserve the old state bytes, identify the complete continuous range, obtain fresh verification and independent structured reconciliation review, and adopt atomically. | Archived old state/hash; complete commit range; fresh exact candidate evidence; independent review and new state/ref identity. A missing/interrupted range, active intent, dirty target, substituted candidate or failed review blocks adoption without resetting history. |
++| ORCH-RETENTION-01 | Run retention preview, provide the fixture maintainer's explicit approval for the exact plan, and apply through the production retention operation. Complete normal workspace cleanup and resume an interrupted approved apply. | Retention plan/digest, separate approval record, dry-run inventory, before/after owned paths, intent/recovery records, undeleted sentinel files outside scope. No approval, stale plan, junction/symlink escape or foreign file permits deletion. Test actors may approve only their disposable fixture. |
++| ORCH-CONTAIN-01 | Run the real Docker executor with the pinned image and inspect the runtime's applied policy. Execute successful fixture build/tests plus outside-read, outside-write, network, privileged/socket, descendant-process, and resource/output-limit attacks. | Docker version/inspect and image digest; actual mounts/capabilities/resources/network; raw attack observations and owned receipts. No host checkout write, host secret/socket access, network success or surviving owned descendant is allowed. Missing runtime, wrong digest, extra mount/capability, unsupported policy, or diagnostic fallback is ineligible. |
++| ORCH-BOUNDS-01 | Exercise the production supervisor with output flood, inherited pipes, a stubborn descendant and deadline expiration; exercise read-only status/doctor over the resulting state. Show output capture stays within its actual cap, drain/termination facts are truthful, and the controller remains inspectable. | Raw byte/process observations, timeout and drain records, effective limits, diagnostic output, and no survivor evidence. Preserve current 64 MiB command-output cap, 5 s kill grace, 2 CPU/2 GiB/256 PID container limits, 65-minute owner tier bounds and 20-minute other focused tier bounds; individual test, exact-closure and measurement limits are unchanged. No speedup or general latency guarantee follows. |
++
++## Production release build
++
++The release is an allowlisted runtime/template distribution, not a copy of the working tree. Its payload contains the public CLI runtime (including the generator), schemas, configuration templates, bootstrap scaffold, necessary tools, package/workspace manifests, frozen lockfile, notices and user instructions. Preserve the currently supported TypeScript/tsx runtime layout; a new compiled SDK or npm publishing system is not required. Tests are packaged only where the installed controller, invariant/ownership discovery, generated verification or qualification workflow requires them; dependencies and runtime entrypoint discovery must prove the allowlist is complete.
++
++`build:production` writes `dist/milestone-loop-template/` plus a deterministic archive and release manifest under `dist/`. The manifest identifies the source commit/tree and each payload file's path, bytes, and hash. Source identity metadata is fixed for identical input commits; wall-clock build telemetry is outside the reproducible payload. No credentials, source `.git`, controller state, workspaces, evidence caches, source readiness marker, source commissioning state or source acceptance identity may leak into a generated adopter. The release's own provenance remains distinguishable from that adopter's identity.
++
++The archive is safely extracted into a fresh absent path, dependencies are installed from the frozen lock, and the extracted CLI is the only runtime used for the generation smoke. No source-checkout imports or writable shared node_modules are permitted. Repeated builds start with absent output roots and independent writable workspaces. The portable payload inventory must also agree between Windows and Linux; platform-specific dependency installations and execution telemetry are recorded outside that payload. Removing a declared runtime/schema/scaffold file from a committed mutation must break the external smoke. Build success requires the payload and its real consumer observations, not just `tsc --noEmit`, a tar operation, or unit success.
++
++## Qualification invocation and recursion boundary
++
++One literal no-argument source `pnpm verify` invocation owns a fresh cross-platform qualification identity and all required stages. A trusted external coordinator dispatches native Windows/Linux jobs for the full required observation matrix and validates their provenance and artifacts. Those jobs execute the source stage commands and real controller workflows; they do not recursively request source readiness. Generated adopters and bounded target fixtures execute their own distinct contracts. The source result cannot become completion-eligible until every required platform/provider observation has been independently validated.
++
++The tested controller needs a container control plane, so it runs on a maintainer-authorized disposable qualification host. Its candidate children remain in the existing attested OCI sandbox. Source candidate commands inside that sandbox cannot launch Docker or contact a qualification service. Where a source tier consumes remote workflow observations, the trusted outer coordinator must first produce a fresh, nonce-bound bundle and deliver it through a validated read-only task-input channel. The child command independently checks that bundle and owns a receipt for that verification; producer-owned workflow receipts remain separately retained. The outer verifier independently checks both. Candidate-authored files cannot act as coordinator approval or provider attestation. Missing coordinator, input-channel support or provenance remains NOT_READY, never host fallback. The reviewed qualification protocol specifies this additional implementation work.
++
++## Required negative scenarios
++
++The manifest names exactly sixteen scenario families, each mandatory on Windows and Linux. Each uses a real subprocess/command boundary and records its complete variant list: invalid proposal; protected-worker write; unclassified test; missing/forged child evidence; stale/rejected independent review; target divergence; stale/corrupt state; competing lease/generation; workspace-create crash; candidate-prepare crash; integration crash; cleanup escape/crash; unapproved/stale retention; external-reconciliation mismatch; amendment mixed/foreign/crashed generation; containment/supervision violation. Multi-boundary variants within a family all must pass; one representative cannot replace an omitted boundary.
++
++Required rate is 16/16 correct family dispositions and 100% of enumerated variants on each platform, with zero unexpected integrity violations. A deliberately rejected operation is not itself an integrity violation. Skips and infrastructure failures are not correct negative outcomes. This finite corpus is qualification evidence, not a 99% reliability estimate.
++
++## Human and live-agent acceptance
++
++After machine qualification, the maintainer uses the delivered distribution to create and commission a disposable adopter with a bounded real requirement and actual acceptance assertions. Use the committed live agent/model policy with separate Planner, Worker and Reviewer sessions. Exercise a successful change through verification, independent review and fast-forward integration; deliberately reject a stale/rejected candidate; terminate and resume one operation; inspect Status/Doctor and the evidence chain. Record actual transport and role identity, source release/adopter identities, commands, artifacts, review and maintainer disposition. Never substitute deterministic adapter output or scripted unit success for this live workflow.
++
++The maintainer verifies that instructions are sufficient, the integrated outcome meets the fixture's stated requirement, failed paths preserve data, and claim labels are understandable. Approval must be explicit and bound to the release digest. Missing credentials or service access leaves this gate pending. Human acceptance establishes the supported operator workflow, not arbitrary coding quality or downstream product completion.
++
++## Claim boundaries and historical requirements
++
++Generated bootstrap browser/Worker/persistence results remain mandatory compatibility observations within ORCH-ADOPT-01. They do not prove that the source has a game renderer or that the adopter's product is complete. The generated bootstrap profile remains completion-ineligible for autonomous readiness. The downstream readiness registry and frozen acceptance remain governed by that adopter's own contract.
++
++Old source AUTO/PLAY/VIS/PERF/REPLAY/SAVE/FAULT, metric, bot and seed IDs are not silently renamed. The approved migration mapping records each replacement, preservation, or source retirement. All original frozen documents, schemas, tests, threshold values and calibration history remain retrievable. Source-frame-time, game-seed and gameplay-bot requirements have no passing source outcome after this revision; their source applicability is explicitly retired. Neither this contract nor its qualification closes WP6e/WP6f or overwrites their evidence.
+diff --git "a/C:\\Dev\\loop-extraction\\milestone-loop-template\\evals\\acceptance-manifest.json" "b/C:\\Dev\\loop-extraction\\milestone-loop-template\\docs\\proposals\\ORCH-AUTH-01\\proposed\\evals\\acceptance-manifest.json"
+index 9f1799a..6c4a5bd 100644
+--- "a/C:\\Dev\\loop-extraction\\milestone-loop-template\\evals\\acceptance-manifest.json"
++++ "b/C:\\Dev\\loop-extraction\\milestone-loop-template\\docs\\proposals\\ORCH-AUTH-01\\proposed\\evals\\acceptance-manifest.json"
+@@ -1,104 +1,702 @@
+ {
+-  "schemaVersion": "1.0.0",
+-  "title": "Example Project acceptance manifest (placeholder)",
+-  "validationLayers": [
+-    { "id": "AUTO-01", "required": true, "name": "Automated verification" },
+-    { "id": "PLAY-01", "required": true, "name": "Bot playtesting" },
+-    { "id": "VIS-01", "required": true, "name": "Rendered evidence" },
+-    { "id": "PERF-GATE-01", "required": true, "name": "Performance budgets" },
+-    { "id": "REPLAY-01", "required": true, "name": "Determinism and replay" },
+-    { "id": "SAVE-01", "required": true, "name": "Persistence integrity" },
+-    { "id": "FAULT-01", "required": true, "name": "Operational fault chains" }
++  "schemaVersion": "source-template-acceptance.v1",
++  "contractId": "milestone-loop-orchestrator-source.v1",
++  "authorityEpoch": "orch-template.v1",
++  "claimScope": "orchestrator-template",
++  "title": "Milestone orchestrator/template source acceptance",
++  "platforms": [
++    {
++      "id": "windows",
++      "nativeControllerRequired": true,
++      "referenceRunner": "windows-2022",
++      "realProviderRequired": true
++    },
++    {
++      "id": "linux",
++      "nativeControllerRequired": true,
++      "referenceRunner": "ubuntu-24.04",
++      "realProviderRequired": true
++    }
+   ],
+-  "completionMetrics": [
++  "requiredToolchain": {
++    "node": "24.18.0",
++    "pnpm": "11.15.1",
++    "typescript": "5.9.3",
++    "vitest": "4.1.10",
++    "otherDependencyAndModelPins": "unchanged"
++  },
++  "requirements": [
++    {
++      "id": "ORCH-STATIC-01",
++      "name": "Static, dependency and architecture integrity",
++      "required": true,
++      "outcome": "all installed-graph/import-boundary/static/regression checks pass",
++      "requiredArtifactKinds": [
++        "installed-graph-report",
++        "architecture-edge-report",
++        "vitest-report"
++      ],
++      "requiredPlatforms": [
++        "windows",
++        "linux"
++      ],
++      "specification": "evals/ACCEPTANCE.md#required-machine-outcomes"
++    },
+     {
+-      "id": "METRIC-01",
+-      "name": "Core outcome completion",
+-      "thresholds": [{ "freeze": "IMMUTABLE", "value": 1 }]
++      "id": "ORCH-BUILD-01",
++      "name": "Reproducible consumed release",
++      "required": true,
++      "outcome": "two independent clean payloads per platform and portable inventories across platforms agree; extracted CLI generates and commissions adopter",
++      "requiredArtifactKinds": [
++        "build-report",
++        "release-manifest",
++        "external-release-smoke-report"
++      ],
++      "requiredPlatforms": [
++        "windows",
++        "linux"
++      ],
++      "specification": "evals/ACCEPTANCE.md#required-machine-outcomes"
+     },
+     {
+-      "id": "METRIC-02",
+-      "name": "Content breadth floor",
+-      "thresholds": [{ "freeze": "CAL-1_PROVISIONAL", "value": 4 }]
++      "id": "ORCH-ADOPT-01",
++      "name": "Fresh adopter bootstrap compatibility",
++      "required": true,
++      "outcome": "two distinct definitions on each platform complete real generated bootstrap and preserve claim scope",
++      "requiredArtifactKinds": [
++        "adopter-package-report",
++        "bootstrap-result-index",
++        "screenshot",
++        "playwright-report",
++        "browser-diagnostics"
++      ],
++      "requiredPlatforms": [
++        "windows",
++        "linux"
++      ],
++      "specification": "evals/ACCEPTANCE.md#required-machine-outcomes"
+     },
+     {
+-      "id": "METRIC-03",
+-      "name": "Reliability floor",
+-      "thresholds": [{ "freeze": "CAL-1_PROVISIONAL", "value": 0.99 }]
++      "id": "ORCH-PLAN-01",
++      "name": "Bounded planning and diagnostics",
++      "required": true,
++      "outcome": "valid proposal admitted and invalid/protected proposal rejected before worker start",
++      "requiredArtifactKinds": [
++        "orchestration-workflow-report",
++        "proposal-policy-report"
++      ],
++      "requiredPlatforms": [
++        "windows",
++        "linux"
++      ],
++      "specification": "evals/ACCEPTANCE.md#required-machine-outcomes"
+     },
+     {
+-      "id": "METRIC-04",
+-      "name": "Performance budget",
+-      "thresholds": [{ "freeze": "CAL-1_PROVISIONAL", "value": 16.6 }]
++      "id": "ORCH-VERIFY-01",
++      "name": "Candidate and evidence verification",
++      "required": true,
++      "outcome": "actual commissioned tier passes; four partitions once; invalid evidence rejected before integration",
++      "requiredArtifactKinds": [
++        "verification-tier-report",
++        "test-partition-report",
++        "receipt-audit-report"
++      ],
++      "requiredPlatforms": [
++        "windows",
++        "linux"
++      ],
++      "specification": "evals/ACCEPTANCE.md#required-machine-outcomes"
++    },
++    {
++      "id": "ORCH-REVIEW-01",
++      "name": "Independent review and integration",
++      "required": true,
++      "outcome": "stale/rejected review cannot integrate; independently reviewed exact candidate fast-forwards",
++      "requiredArtifactKinds": [
++        "orchestration-workflow-report",
++        "independent-review-record",
++        "git-transition-report"
++      ],
++      "requiredPlatforms": [
++        "windows",
++        "linux"
++      ],
++      "specification": "evals/ACCEPTANCE.md#required-machine-outcomes"
++    },
++    {
++      "id": "ORCH-STATE-01",
++      "name": "Canonical state, leases and parity",
++      "required": true,
++      "outcome": "single writer/owner, valid restart and equal semantic traces across repeated native-platform runs",
++      "requiredArtifactKinds": [
++        "state-generation-report",
++        "lease-contention-report",
++        "canonical-parity-report"
++      ],
++      "requiredPlatforms": [
++        "windows",
++        "linux"
++      ],
++      "specification": "evals/ACCEPTANCE.md#required-machine-outcomes"
++    },
++    {
++      "id": "ORCH-RECOVERY-01",
++      "name": "Intent-based recovery",
++      "required": true,
++      "outcome": "all registered durable boundaries resume exact intended state or preserve foreign state without adoption",
++      "requiredArtifactKinds": [
++        "recovery-boundary-inventory",
++        "fault-recovery-report"
++      ],
++      "requiredPlatforms": [
++        "windows",
++        "linux"
++      ],
++      "specification": "evals/ACCEPTANCE.md#required-machine-outcomes"
++    },
++    {
++      "id": "ORCH-RECONCILE-01",
++      "name": "External boundary reconciliation",
++      "required": true,
++      "outcome": "complete external range reviewed and verified before atomic adoption; mismatch fails closed",
++      "requiredArtifactKinds": [
++        "reconciliation-report",
++        "independent-reconciliation-review",
++        "archived-state-index"
++      ],
++      "requiredPlatforms": [
++        "windows",
++        "linux"
++      ],
++      "specification": "evals/ACCEPTANCE.md#required-machine-outcomes"
++    },
++    {
++      "id": "ORCH-RETENTION-01",
++      "name": "Approved retention and contained cleanup",
++      "required": true,
++      "outcome": "exact approved plan applies; stale/unapproved/escaped targets remain untouched",
++      "requiredArtifactKinds": [
++        "retention-plan",
++        "approval-record",
++        "retention-application-report",
++        "outside-sentinel-report"
++      ],
++      "requiredPlatforms": [
++        "windows",
++        "linux"
++      ],
++      "specification": "evals/ACCEPTANCE.md#required-machine-outcomes"
++    },
++    {
++      "id": "ORCH-CONTAIN-01",
++      "name": "Real OCI containment",
++      "required": true,
++      "outcome": "actual attested provider denies all prohibited access and preserves scoped process/resource boundaries",
++      "requiredArtifactKinds": [
++        "container-inspection-report",
++        "containment-attack-report"
++      ],
++      "requiredPlatforms": [
++        "windows",
++        "linux"
++      ],
++      "specification": "evals/ACCEPTANCE.md#required-machine-outcomes"
++    },
++    {
++      "id": "ORCH-BOUNDS-01",
++      "name": "Bounded supervision and truthful diagnostics",
++      "required": true,
++      "outcome": "actual caps/deadlines/drain/termination work with no surviving owned descendant or false success",
++      "requiredArtifactKinds": [
++        "supervision-report",
++        "process-survivor-report",
++        "diagnostic-report"
++      ],
++      "requiredPlatforms": [
++        "windows",
++        "linux"
++      ],
++      "specification": "evals/ACCEPTANCE.md#required-machine-outcomes"
+     }
+   ],
+-  "botRequirements": [
++  "negativeScenarios": [
++    {
++      "id": "NEG-01",
++      "name": "Invalid or overbroad proposal",
++      "requirementIds": [
++        "ORCH-PLAN-01"
++      ],
++      "requiredPlatforms": [
++        "windows",
++        "linux"
++      ],
++      "requiredVariantFraction": 1,
++      "earlierInfrastructureFailureSatisfiesScenario": false
++    },
++    {
++      "id": "NEG-02",
++      "name": "Protected worker write",
++      "requirementIds": [
++        "ORCH-PLAN-01",
++        "ORCH-VERIFY-01"
++      ],
++      "requiredPlatforms": [
++        "windows",
++        "linux"
++      ],
++      "requiredVariantFraction": 1,
++      "earlierInfrastructureFailureSatisfiesScenario": false
++    },
++    {
++      "id": "NEG-03",
++      "name": "Unclassified test",
++      "requirementIds": [
++        "ORCH-VERIFY-01",
++        "ORCH-STATIC-01"
++      ],
++      "requiredPlatforms": [
++        "windows",
++        "linux"
++      ],
++      "requiredVariantFraction": 1,
++      "earlierInfrastructureFailureSatisfiesScenario": false
++    },
++    {
++      "id": "NEG-04",
++      "name": "Missing/forged child evidence",
++      "requirementIds": [
++        "ORCH-VERIFY-01"
++      ],
++      "requiredPlatforms": [
++        "windows",
++        "linux"
++      ],
++      "requiredVariantFraction": 1,
++      "earlierInfrastructureFailureSatisfiesScenario": false
++    },
++    {
++      "id": "NEG-05",
++      "name": "Stale/rejected/worker-authored review",
++      "requirementIds": [
++        "ORCH-REVIEW-01"
++      ],
++      "requiredPlatforms": [
++        "windows",
++        "linux"
++      ],
++      "requiredVariantFraction": 1,
++      "earlierInfrastructureFailureSatisfiesScenario": false
++    },
++    {
++      "id": "NEG-06",
++      "name": "Diverged target ref",
++      "requirementIds": [
++        "ORCH-REVIEW-01"
++      ],
++      "requiredPlatforms": [
++        "windows",
++        "linux"
++      ],
++      "requiredVariantFraction": 1,
++      "earlierInfrastructureFailureSatisfiesScenario": false
++    },
++    {
++      "id": "NEG-07",
++      "name": "Stale/corrupt canonical state",
++      "requirementIds": [
++        "ORCH-STATE-01"
++      ],
++      "requiredPlatforms": [
++        "windows",
++        "linux"
++      ],
++      "requiredVariantFraction": 1,
++      "earlierInfrastructureFailureSatisfiesScenario": false
++    },
++    {
++      "id": "NEG-08",
++      "name": "Concurrent lease/generation and reused process identity",
++      "requirementIds": [
++        "ORCH-STATE-01"
++      ],
++      "requiredPlatforms": [
++        "windows",
++        "linux"
++      ],
++      "requiredVariantFraction": 1,
++      "earlierInfrastructureFailureSatisfiesScenario": false
++    },
++    {
++      "id": "NEG-09",
++      "name": "Workspace-create publication crash",
++      "requirementIds": [
++        "ORCH-RECOVERY-01"
++      ],
++      "requiredPlatforms": [
++        "windows",
++        "linux"
++      ],
++      "requiredVariantFraction": 1,
++      "earlierInfrastructureFailureSatisfiesScenario": false
++    },
++    {
++      "id": "NEG-10",
++      "name": "Candidate-prepare publication crash",
++      "requirementIds": [
++        "ORCH-RECOVERY-01"
++      ],
++      "requiredPlatforms": [
++        "windows",
++        "linux"
++      ],
++      "requiredVariantFraction": 1,
++      "earlierInfrastructureFailureSatisfiesScenario": false
++    },
+     {
+-      "id": "BOT-01",
+-      "name": "Bot reaches the core outcome",
+-      "threshold": { "freeze": "IMMUTABLE", "minimum": 1 }
++      "id": "NEG-11",
++      "name": "Integration publication crash",
++      "requirementIds": [
++        "ORCH-RECOVERY-01",
++        "ORCH-REVIEW-01"
++      ],
++      "requiredPlatforms": [
++        "windows",
++        "linux"
++      ],
++      "requiredVariantFraction": 1,
++      "earlierInfrastructureFailureSatisfiesScenario": false
+     },
+     {
+-      "id": "BOT-02",
+-      "name": "Bot sustains operation",
+-      "threshold": { "freeze": "CAL-1_PROVISIONAL", "minimum": 1 }
++      "id": "NEG-12",
++      "name": "Cleanup escape/publication crash",
++      "requirementIds": [
++        "ORCH-RECOVERY-01",
++        "ORCH-RETENTION-01"
++      ],
++      "requiredPlatforms": [
++        "windows",
++        "linux"
++      ],
++      "requiredVariantFraction": 1,
++      "earlierInfrastructureFailureSatisfiesScenario": false
+     },
+     {
+-      "id": "BOT-03",
+-      "name": "Bot recovers from faults",
+-      "threshold": { "freeze": "CAL-1_PROVISIONAL", "minimum": 1 }
++      "id": "NEG-13",
++      "name": "Unapproved/stale/interrupted retention",
++      "requirementIds": [
++        "ORCH-RETENTION-01"
++      ],
++      "requiredPlatforms": [
++        "windows",
++        "linux"
++      ],
++      "requiredVariantFraction": 1,
++      "earlierInfrastructureFailureSatisfiesScenario": false
++    },
++    {
++      "id": "NEG-14",
++      "name": "External reconciliation range/identity mismatch",
++      "requirementIds": [
++        "ORCH-RECONCILE-01"
++      ],
++      "requiredPlatforms": [
++        "windows",
++        "linux"
++      ],
++      "requiredVariantFraction": 1,
++      "earlierInfrastructureFailureSatisfiesScenario": false
++    },
++    {
++      "id": "NEG-15",
++      "name": "Mixed/foreign/crashed amendment generation",
++      "requirementIds": [
++        "ORCH-RECOVERY-01",
++        "ORCH-VERIFY-01"
++      ],
++      "requiredPlatforms": [
++        "windows",
++        "linux"
++      ],
++      "requiredVariantFraction": 1,
++      "earlierInfrastructureFailureSatisfiesScenario": false
++    },
++    {
++      "id": "NEG-16",
++      "name": "Containment/supervision/unauthorized hidden request",
++      "requirementIds": [
++        "ORCH-CONTAIN-01",
++        "ORCH-BOUNDS-01",
++        "ORCH-VERIFY-01"
++      ],
++      "requiredPlatforms": [
++        "windows",
++        "linux"
++      ],
++      "requiredVariantFraction": 1,
++      "earlierInfrastructureFailureSatisfiesScenario": false
+     }
+   ],
+-  "operationalChains": ["CHAIN-01", "CHAIN-02"],
+-  "seedSets": {
+-    "benchmark": {
+-      "gateId": "SEED-BENCH-01",
+-      "minimumSuccesses": 1,
+-      "requiredSuccessRate": 1,
+-      "requireZeroCatastrophicIntegrityFailures": true,
+-      "freeze": "IMMUTABLE"
+-    },
+-    "visibleDevelopment": {
+-      "gateId": "SEED-VISIBLE-01",
+-      "requiredRuns": 16,
+-      "minimumSuccesses": 13,
+-      "requireZeroCatastrophicIntegrityFailures": true,
+-      "freeze": "CAL-1_PROVISIONAL"
+-    },
+-    "hidden": {
+-      "successGateId": "SEED-HIDDEN-01",
+-      "integrityGateId": "SEED-HIDDEN-INTEGRITY-01",
+-      "requiredRuns": 20,
+-      "minimumSuccesses": 16,
+-      "valuesInRepository": false,
+-      "requireZeroCatastrophicIntegrityFailures": true,
+-      "freeze": "CAL-1_PROVISIONAL"
++  "completionMetrics": [
++    {
++      "id": "ORCH-METRIC-COVERAGE",
++      "requiredDomains": 8,
++      "requiredMachineOutcomes": 12,
++      "requiredFraction": 1,
++      "freeze": "HUMAN_REVISION_ONLY"
++    },
++    {
++      "id": "ORCH-METRIC-NEGATIVE",
++      "requiredScenarioFamilies": 16,
++      "requiredVariantFraction": 1,
++      "requiredFamilyPassesPerPlatform": 16,
++      "freeze": "HUMAN_REVISION_ONLY"
++    },
++    {
++      "id": "ORCH-METRIC-INTEGRITY",
++      "maximumUnexpectedIntegrityViolations": 0,
++      "freeze": "HUMAN_REVISION_ONLY"
++    },
++    {
++      "id": "ORCH-METRIC-REPRODUCIBILITY",
++      "independentCleanBuildsPerPlatform": 2,
++      "requiredIdenticalPortablePayloadInventories": true,
++      "freeze": "HUMAN_REVISION_ONLY"
++    },
++    {
++      "id": "ORCH-METRIC-BOUNDS",
++      "commandOutputLimitBytes": 67108864,
++      "commandKillGraceMs": 5000,
++      "containerCpuCount": 2,
++      "containerMemoryBytes": 2147483648,
++      "containerPids": 256,
++      "ownerTierTimeoutMs": 3900000,
++      "otherFocusedTierTimeoutMs": 1200000,
++      "unrelatedDeadlines": "unchanged",
++      "freeze": "HUMAN_REVISION_ONLY"
+     }
++  ],
++  "calibration": {
++    "policy": "human-revision-only",
++    "provisionalFields": [],
++    "consumesLegacyCal1": false
+   },
++  "publicProductSeedGate": null,
++  "hiddenProductSeedGate": null,
++  "productBotRequirements": [],
+   "plannedCommandSurface": {
+-    "commands": [{ "id": "verify_full", "plannedCommand": "pnpm verify" }],
++    "commands": [
++      {
++        "id": "verify_source_full",
++        "plannedCommand": "pnpm verify"
++      }
++    ],
+     "profileContract": {
+-      "additiveRequirementId": "HARNESS-PROFILE-01",
+-      "bootstrapIsAutonomousReadinessEvidence": false,
+-      "requiredDefaultProfileForAutonomousReadiness": "readiness",
+-      "profileOwner": "package.json#milestoneLoop.verification.defaultProfile"
+-    }
++      "id": "ORCH-PROFILE-01",
++      "defaultProfile": "readiness",
++      "profileOwner": "package.json#milestoneLoop.verification.defaultProfile",
++      "contractOwner": "package.json#milestoneLoop.verification.contractId",
++      "bootstrapIsSourceReadinessEvidence": false,
++      "markerAndHistoryPreserved": true,
++      "scopeOverrideCanAuthorizeCompletion": false
++    },
++    "sourceStages": [
++      {
++        "id": "environment",
++        "scripts": [
++          "verify:source-dependencies"
++        ],
++        "acceptanceIds": [
++          "ORCH-STATIC-01"
++        ],
++        "required": true
++      },
++      {
++        "id": "contract-integrity",
++        "scripts": [
++          "test:invariants"
++        ],
++        "acceptanceIds": [
++          "ORCH-STATIC-01",
++          "ORCH-VERIFY-01"
++        ],
++        "required": true
++      },
++      {
++        "id": "format-lint",
++        "scripts": [
++          "format:check",
++          "lint",
++          "lint:source-architecture"
++        ],
++        "acceptanceIds": [
++          "ORCH-STATIC-01"
++        ],
++        "required": true
++      },
++      {
++        "id": "typecheck",
++        "scripts": [
++          "typecheck"
++        ],
++        "acceptanceIds": [
++          "ORCH-STATIC-01"
++        ],
++        "required": true
++      },
++      {
++        "id": "production-build",
++        "scripts": [
++          "build"
++        ],
++        "acceptanceIds": [
++          "ORCH-BUILD-01"
++        ],
++        "required": true
++      },
++      {
++        "id": "unit",
++        "scripts": [
++          "test:unit"
++        ],
++        "acceptanceIds": [
++          "ORCH-STATIC-01"
++        ],
++        "required": true
++      },
++      {
++        "id": "orchestration-domain",
++        "scripts": [
++          "test:orchestration-domain"
++        ],
++        "acceptanceIds": [
++          "ORCH-PLAN-01",
++          "ORCH-VERIFY-01",
++          "ORCH-REVIEW-01",
++          "ORCH-STATE-01",
++          "ORCH-RECOVERY-01",
++          "ORCH-RECONCILE-01",
++          "ORCH-RETENTION-01",
++          "ORCH-CONTAIN-01"
++        ],
++        "required": true
++      },
++      {
++        "id": "orchestration-parity",
++        "scripts": [
++          "verify:source-parity"
++        ],
++        "acceptanceIds": [
++          "ORCH-STATE-01"
++        ],
++        "required": true
++      },
++      {
++        "id": "adopter-bootstrap",
++        "scripts": [
++          "verify:adopter-bootstrap"
++        ],
++        "acceptanceIds": [
++          "ORCH-ADOPT-01"
++        ],
++        "required": true
++      },
++      {
++        "id": "resource-bounds",
++        "scripts": [
++          "verify:source-bounds"
++        ],
++        "acceptanceIds": [
++          "ORCH-BOUNDS-01"
++        ],
++        "required": true
++      },
++      {
++        "id": "source-acceptance",
++        "scripts": [
++          "verify:source-acceptance"
++        ],
++        "acceptanceIds": [
++          "ORCH-STATIC-01",
++          "ORCH-BUILD-01",
++          "ORCH-ADOPT-01",
++          "ORCH-PLAN-01",
++          "ORCH-VERIFY-01",
++          "ORCH-REVIEW-01",
++          "ORCH-STATE-01",
++          "ORCH-RECOVERY-01",
++          "ORCH-RECONCILE-01",
++          "ORCH-RETENTION-01",
++          "ORCH-CONTAIN-01",
++          "ORCH-BOUNDS-01"
++        ],
++        "required": true
++      }
++    ]
++  },
++  "evidence": {
++    "id": "ORCH-EVIDENCE-01",
++    "receiptRequiredForEverySuccessfulChild": true,
++    "validateArtifactBytesAndHashes": true,
++    "sourceAndFixtureIdentitiesSeparate": true,
++    "authorityAndClaimScopeRequired": true,
++    "independentReviewRequired": true,
++    "attestedCandidateProviderRequired": true,
++    "qualifierHostAndCandidateProviderIdentitiesSeparate": true,
++    "freshQualificationNonceRequired": true,
++    "exactCompletionEvidenceReusable": false,
++    "unitSuccessSubstitutesForWorkflow": false,
++    "skippedUnavailableTimedOutOrFlaky": "non-passing",
++    "crossScopePassInheritance": false
+   },
+   "readinessGate": {
+-    "id": "AUTONOMOUS-READINESS-01",
++    "id": "ORCH-AUTONOMOUS-READINESS-01",
+     "aggregation": "all",
+     "compensationBetweenRequirementsAllowed": false,
+     "requirements": [
+-      "all_validation_layers_pass",
+-      "all_completion_metrics_pass",
+-      "all_bot_requirements_pass",
+-      "all_seed_gates_pass",
+-      "all_operational_chains_pass"
+-    ]
++      "ORCH-STATIC-01",
++      "ORCH-BUILD-01",
++      "ORCH-ADOPT-01",
++      "ORCH-PLAN-01",
++      "ORCH-VERIFY-01",
++      "ORCH-REVIEW-01",
++      "ORCH-STATE-01",
++      "ORCH-RECOVERY-01",
++      "ORCH-RECONCILE-01",
++      "ORCH-RETENTION-01",
++      "ORCH-CONTAIN-01",
++      "ORCH-BOUNDS-01",
++      "ORCH-METRIC-COVERAGE",
++      "ORCH-METRIC-NEGATIVE",
++      "ORCH-METRIC-INTEGRITY",
++      "ORCH-METRIC-REPRODUCIBILITY",
++      "ORCH-METRIC-BOUNDS",
++      "ORCH-PROFILE-01",
++      "ORCH-EVIDENCE-01",
++      "all_negative_scenario_variants_on_both_platforms",
++      "fresh_clean_exact_default_source_verification_with_both_native_platforms",
++      "independently_validated_hosted_and_real_provider_evidence"
++    ],
++    "claim": "source_machine_qualified_for_human_acceptance"
+   },
+   "humanAcceptanceGate": {
+-    "id": "HUMAN-ACCEPT-01",
++    "id": "ORCH-HUMAN-ACCEPT-01",
+     "aggregation": "all",
+-    "requirements": ["scripted_human_review_pass"]
++    "requirements": [
++      "ORCH-AUTONOMOUS-READINESS-01",
++      "real_released_artifact_installation_and_commissioning",
++      "live_configured_planner_worker_reviewer_workflow",
++      "successful_verified_reviewed_fast_forward",
++      "actual_stale_or_rejected_candidate_refusal",
++      "interrupted_operation_resume",
++      "explicit_maintainer_acceptance_bound_to_release_digest"
++    ],
++    "machineMayAssertHumanApproval": false
++  },
++  "claimBoundaries": {
++    "sourceQualificationDoesNotCompleteGeneratedAdopter": true,
++    "generatedBootstrapDoesNotCompleteProduct": true,
++    "downstreamAuthorityUnchanged": true,
++    "wp6eOrWp6fCompletionAuthorized": false,
++    "fieldReliabilityOrGeneralAgentSuccessRateClaim": false
+   }
+ }
+diff --git "a/C:\\Dev\\loop-extraction\\milestone-loop-template\\evals\\HIDDEN_VALIDATION_PROTOCOL.md" "b/C:\\Dev\\loop-extraction\\milestone-loop-template\\docs\\proposals\\ORCH-AUTH-01\\proposed\\evals\\HIDDEN_VALIDATION_PROTOCOL.md"
+index b95180a..e6c0cdd 100644
+--- "a/C:\\Dev\\loop-extraction\\milestone-loop-template\\evals\\HIDDEN_VALIDATION_PROTOCOL.md"
++++ "b/C:\\Dev\\loop-extraction\\milestone-loop-template\\docs\\proposals\\ORCH-AUTH-01\\proposed\\evals\\HIDDEN_VALIDATION_PROTOCOL.md"
+@@ -1,20 +1,9 @@
+-# Hidden Validation Protocol (placeholder)
++# Validation Custody and Claim Scope
+ 
+-> Replace with your project's hidden-validation protocol, then freeze it via
+-> `evals/immutable-contract-lock.json`.
++This source authority is part of `milestone-loop-orchestrator-source.v1` and replaces the source placeholder hidden-product protocol through an explicit human revision. It does not revise any generated adopter's authority.
+ 
+-Hidden validation runs the frozen bot benchmark against a seed pool whose
+-values live outside this repository, under human custody.
+-
+-Rules the loop enforces regardless of project:
+-
+-1. Hidden seed values never enter the repository, logs, artifacts, prompts,
+-   or telemetry. Agents must not request, reveal, or brute-force them.
+-2. Hidden validation executes only through the designated human-triggered
+-   procedure; `hiddenValidationEnabled` stays `false` in the orchestrator
+-   config until that procedure exists, and a cooldown
+-   (`limits.hiddenValidationCooldownMs`) bounds its frequency.
+-3. Results are recorded as pass/fail aggregates (`SEED-HIDDEN-01`,
+-   `SEED-HIDDEN-INTEGRITY-01`) without echoing seed values.
+-4. A hidden-validation failure is an acceptance defect: it returns the
+-   project to the ordinary loop; it never lowers the gate.
++1. The source contract uses a public, enumerated orchestration scenario corpus. It has no hidden product-seed success-rate gate. No source command may claim that a downstream benchmark, visible seed pool, hidden seed pool, or catastrophic-integrity gate passed.
++2. Hidden downstream values remain outside this repository, logs, artifacts, prompts, and telemetry under the downstream human custodian. Agents must not request, reveal, invent, or brute-force them. Public synthetic custody fixtures are labeled synthetic and contain no real held-out values.
++3. Downstream hidden validation remains human-triggered through its designated procedure. `hiddenValidationEnabled` remains false unless that procedure and its explicit authorization exist; the configured cooldown remains enforced. A source test cannot enable hidden validation in a real adopter. Qualification must verify refusal of unauthorized requests and safe redaction using synthetic inputs.
++4. Accepted downstream records identify their own authority, candidate, scope, and aggregate gate results without seed values. Missing, mismatched, stale, or unauthenticated records are non-passing. Source qualification only checks the transport/custody rules and never imports a downstream PASS as source or other-project completion.
++5. A downstream hidden-validation failure remains an acceptance defect under that product's authority and never lowers its gates. The legacy source protocol, original gate IDs, thresholds, and calibration state remain preserved in the immutable legacy epoch snapshot; retirement from source scope is not a successful historical evaluation.
+diff --git "a/C:\\Dev\\loop-extraction\\milestone-loop-template\\evals\\immutable-contract-lock.json" "b/C:\\Dev\\loop-extraction\\milestone-loop-template\\docs\\proposals\\ORCH-AUTH-01\\proposed\\evals\\immutable-contract-lock.json"
+index d1082c4..1659577 100644
+--- "a/C:\\Dev\\loop-extraction\\milestone-loop-template\\evals\\immutable-contract-lock.json"
++++ "b/C:\\Dev\\loop-extraction\\milestone-loop-template\\docs\\proposals\\ORCH-AUTH-01\\proposed\\evals\\immutable-contract-lock.json"
+@@ -1,35 +1,43 @@
+ {
+-  "schemaVersion": "1.0.0",
+-  "calibrationTransition": {
+-    "state": "open_not_started",
+-    "completedCount": 0,
+-    "maximumCount": 1,
+-    "recordPath": null
++  "schemaVersion": "2.0.0",
++  "authorityEpoch": "orch-template.v1",
++  "authoritySnapshotPrefix": "evals/authority-epochs/orch-template.v1/root",
++  "approvalRecordPath": "evals/authority-revisions/ORCH-AUTH-01/approval.json",
++  "origin": {
++    "legacyEpoch": "legacy-source.v1",
++    "legacyAuthorityBaseCommit": "0f4ab3e5ef39bda07d6e77356ad53fca9136cdd5",
++    "legacyLockSnapshotPath": "evals/authority-epochs/legacy-source.v1/root/evals/immutable-contract-lock.json",
++    "legacyLockSha256": "d1166088b00c54af65e8654188adc58a3cabd9d7908820809fe66af28c933050"
++  },
++  "calibrationPolicy": {
++    "kind": "human-revision-only",
++    "provisionalFields": [],
++    "legacyTransitionConsumed": false
+   },
+   "files": [
+     {
+       "path": "PROJECT_GOAL.md",
+       "changeClass": "HUMAN_REVISION_ONLY",
+-      "baselineSha256": "72b08d4132159866cceba7f19c54a5484d1acf2a142e5e6285903d0a3a231b88",
+-      "activeSha256": "72b08d4132159866cceba7f19c54a5484d1acf2a142e5e6285903d0a3a231b88"
++      "epochBaselineSha256": "8787907ad353e63ffe266ec5ad83bd20cdbe51e202c9affe533770c97e99dc06",
++      "activeSha256": "8787907ad353e63ffe266ec5ad83bd20cdbe51e202c9affe533770c97e99dc06"
+     },
+     {
+       "path": "evals/ACCEPTANCE.md",
+-      "changeClass": "CAL1_PROVISIONAL_FIELDS_ONCE_OR_HUMAN_REVISION",
+-      "baselineSha256": "84d2027a4196a2446ca7d519025f0cacac2c0576c65bb6d8590c111b1a267dba",
+-      "activeSha256": "84d2027a4196a2446ca7d519025f0cacac2c0576c65bb6d8590c111b1a267dba"
++      "changeClass": "HUMAN_REVISION_ONLY",
++      "epochBaselineSha256": "b135acb7fc0af4d3e85a4c2d68ab14e15f5ec9bd7e0453eb31cfa8ec0a1b6382",
++      "activeSha256": "b135acb7fc0af4d3e85a4c2d68ab14e15f5ec9bd7e0453eb31cfa8ec0a1b6382"
+     },
+     {
+       "path": "evals/acceptance-manifest.json",
+-      "changeClass": "CAL1_PROVISIONAL_FIELDS_ONCE_OR_HUMAN_REVISION",
+-      "baselineSha256": "365e452dcc770e99a9689d3a36b74660f7ec3c4c25c298f9eee4ea20b18a001c",
+-      "activeSha256": "365e452dcc770e99a9689d3a36b74660f7ec3c4c25c298f9eee4ea20b18a001c"
++      "changeClass": "HUMAN_REVISION_ONLY",
++      "epochBaselineSha256": "6852c58ce0a71f70a7cac700f7bc0966297ad49fe4baae8a3a004cd4ae1f27e9",
++      "activeSha256": "6852c58ce0a71f70a7cac700f7bc0966297ad49fe4baae8a3a004cd4ae1f27e9"
+     },
+     {
+       "path": "evals/HIDDEN_VALIDATION_PROTOCOL.md",
+       "changeClass": "HUMAN_REVISION_ONLY",
+-      "baselineSha256": "89628e97a8a535ea3fc4771c273efc7f79b0d1881695aa0c513ab552486f1673",
+-      "activeSha256": "89628e97a8a535ea3fc4771c273efc7f79b0d1881695aa0c513ab552486f1673"
++      "epochBaselineSha256": "c3d33f3737c3f02ef031c5eb0f033796894403e1c7781225e8f425c3e2ce31d1",
++      "activeSha256": "c3d33f3737c3f02ef031c5eb0f033796894403e1c7781225e8f425c3e2ce31d1"
+     }
+   ]
+ }
+diff --git "a/C:\\Dev\\loop-extraction\\milestone-loop-template\\AGENTS.md" "b/C:\\Dev\\loop-extraction\\milestone-loop-template\\docs\\proposals\\ORCH-AUTH-01\\proposed\\AGENTS.md"
+index 35ecc66..de055de 100644
+--- "a/C:\\Dev\\loop-extraction\\milestone-loop-template\\AGENTS.md"
++++ "b/C:\\Dev\\loop-extraction\\milestone-loop-template\\docs\\proposals\\ORCH-AUTH-01\\proposed\\AGENTS.md"
+@@ -2,31 +2,19 @@
+ 
+ ## Authority
+ 
+-Read `PROJECT_GOAL.md` before planning or changing the repository. It is the frozen product authority. In descending order, follow:
++Read PROJECT_GOAL.md before planning or changing the repository. In descending order, follow the frozen goal and original immutable acceptance suite; this contract; the active executable plan; and implementation documentation. Plans and logs never amend authority. Preserve the higher authority and record any conflict.
+ 
+-1. `PROJECT_GOAL.md` and the original immutable acceptance suite.
+-2. This contract.
+-3. The active executable plan in `.agent/current-exec-plan.md`.
+-4. Architecture notes, decision records, and other implementation documentation.
++The applicable product scope, non-goals, stack, required rule separation, determinism/persistence/replay, role/action restrictions, completion categories and breadth, thresholds, calibration policy, acceptance tests, and machine/human gates are immutable except through an explicit human revision. Scope is determined by the commissioned authority, never by a project name or a convenient profile. Source orchestrator/template qualification, generated-adopter bootstrap, and downstream product completion are distinct claims. Source developer agents are not substitutes for downstream gameplay bots.
+ 
+-If authorities conflict, preserve the higher authority, record the conflict, and do not choose the easier interpretation. Plans and logs never amend the frozen goal.
+-
+-The following are immutable: the frozen product scope and non-goals; the required stack and simulation/rendering separation; determinism, replay, save/load, and user-action-only bot rules; the completion categories and breadth minima; the one-time calibration constraints; the original acceptance tests; and the autonomous readiness and human-verification gates. Only an explicit human revision to the frozen goal may change them.
+-
+-`evals/immutable-contract-lock.json` records baseline and active hashes for the frozen goal and original evaluation contract. A hash mismatch is a blocking contract defect, not permission to regenerate the lock. The goal and hidden protocol are human-revision-only. The acceptance prose/manifest active hashes may change without a human revision only once, when `CAL-1` closes, and only after an executable semantic diff proves that every change is confined to an explicitly provisional field, the complete calibration record exists, and every immutable ID/meaning/gate remains equal to the baseline. Baseline hashes never change during calibration. Until that transition is actually being implemented, all active hashes must equal their baselines.
++Legacy immutable-contract-lock v1 and its baseline/active hashes retain their existing rules, including the one permitted CAL-1 transition confined to explicitly provisional fields after semantic equivalence checks. Baseline hashes never change during calibration. The source-only v2 lock identifies a human-approved epoch, preserves the original lock/baselines and calibration state, and pins each new authority byte to its approved strict-ancestor snapshot. A mismatch blocks operation; it never authorizes regeneration, rebaselining, ledger deletion or a weaker interpretation. A new source epoch requires exact human approval, a recorded cross-epoch migration and recovery-safe coordinated commissioning. Historical tests and evidence stay bound to their original epochs.
+ 
+ ## Verification Profiles and Bootstrap Boundary
+ 
+-`pnpm verify` selects the profile declared at `package.json` -> `milestoneLoop.verification.defaultProfile`. The only valid profiles are:
+-
+-- `bootstrap`: proves the technical scaffold, shared deterministic smoke kernel, minimal persistence/replay, production build, and real browser rendering/evidence path. It is never evidence of product-system completion or autonomous readiness.
+-- `readiness`: exercises the complete frozen evaluation surface and is the only profile eligible to support `AUTONOMOUS-READINESS-01`.
+-
+-The bootstrap profile exists so the first application increment can become truthfully green without fabricating future product, bot, seed, fault, or performance systems. It is also a strict scope ceiling: while `bootstrap` is the default, do not implement product domain systems, content breadth, production bot policy, or any other substantive feature work.
++The only profiles remain bootstrap and readiness. Package-default no-argument pnpm verify selects the authority-anchored contract and ordered stage registry. Bootstrap proves the generated adopter's technical scaffold, shared deterministic kernel, minimal persistence/replay, production build and real browser evidence; it never proves autonomous readiness or downstream product completion. Bootstrap remains a scope ceiling and can end only at a clean committed tree with passing no-argument verification and all owned receipts.
+ 
+-Bootstrap ends only at a clean committed tree with a passing no-argument `pnpm verify` and the required structured receipts/artifacts. A later plan must change the default profile to `readiness` and add the permanent `.agent/readiness-profile-activated.json` transition marker before the first substantive product-system implementation. From that transition onward, missing readiness stages remain non-passing until genuinely implemented; the marker may not be deleted and the profile may not be changed back to obtain a green result. The verifier checks marker history to reject rollback. A bootstrap result, focused `--stage` result, explicit non-default profile run, dirty-tree run, or result whose `completion.eligible` is false cannot support a completion claim.
++The permanent readiness transition marker and its Git history remain mandatory and cannot be deleted or rolled back to obtain a green result. For an adopter, readiness exercises that adopter's frozen downstream contract and retains simulation/rendering separation, user-action-only bots and every seed/breadth/human gate its authority requires. For the source contract milestone-loop-orchestrator-source.v1, readiness exercises the frozen orchestration/template workflow registry; ORCH-AUTONOMOUS-READINESS-01 and ORCH-HUMAN-ACCEPT-01 are source-scoped and never inherit a generated bootstrap or downstream PASS. No new profile is introduced.
+ 
+-Every successful child verification command must write the command-owned evidence receipt required by `CONTRACT.md`. Exit code zero without a valid receipt and independently verified artifacts is a failure. Do not use placeholder/no-op scripts or receipts that merely assert success without exercising the production boundary named by the stage.
++Completion requires the exact clean committed candidate, default profile, matching authority/claim scope, fresh full verification, independently validated artifacts and required platform/provider evidence. Focused, dirty, unavailable, skipped, stale, diagnostic, cross-scope or completion-ineligible results cannot support it. Every successful child verification command writes its owned receipt; exit zero or a self-asserted PASS is insufficient. Missing stages stay non-passing until genuinely implemented. No-op scripts or unit results may substitute for public workflow evidence.
+ 
+ ## Operating Loop
+ 
+@@ -34,7 +22,7 @@ Run this loop until the readiness gate passes:
+ 
+ 1. **Inspect:** Read the goal, active plan, logs, working tree, relevant code, tests, and current evidence. Reproduce the highest-impact known gap.
+ 2. **Plan:** Select one cohesive, testable increment. Update `.agent/current-exec-plan.md` with scope, acceptance, risks, and commands before substantial implementation.
+-3. **Implement:** Make the smallest complete change that advances the plan. Keep simulation rules shared by rendered, headless, bot, save/load, and replay paths.
++3. **Implement:** Make the smallest complete change that advances the plan. Keep the applicable production rules shared by public CLI/controller paths; generated or downstream simulation rules remain shared by rendered, headless, bot, save/load, and replay paths.
+ 4. **Test:** Add or update tests, then run focused checks and the applicable broader suite. Never delete, bypass, dilute, or condition away a failure.
+ 5. **Evaluate:** Inspect behavior and evidence, including rendered output when the change is visual or interactive. Compare results with the goal and plan, not merely with test exit codes.
+ 6. **Record:** Update the plan, `docs/autonomy-log.md`, and `docs/decision-log.md` when a durable decision was made. Record commands, outcomes, artifacts, and known gaps accurately.
+diff --git "a/C:\\Dev\\loop-extraction\\milestone-loop-template\\CONTRACT.md" "b/C:\\Dev\\loop-extraction\\milestone-loop-template\\docs\\proposals\\ORCH-AUTH-01\\proposed\\CONTRACT.md"
+index db9364c..c3298c9 100644
+--- "a/C:\\Dev\\loop-extraction\\milestone-loop-template\\CONTRACT.md"
++++ "b/C:\\Dev\\loop-extraction\\milestone-loop-template\\docs\\proposals\\ORCH-AUTH-01\\proposed\\CONTRACT.md"
+@@ -4,6 +4,18 @@ What an adopting repository must provide for the milestone loop to operate.
+ The orchestrator treats everything below as load-bearing; each item is
+ validated at runtime (fail-closed) rather than assumed.
+ 
++## Source authority scope (orch-template.v1)
++
++This addendum applies only when the validated commissioned authority identifies milestone-loop-orchestrator-source.v1. The source product is the reusable controller/template. Its frozen source goal and acceptance manifest own its source build, workflow stages, metrics and source machine/human gates. Generated adopters and downstream repositories retain their own frozen authority and the unchanged legacy bootstrap/readiness registries below. Source workflow evidence, generated bootstrap and downstream completion cannot be interchanged.
++
++The source adds a real build:production distribution consumed through an extracted CLI, source dependency/import checks, production orchestration-domain workflows, canonical parity, fresh-adopter bootstrap compatibility and bounded-resource verification. Existing unit checks remain mandatory but are insufficient alone. The package stays in readiness with its permanent marker; no third profile or completion override exists. Exact source stage order comes from the approved source manifest. All receipt, artifact, isolation, independent review, identity, state, lease, intent, recovery, retention and fail-closed integration rules below remain mandatory.
++
++Lock v2 is source-epoch aware and preserves the original v1 lock and baseline bytes. A new authority snapshot is committed inertly under the approved epoch prefix before activation; it must be a strict ancestor. Activation uses an explicit exact-digest human approval and one recoverable coordinated authority/commissioning operation. Pending or mixed epochs are refused by all consumers. The original commissioning/schedule ledger is preserved and linked; it is not reset by one-shot recommissioning or a schedule amendment. Existing state is fenced by epoch and adopted only through fresh independent reconciliation.
++
++Source qualification coordinators and tested candidate execution have distinct identities. Candidate containers never receive Docker sockets or host credentials. Cross-platform/hosted proof must come from fresh independently checked qualification jobs on the exact source, not fabricated self-attestation. Scope-aware result schemas must reject a bootstrap, diagnostic, old-epoch or downstream PASS as source completion. The existing no-argument spelling and exact-fresh evidence requirement remain; legacy stage IDs and downstream meanings are not renamed or weakened.
++
++The rest of this document is retained as the general and legacy/downstream contract. Where its product-specific stage names, bot/seed/frame metrics or single-epoch lock grammar differ, the explicitly approved source manifest and source-epoch grammar govern only the new source contract. Every general safety invariant still applies. This addendum does not amend WP6e/WP6f or retroactively complete their blocked gates.
++
+ ## 1. Frozen authority set
+ 
+ | File                                                              | Role                                                                                                                                                                                                                                                         |
