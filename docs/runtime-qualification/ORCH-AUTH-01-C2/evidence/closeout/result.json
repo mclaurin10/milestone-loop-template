@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0.0",
+  "stageId": "orch-auth-01-c2",
+  "commandId": "vm-lifecycle-closeout",
+  "status": "PASS",
+  "checks": [
+    {
+      "id": "curated-vm-lifecycle-evidence",
+      "summary": "Reconstructed tested source, validated actual retained VM/provenance/boundary evidence and sixteen supporting receipts, rejected mutated bytes, and preserved sealed authority plus incomplete host/Windows/readiness gates.",
+      "status": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "closeout-report.json",
+      "kind": "vm-lifecycle-closeout-report",
+      "bytes": 835,
+      "sha256": "ac2674dd9e4818ad3c657d607634d65b1747f682ee94902403f67cf2de03af38"
+    }
+  ]
+}

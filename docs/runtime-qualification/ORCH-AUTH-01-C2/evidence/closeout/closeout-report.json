@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "orch-auth-01-c2-closeout.v1",
+  "status": "PASS",
+  "sourceMode": "frozen-index",
+  "testedHead": "a649611ee7be1834b915c377b93d7d71c02a7028",
+  "testedTree": "93f0fe82053ba95cd7fae79e10b2ae7cb2fbc772",
+  "evidenceFiles": 159,
+  "supportingReceipts": 16,
+  "focusedTests": 35,
+  "repositoryToolingTests": 91,
+  "linuxFilesystemBoundaryCases": 6,
+  "verifiedInputPackages": 29,
+  "guestKernel": "6.8.0-138-generic",
+  "guestDurationMs": 212508.109716,
+  "pilot": "ERROR: collector framing timeout; cleanup observed",
+  "actualTamperRejected": true,
+  "rootBuild": "NOT_READY",
+  "generalDockerControllerHostQualified": false,
+  "nativeWindowsQualified": false,
+  "windowsServer2022ReferenceQualified": false,
+  "authorityActivation": false,
+  "humanAcceptance": false,
+  "completion": {
+    "eligible": false
+  }
+}

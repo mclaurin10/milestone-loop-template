@@ -3,6 +3,15 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-09-06 UTC — Prove a network-disabled task-local VM lifecycle before host admission
+
+Choose QEMU TCG with a signed Ubuntu cloud image for C2's bounded trusted diagnostic. The existing WSL user cannot use KVM and no qualified provider was discovered. Extract verified Debian payloads in a fresh task prefix without maintainer scripts; do not install a global provider, reuse the shared LXD service, mount a Docker socket, expose workstation directories or dispatch a source controller. Native Windows and the frozen Server 2022 reference remain distinct unsolved requirements.
+
+Pin launcher/image bytes and the complete extracted-provider inventory outside the guest report. Use fixed VM argv, no NIC, an immutable backing image, fresh owned overlay/read-only seed, QMP observations, kernel/process evidence and a direct nonce-bound guest serial diagnostic. The final guest probe runs during cloud-init's boot stage; the earlier prefixed late-stage output caused a real timeout and remains failed. Keep resource/deadline restrictions and label guest settings separately from future host admission/cgroup/quota guarantees. A diagnostic PASS and an upstream signature do not authorize or qualify Docker-controller execution.
+
+Cleanup requires the recorded owner and exact allowed entries after process exit, removes individual owned files without recursive deletion, and refuses foreign/linked/changed ownership input. Actual Linux probes exercise these boundaries and a separate native observer verifies the completed cleanup. Keep immutable inputs, outside sentinels, unsuccessful attempts and their provenance limits. Do not turn missing historical stderr into a fabricated raw artifact.
+
+Docker's client/VM support and remote bind-mount semantics constrain native Windows options. A suitable dedicated Windows client with a supported Linux backend still needs its own authorized lifecycle and real executor proof; an arbitrary remote daemon lacks the existing executor's local-path transport/mapping. Server container/LCOW or WSL substitution does not close the native Windows/Server 2022 row. Preserve all gates and settled r2 scope while the next increment provisions and qualifies an actual disposable guest with compatible Docker/OCI inputs.
 ## 2026-09-05 — Inspect host launchers as data before executing capability queries
 
 C1 follows a concrete discovery failure: codex.lab's /usr/sbin/lxc version query
