@@ -1,5 +1,12 @@
 # Decision Log
 
+## 2026-09-06 UTC — Bound disposal of exact source-transition fixture roots
+
+The real bb312f3 Linux controller failed teardown with ENOTEMPTY in a newly owned Git clone, without evidence identifying a background writer. Disable automatic Git maintenance/GC only in each disposable clone as a precaution. Retain the original fixture and CLI test bodies, assertions and deadlines. Cleanup accepts only exact canonical system-temporary mkdtemp roots or the two original UUID-named CLI output patterns under canonical controller artifacts, then uses Node's documented five retries at 25ms linear backoff. Persistent failures remain fatal; no shared configuration or production contract changes.
+
+The initial guard overlooked the existing CLI output roots and caused two actual cleanup failures; retain that 30 PASS/2 FAIL run and correct only the guard. Do not change the suite or normalize the failure. The retained auditor compares complete original suite syntax trees and validates raw reports and every command-owned receipt. The predecessor R1 clean post-commit audit/focused/dependency/consumed-build observations remain separate from hosted outcomes. Keep the running bb312f3 Windows cohort until complete before any same-ref successor push.
+
+
 ## 2026-09-06 UTC — bind the package-runtime fixture to the observed installation store
 
 The runtime probe claims to consume the CI-installed graph. Its offline fixture must therefore use the store recorded by that actual installation, rather than an implicit location selected in a temporary directory. Read/validate pinned pnpm metadata, require a canonical absolute v11 store, and pass --config.store-dir to both install and exec. Force a fixture-local empty implicit store to keep the observed missing-store boundary covered. Preserve original assertions, deadlines, copy/offline/frozen/ignore-scripts flags and safeAgentEnvironment. No production verification or shared configuration change is warranted by this fixture defect; a drive-specific explanation remains unproven by local observations.

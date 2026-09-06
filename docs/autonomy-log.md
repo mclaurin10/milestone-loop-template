@@ -1,5 +1,16 @@
 # Autonomy Log
 
+## 2026-09-06 UTC — C6d-R2 owned source-transition fixture cleanup
+
+Pause C6e for bb312f3 Linux job 101513230820, run 34043089595: 949 PASS/1 FAIL among 950 controller cases, ENOTEMPTY in a disposable .git/objects/info teardown. No controller PASS receipt or later Linux root-unit execution; the runtime-store test passed. No captured observation identifies the background writer. Retain the four then-available hosted archives as a partial snapshot; collect the still-running Windows job separately before a successor same-ref push.
+
+An unchanged native baseline passed all 32 transition/runtime cases (5b82254214621040da5a3922b97670d6f32a5b311472edfec0cd2d491491f6da). Suppress automatic Git housekeeping only in each new clone, validate exact canonical owned Git/CLI output paths, and use five native rm retries with 25ms linear backoff. Original complete suite syntax trees, identities, assertions and deadlines remain equal. The first repair overlooked the two existing CLI output directories and actually failed 30 PASS/2 FAIL; preserve it and correct only that guard. Final full files pass 32 (3228b6c9ccf1e30fc3f7858ab86b7fed6ac5ca229af3b830ab0e1135c0fc635a). Final typecheck/lint/format and applicable source architecture/dependency checks pass; all five invariants pass in 84754ms, without performance interpretation.
+
+Retention: docs/ci-regressions/source-transition-cleanup, 409 regular files, 3908229 raw bytes, 49 validated command-owned receipts; ZIP 1816614 bytes, SHA256 7a7f61733e455c405e9ebb193efa625b7870ab4a1024d4b6a116eacf2e6d4f6e. Fresh extraction/audit passes (87c444475a3c25fbde0965eec1d37231453aabfff330ed4e2c6899c5811eef85). The seal includes the independently rechecked clean R1 audit/focused/dependency/consumed-build evidence at bb312f3. Its complete hosted cohort remains separate. The new auditor uses the production pending-path export, correcting only the supplemental R1 observer spelling without rewriting sealed history.
+
+The clean repair commit's independent audit/focused/dependency/consumed-build and exact new five-job hosted observations remain required at the committed plan's ignored destination. Restore C6e without losing a byte, then continue the full authorized migration, actual candidate/four partitions/raw reconciliation, real 65-minute provider boundary and committed 5(a)/5(b). Historical WP6e remains BLOCKED at e590e38, source state absent, no activation/readiness/human-acceptance or WP6f claim.
+
+
 ## 2026-09-06 UTC — C6d-R1 native package-runtime fixture store binding
 
 Pause C6e after actual C6d Windows job 101500874916 in run 34038506240 fails one of 950 controller cases: an offline temporary-fixture install cannot find locked @eslint/js 10.0.1. Retain all five exact-commit archives and their 38-receipt audit, four successful jobs, Windows 949 PASS/1 FAIL, and Windows root-unit NOT_EXECUTED. The failure did not reach a timeout. Local store-path observations do not establish the precise hosted selection mechanism.

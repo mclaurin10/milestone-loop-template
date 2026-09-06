@@ -1,3 +1,4 @@
+import assert from "node:assert/strict";
 import { createHash, randomUUID } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
@@ -10,7 +11,7 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, resolve } from "node:path";
+import { basename, dirname, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { runPnpm } from "../../evidence.mjs";
@@ -77,6 +78,10 @@ async function fixture() {
   git(
     controller,
     "clone",
+    "--config",
+    "maintenance.auto=false",
+    "--config",
+    "gc.auto=0",
     "--shared",
     "--no-checkout",
     "--single-branch",
@@ -97,8 +102,32 @@ async function committedChange(root: string, path: string, contents: string) {
   git(root, "commit", "--quiet", "-m", "Transition rejection fixture");
 }
 afterEach(async () => {
-  for (const root of temporary.splice(0))
-    await rm(root, { recursive: true, force: true });
+  for (const root of temporary.splice(0)) {
+    const parent = dirname(root),
+      name = basename(root);
+    assert(
+      (parent === (await realpath(tmpdir())) &&
+        /^source-transition-test-[A-Za-z0-9]{6}$/.test(name)) ||
+        (parent === (await realpath(resolve(controller, "artifacts"))) &&
+          /^source-(transition|request)-cli-test-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(
+            name,
+          )),
+      "Fixture cleanup refuses an unrecognized owned path.",
+    );
+    try {
+      assert.equal(await realpath(root), root);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    }
+    // Node retries documented transient filesystem errors with bounded linear
+    // backoff. Persistent failure still rejects this unchanged test deadline.
+    await rm(root, {
+      recursive: true,
+      force: true,
+      maxRetries: 5,
+      retryDelay: 25,
+    });
+  }
 });
 const prepare = (root: string, snapshotCommit = SNAPSHOT) =>
   prepareSourceAuthorityTransition({ repositoryRoot: root, snapshotCommit });
