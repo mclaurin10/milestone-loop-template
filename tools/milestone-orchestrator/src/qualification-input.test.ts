@@ -4,6 +4,7 @@ import {
   mkdir,
   mkdtemp,
   readFile,
+  realpath,
   rm,
   symlink,
   writeFile,
@@ -49,7 +50,11 @@ function binding(): QualificationBinding {
 }
 
 async function fixture() {
-  const root = await mkdtemp(resolve(tmpdir(), "qualification-input-"));
+  // Windows TEMP may use short names or different casing. The production
+  // artifact boundary requires the actual canonical directory identity.
+  const root = await realpath(
+    await mkdtemp(resolve(tmpdir(), "qualification-input-")),
+  );
   roots.push(root);
   const source = resolve(root, "source");
   await mkdir(source);
