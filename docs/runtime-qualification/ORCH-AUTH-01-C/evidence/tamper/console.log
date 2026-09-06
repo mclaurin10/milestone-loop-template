@@ -1,0 +1,1056 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+... Skipped lines
+
+  {
+    fileCount: 174,
+    files: [
+      {
+        bytes: 180,
+...
+      {
++       bytes: 8972,
+-       bytes: 8971,
+        path: 'discovery-final-remote/host-report.json',
++       sha256: 'e886b97a8a428c45e012e073c229032144c961903b738bb43f108bd9d437b34a'
+-       sha256: '8a417e6e3884c62f786b5c517b5e4ce9e2bf1a074e0c176bb7e3a4d8ff4c55f0'
+      },
+      {
+        bytes: 2424,
+        path: 'discovery-final-remote/manifest.json',
+        sha256: 'cbdae5e1309271c4963710425939283697618a0baa885664fc63b1aef95fcdc6'
+...
+    schemaVersion: '1.0.0',
++   totalBytes: 462381
+-   totalBytes: 462380
+  }
+
+    at <anonymous> (C:\Dev\loop-extraction\milestone-loop-template\docs\runtime-qualification\ORCH-AUTH-01-C\verify-closeout.ts:65:10)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: {
+    schemaVersion: '1.0.0',
+    fileCount: 174,
+    totalBytes: 462381,
+    files: [
+      {
+        path: 'checks/build/console.log',
+        bytes: 180,
+        sha256: '2d660ec0f9b42ded85e178b05b093e6f004c869ee81de8b2186e190ad734966b'
+      },
+      {
+        path: 'checks/build/manifest.json',
+        bytes: 1249,
+        sha256: 'ca9d860eae9d888ef0cf0f77bf8b6d96f9b72390e1460f00fd8fd3715292bdd2'
+      },
+      {
+        path: 'checks/format-check/console.log',
+        bytes: 171,
+        sha256: '555745acd5be461f615332bdd62b1000b7f9f194cb3cf905573ed5e9c62a2f52'
+      },
+      {
+        path: 'checks/format-check/format-report.json',
+        bytes: 1856,
+        sha256: 'bf1d96b2322c284ec39f21eb4334937d2ae1013f3236a86070cf2007e3002269'
+      },
+      {
+        path: 'checks/format-check/manifest.json',
+        bytes: 1494,
+        sha256: 'd8f61c0939801cafc3bdb0a2c02e68afc767e0bf217628214633b606c4e6bb82'
+      },
+      {
+        path: 'checks/format-check/result.json',
+        bytes: 487,
+        sha256: 'f5757923baa8308e7fd234f43d769630942eaa881f6cbb36ceee1a2058797321'
+      },
+      {
+        path: 'checks/lint/console.log',
+        bytes: 157,
+        sha256: '5735cb731c802aa9e66a6de978ab70dba8048d9fa3b9fa1f635d1422b0c07066'
+      },
+      {
+        path: 'checks/lint/lint-report.json',
+        bytes: 1684,
+        sha256: 'cb4a3c2eb2a92556aa2069d11fd868733b8bbbc49d82e30335ca0ffea100a1dc'
+      },
+      {
+        path: 'checks/lint/manifest.json',
+        bytes: 1456,
+        sha256: '45ffb74e46f18f0f8a023a938f27b35b18413bc34727b09e5d75f67c84393389'
+      },
+      {
+        path: 'checks/lint/result.json',
+        bytes: 471,
+        sha256: '6895cc6b05c92743a653453d904abe3506848782bd9957218ab977c2c565a43a'
+      },
+      {
+        path: 'checks/test-invariants/console.log',
+        bytes: 119,
+        sha256: '60c72aeebb087ea880bcbc50203b2b23ff78f70f4a7b21a12a3b533df9945f5c'
+      },
+      {
+        path: 'checks/test-invariants/entries/fail-closed-evidence/invariant-vitest-report.json',
+        bytes: 19818,
+        sha256: '511a4c2910359a3cb85adfa14441436ff1941c52fa60d3a7e49073b94a773036'
+      },
+      {
+        path: 'checks/test-invariants/entries/fail-closed-evidence/manifest.json',
+        bytes: 1633,
+        sha256: '9c609361a9b158f17bad1e41441665969f5d4f9831cdc701e3074c25f9a2f8d6'
+      },
+      {
+        path: 'checks/test-invariants/entries/fail-closed-evidence/result.json',
+        bytes: 598,
+        sha256: 'dddd481d474dc072d782c3557e71aed739a9614080a227d0980814ef80bff5e7'
+      },
+      {
+        path: 'checks/test-invariants/entries/orchestrator-policy-integrity/invariant-vitest-report.json',
+        bytes: 5081,
+        sha256: '2dc7990d7064b230035c8fb86c3004d3c905b08089264fc9aa5416eb7e594b64'
+      },
+      {
+        path: 'checks/test-invariants/entries/orchestrator-policy-integrity/manifest.json',
+        bytes: 1665,
+        sha256: 'f238d6c3d63a52b2e890bea90f2ace28da6c6ea0e5f6862f2618d5acff939f43'
+      },
+      {
+        path: 'checks/test-invariants/entries/orchestrator-policy-integrity/result.json',
+        bytes: 604,
+        sha256: 'bef699004677f7318efd1a4b551a27c16e62a0bfb1401263a5cb6b317f5b8017'
+      },
+      {
+        path: 'checks/test-invariants/entries/orchestrator-schema-integrity/invariant-vitest-report.json',
+        bytes: 3263,
+        sha256: 'e80c3f589e6de7b184aec17d789d5feb1b82b2d69bd5161cefb88fd499e54b6e'
+      },
+      {
+        path: 'checks/test-invariants/entries/orchestrator-schema-integrity/manifest.json',
+        bytes: 1668,
+        sha256: 'f09b10318d95f3d00cf7c1e2a13c542c4d2b1a3f41137caa0d51205e2d64c115'
+      },
+      {
+        path: 'checks/test-invariants/entries/orchestrator-schema-integrity/result.json',
+        bytes: 604,
+        sha256: '6ee18d2373dd162212ff24b6913b1b0b0144cbb368f0944fed255c8b1d0a9b18'
+      },
+      {
+        path: 'checks/test-invariants/entries/protected-integrity/contract-integrity-report.json',
+        bytes: 3532,
+        sha256: '93337b0a760a7da19d64ad81c61b92d1acfdd5f0c6f78f0a1da848ddf54f117e'
+      },
+      {
+        path: 'checks/test-invariants/entries/protected-integrity/manifest.json',
+        bytes: 1429,
+        sha256: 'f192fc7b9223ec926539e20e6efe2a5c758b7775881e8f72eadd1a4de0dbb69d'
+      },
+      {
+        path: 'checks/test-invariants/entries/protected-integrity/result.json',
+        bytes: 764,
+        sha256: '71cbfec5122d892b7a8a8508faac43e7c874164cd7c410be0b8e739a69ccc02b'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-01-1.stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-01-1.stdout.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-01-1.vitest-list.json',
+        bytes: 113,
+        sha256: '46ead0f448a0873a95cc06c66d6418536aa757fa77b15ae6fbf87252df62b9e3'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-01-2.stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-01-2.stdout.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-01-2.vitest-list.json',
+        bytes: 113,
+        sha256: '46ead0f448a0873a95cc06c66d6418536aa757fa77b15ae6fbf87252df62b9e3'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-02-1.stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-02-1.stdout.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-02-1.vitest-list.json',
+        bytes: 318,
+        sha256: '2db4ab7ef3837137aea208a7ef2c3d3f393a21a1d691002b07dac00879f6e31c'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-02-2.stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-02-2.stdout.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-02-2.vitest-list.json',
+        bytes: 318,
+        sha256: '2db4ab7ef3837137aea208a7ef2c3d3f393a21a1d691002b07dac00879f6e31c'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-03-1.stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-03-1.stdout.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-03-1.vitest-list.json',
+        bytes: 11321,
+        sha256: '30b344c79cbefe7ee9bdcba9204ed5e4ec6c61d3122e4c008c280f9bfe88dc9a'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-03-2.stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-03-2.stdout.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-03-2.vitest-list.json',
+        bytes: 11321,
+        sha256: '30b344c79cbefe7ee9bdcba9204ed5e4ec6c61d3122e4c008c280f9bfe88dc9a'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-04-1.stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-04-1.stdout.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-04-1.vitest-list.json',
+        bytes: 11105,
+        sha256: '41a1957fab46b1db82b3cce1f24f161642f978052ddee9fd289627abf85f97b2'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-04-2.stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-04-2.stdout.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-04-2.vitest-list.json',
+        bytes: 11105,
+        sha256: '41a1957fab46b1db82b3cce1f24f161642f978052ddee9fd289627abf85f97b2'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/manifest.json',
+        bytes: 1395,
+        sha256: 'e03994b64e13ee5219ee28d601ac27070c81f2a6dc5336f2a38aae6614af57e4'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/result.json',
+        bytes: 968,
+        sha256: '6844b9e59ff889c3c894640d0cc48aa486235107ca82a23c8c110a368487b199'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/test-ownership-report.json',
+        bytes: 33645,
+        sha256: '344775f2aa5bcbb2638a3ed2d14383a227fc7dd374a31bcbc37ebbfbf2c9c228'
+      },
+      {
+        path: 'checks/test-invariants/invariant-suite-report.json',
+        bytes: 9001,
+        sha256: '1bd49cedadb2648beff0dae360e0ee702caf47a05c2e2a676c4a214bd3ef737f'
+      },
+      {
+        path: 'checks/test-invariants/logs/fail-closed-evidence.stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/logs/fail-closed-evidence.stdout.log',
+        bytes: 180,
+        sha256: 'd69ee56840150048e309d69b16f45447f70375ce236433fa2ca65c9a5f598a7b'
+      },
+      {
+        path: 'checks/test-invariants/logs/orchestrator-policy-integrity.stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/logs/orchestrator-policy-integrity.stdout.log',
+        bytes: 189,
+        sha256: '5ee0a7dd33ffd28f390841aa78080f7491efc1cac5ef0e72b0de22645d687e23'
+      },
+      {
+        path: 'checks/test-invariants/logs/orchestrator-schema-integrity.stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/logs/orchestrator-schema-integrity.stdout.log',
+        bytes: 189,
+        sha256: 'c82e7b848f023b433037862ca89a8b0cc87ca7076bd0e72e8b1f24fc260c748c'
+      },
+      {
+        path: 'checks/test-invariants/logs/protected-integrity.stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/logs/protected-integrity.stdout.log',
+        bytes: 89,
+        sha256: '128a666acc082d496c4a4700517431ba3019216135e59f2fa134d3e978122554'
+      },
+      {
+        path: 'checks/test-invariants/logs/test-ownership.stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/logs/test-ownership.stdout.log',
+        bytes: 44,
+        sha256: '5673551960b3f30788dba24c96c4dccf81e77bec2a5bee6319e5e55fef4985d4'
+      },
+      {
+        path: 'checks/test-invariants/manifest.json',
+        bytes: 1408,
+        sha256: '20892c754aa96d0add96403707ea0a781ae5b31a5538f5a6484a47e21fd4ee04'
+      },
+      {
+        path: 'checks/test-invariants/result.json',
+        bytes: 1035,
+        sha256: 'a7971626f23f9dd0f723157e9c115fa5520b787ad6cfba2831b4bc1f3bc61b04'
+      },
+      {
+        path: 'checks/test-partition-repository-tooling/console.log',
+        bytes: 241,
+        sha256: '39dea96bf0468424894595db32a210bd99f97b116ae170476c400d0c6cbfbe7d'
+      },
+      {
+        path: 'checks/test-partition-repository-tooling/manifest.json',
+        bytes: 1407,
+        sha256: '8a3fef630ff652456018f4c8e6881894b678f0c6a424c447f8de5b210aae3831'
+      },
+      {
+        path: 'checks/test-partition-repository-tooling/test-partition-report.json',
+        bytes: 133,
+        sha256: 'eceec2fdeff4da841e7967744fd62b9d55e7995325bd8ad369709e1293f22237'
+      },
+      {
+        path: 'checks/typecheck/console.log',
+        bytes: 177,
+        sha256: 'b96adf65f51f6a6ed9bee9d0412ce3a71e38b87ad082cbc6696b7be039fbdc25'
+      },
+      {
+        path: 'checks/typecheck/manifest.json',
+        bytes: 1486,
+        sha256: '2f97259acf9c44b01449aed4ea3668c9f650a3e803dadc2cb43422c431c9793c'
+      },
+      {
+        path: 'checks/typecheck/result.json',
+        bytes: 494,
+        sha256: 'de6c071f03ce6e8e85056888a556a774504efb3fe55495bbef042188c107ea3c'
+      },
+      {
+        path: 'checks/typecheck/typecheck-report.json',
+        bytes: 1151,
+        sha256: '945f82c04c3899a5fba4e900ee6ca789d0f8d3a842265457154466712cd8f366'
+      },
+      {
+        path: 'discovery-final-remote/audit-report.json',
+        bytes: 1207,
+        sha256: '15b2c3e76390616a9bb90261cc0df0a8a879ad0da00187ec5a6be208d5bb486a'
+      },
+      {
+        path: 'discovery-final-remote/dispatch.json',
+        bytes: 2764,
+        sha256: '5efec38d2aed3f6de606a7f851c1d92937c55f4347452bb68907c5e020c98552'
+      },
+      {
+        path: 'discovery-final-remote/execution.json',
+        bytes: 623,
+        sha256: '957229877009425d30b2083771f16440432cbdbed497506cdaff06a771b01134'
+      },
+      {
+        path: 'discovery-final-remote/expectations.json',
+        bytes: 677,
+        sha256: '62fa2bf3438d627acb2ac94861cc75417e48948fa7179cc64f812f4ff274b1ef'
+      },
+      {
+        path: 'discovery-final-remote/host-report.json',
+        bytes: 8972,
+        sha256: 'e886b97a8a428c45e012e073c229032144c961903b738bb43f108bd9d437b34a'
+      },
+      {
+        path: 'discovery-final-remote/manifest.json',
+        bytes: 2424,
+        sha256: 'cbdae5e1309271c4963710425939283697618a0baa885664fc63b1aef95fcdc6'
+      },
+      {
+        path: 'discovery-final-remote/result.json',
+        bytes: 1439,
+        sha256: 'a8a623628bc14217cb28c51539cd875dbe927939de2cf49161a45b19e9507e7b'
+      },
+      {
+        path: 'discovery-final-remote/stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'discovery-final-windows/audit-report.json',
+        bytes: 1201,
+        sha256: '1778e93874fc6431d828a549d288421347e067a965209f30d88f628627b5a4fe'
+      },
+      {
+        path: 'discovery-final-windows/dispatch.json',
+        bytes: 2711,
+        sha256: '50b6a9067a798c1de98acf228a40b0d1b0df2116ac3c5ff5b1b863b74a65feb8'
+      },
+      {
+        path: 'discovery-final-windows/execution.json',
+        bytes: 623,
+        sha256: 'a57135214c5397914ee198b22a506c95cf745ade47dd3e6accee5006ad8e753a'
+      },
+      {
+        path: 'discovery-final-windows/expectations.json',
+        bytes: 671,
+        sha256: 'e9204c13845d5e933c08e36862d24d7b4e73db31762fef5b012a456134271347'
+      },
+      {
+        path: 'discovery-final-windows/host-report.json',
+        bytes: 2494,
+        sha256: 'd524178c53a252c48327e6d26988cb54eb41b66be7432a8a9a63f21a0ff4e6ff'
+      },
+      {
+        path: 'discovery-final-windows/manifest.json',
+        bytes: 2494,
+        sha256: '5efbf46e480d99a579546b11c205c0563f8398de7308d05a4864afb9516059c2'
+      },
+      {
+        path: 'discovery-final-windows/result.json',
+        bytes: 1440,
+        sha256: 'b011bb5eeab10a87b421d74ef1e693eb413313120a4be03f8f0ff12460967c4e'
+      },
+      {
+        path: 'discovery-final-windows/stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'discovery-final-wsl/audit-report.json',
+        bytes: 1218,
+        sha256: 'd9a2ca5c0601c17842a97aa66b60e1f374b15e163ff55035cf64b7fcdbd43bad'
+      },
+      {
+        path: 'discovery-final-wsl/dispatch.json',
+        bytes: 2708,
+        sha256: 'd233f1b6594569944445a9a9da37fa6a0e0a46468a18b5f77b428d923ca21375'
+      },
+      {
+        path: 'discovery-final-wsl/execution.json',
+        bytes: 626,
+        sha256: '303221665009afc1f629e0b7aa7ae8543a420e51bf23e12fea699bc08fa6cb23'
+      },
+      {
+        path: 'discovery-final-wsl/expectations.json',
+        bytes: 689,
+        sha256: 'e19615c585462149cc5ccd77e1c1ff4b2345cfb31e57e6f43cae11d3f0a828f2'
+      },
+      {
+        path: 'discovery-final-wsl/host-report.json',
+        bytes: 13664,
+        sha256: '211edc7d71a0740b40cafcdbe4d90c61d281bc76ae1dca0ccb83dd033238ae6a'
+      },
+      {
+        path: 'discovery-final-wsl/manifest.json',
+        bytes: 2433,
+        sha256: '8e129733652b29c137af97e16033f53245929a7cfdd2260daaf3ad7e3f4ed00e'
+      },
+      {
+        path: 'discovery-final-wsl/result.json',
+        bytes: 1437,
+        sha256: '84f714a571d2c07a8bf3b974079a01ad72515bdef5c012e1931503482bca5f65'
+      },
+      {
+        path: 'discovery-final-wsl/stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'discovery-remote/audit-report.json',
+        bytes: 1207,
+        sha256: 'e45c32777604319ac34c82b06484b01464ba952c72d96ad4479bad0c0903cf9a'
+      },
+      {
+        path: 'discovery-remote/dispatch.json',
+        bytes: 2764,
+        sha256: '4daba6034eee38ddb94ff896bf10f77c123aa94b3ec383828e28179393012d4c'
+      },
+      {
+        path: 'discovery-remote/execution.json',
+        bytes: 623,
+        sha256: '4844d510bb7308b7d34aa93ef9c6fed5bb505c529c8e002fefa297d7a90e13d4'
+      },
+      {
+        path: 'discovery-remote/expectations.json',
+        bytes: 677,
+        sha256: '005fa4b13c580de7d536b656b073fcf143e22103ffa4cd44ea41bd0832f1226d'
+      },
+      {
+        path: 'discovery-remote/host-report.json',
+        bytes: 8971,
+        sha256: '5b8b1b284896e792a5389603f8c2cc020e0aec5c4081322d2c720fba286cdbe0'
+      },
+      {
+        path: 'discovery-remote/manifest.json',
+        bytes: 2417,
+        sha256: '86e2a1910b98f34d035a5264ed981e1d253b57b719e26844bef2e5728f810be6'
+      },
+      ... 74 more items
+    ]
+  },
+  expected: {
+    schemaVersion: '1.0.0',
+    fileCount: 174,
+    totalBytes: 462380,
+    files: [
+      {
+        path: 'checks/build/console.log',
+        bytes: 180,
+        sha256: '2d660ec0f9b42ded85e178b05b093e6f004c869ee81de8b2186e190ad734966b'
+      },
+      {
+        path: 'checks/build/manifest.json',
+        bytes: 1249,
+        sha256: 'ca9d860eae9d888ef0cf0f77bf8b6d96f9b72390e1460f00fd8fd3715292bdd2'
+      },
+      {
+        path: 'checks/format-check/console.log',
+        bytes: 171,
+        sha256: '555745acd5be461f615332bdd62b1000b7f9f194cb3cf905573ed5e9c62a2f52'
+      },
+      {
+        path: 'checks/format-check/format-report.json',
+        bytes: 1856,
+        sha256: 'bf1d96b2322c284ec39f21eb4334937d2ae1013f3236a86070cf2007e3002269'
+      },
+      {
+        path: 'checks/format-check/manifest.json',
+        bytes: 1494,
+        sha256: 'd8f61c0939801cafc3bdb0a2c02e68afc767e0bf217628214633b606c4e6bb82'
+      },
+      {
+        path: 'checks/format-check/result.json',
+        bytes: 487,
+        sha256: 'f5757923baa8308e7fd234f43d769630942eaa881f6cbb36ceee1a2058797321'
+      },
+      {
+        path: 'checks/lint/console.log',
+        bytes: 157,
+        sha256: '5735cb731c802aa9e66a6de978ab70dba8048d9fa3b9fa1f635d1422b0c07066'
+      },
+      {
+        path: 'checks/lint/lint-report.json',
+        bytes: 1684,
+        sha256: 'cb4a3c2eb2a92556aa2069d11fd868733b8bbbc49d82e30335ca0ffea100a1dc'
+      },
+      {
+        path: 'checks/lint/manifest.json',
+        bytes: 1456,
+        sha256: '45ffb74e46f18f0f8a023a938f27b35b18413bc34727b09e5d75f67c84393389'
+      },
+      {
+        path: 'checks/lint/result.json',
+        bytes: 471,
+        sha256: '6895cc6b05c92743a653453d904abe3506848782bd9957218ab977c2c565a43a'
+      },
+      {
+        path: 'checks/test-invariants/console.log',
+        bytes: 119,
+        sha256: '60c72aeebb087ea880bcbc50203b2b23ff78f70f4a7b21a12a3b533df9945f5c'
+      },
+      {
+        path: 'checks/test-invariants/entries/fail-closed-evidence/invariant-vitest-report.json',
+        bytes: 19818,
+        sha256: '511a4c2910359a3cb85adfa14441436ff1941c52fa60d3a7e49073b94a773036'
+      },
+      {
+        path: 'checks/test-invariants/entries/fail-closed-evidence/manifest.json',
+        bytes: 1633,
+        sha256: '9c609361a9b158f17bad1e41441665969f5d4f9831cdc701e3074c25f9a2f8d6'
+      },
+      {
+        path: 'checks/test-invariants/entries/fail-closed-evidence/result.json',
+        bytes: 598,
+        sha256: 'dddd481d474dc072d782c3557e71aed739a9614080a227d0980814ef80bff5e7'
+      },
+      {
+        path: 'checks/test-invariants/entries/orchestrator-policy-integrity/invariant-vitest-report.json',
+        bytes: 5081,
+        sha256: '2dc7990d7064b230035c8fb86c3004d3c905b08089264fc9aa5416eb7e594b64'
+      },
+      {
+        path: 'checks/test-invariants/entries/orchestrator-policy-integrity/manifest.json',
+        bytes: 1665,
+        sha256: 'f238d6c3d63a52b2e890bea90f2ace28da6c6ea0e5f6862f2618d5acff939f43'
+      },
+      {
+        path: 'checks/test-invariants/entries/orchestrator-policy-integrity/result.json',
+        bytes: 604,
+        sha256: 'bef699004677f7318efd1a4b551a27c16e62a0bfb1401263a5cb6b317f5b8017'
+      },
+      {
+        path: 'checks/test-invariants/entries/orchestrator-schema-integrity/invariant-vitest-report.json',
+        bytes: 3263,
+        sha256: 'e80c3f589e6de7b184aec17d789d5feb1b82b2d69bd5161cefb88fd499e54b6e'
+      },
+      {
+        path: 'checks/test-invariants/entries/orchestrator-schema-integrity/manifest.json',
+        bytes: 1668,
+        sha256: 'f09b10318d95f3d00cf7c1e2a13c542c4d2b1a3f41137caa0d51205e2d64c115'
+      },
+      {
+        path: 'checks/test-invariants/entries/orchestrator-schema-integrity/result.json',
+        bytes: 604,
+        sha256: '6ee18d2373dd162212ff24b6913b1b0b0144cbb368f0944fed255c8b1d0a9b18'
+      },
+      {
+        path: 'checks/test-invariants/entries/protected-integrity/contract-integrity-report.json',
+        bytes: 3532,
+        sha256: '93337b0a760a7da19d64ad81c61b92d1acfdd5f0c6f78f0a1da848ddf54f117e'
+      },
+      {
+        path: 'checks/test-invariants/entries/protected-integrity/manifest.json',
+        bytes: 1429,
+        sha256: 'f192fc7b9223ec926539e20e6efe2a5c758b7775881e8f72eadd1a4de0dbb69d'
+      },
+      {
+        path: 'checks/test-invariants/entries/protected-integrity/result.json',
+        bytes: 764,
+        sha256: '71cbfec5122d892b7a8a8508faac43e7c874164cd7c410be0b8e739a69ccc02b'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-01-1.stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-01-1.stdout.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-01-1.vitest-list.json',
+        bytes: 113,
+        sha256: '46ead0f448a0873a95cc06c66d6418536aa757fa77b15ae6fbf87252df62b9e3'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-01-2.stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-01-2.stdout.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-01-2.vitest-list.json',
+        bytes: 113,
+        sha256: '46ead0f448a0873a95cc06c66d6418536aa757fa77b15ae6fbf87252df62b9e3'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-02-1.stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-02-1.stdout.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-02-1.vitest-list.json',
+        bytes: 318,
+        sha256: '2db4ab7ef3837137aea208a7ef2c3d3f393a21a1d691002b07dac00879f6e31c'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-02-2.stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-02-2.stdout.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-02-2.vitest-list.json',
+        bytes: 318,
+        sha256: '2db4ab7ef3837137aea208a7ef2c3d3f393a21a1d691002b07dac00879f6e31c'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-03-1.stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-03-1.stdout.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-03-1.vitest-list.json',
+        bytes: 11321,
+        sha256: '30b344c79cbefe7ee9bdcba9204ed5e4ec6c61d3122e4c008c280f9bfe88dc9a'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-03-2.stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-03-2.stdout.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-03-2.vitest-list.json',
+        bytes: 11321,
+        sha256: '30b344c79cbefe7ee9bdcba9204ed5e4ec6c61d3122e4c008c280f9bfe88dc9a'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-04-1.stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-04-1.stdout.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-04-1.vitest-list.json',
+        bytes: 11105,
+        sha256: '41a1957fab46b1db82b3cce1f24f161642f978052ddee9fd289627abf85f97b2'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-04-2.stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-04-2.stdout.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/discovery-logs/ownership-discovery-04-2.vitest-list.json',
+        bytes: 11105,
+        sha256: '41a1957fab46b1db82b3cce1f24f161642f978052ddee9fd289627abf85f97b2'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/manifest.json',
+        bytes: 1395,
+        sha256: 'e03994b64e13ee5219ee28d601ac27070c81f2a6dc5336f2a38aae6614af57e4'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/result.json',
+        bytes: 968,
+        sha256: '6844b9e59ff889c3c894640d0cc48aa486235107ca82a23c8c110a368487b199'
+      },
+      {
+        path: 'checks/test-invariants/entries/test-ownership/test-ownership-report.json',
+        bytes: 33645,
+        sha256: '344775f2aa5bcbb2638a3ed2d14383a227fc7dd374a31bcbc37ebbfbf2c9c228'
+      },
+      {
+        path: 'checks/test-invariants/invariant-suite-report.json',
+        bytes: 9001,
+        sha256: '1bd49cedadb2648beff0dae360e0ee702caf47a05c2e2a676c4a214bd3ef737f'
+      },
+      {
+        path: 'checks/test-invariants/logs/fail-closed-evidence.stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/logs/fail-closed-evidence.stdout.log',
+        bytes: 180,
+        sha256: 'd69ee56840150048e309d69b16f45447f70375ce236433fa2ca65c9a5f598a7b'
+      },
+      {
+        path: 'checks/test-invariants/logs/orchestrator-policy-integrity.stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/logs/orchestrator-policy-integrity.stdout.log',
+        bytes: 189,
+        sha256: '5ee0a7dd33ffd28f390841aa78080f7491efc1cac5ef0e72b0de22645d687e23'
+      },
+      {
+        path: 'checks/test-invariants/logs/orchestrator-schema-integrity.stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/logs/orchestrator-schema-integrity.stdout.log',
+        bytes: 189,
+        sha256: 'c82e7b848f023b433037862ca89a8b0cc87ca7076bd0e72e8b1f24fc260c748c'
+      },
+      {
+        path: 'checks/test-invariants/logs/protected-integrity.stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/logs/protected-integrity.stdout.log',
+        bytes: 89,
+        sha256: '128a666acc082d496c4a4700517431ba3019216135e59f2fa134d3e978122554'
+      },
+      {
+        path: 'checks/test-invariants/logs/test-ownership.stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'checks/test-invariants/logs/test-ownership.stdout.log',
+        bytes: 44,
+        sha256: '5673551960b3f30788dba24c96c4dccf81e77bec2a5bee6319e5e55fef4985d4'
+      },
+      {
+        path: 'checks/test-invariants/manifest.json',
+        bytes: 1408,
+        sha256: '20892c754aa96d0add96403707ea0a781ae5b31a5538f5a6484a47e21fd4ee04'
+      },
+      {
+        path: 'checks/test-invariants/result.json',
+        bytes: 1035,
+        sha256: 'a7971626f23f9dd0f723157e9c115fa5520b787ad6cfba2831b4bc1f3bc61b04'
+      },
+      {
+        path: 'checks/test-partition-repository-tooling/console.log',
+        bytes: 241,
+        sha256: '39dea96bf0468424894595db32a210bd99f97b116ae170476c400d0c6cbfbe7d'
+      },
+      {
+        path: 'checks/test-partition-repository-tooling/manifest.json',
+        bytes: 1407,
+        sha256: '8a3fef630ff652456018f4c8e6881894b678f0c6a424c447f8de5b210aae3831'
+      },
+      {
+        path: 'checks/test-partition-repository-tooling/test-partition-report.json',
+        bytes: 133,
+        sha256: 'eceec2fdeff4da841e7967744fd62b9d55e7995325bd8ad369709e1293f22237'
+      },
+      {
+        path: 'checks/typecheck/console.log',
+        bytes: 177,
+        sha256: 'b96adf65f51f6a6ed9bee9d0412ce3a71e38b87ad082cbc6696b7be039fbdc25'
+      },
+      {
+        path: 'checks/typecheck/manifest.json',
+        bytes: 1486,
+        sha256: '2f97259acf9c44b01449aed4ea3668c9f650a3e803dadc2cb43422c431c9793c'
+      },
+      {
+        path: 'checks/typecheck/result.json',
+        bytes: 494,
+        sha256: 'de6c071f03ce6e8e85056888a556a774504efb3fe55495bbef042188c107ea3c'
+      },
+      {
+        path: 'checks/typecheck/typecheck-report.json',
+        bytes: 1151,
+        sha256: '945f82c04c3899a5fba4e900ee6ca789d0f8d3a842265457154466712cd8f366'
+      },
+      {
+        path: 'discovery-final-remote/audit-report.json',
+        bytes: 1207,
+        sha256: '15b2c3e76390616a9bb90261cc0df0a8a879ad0da00187ec5a6be208d5bb486a'
+      },
+      {
+        path: 'discovery-final-remote/dispatch.json',
+        bytes: 2764,
+        sha256: '5efec38d2aed3f6de606a7f851c1d92937c55f4347452bb68907c5e020c98552'
+      },
+      {
+        path: 'discovery-final-remote/execution.json',
+        bytes: 623,
+        sha256: '957229877009425d30b2083771f16440432cbdbed497506cdaff06a771b01134'
+      },
+      {
+        path: 'discovery-final-remote/expectations.json',
+        bytes: 677,
+        sha256: '62fa2bf3438d627acb2ac94861cc75417e48948fa7179cc64f812f4ff274b1ef'
+      },
+      {
+        path: 'discovery-final-remote/host-report.json',
+        bytes: 8971,
+        sha256: '8a417e6e3884c62f786b5c517b5e4ce9e2bf1a074e0c176bb7e3a4d8ff4c55f0'
+      },
+      {
+        path: 'discovery-final-remote/manifest.json',
+        bytes: 2424,
+        sha256: 'cbdae5e1309271c4963710425939283697618a0baa885664fc63b1aef95fcdc6'
+      },
+      {
+        path: 'discovery-final-remote/result.json',
+        bytes: 1439,
+        sha256: 'a8a623628bc14217cb28c51539cd875dbe927939de2cf49161a45b19e9507e7b'
+      },
+      {
+        path: 'discovery-final-remote/stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'discovery-final-windows/audit-report.json',
+        bytes: 1201,
+        sha256: '1778e93874fc6431d828a549d288421347e067a965209f30d88f628627b5a4fe'
+      },
+      {
+        path: 'discovery-final-windows/dispatch.json',
+        bytes: 2711,
+        sha256: '50b6a9067a798c1de98acf228a40b0d1b0df2116ac3c5ff5b1b863b74a65feb8'
+      },
+      {
+        path: 'discovery-final-windows/execution.json',
+        bytes: 623,
+        sha256: 'a57135214c5397914ee198b22a506c95cf745ade47dd3e6accee5006ad8e753a'
+      },
+      {
+        path: 'discovery-final-windows/expectations.json',
+        bytes: 671,
+        sha256: 'e9204c13845d5e933c08e36862d24d7b4e73db31762fef5b012a456134271347'
+      },
+      {
+        path: 'discovery-final-windows/host-report.json',
+        bytes: 2494,
+        sha256: 'd524178c53a252c48327e6d26988cb54eb41b66be7432a8a9a63f21a0ff4e6ff'
+      },
+      {
+        path: 'discovery-final-windows/manifest.json',
+        bytes: 2494,
+        sha256: '5efbf46e480d99a579546b11c205c0563f8398de7308d05a4864afb9516059c2'
+      },
+      {
+        path: 'discovery-final-windows/result.json',
+        bytes: 1440,
+        sha256: 'b011bb5eeab10a87b421d74ef1e693eb413313120a4be03f8f0ff12460967c4e'
+      },
+      {
+        path: 'discovery-final-windows/stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'discovery-final-wsl/audit-report.json',
+        bytes: 1218,
+        sha256: 'd9a2ca5c0601c17842a97aa66b60e1f374b15e163ff55035cf64b7fcdbd43bad'
+      },
+      {
+        path: 'discovery-final-wsl/dispatch.json',
+        bytes: 2708,
+        sha256: 'd233f1b6594569944445a9a9da37fa6a0e0a46468a18b5f77b428d923ca21375'
+      },
+      {
+        path: 'discovery-final-wsl/execution.json',
+        bytes: 626,
+        sha256: '303221665009afc1f629e0b7aa7ae8543a420e51bf23e12fea699bc08fa6cb23'
+      },
+      {
+        path: 'discovery-final-wsl/expectations.json',
+        bytes: 689,
+        sha256: 'e19615c585462149cc5ccd77e1c1ff4b2345cfb31e57e6f43cae11d3f0a828f2'
+      },
+      {
+        path: 'discovery-final-wsl/host-report.json',
+        bytes: 13664,
+        sha256: '211edc7d71a0740b40cafcdbe4d90c61d281bc76ae1dca0ccb83dd033238ae6a'
+      },
+      {
+        path: 'discovery-final-wsl/manifest.json',
+        bytes: 2433,
+        sha256: '8e129733652b29c137af97e16033f53245929a7cfdd2260daaf3ad7e3f4ed00e'
+      },
+      {
+        path: 'discovery-final-wsl/result.json',
+        bytes: 1437,
+        sha256: '84f714a571d2c07a8bf3b974079a01ad72515bdef5c012e1931503482bca5f65'
+      },
+      {
+        path: 'discovery-final-wsl/stderr.log',
+        bytes: 0,
+        sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        path: 'discovery-remote/audit-report.json',
+        bytes: 1207,
+        sha256: 'e45c32777604319ac34c82b06484b01464ba952c72d96ad4479bad0c0903cf9a'
+      },
+      {
+        path: 'discovery-remote/dispatch.json',
+        bytes: 2764,
+        sha256: '4daba6034eee38ddb94ff896bf10f77c123aa94b3ec383828e28179393012d4c'
+      },
+      {
+        path: 'discovery-remote/execution.json',
+        bytes: 623,
+        sha256: '4844d510bb7308b7d34aa93ef9c6fed5bb505c529c8e002fefa297d7a90e13d4'
+      },
+      {
+        path: 'discovery-remote/expectations.json',
+        bytes: 677,
+        sha256: '005fa4b13c580de7d536b656b073fcf143e22103ffa4cd44ea41bd0832f1226d'
+      },
+      {
+        path: 'discovery-remote/host-report.json',
+        bytes: 8971,
+        sha256: '5b8b1b284896e792a5389603f8c2cc020e0aec5c4081322d2c720fba286cdbe0'
+      },
+      {
+        path: 'discovery-remote/manifest.json',
+        bytes: 2417,
+        sha256: '86e2a1910b98f34d035a5264ed981e1d253b57b719e26844bef2e5728f810be6'
+      },
+      ... 74 more items
+    ]
+  },
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.18.0

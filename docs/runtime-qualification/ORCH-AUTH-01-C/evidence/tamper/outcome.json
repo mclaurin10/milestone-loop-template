@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "orch-auth-01-c-tamper-observation.v1",
+  "procedure": "Append one ASCII space to the retained remote host-report.json in a separate copy, then run the unchanged closeout auditor",
+  "file": "raw/discovery-final-remote/host-report.json",
+  "originalSha256": "8a417e6e3884c62f786b5c517b5e4ce9e2bf1a074e0c176bb7e3a4d8ff4c55f0",
+  "tamperedSha256": "e886b97a8a428c45e012e073c229032144c961903b738bb43f108bd9d437b34a",
+  "exitCode": 1,
+  "passReceiptExists": false,
+  "consoleSha256": "26cacd664c947fbea5cfbab24323fd694a1f36184b656fc3ef6a3fedcdb0493d"
+}

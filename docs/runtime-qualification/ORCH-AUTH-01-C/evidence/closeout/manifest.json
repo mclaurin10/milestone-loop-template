@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0.0",
+  "manifestId": "manual-host-discovery-closeout-20260906000632513-9680-2d67e4e8",
+  "stageId": "orch-auth-01-c",
+  "commandId": "host-discovery-closeout",
+  "displayCommand": "C:\\Dev\\loop-extraction\\milestone-loop-template\\.tools\\node-v24.18.0-win-x64\\node.exe C:\\Dev\\loop-extraction\\milestone-loop-template\\docs\\runtime-qualification\\ORCH-AUTH-01-C\\verify-closeout.ts C:\\Dev\\loop-extraction\\milestone-loop-template\\artifacts\\orch-auth-01-c\\reproduce-f49fcf392af54b85a62ac5455ad422a0 artifacts/orch-auth-01-c/closeout-final",
+  "status": "PASS",
+  "candidate": {
+    "gitCommit": "13b013d3b5b20e056561d12221e83b741b65fe8f",
+    "gitTree": "822426b10089f90ae6fcbe397a322914ec97b757",
+    "workingTreeDirty": true
+  },
+  "receipt": {
+    "path": "result.json",
+    "sha256": "1e367b7532a9ce0f64071a44b330af8c4a630f8aa2bf434f2a6018832604cc03",
+    "bytes": 647
+  },
+  "declaredArtifacts": {
+    "count": 1,
+    "bytes": 2063,
+    "declarations": [
+      {
+        "path": "closeout-report.json",
+        "kind": "host-discovery-closeout-report",
+        "bytes": 2063,
+        "sha256": "38719fe9f2f3ce68b09edec1d85f8f8d2b9b777a4e0b68f9d92eb6f1c50b697a"
+      }
+    ]
+  },
+  "telemetry": {
+    "runId": null,
+    "manifestPath": null
+  },
+  "citationClass": "uncited-at-creation",
+  "durableCitations": {
+    "trackedPaths": [],
+    "controllerStateReferences": [],
+    "activeReconciliationReference": null
+  },
+  "createdAt": "2026-09-06T00:06:32.513Z",
+  "finishedAt": "2026-09-06T00:06:36.876Z",
+  "failureClassification": null
+}

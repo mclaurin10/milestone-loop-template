@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0.0",
+  "manifestId": "manual-host-discovery-closeout-20260906000105684-14296-1c8e49dd",
+  "stageId": "orch-auth-01-c",
+  "commandId": "host-discovery-closeout",
+  "displayCommand": "C:\\Dev\\loop-extraction\\milestone-loop-template\\.tools\\node-v24.18.0-win-x64\\node.exe C:\\Dev\\loop-extraction\\milestone-loop-template\\docs\\runtime-qualification\\ORCH-AUTH-01-C\\verify-closeout.ts C:\\Dev\\loop-extraction\\milestone-loop-template\\artifacts\\orch-auth-01-c\\tamper-extracted artifacts/orch-auth-01-c/tamper-audit",
+  "status": "ERROR",
+  "candidate": {
+    "gitCommit": "13b013d3b5b20e056561d12221e83b741b65fe8f",
+    "gitTree": "822426b10089f90ae6fcbe397a322914ec97b757",
+    "workingTreeDirty": true
+  },
+  "receipt": null,
+  "declaredArtifacts": {
+    "count": 0,
+    "bytes": 0,
+    "declarations": []
+  },
+  "telemetry": {
+    "runId": null,
+    "manifestPath": null
+  },
+  "citationClass": "uncited-at-creation",
+  "durableCitations": {
+    "trackedPaths": [],
+    "controllerStateReferences": [],
+    "activeReconciliationReference": null
+  },
+  "createdAt": "2026-09-06T00:01:05.684Z",
+  "finishedAt": "2026-09-06T00:01:07.739Z",
+  "failureClassification": {
+    "kind": "product",
+    "message": "Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    fileCount: 174,\n    files: [\n      {\n        bytes: 180,\n...\n      {\n+       bytes: 8972,\n-       bytes: 8971,\n        path: 'discovery-final-remote/host-report.json',\n+       sha256: 'e886b97a8a428c45e012e073c229032144c961903b738bb43f108bd9d437b34a'\n-       sha256: '8a417e6e3884c62f786b5c517b5e4ce9e2bf1a074e0c176bb7e3a4d8ff4c55f0'\n      },\n      {\n        bytes: 2424,\n        path: 'discovery-final-remote/manifest.json',\n        sha256: 'cbdae5e1309271c4963710425939283697618a0baa885664fc63b1aef95fcdc6'\n...\n    schemaVersion: '1.0.0',\n+   totalBytes: 462381\n-   totalBytes: 462380\n  }\n"
+  }
+}

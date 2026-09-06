@@ -3,6 +3,40 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-09-05 — Inspect host launchers as data before executing capability queries
+
+C1 follows a concrete discovery failure: codex.lab's /usr/sbin/lxc version query
+triggered the LXD installer. Treat newly discovered Docker/VM launchers as data
+first. Read bounded metadata/prefixes without invoking --version, an interpreter,
+a shell alias or an installer; preserve earlier PATH candidates and ambiguous
+links/aliases instead of selecting a later apparently usable binary. Record
+errors and missing prerequisites without promoting metadata into host support.
+
+The standalone scanner is the smallest dependency-free unit that can run on the
+native Windows process and both inspected Linux routes without copying a source
+checkout or provisioning a provider. Its immediate consumer is an explicit
+outer discovery command with a pinned scanner/source/run/nonce and independently
+retained capture digest. Fixed-name PATH search is not universal shell command
+resolution. A binary signature is only prefix evidence. The command's PASS
+receipt attests completed observation/audit, while host qualification remains
+NOT_READY and completion remains false. This does not implement the later
+trusted disposable-host/admission protocol or grant maintainer approval.
+
+Reject automatic provider installation, privileged nested Docker, socket mounts,
+shared-workstation controller fallback, arbitrary remote context substitution
+and WSL-as-Windows claims. Docker documents supported Windows client Desktop
+routes but excludes Server 2022; a remote daemon's bind mounts address its own
+filesystem. Native Windows routing and the frozen Server 2022 reference remain
+real implementation/qualification work, not an authority reinterpretation.
+
+Preserve the unintended remote installation and the failed concurrent partition
+identity capture as actual events. Do not invent a configuration-unchanged claim
+or delete remote package/service data to conceal the side effect. The serial
+partition rerun resolves the check, but its initial cause remains unproven.
+The full source gate, protected CI/candidate cadence, authority activation and
+human gate are unchanged. A future increment must prove one disposable host
+lifecycle/provenance route before expanding controller workflows.
+
 ## 2026-09-05 — Use contained planning and an externally pinned read-only input
 
 The first B workflow uses public planning because that controller needs no Docker

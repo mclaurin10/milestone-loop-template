@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "orch-auth-01-c-closeout.v1",
+  "status": "PASS",
+  "sourceMode": "frozen-index",
+  "testedHead": "13b013d3b5b20e056561d12221e83b741b65fe8f",
+  "testedTree": "822426b10089f90ae6fcbe397a322914ec97b757",
+  "evidenceFiles": 174,
+  "supportingReceipts": 15,
+  "focusedTests": 40,
+  "repositoryToolingTests": 56,
+  "actualTamperRejected": true,
+  "routes": [
+    {
+      "route": "native-windows",
+      "controller": {
+        "platform": "win32",
+        "architecture": "x64",
+        "kernelRelease": "10.0.26200",
+        "wsl": false,
+        "nodeVersion": "v24.18.0"
+      },
+      "qualification": "NOT_READY",
+      "durationMs": 414,
+      "runId": "1c0621e9-dd9d-4166-a256-1d5ca7a19237",
+      "nonce": "da6d30aa6d510f58f952cef148570c98dd3d9cc3340ecdaf357f875be1032159"
+    },
+    {
+      "route": "wsl-ubuntu",
+      "controller": {
+        "platform": "linux",
+        "architecture": "x64",
+        "kernelRelease": "6.6.87.2-microsoft-standard-WSL2",
+        "wsl": true,
+        "nodeVersion": "v24.18.0"
+      },
+      "qualification": "NOT_READY",
+      "durationMs": 5114,
+      "runId": "1115c674-2995-4c72-bbfb-505bf1062db9",
+      "nonce": "863332e1c89ca476ba1c83816a3f686986f906d31f8fa56c9c9327f0e7857741"
+    },
+    {
+      "route": "ssh-codex-lab",
+      "controller": {
+        "platform": "linux",
+        "architecture": "x64",
+        "kernelRelease": "6.8.0-101-generic",
+        "wsl": false,
+        "nodeVersion": "v24.18.0"
+      },
+      "qualification": "NOT_READY",
+      "durationMs": 428,
+      "runId": "f60f65b5-e14d-44b4-a48f-aaf8ee9256af",
+      "nonce": "de14b4f7d46a731ac7bf3cd1bb8f009387bebceb3b28dba1a6a08192d6384745"
+    }
+  ],
+  "rootBuild": "NOT_READY",
+  "generalDockerControllerHostQualified": false,
+  "nativeWindowsQualified": false,
+  "authorityActivation": false,
+  "humanAcceptance": false,
+  "remoteDiscoveryIncident": {
+    "host": "codex.lab",
+    "configurationChanged": true,
+    "lxdInstalled": true,
+    "rollbackPerformed": false
+  },
+  "completion": {
+    "eligible": false
+  }
+}

@@ -1,0 +1,145 @@
+{
+  "identity": {
+    "gitCommit": "13b013d3b5b20e056561d12221e83b741b65fe8f",
+    "gitTree": "822426b10089f90ae6fcbe397a322914ec97b757",
+    "gitStatus": "MM .agent/current-exec-plan.md\n M docs/autonomy-log.md\n M docs/decision-log.md\nA  docs/runtime-qualification/ORCH-AUTH-01-C/run-discovery.ts\nA  docs/runtime-qualification/ORCH-AUTH-01-C/run-focused.ts\nM  tools/milestone-orchestrator/config/test-ownership.json\nA  tools/qualification-host-discovery.mjs\nA  tools/qualification-host-discovery.test.mjs\n?? \"Implementation-ready improvement plan 8-5-26.txt\"\n?? docs/runtime-qualification/ORCH-AUTH-01-C/README.md\n?? docs/runtime-qualification/ORCH-AUTH-01-C/curate-evidence.ts\n?? docs/runtime-qualification/ORCH-AUTH-01-C/evidence/manifest.json\n?? docs/runtime-qualification/ORCH-AUTH-01-C/evidence/supporting-evidence.tar.gz\n?? docs/runtime-qualification/ORCH-AUTH-01-C/evidence/tamper/console.log\n?? docs/runtime-qualification/ORCH-AUTH-01-C/evidence/tamper/manifest.json\n?? docs/runtime-qualification/ORCH-AUTH-01-C/evidence/tamper/outcome.json\n?? docs/runtime-qualification/ORCH-AUTH-01-C/verify-closeout.ts",
+    "nodeVersion": "v24.18.0",
+    "pnpmVersion": "11.15.1"
+  },
+  "hashes": [
+    {
+      "path": "docs/runtime-qualification/ORCH-AUTH-01-C/run-discovery.ts",
+      "sha256": "fa195f52f08f37de5435370e2fca8a533a9f610679b9f7bab6f4efaa4fd3c14e"
+    },
+    {
+      "path": "docs/runtime-qualification/ORCH-AUTH-01-C/run-focused.ts",
+      "sha256": "da65982a57ce718dcc36718ee31bb87cbd458f85f8a450141d661764cc48eba2"
+    },
+    {
+      "path": "docs/runtime-qualification/ORCH-AUTH-01-C/verify-closeout.ts",
+      "sha256": "bcf8e76c8f8f322a788d43c828ea7ec63de63c8e118eb15302ba3d52aed1a536"
+    },
+    {
+      "path": "docs/runtime-qualification/ORCH-AUTH-01-C/curate-evidence.ts",
+      "sha256": "4781e8b8b9ba14af99293c8a31d82c7348b7b4770fe4152818329f9165603e6f"
+    },
+    {
+      "path": "docs/runtime-qualification/ORCH-AUTH-01-C/README.md",
+      "sha256": "2a89d9afe4291185610ee17f94b3ed4f01cc69bf20179ff887f093c1f5e4ef47"
+    },
+    {
+      "path": ".agent/current-exec-plan.md",
+      "sha256": "2c1b05f484948cee52f105b911c54c22facf616dbb018e9d43b2dc4c09bb8ca9"
+    }
+  ],
+  "executions": [
+    {
+      "argv": [
+        "pnpm",
+        "exec",
+        "eslint",
+        "docs/runtime-qualification/ORCH-AUTH-01-C/run-discovery.ts",
+        "docs/runtime-qualification/ORCH-AUTH-01-C/run-focused.ts",
+        "docs/runtime-qualification/ORCH-AUTH-01-C/verify-closeout.ts",
+        "docs/runtime-qualification/ORCH-AUTH-01-C/curate-evidence.ts"
+      ],
+      "result": {
+        "status": 0,
+        "signal": null,
+        "stdout": "",
+        "stderr": "",
+        "error": null,
+        "spawnargs": [
+          "C:\\Dev\\loop-extraction\\milestone-loop-template\\.tools\\node-v24.18.0-win-x64\\node.exe",
+          "C:\\Dev\\loop-extraction\\milestone-loop-template\\.tools\\node-v24.18.0-win-x64\\node_modules\\corepack\\dist\\pnpm.js",
+          "exec",
+          "eslint",
+          "docs/runtime-qualification/ORCH-AUTH-01-C/run-discovery.ts",
+          "docs/runtime-qualification/ORCH-AUTH-01-C/run-focused.ts",
+          "docs/runtime-qualification/ORCH-AUTH-01-C/verify-closeout.ts",
+          "docs/runtime-qualification/ORCH-AUTH-01-C/curate-evidence.ts"
+        ],
+        "supervision": {
+          "timedOut": false,
+          "outputLimitExceeded": false,
+          "terminationReason": null,
+          "termination": null,
+          "streamsClosed": true,
+          "drainTimedOut": false,
+          "drainCutoff": null,
+          "drainSweep": null,
+          "stdout": {
+            "bytesCaptured": 0,
+            "totalBytesObserved": 0,
+            "truncated": false,
+            "capBytes": 67108864
+          },
+          "stderr": {
+            "bytesCaptured": 0,
+            "totalBytesObserved": 0,
+            "truncated": false,
+            "capBytes": 67108864
+          },
+          "duplicateSettleSignals": []
+        }
+      }
+    },
+    {
+      "argv": [
+        "pnpm",
+        "exec",
+        "prettier",
+        "--check",
+        "docs/runtime-qualification/ORCH-AUTH-01-C/run-discovery.ts",
+        "docs/runtime-qualification/ORCH-AUTH-01-C/run-focused.ts",
+        "docs/runtime-qualification/ORCH-AUTH-01-C/verify-closeout.ts",
+        "docs/runtime-qualification/ORCH-AUTH-01-C/curate-evidence.ts",
+        "docs/runtime-qualification/ORCH-AUTH-01-C/README.md",
+        ".agent/current-exec-plan.md"
+      ],
+      "result": {
+        "status": 0,
+        "signal": null,
+        "stdout": "Checking formatting...\nAll matched files use Prettier code style!\n",
+        "stderr": "",
+        "error": null,
+        "spawnargs": [
+          "C:\\Dev\\loop-extraction\\milestone-loop-template\\.tools\\node-v24.18.0-win-x64\\node.exe",
+          "C:\\Dev\\loop-extraction\\milestone-loop-template\\.tools\\node-v24.18.0-win-x64\\node_modules\\corepack\\dist\\pnpm.js",
+          "exec",
+          "prettier",
+          "--check",
+          "docs/runtime-qualification/ORCH-AUTH-01-C/run-discovery.ts",
+          "docs/runtime-qualification/ORCH-AUTH-01-C/run-focused.ts",
+          "docs/runtime-qualification/ORCH-AUTH-01-C/verify-closeout.ts",
+          "docs/runtime-qualification/ORCH-AUTH-01-C/curate-evidence.ts",
+          "docs/runtime-qualification/ORCH-AUTH-01-C/README.md",
+          ".agent/current-exec-plan.md"
+        ],
+        "supervision": {
+          "timedOut": false,
+          "outputLimitExceeded": false,
+          "terminationReason": null,
+          "termination": null,
+          "streamsClosed": true,
+          "drainTimedOut": false,
+          "drainCutoff": null,
+          "drainSweep": null,
+          "stdout": {
+            "bytesCaptured": 66,
+            "totalBytesObserved": 66,
+            "truncated": false,
+            "capBytes": 67108864
+          },
+          "stderr": {
+            "bytesCaptured": 0,
+            "totalBytesObserved": 0,
+            "truncated": false,
+            "capBytes": 67108864
+          },
+          "duplicateSettleSignals": []
+        }
+      }
+    }
+  ]
+}

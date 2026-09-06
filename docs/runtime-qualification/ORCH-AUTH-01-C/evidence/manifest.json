@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "orch-auth-01-c-evidence.v1",
+  "completionEligible": false,
+  "inventorySha256": "2ba6c7f7582a95cd157caaf246b5710e64de9e9d19ecf5222b3fd3675ed4dc9d",
+  "rawFiles": 174,
+  "archive": {
+    "file": "supporting-evidence.tar.gz",
+    "bytes": 75092,
+    "sha256": "9d115afe7f9891cc62e6e7d06c85204a151fb52e29939a3b78d7beff85ee62f9"
+  }
+}

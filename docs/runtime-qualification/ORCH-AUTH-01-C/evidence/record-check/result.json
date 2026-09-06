@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0.0",
+  "stageId": "orch-auth-01-c",
+  "commandId": "host-discovery-record-check",
+  "status": "PASS",
+  "checks": [
+    {
+      "id": "closeout-records-linted-and-formatted",
+      "summary": "Executed ESLint and Prettier against the exact closeout helpers and updated records, retaining their actual output and source hashes.",
+      "status": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "record-check.json",
+      "kind": "host-discovery-record-check",
+      "bytes": 6121,
+      "sha256": "72f4f46088383309bcbd23b4945712caee8d2a5b2abd1164a4afb11efef5557d"
+    },
+    {
+      "path": "procedure.ts",
+      "kind": "host-discovery-record-check-procedure",
+      "bytes": 2450,
+      "sha256": "574f73a6b3034bd1776b1dd3e4e6ae4e979210710508ea3aaebc492551bebc26"
+    }
+  ]
+}

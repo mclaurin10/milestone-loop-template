@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0.0",
+  "stageId": "orch-auth-01-c",
+  "commandId": "host-discovery-closeout",
+  "status": "PASS",
+  "checks": [
+    {
+      "id": "bounded-host-discovery-closeout",
+      "summary": "Reconstructed the tested source, verified archive/raw observations and receipts, preserved source authorities, and retained NOT_READY gates and the remote discovery side effect.",
+      "status": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "closeout-report.json",
+      "kind": "host-discovery-closeout-report",
+      "bytes": 2063,
+      "sha256": "38719fe9f2f3ce68b09edec1d85f8f8d2b9b777a4e0b68f9d92eb6f1c50b697a"
+    }
+  ]
+}

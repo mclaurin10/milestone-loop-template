@@ -93,7 +93,10 @@
     },
     {
       "id": "repository-tooling",
-      "files": ["tools/production-build.test.mjs"]
+      "files": [
+        "tools/production-build.test.mjs",
+        "tools/qualification-host-discovery.test.mjs"
+      ]
     },
     {
       "id": "adopter-template",

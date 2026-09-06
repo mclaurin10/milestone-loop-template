@@ -3,6 +3,76 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-09-05 — ORCH-AUTH-01-C1: inspect qualification routes without launching discovered programs
+
+Reproduced B's unchanged curated closeout from 13b013d with Node 24.18.0/pnpm
+11.15.1 before editing. The fresh archive audit checked 430 frozen files,
+94 archived tests, six OCI cases, 104 workflow files, 152 matrix files and
+eleven supporting receipts. It remains archive inspection, not fresh C
+workflow execution. The approved r2 digest and all sealed/live authorities,
+locks, commissioned records, protected CI and package scripts remain unchanged.
+
+Inspected native Windows, WSL Ubuntu and the previously recorded codex.lab SSH
+route. No authorized disposable Docker-controller host or native Windows
+workflow route was established. The WSL environment exposes /mnt/c and its KVM
+device is inaccessible to this user; noninteractive group-switch privilege was
+unavailable. The remote had no discovered Docker/QEMU/virsh executable or KVM
+device. These are bounded observations, not a claim that all possible host
+routes have been exhausted.
+
+An intended read-only remote lxc version query unexpectedly invoked Ubuntu's
+installer shim and installed LXD snap 5.21.7-1018661 revision 40585 (snap change 2,
+23:35–23:36 UTC). The local probe was interrupted but installation completed;
+the daemon was observed active and the probe processes ended. No instance or
+controller was requested. No remote uninstall or state deletion was attempted.
+This is an actual unintended configuration change, explicitly retained in
+inspection/incident.json and corroborated by raw post-event script/package/
+service observations. The original query description is labeled a transcription;
+it is not fabricated raw output.
+
+Selected and documented C1 before implementation: a standalone metadata-only
+scanner and receipt-owning outer audit. It never invokes discovered launchers,
+including version commands. It keeps the first candidate, refuses linked or
+aliased paths before content reads, bounds PATH/candidate/prefix/report sizes,
+and captures only the declared fixed-name search. The outer command selects
+native route/platform and fresh source/run/nonce/scanner bindings, supervises
+the real Node subprocess, separately pins the capture hash, and rechecks retained
+bytes. It grants neither host authorization nor provider/workflow qualification.
+
+Final Windows/WSL/SSH discovery took 414/5,114/428 ms respectively, one scanner
+per dispatch. All three audited observations remain NOT_READY. WSL process
+identity is Linux. Initial observations with the over-specific linked-path label
+are retained; the final linked-or-aliased-path label and fresh recaptures avoid
+misstating native Windows canonical-case differences as symlinks.
+
+All 40 focused regressions passed, including a real installer-shaped script
+whose marker remained absent. The full affected repository-tooling partition
+passed all 56 tests across both owner files. Its first attempt failed before
+testing because Git tree identity was unavailable during concurrent checks.
+The serial rerun passed without code or gate changes; index-lock contention is
+an inference, not a proven root cause because that helper omitted subprocess
+stderr. Typecheck, lint, format and five invariant entries passed with receipts
+(the invariant aggregate took 61,254 ms). Root build remains exit 2 / NOT_READY
+with no PASS receipt. No OCI/candidate execution policy changed or container ran.
+
+The genuine tested index is 822426b10089f90ae6fcbe397a322914ec97b757 on 13b013d.
+Its binary patch and executable identities are retained. C1's closeout reconstructs
+that tree in a separate bare database, checks current executable blobs, preserved
+authorities, 174 raw files and fifteen supporting receipts. A one-byte mutation
+of the retained remote report was rejected with no PASS receipt. Reproduction,
+actual incident/failed attempts, supported Windows route limits and exact
+arguments are in docs/runtime-qualification/ORCH-AUTH-01-C/README.md and its
+curated evidence. The final commit adds records to the tested implementation;
+these dirty-tree supporting results are not exact source readiness.
+
+Record identity is the scoped commit containing this entry and the C1 plan.
+Source controller state/private refs remain uninitialized and unadopted; the
+user roadmap is unchanged and excluded. General host qualification, native
+Windows workflows, root production build, migration/activation, full source
+readiness and live human acceptance remain incomplete. Continue C with a bounded
+disposable-host lifecycle/provenance route before Docker-controller dispatch;
+do not treat the new LXD installation as qualified infrastructure.
+
 ## 2026-09-05 — ORCH-AUTH-01-B: qualify public planning and authenticated evidence delivery
 
 Continued from e01298b after reproducing A's closeout audit. The approved r2
