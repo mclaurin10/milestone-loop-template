@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "retained-actual-git-commits.v1",
+  "source": "git cat-file commit of existing supporting branch objects",
+  "fabricated": false,
+  "files": [
+    {
+      "commit": "6dd6463cf630176783c084dda4537386021045bd",
+      "tree": "66598b41f04e84d719ac5eb394b842d511ed81b6",
+      "parent": "91cbd3eb75ec771cfa1f315fe2641488e361c9e0",
+      "path": "6dd6463cf630176783c084dda4537386021045bd.commit",
+      "bytes": 263,
+      "sha256": "3dcf83d011de4c6301a3aa5188faf1ee53135a3232cbbab8822ec446f087e609"
+    },
+    {
+      "commit": "c3617cb5be2c05203a3a2e5205396c2242c4f118",
+      "tree": "a7a0d2355bd1b9f138bc34f4cfcea30d8f1e39f1",
+      "parent": "91cbd3eb75ec771cfa1f315fe2641488e361c9e0",
+      "path": "c3617cb5be2c05203a3a2e5205396c2242c4f118.commit",
+      "bytes": 289,
+      "sha256": "3bb1bb88bdba77608c065266f7da5c97103c81a06a90560b24275e3efaae21fd"
+    }
+  ]
+}

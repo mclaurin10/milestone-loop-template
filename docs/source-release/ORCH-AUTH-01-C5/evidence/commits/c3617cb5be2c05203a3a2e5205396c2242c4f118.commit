@@ -1,0 +1,6 @@
+tree a7a0d2355bd1b9f138bc34f4cfcea30d8f1e39f1
+parent 91cbd3eb75ec771cfa1f315fe2641488e361c9e0
+author Duncan <duncan.mclaurin@icloud.com> 1788673670 -0600
+committer Duncan <duncan.mclaurin@icloud.com> 1788673670 -0600
+
+C5 supporting source release candidate with checked dependency aliases

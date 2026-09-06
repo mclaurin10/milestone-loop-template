@@ -1,5 +1,9 @@
 # Decision Log
 
+## 2026-09-06 UTC — Transport actual supporting Git objects without source refs
+
+A published branch-only clone cannot depend on unpushed side branches for its retained audit. Retain exact original commit bytes and verify their Git IDs against the sealed record; reconstruct their original trees from the existing sealed patches in a temporary object cache. Expose that cache only to the unchanged auditor, then delete it and assert the source bindings remain unchanged. Do not manufacture new commit metadata, publish supporting refs, rewrite the sealed archive or adopt controller state. The wrapper and its independent retained follow-up audit remain supporting evidence; fresh clean post-commit observations are separately required.
+
 ## 2026-09-06 UTC — Package committed runtime bytes and retain the real consumer
 
 Use an explicit portable TS/tsx payload and deterministic regular-file ustar/gzip archive, keeping exact source provenance inside the payload and wall-clock consumer telemetry outside it. Parse actual imports and model the generated scaffold overlay; shipped code may not resolve through source-only checkers. Reuse the existing clean-clone production build and its twice-checked output inventory. The declared source build's afterReport consumer independently inspects and retains the real archive, manifest, child receipt and detached generation output before cleanup. Preserve generic adopter build behavior and its original safety assertions.

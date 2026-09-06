@@ -3,6 +3,14 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-09-06 UTC — Make C5 retained evidence reproducible from published history
+
+The real build/dependency/architecture commands passed in a clean branch-only no-local clone of committed C5 0b7a820aa589b227993781474de2d00b79628a6b. The original retained audit failed there because its two supporting side-branch objects were absent. Retained that failure and the successful production receipts in the separate 60-file/six-receipt archive (SHA256 58137c5f9e2d1ad50b947885d757d28ae8da3a208442c6f6b74f007b3cb2d83c). Preserve the original 318-file archive, manifest and auditor unchanged.
+
+Captured actual raw Git commit objects and added a portable wrapper that validates their original IDs, reconstructs exact sealed trees in a temporary object cache, runs the unchanged auditor and checks source HEAD/index/refs/status/state remain unchanged. The prototype passed in the clone without supporting branches; a one-byte object mutation failed before child audit with no PASS receipt. The independent follow-up audit rehashes all 60 files, validates six receipts and the actual post-commit archive/consumer, and passes at artifacts/wp6e-source-build-20260906/portable-followup-audit-5. Four initial auditor defects remain non-passing in preceding directories. Prototype dirtiness is explicit; no source controller state or authority was created.
+
+Commit identity is the narrow commit with subject "Retain actual Git objects for portable source evidence audits" containing this entry. Fresh clean post-commit portable-wrapper verification is the immediate next action, then C6 compatible authority consumers and the approved migration/candidate obligations. Repair CI 34015911019 still has four passing jobs and a running Windows controller. Historical WP6e remains BLOCKED; readiness, native full workflow and human gates remain incomplete.
+
 ## 2026-09-06 UTC — C5: consume a portable source release and inspect real dependency bytes
 
 Implemented the explicitly approved supporting source distribution and additive build/dependency/architecture commands while legacy authority remains active. Existing package argv, protected workflows, immutable authorities and commissioning/amendment history remain unchanged. The shared build wrapper retains the real archive, manifest, detached generation observation and owned child evidence only after independent output inspection; its original clone/install/output safety remains. Generated adopters receive the original universal AGENTS template and their own authority/bootstrap history.

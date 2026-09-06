@@ -1,0 +1,315 @@
+{
+  "schemaVersion": "c5-portable-followup-evidence.v1",
+  "sourceCommit": "0b7a820aa589b227993781474de2d00b79628a6b",
+  "sourceTree": "ba24ff667ed13ce14117bbe5c2cbe72ad94fef06",
+  "authorityGeneration": "legacy-source.v1",
+  "completionEligible": false,
+  "files": [
+    {
+      "path": "c5-portable-audit-fixed/manifest.json",
+      "bytes": 2172,
+      "sha256": "8f548aaac771c3c0776a4e811b204470743dd1182edeed7efe22497a48cc7142"
+    },
+    {
+      "path": "c5-portable-audit-fixed/original-audit/audit.json",
+      "bytes": 12437,
+      "sha256": "574777a24826d72ca19705db16b55de692a78e3035ee757fa8f905a1943da579"
+    },
+    {
+      "path": "c5-portable-audit-fixed/original-audit/manifest.json",
+      "bytes": 1684,
+      "sha256": "62bddbaf22eb4ade3fec8ca7611c5e8b3d2b3cccaa3a80c6682727392ebadd16"
+    },
+    {
+      "path": "c5-portable-audit-fixed/original-audit/result.json",
+      "bytes": 704,
+      "sha256": "3c41bad22219b46f46c9e6b1bedd643cab41987b2012065b51c7401d81435df5"
+    },
+    {
+      "path": "c5-portable-audit-fixed/portable-audit.json",
+      "bytes": 16035,
+      "sha256": "c6d4aabcb150a93420a3d13bf2074428f688069d9fccf43da739733da4aef3ee"
+    },
+    {
+      "path": "c5-portable-audit-fixed/result.json",
+      "bytes": 1288,
+      "sha256": "5c4fc849dc2053526844c1dd792a69799da3ef53824f7cc365648425fb6c3f35"
+    },
+    {
+      "path": "c5-portable-audit-fixed/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "c5-portable-audit-fixed/stdout.log",
+      "bytes": 101,
+      "sha256": "4df40a0bdd9c1fd872e57bdebb5a1f8bc7f21ce3ffa2c7855f501ebccf13ed13"
+    },
+    {
+      "path": "c5-portable-corrupt-object/manifest.json",
+      "bytes": 1473,
+      "sha256": "63900a8344dfa3720c296433bd6c4c7f0468a2ab49d86c9855af9f70e8513ed4"
+    },
+    {
+      "path": "c5-postcommit-architecture/manifest.json",
+      "bytes": 1415,
+      "sha256": "1697c40ace011a2fed44842b4e433682f979b933e3bf914215b70c83ebc5abb3"
+    },
+    {
+      "path": "c5-postcommit-architecture/report.json",
+      "bytes": 130070,
+      "sha256": "ab450d53810353b8c24ceb123ed781bc33a96e1258a9027758878d719032eeeb"
+    },
+    {
+      "path": "c5-postcommit-architecture/result.json",
+      "bytes": 586,
+      "sha256": "9d41bebfa17b69797682503ed412f103112eceea9a34d6abb300f0fd040f074b"
+    },
+    {
+      "path": "c5-postcommit-audit/manifest.json",
+      "bytes": 1440,
+      "sha256": "574dcefe80a92bc90d12de965f77076d6af8d149359fdb82cd51464c94b41080"
+    },
+    {
+      "path": "c5-postcommit-build/build-report.json",
+      "bytes": 43755,
+      "sha256": "3ecabbf520f143c5f5054a5424a8bbc911f2060d04f8ad930cea63fa67fadf53"
+    },
+    {
+      "path": "c5-postcommit-build/manifest.json",
+      "bytes": 4038,
+      "sha256": "0d37576aae04d49fa30d1a8de2fc9fc37573670c0a40ecc29d712c61ebc723f1"
+    },
+    {
+      "path": "c5-postcommit-build/result.json",
+      "bytes": 2927,
+      "sha256": "91f15968d3d46e6329137c9e61bd79104101268c28a4055fe3a4b9aa469a0604"
+    },
+    {
+      "path": "c5-postcommit-build/source-release/build-evidence/architecture.json",
+      "bytes": 130070,
+      "sha256": "ab450d53810353b8c24ceb123ed781bc33a96e1258a9027758878d719032eeeb"
+    },
+    {
+      "path": "c5-postcommit-build/source-release/build-evidence/consumer-generate.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "c5-postcommit-build/source-release/build-evidence/consumer-generate.stdout.log",
+      "bytes": 26535,
+      "sha256": "3973a4ce5dfdb0942dadb272838fa1462cfb4c9cfcdf9bfc77c226f4a835cad1"
+    },
+    {
+      "path": "c5-postcommit-build/source-release/build-evidence/consumer-install.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "c5-postcommit-build/source-release/build-evidence/consumer-install.stdout.log",
+      "bytes": 775,
+      "sha256": "df070a3bacb3fac28bfa3485fa1eb8d873785c0a73cabecdc1a4b1264fb8671f"
+    },
+    {
+      "path": "c5-postcommit-build/source-release/build-evidence/consumer.json",
+      "bytes": 2378,
+      "sha256": "0a65d32e4c6e63194ddf8e3a9666f401c0ae12faa3841209e21995b97de2b1ad"
+    },
+    {
+      "path": "c5-postcommit-build/source-release/build-evidence/manifest.json",
+      "bytes": 2511,
+      "sha256": "9e112d98b2d9da6d2bb126d8bc58a474571fbf2835eedb28589d50dc9667e414"
+    },
+    {
+      "path": "c5-postcommit-build/source-release/build-evidence/report.json",
+      "bytes": 36990,
+      "sha256": "26275899ae1ea76ed85b203fc8b23bfc273f7cc95ded07f1fedfc9316bfa90ca"
+    },
+    {
+      "path": "c5-postcommit-build/source-release/build-evidence/result.json",
+      "bytes": 1536,
+      "sha256": "445707b40bf453d8e7bc29a9703c4ecd6fd03d27bec109dee2142ee20d6d960d"
+    },
+    {
+      "path": "c5-postcommit-build/source-release/build-evidence/store-path.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "c5-postcommit-build/source-release/build-evidence/store-path.stdout.log",
+      "bytes": 45,
+      "sha256": "aca534bddaa663aed8087528fd7c6aaa6a2a1121d50754540b520a068c54147b"
+    },
+    {
+      "path": "c5-postcommit-build/source-release/consumer.json",
+      "bytes": 2378,
+      "sha256": "0a65d32e4c6e63194ddf8e3a9666f401c0ae12faa3841209e21995b97de2b1ad"
+    },
+    {
+      "path": "c5-postcommit-build/source-release/release-manifest.json",
+      "bytes": 34600,
+      "sha256": "16025427de96b237b2a94c185c81161a9bb85cfba46de67ee8f9143721931ab4"
+    },
+    {
+      "path": "c5-postcommit-build/source-release/release.tar.gz",
+      "bytes": 559124,
+      "sha256": "b9d7c1ca0c06c33fc6fba7b3a30ed76570de735e8a5576b0fbc55fa5f95ef6b9"
+    },
+    {
+      "path": "c5-postcommit-dependencies/exact-pnpm.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "c5-postcommit-dependencies/exact-pnpm.stdout.log",
+      "bytes": 8,
+      "sha256": "9489fc454e716b6ac53dfe17432d495e9143a744509eadeb49380765597fc94b"
+    },
+    {
+      "path": "c5-postcommit-dependencies/installed-graph.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "c5-postcommit-dependencies/installed-graph.stdout.log",
+      "bytes": 133641,
+      "sha256": "fded5c164cab569cb73c31f631e194f5941571143030dac46115f484207f4e20"
+    },
+    {
+      "path": "c5-postcommit-dependencies/manifest.json",
+      "bytes": 2624,
+      "sha256": "d701f76b8bd7b50a37720d1a3781c33768d30a6fb95e6e5bb1833e65d6f16742"
+    },
+    {
+      "path": "c5-postcommit-dependencies/reference-graph.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "c5-postcommit-dependencies/reference-graph.stdout.log",
+      "bytes": 133053,
+      "sha256": "d6df6599dfc8edd271bf41fdb0110aa10adb9ef2f8e8d594aedb9e82329ce0b7"
+    },
+    {
+      "path": "c5-postcommit-dependencies/reference-install.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "c5-postcommit-dependencies/reference-install.stdout.log",
+      "bytes": 775,
+      "sha256": "a660ebf6ae839a4b8b7c410322aad5bcc8a9f2475ed0ec92de7fcb669adb948a"
+    },
+    {
+      "path": "c5-postcommit-dependencies/report.json",
+      "bytes": 59809,
+      "sha256": "c1bf7faa9c53e7083564e8aad42cb1dffbe7ee2434a2a4e98cde618d5f5eaee6"
+    },
+    {
+      "path": "c5-postcommit-dependencies/result.json",
+      "bytes": 1757,
+      "sha256": "d8439511e232775b21b01f3fb3915f23c4409bd7107c570c979544ee2b21a6bf"
+    },
+    {
+      "path": "c5-postcommit-dependencies/store-integrity.stderr.log",
+      "bytes": 36,
+      "sha256": "c4f16a31d377fee597db7268b61ea31ec983e17d74f3acffb2ebf91866ab7183"
+    },
+    {
+      "path": "c5-postcommit-dependencies/store-integrity.stdout.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "c5-postcommit-dependencies/store-path.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "c5-postcommit-dependencies/store-path.stdout.log",
+      "bytes": 45,
+      "sha256": "aca534bddaa663aed8087528fd7c6aaa6a2a1121d50754540b520a068c54147b"
+    },
+    {
+      "path": "portable-corrupt-object.stderr.log",
+      "bytes": 752,
+      "sha256": "98a70ac28c3bb1ebcd3bb609ad211911020cf39f03becd18782ea0ecfd57959a"
+    },
+    {
+      "path": "portable-corrupt-object.stdout.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "portable-prototype-source-objects.stderr.log",
+      "bytes": 82,
+      "sha256": "e9c83590e8a47d05711f7944d9409e4992f271b757704fd3b270c3dd8a69d996"
+    },
+    {
+      "path": "postcommit-architecture.stderr.log",
+      "bytes": 46,
+      "sha256": "2f72c1ea72c3193129da4f0b59f0aeb1757f372821f5b59cbcefa22ed6ba8307"
+    },
+    {
+      "path": "postcommit-architecture.stdout.log",
+      "bytes": 229,
+      "sha256": "03ed58182a9bb956109ef4bbbd58608808d54e9c68da4eac56985e80710e3293"
+    },
+    {
+      "path": "postcommit-audit.stderr.log",
+      "bytes": 2165,
+      "sha256": "a74ecde0f4fef39b637379419c7fb6b7319e827b359408443b29a46dc80803cf"
+    },
+    {
+      "path": "postcommit-audit.stdout.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "postcommit-build.stderr.log",
+      "bytes": 41,
+      "sha256": "aaf1af46f20a954f68b247e2162a5b644a42c464dc4df1eafcebaebcf7c17e54"
+    },
+    {
+      "path": "postcommit-build.stdout.log",
+      "bytes": 138,
+      "sha256": "f7259af2ada23a1ff4d52534044eb4c3046b1d4306523a4934dbfbb0787e4305"
+    },
+    {
+      "path": "postcommit-dependencies.stderr.log",
+      "bytes": 46,
+      "sha256": "00eca2c11bbc62c5b4ba17d5445e8270fb5e637dcf2ab55d71d4a5be09b00eb0"
+    },
+    {
+      "path": "postcommit-dependencies.stdout.log",
+      "bytes": 229,
+      "sha256": "8f6ed03fc139dbc647e88ce354481baf90f003e819af049b0db9766eb1862789"
+    },
+    {
+      "path": "postcommit-install.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "postcommit-install.stdout.log",
+      "bytes": 798,
+      "sha256": "cd344c6475f820f56ee7e1288b6a94df4a7e2a5d0733523727928496922dc1b0"
+    },
+    {
+      "path": "postcommit-source.json",
+      "bytes": 243,
+      "sha256": "ef8a089602190dde194975f0f11d48f7b2d4a2f56c93aba8b030fe4a8e3be559"
+    },
+    {
+      "path": "postcommit-supporting-object.stderr.log",
+      "bytes": 82,
+      "sha256": "e9c83590e8a47d05711f7944d9409e4992f271b757704fd3b270c3dd8a69d996"
+    }
+  ],
+  "archive": {
+    "path": "observations.zip",
+    "bytes": 676658,
+    "sha256": "58137c5f9e2d1ad50b947885d757d28ae8da3a208442c6f6b74f007b3cb2d83c"
+  },
+  "portableImplementationSha256": "562546cdde8cde859c73970fb59b0078a45a29c3db5c4bd35a9d96fd81fd3b9f"
+}

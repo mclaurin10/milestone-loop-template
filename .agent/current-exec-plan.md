@@ -1,6 +1,6 @@
 # Current Execution Plan
 
-Status: C5 implementation verified; commit and exact post-commit observations pending. Updated: 2026-09-06 UTC. Owner: authorized WP6e continuation.
+Status: C5 committed and production post-commit checks pass; portable audit repair verified, exact clean post-commit verification pending. Updated: 2026-09-06 UTC. Owner: authorized WP6e continuation.
 
 ## Objective
 
@@ -39,8 +39,10 @@ Keep telemetry outside the reproducible payload and retain the real consumer bef
 
 ## Progress and Evidence
 
+C5 is committed at 0b7a820aa589b227993781474de2d00b79628a6b/tree ba24ff667ed13ce14117bbe5c2cbe72ad94fef06. A fresh --no-local --single-branch clone reproduced an evidence-portability defect: the supporting commits 6dd6463/c3617cb5 are real local side-branch objects but are absent from published main history, so the original retained audit fails there without a receipt. Production post-commit build, dependency and architecture checks passed. Pause the next feature increment to retain the exact raw supporting commit objects and add a portable audit wrapper that reconstructs those exact objects from the already sealed binary patches in an owned temporary object store. Keep the original C5 archive, manifest and auditor byte-for-byte unchanged. The wrapper must validate hashes/trees/parents, expose no new source refs/state, pass the original audit in a fresh branch-only clone, and retain the actual earlier failure. This is evidence transport repair, not fabricated commits or authority activation.
+
 Detailed reproduction and claims: docs/source-release/ORCH-AUTH-01-C5/README.md. Archive SHA256 2bb249859bd63731956b76a753ab87ba5cf88154e176f914a454c3f96a555763. Supporting source 6dd6463cf630176783c084dda4537386021045bd/tree 66598b41f04e84d719ac5eb394b842d511ed81b6 produced archive b8f33ddfdad6547a00f4cc3938865b60f3d9fc430b69924520d173f3b7bd070d. Corrected source c3617cb5be2c05203a3a2e5205396c2242c4f118/tree a7a0d2355bd1b9f138bc34f4cfcea30d8f1e39f1 produced e38003ea2f1e43ac6e2b4d6eef53d9c9168aefbf91b2ebf2e89b843ce94b1d80. Both are legacy-source.v1 and completion-ineligible.
 
 ## Next Action
 
-Commit C5, execute the exact clean post-commit build/check/audit, retain the pending five-job cohort, then immediately implement the next compatible-reader prerequisite. Continue the authorized WP6e loop through the real candidate/four validated partitions/raw identity union/65-minute provider timeout and correctly reached committed 5(a)/5(b). Do not stop at this precursor or claim historical/readiness/human completion.
+C5 is committed at 0b7a820aa589b227993781474de2d00b79628a6b. Its clean branch-only post-commit build, dependency and architecture commands pass. The retained audit failed because supporting side-branch objects were absent. The portable repair now passes in that clone, validates actual retained raw Git IDs and sealed patch trees in temporary storage, and rejects a one-byte mutation before child audit. Its independent 60-file/six-receipt audit passes at artifacts/wp6e-source-build-20260906/portable-followup-audit-5. Preserve all original C5 sealed bytes and initial failures. Commit the narrow evidence repair, then immediately reproduce it from a clean branch-only clone and replace this plan for C6 compatible consumers. Actual candidate/four partitions/5(a)/5(b) and native full workflow gates remain incomplete. Continue the authorized WP6e loop through the real candidate/four validated partitions/raw identity union/65-minute provider timeout and correctly reached committed 5(a)/5(b). Do not stop at this precursor or claim historical/readiness/human completion.

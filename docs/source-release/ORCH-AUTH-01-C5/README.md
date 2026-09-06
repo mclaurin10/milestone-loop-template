@@ -21,10 +21,23 @@ Use the exact C5 commit and Node/pnpm pins, with fresh output paths:
 
 ```powershell
 & docs/ci-regressions/wp6e-inventory/extract.ps1 -Archive docs/source-release/ORCH-AUTH-01-C5/evidence/retained-evidence.zip -ExpectedSha256 2bb249859bd63731956b76a753ab87ba5cf88154e176f914a454c3f96a555763 -Destination (Join-Path (Get-Location) 'artifacts/c5-fresh-extraction')
-pnpm exec tsx docs/source-release/ORCH-AUTH-01-C5/audit.ts artifacts/c5-fresh-extraction artifacts/c5-fresh-audit
+pnpm exec tsx docs/source-release/ORCH-AUTH-01-C5/portable-audit.ts artifacts/c5-fresh-extraction artifacts/c5-fresh-audit
 ```
 
-A fresh build requires a clean committed checkout and a prepared frozen copy-mode install. Run `pnpm build`, `pnpm verify:source-dependencies`, and `pnpm lint:source-architecture`; give each a fresh LOOP_VERIFY_COMMAND_ARTIFACT_DIR. The outer build receipt retains the distribution under its `source-release/` directory. Actual post-commit build/check/audit observations remain required after this evidence commit; retained replay is not a fresh build.
+A fresh build requires a clean committed checkout and a prepared frozen copy-mode install. Run `pnpm build`, `pnpm verify:source-dependencies`, and `pnpm lint:source-architecture`; give each a fresh LOOP_VERIFY_COMMAND_ARTIFACT_DIR. The outer build receipt retains the distribution under its `source-release/` directory.
+
+At committed C5 `0b7a820aa589b227993781474de2d00b79628a6b` / tree `ba24ff667ed13ce14117bbe5c2cbe72ad94fef06`, a clean `--no-local --single-branch --branch master` clone with its origin removed passed all three real production commands. Its release archive is 559,124 bytes, SHA256 `b9d7c1ca0c06c33fc6fba7b3a30ed76570de735e8a5576b0fbc55fa5f95ef6b9`. The original retained auditor failed because the two actual supporting side-branch commits were absent from that published history. This is a real evidence-portability defect, retained without a PASS receipt.
+
+The portable wrapper retains the exact raw commit objects captured from those existing supporting commits, verifies their Git IDs and SHA256 pins, reconstructs their exact trees from the already sealed binary patches in an owned temporary object cache, and invokes the unchanged original auditor. It deletes the temporary cache and verifies source HEAD/index/refs/status/state remain equal. The original archive, manifest and auditor remain byte-identical. A prototype in the branch-only clone passed; its observer honestly includes the untracked wrapper copies. A same-length one-byte change to a retained commit object failed before the original child auditor started. This tamper observation is not candidate mutation 5(a) or 5(b).
+
+The separate 60-file/six-receipt follow-up archive is 676,658 bytes, SHA256 `58137c5f9e2d1ad50b947885d757d28ae8da3a208442c6f6b74f007b3cb2d83c`. It retains the exact post-commit commands and both genuine failures. Its independent auditor validates every file and receipt, decodes the actual release archive and checks the consumer and unchanged source bindings. Four initial follow-up auditor attempts failed on its incorrect archive-helper invocation or diagnostic expectation; they remain non-passing under `artifacts/wp6e-source-build-20260906/portable-followup-audit-{1,2,3,4}`. Corrected audit 5 passes; these were auditor defects, without production changes. Reproduce using fresh paths:
+
+```powershell
+& docs/ci-regressions/wp6e-inventory/extract.ps1 -Archive docs/source-release/ORCH-AUTH-01-C5/evidence/portable-followup/observations.zip -ExpectedSha256 58137c5f9e2d1ad50b947885d757d28ae8da3a208442c6f6b74f007b3cb2d83c -Destination (Join-Path (Get-Location) 'artifacts/c5-followup-extraction')
+pnpm exec tsx docs/source-release/ORCH-AUTH-01-C5/audit-followup.ts artifacts/c5-followup-extraction artifacts/c5-followup-audit
+```
+
+Exact clean post-commit portable-wrapper verification remains required after the narrow evidence-repair commit. Retained replay is never a fresh build.
 
 C5 paused for the failed 827ebbf hosted cohort and resumed after the narrow canonical-fixture repair `42871f66ae1711821703f16bcb97cca18b5ccf3a`. All 24 C5 files and the user's roadmap hashes matched after ordinary stash/fast-forward/conflict recovery. The recovery stash is retained. New exact repair run [34015911019](https://github.com/mclaurin10/milestone-loop-template/actions/runs/34015911019) is pending; do not cancel it with a later master push before retaining its outcomes.
 
