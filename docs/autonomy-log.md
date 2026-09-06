@@ -1,5 +1,13 @@
 # Autonomy Log
 
+## 2026-09-06 UTC — C6d-R1 native package-runtime fixture store binding
+
+Pause C6e after actual C6d Windows job 101500874916 in run 34038506240 fails one of 950 controller cases: an offline temporary-fixture install cannot find locked @eslint/js 10.0.1. Retain all five exact-commit archives and their 38-receipt audit, four successful jobs, Windows 949 PASS/1 FAIL, and Windows root-unit NOT_EXECUTED. The failure did not reach a timeout. Local store-path observations do not establish the precise hosted selection mechanism.
+
+In an owned remote-free clone at 96abed9, reproduce the same real installation failure using an empty fixture-local implicit store, then pin the actual source-installed store for the existing offline install and strict sanitized/CI children. Preserve every original assertion, identity and deadline; no runner/environment/public argv/workflow/authority changes. The first option spelling fails at pnpm exec and is retained; --config.store-dir works for both commands. Complete affected files pass 15 cases (6f02577f78c24ebbb2ae2a98d0266d7f99a0645ee8cf2e3968e55cd2ea9f4b9c); typecheck/lint/format/source dependency/architecture and five invariants pass. Dirty-tree build refusal and an interrupted accidental full-unit launch remain unverified without PASS receipts.
+
+Retention/auditor: docs/ci-regressions/candidate-installed-store. Fresh extraction validates 468 files/56 receipts and preserves eight original assertion expressions; ZIP SHA256 9f6fb78dc131c0de7d2f80e9fc80608286741c920c7f390c71c4e1e0c07c3a72, audit 2f3a666c9d1e3eab71b491ad4f4fa9c7e879740fec84ccdb21739b0ea4d9b5a4. Exact clean post-commit consumed build, independent reproduction and the new five-job hosted cohort remain required at the committed plan's ignored destination. C6e stays preserved and unactivated; continue the full authorized candidate/provider/mutation closure. Historical WP6e remains BLOCKED at e590e38, source state absent, no readiness/human-acceptance or WP6f claim.
+
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 

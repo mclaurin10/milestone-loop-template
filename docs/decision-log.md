@@ -1,5 +1,9 @@
 # Decision Log
 
+## 2026-09-06 UTC — bind the package-runtime fixture to the observed installation store
+
+The runtime probe claims to consume the CI-installed graph. Its offline fixture must therefore use the store recorded by that actual installation, rather than an implicit location selected in a temporary directory. Read/validate pinned pnpm metadata, require a canonical absolute v11 store, and pass --config.store-dir to both install and exec. Force a fixture-local empty implicit store to keep the observed missing-store boundary covered. Preserve original assertions, deadlines, copy/offline/frozen/ignore-scripts flags and safeAgentEnvironment. No production verification or shared configuration change is warranted by this fixture defect; a drive-specific explanation remains unproven by local observations.
+
 ## 2026-09-06 UTC — Reproduce fixed transition outputs before admitting publication
 
 Use a strict twelve-file output allowlist and a canonical request-subject digest linking the new epoch ledger to real audited implementation and strict-ancestor snapshots. The separately committed request binds those output hashes and a fixed implementation-evidence path. It cannot supply arbitrary output bytes, file paths, approval flags or a weaker command floor. Inspect actual Git objects and reconstruct the full proposal in an owned temporary view; do not fabricate commits or copy source controller state. The read-only inspector is an immediate receipt-owning consumer, with publication, audit-authentication, review-authentication and completion flags false.

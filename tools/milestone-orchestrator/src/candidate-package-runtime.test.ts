@@ -6,9 +6,10 @@ import {
   readFile,
   realpath,
   rm,
+  writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, resolve } from "node:path";
+import { dirname, isAbsolute, resolve } from "node:path";
 
 import { expect, it } from "vitest";
 
@@ -36,11 +37,50 @@ it("consumes the CI-installed package graph through the unchanged sanitized chil
     expect(
       safeAgentEnvironment({ ...process.env, CI: "1" })["CI"],
     ).toBeUndefined();
+    // Force the unhydrated implicit fixture-store condition observed in CI.
+    // Only this owned fixture's configuration is changed.
+    await writeFile(
+      resolve(fixture, "pnpm-workspace.yaml"),
+      (await readFile(resolve(fixture, "pnpm-workspace.yaml"), "utf8")) +
+        "\nstoreDir: " +
+        JSON.stringify(resolve(fixture, "empty-store")) +
+        "\n",
+    );
+    const modules = JSON.parse(
+      await readFile(resolve(repository, "node_modules/.modules.yaml"), "utf8"),
+    );
+    expect(modules.packageManager).toBe("pnpm@11.15.1");
+    expect(typeof modules.storeDir).toBe("string");
+    expect(isAbsolute(modules.storeDir)).toBe(true);
+    const installedStore = await realpath(modules.storeDir);
+    expect(installedStore).toBe(resolve(modules.storeDir));
+    expect(installedStore).toBe(resolve(dirname(installedStore), "v11"));
+    const storeArgument = "--config.store-dir=" + dirname(installedStore);
+    const implicit = await runCommand(
+      {
+        id: "implicit-fixture-store",
+        executable: "pnpm",
+        args: ["store", "path"],
+        parser: "exit-code",
+      },
+      {
+        workingDirectory: fixture,
+        artifactDirectory: resolve(fixture, "probe/store"),
+        timeoutMs: 30_000,
+        trustedControllerCommand: true,
+        extraEnvironment: { CI: "1" },
+      },
+    );
+    expect(implicit.status).toBe("PASS");
+    expect(resolve((await readFile(implicit.stdoutPath, "utf8")).trim())).toBe(
+      resolve(fixture, "empty-store/v11"),
+    );
     const install = await runCommand(
       {
         id: "install-under-ci",
         executable: "pnpm",
         args: [
+          storeArgument,
           "install",
           "--offline",
           "--frozen-lockfile",
@@ -66,6 +106,11 @@ it("consumes the CI-installed package graph through the unchanged sanitized chil
       }),
     ).toBe("PASS");
     expect(install.exitCode).toBe(0);
+    expect(
+      JSON.parse(
+        await readFile(resolve(fixture, "node_modules/.modules.yaml"), "utf8"),
+      ).storeDir,
+    ).toBe(installedStore);
     const paths = [
       "node_modules/.modules.yaml",
       "node_modules/.pnpm/lock.yaml",
@@ -79,6 +124,7 @@ it("consumes the CI-installed package graph through the unchanged sanitized chil
           id: ci ? "strict-child-with-ci" : "strict-sanitized-child",
           executable: "pnpm",
           args: [
+            storeArgument,
             "--config.verify-deps-before-run=error",
             "exec",
             "node",
