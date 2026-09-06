@@ -12,6 +12,7 @@ import {
   unlink,
 } from "node:fs/promises";
 import { dirname, isAbsolute, relative, resolve } from "node:path";
+import { assertActiveAuthorityPublication } from "./authority-publication.mjs";
 
 import {
   DEFAULT_CONFIG_PATH,
@@ -659,6 +660,7 @@ async function inspectPreCommissioning(
   repositoryRoot: string,
   inputPath: string,
 ): Promise<CommissioningContext> {
+  await assertActiveAuthorityPublication(repositoryRoot);
   if (existsSync(resolve(repositoryRoot, DEFAULT_VERIFICATION_MANIFEST_PATH)))
     throw new Error(
       "Repository is already commissioned; recommissioning is refused.",

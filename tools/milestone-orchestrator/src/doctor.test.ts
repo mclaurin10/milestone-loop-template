@@ -200,6 +200,12 @@ async function repositoryFixture(
     await mkdir(dirname(absolute), { recursive: true });
     await writeFile(absolute, `${path}\n`, "utf8");
   }
+  // The common publication fence reads scope before structural configuration.
+  // Commissioning remains independently mocked below, but the protected lock
+  // must be a parseable legacy record rather than a path-name placeholder.
+  await writeJson(join(root, "evals/immutable-contract-lock.json"), {
+    schemaVersion: "1.0.0",
+  });
   // package.json is itself a protected trust root; the runtime-pin content
   // must land after the placeholder loop above.
   await writeJson(join(root, "package.json"), {

@@ -20,6 +20,7 @@ import {
 } from "../tools/milestone-orchestrator/src/process-supervisor.ts";
 import { validateCommissionedAuthorityAnchor } from "../tools/milestone-orchestrator/src/authority-anchor.ts";
 import { evaluateContractIntegrity } from "../tools/milestone-orchestrator/src/contract-integrity.ts";
+import { assertActiveAuthorityPublication } from "../tools/milestone-orchestrator/src/authority-publication.mjs";
 import {
   EXECUTION_PROVIDER_IDENTITY_ENV,
   decodeExecutionProviderIdentity,
@@ -1355,6 +1356,7 @@ async function loadPackageJson() {
 }
 
 async function runVerification(options) {
+  await assertActiveAuthorityPublication(repositoryRoot);
   const packageLoad = await loadPackageJson();
   const { packageJson } = packageLoad;
   const configuredProfileId =
@@ -1422,6 +1424,7 @@ async function runVerification(options) {
   for (const stage of profile.stages.filter((item) =>
     selectedIds.has(item.id),
   )) {
+    await assertActiveAuthorityPublication(repositoryRoot);
     const result =
       stage.kind === "internal"
         ? await evaluateEnvironment(
@@ -1440,6 +1443,7 @@ async function runVerification(options) {
             executionProvider,
           );
     stages.push(result);
+    await assertActiveAuthorityPublication(repositoryRoot);
     console.log(`[${result.status}] ${result.id} - ${result.name}`);
   }
 

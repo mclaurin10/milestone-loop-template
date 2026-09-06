@@ -65,6 +65,7 @@
     "tools/milestone-orchestrator/src/agent-schemas.ts",
     "tools/milestone-orchestrator/src/artifact-inventory.ts",
     "tools/milestone-orchestrator/src/authority-anchor.ts",
+    "tools/milestone-orchestrator/src/authority-publication.mjs",
     "tools/milestone-orchestrator/src/benchmark.ts",
     "tools/milestone-orchestrator/src/bounded-spawn-sync.ts",
     "tools/milestone-orchestrator/src/budget.ts",
@@ -126,6 +127,7 @@
     "tools/milestone-orchestrator/src/safety-demonstration.ts",
     "tools/milestone-orchestrator/src/schedule-projection.ts",
     "tools/milestone-orchestrator/src/schema.ts",
+    "tools/milestone-orchestrator/src/source-authority-anchor.ts",
     "tools/milestone-orchestrator/src/source-epoch-inspect-cli.ts",
     "tools/milestone-orchestrator/src/source-epoch-snapshot.ts",
     "tools/milestone-orchestrator/src/source-schedule.ts",
@@ -204,6 +206,7 @@
     "tools/milestone-orchestrator/src/process-supervisor.ts",
     "tools/milestone-orchestrator/src/reconciliation.ts",
     "tools/milestone-orchestrator/src/safety-demonstration.ts",
+    "tools/milestone-orchestrator/src/source-authority-anchor.ts",
     "tools/milestone-orchestrator/src/source-epoch-snapshot.ts",
     "tools/milestone-orchestrator/src/status.ts",
     "tools/milestone-orchestrator/src/target-integration.ts",
@@ -216,8 +219,8 @@
     "tools/milestone-orchestrator/src/worked-example.ts",
     "tools/milestone-orchestrator/src/workspace-create.ts",
     "tools/production-build.mjs",
-    "tools/source-release-inspection.mjs",
-    "tools/source-release-command.mjs"
+    "tools/source-release-command.mjs",
+    "tools/source-release-inspection.mjs"
   ],
   "generatedTests": [
     "tools/milestone-orchestrator/template/bootstrap-adopter/scaffold/app/kernel.test.ts",

@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { lstat, readFile } from "node:fs/promises";
 import { hostname, tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
+import { assertActiveAuthorityPublication } from "./authority-publication.mjs";
 
 import { spawnBoundedSync } from "./bounded-spawn-sync.js";
 import { ensureContainedDirectory } from "./path-safety.js";
@@ -332,6 +333,7 @@ export class ControllerLease {
     readonly hooks?: ControllerLeaseHooks;
   }): Promise<ControllerLease> {
     const repositoryRoot = resolve(input.repositoryRoot);
+    await assertActiveAuthorityPublication(repositoryRoot);
     if (input.operation !== "commission-amend") {
       const { assertNoPendingAmendment } =
         await import("./commissioning-audit.js");
@@ -412,6 +414,7 @@ export class ControllerLease {
           );
       }
 
+      await assertActiveAuthorityPublication(repositoryRoot);
       if (store.compareAndSwap(existingObjectId, ownerObjectId)) {
         await input.hooks?.afterPublished?.({
           path: CONTROLLER_LEASE_REF,

@@ -2,6 +2,10 @@ import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { lstat, readFile, realpath } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
+import {
+  assertActiveAuthorityPublication,
+  assertNoPendingAuthorityMigration,
+} from "./authority-publication.mjs";
 
 import {
   assertCommissioningInput,
@@ -169,6 +173,7 @@ export async function readAmendmentFile(
 }
 
 export async function assertNoPendingAmendment(root: string): Promise<void> {
+  await assertNoPendingAuthorityMigration(root);
   if ((await readAmendmentFile(root, AMENDMENT_PENDING_PATH)) !== null)
     throw new Error(
       "Verification manifest amendment publication is incomplete; resume its recorded descriptor.",
@@ -776,6 +781,7 @@ export async function inspectSourceAmendmentAudit(
 export async function assertActiveCommissioningAudit(
   root: string,
 ): Promise<void> {
+  await assertActiveAuthorityPublication(root);
   await assertNoPendingAmendment(root);
   // Generated adopters commission a different input and retain their bootstrap
   // lifecycle. Source deletion is detected from history, not from a live ID.

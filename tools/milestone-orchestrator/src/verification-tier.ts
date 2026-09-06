@@ -3,6 +3,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { mkdir, readFile } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
+import { assertActiveAuthorityPublication } from "./authority-publication.mjs";
 
 import { VERIFICATION_TIER_SCHEMA_VERSION } from "./contracts.js";
 import type {
@@ -209,6 +210,7 @@ export async function planVerificationTier(input: {
   readonly focusedCheckIds?: readonly string[];
   readonly protectedAuthorityPaths?: readonly string[];
 }): Promise<VerificationTierPlan> {
+  await assertActiveAuthorityPublication(input.repositoryRoot);
   sourceScheduleGeneration(input.manifest, input.scopePolicy);
   const [packageGraph] = await Promise.all([
     buildPackageGraph(input.repositoryRoot),
@@ -344,6 +346,7 @@ export async function tierCommandRecord(input: {
   readonly actualCheckIds: readonly string[];
   readonly executionProvider: CandidateExecutionProvider;
 }): Promise<VerificationTierCommandRecord> {
+  await assertActiveAuthorityPublication(input.repositoryRoot);
   const directoryName = `${String(input.index + 1).padStart(2, "0")}-${input.command.id.replaceAll(/[^A-Za-z0-9._-]/g, "-")}`;
   const commandRoot = resolve(input.runRoot, "commands", directoryName);
   const evidenceRoot = resolve(commandRoot, "evidence");
@@ -396,6 +399,7 @@ export async function tierCommandRecord(input: {
     };
   }
   let validated: ValidatedCommandReceipt | null = null;
+  await assertActiveAuthorityPublication(input.repositoryRoot);
   let receiptAbsenceReason: string | null = null;
   let evidenceFailure: string | null = null;
   if (existsSync(resolve(evidenceRoot, "result.json"))) {

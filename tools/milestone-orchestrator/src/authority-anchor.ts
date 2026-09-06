@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { lstat, readFile, realpath } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
+import { assertActiveAuthorityPublication } from "./authority-publication.mjs";
 
 export const IMMUTABLE_CONTRACT_LOCK_PATH =
   "evals/immutable-contract-lock.json" as const;
@@ -294,6 +295,7 @@ export async function validateCommissionedAuthorityAnchor(input: {
   readonly expectedImmutableContractLockSha256?: string;
 }): Promise<AuthorityAnchorResult> {
   const repositoryRoot = resolve(input.repositoryRoot);
+  await assertActiveAuthorityPublication(repositoryRoot);
   const candidateCommit = gitText(repositoryRoot, ["rev-parse", "HEAD"]);
   if (!/^[a-f0-9]{40}$/u.test(candidateCommit))
     throw new Error("Authority anchor requires a canonical SHA-1 HEAD commit.");

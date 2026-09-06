@@ -1,5 +1,11 @@
 # Decision Log
 
+## 2026-09-06 UTC — Fence publication before admitting a new authority generation
+
+Use one native-Node-compatible MJS scope/pending reader across both the unchanged node scripts/verify.mjs entry point and the TS controller. Presence of an intent is refusal, including malformed and linked entries; unknown/mixed source signals cannot fall back to legacy. Recheck before state/ref publication and around provider execution. Exact approved-anchor inspection is read-only and cannot authorize activation. Keep a complete source projection refused until every committed generation/request/review consumer and the recoverable publisher are implemented. Retain original downstream/bootstrap behavior and ship the common runtime dependency explicitly.
+
+Keep production timestamp rejection when a runtime's epoch clock moves backward. Native deadline diagnostics and two raw-passing WSL runs did not supply passing command receipts. The separate Python observer established real clock discontinuities, so use the existing bounded disposable C3 VM route for the complete supporting selection. Preserve its original host limits, original test deadlines and original measurement semantics; add only the fixed reader command and independent guest clock observer after the real OCI probe. Retain all failed attempts and distinguish this development projection from a clean committed candidate, native Windows qualification or any performance interpretation.
+
 ## 2026-09-06 UTC — Transport actual supporting Git objects without source refs
 
 A published branch-only clone cannot depend on unpushed side branches for its retained audit. Retain exact original commit bytes and verify their Git IDs against the sealed record; reconstruct their original trees from the existing sealed patches in a temporary object cache. Expose that cache only to the unchanged auditor, then delete it and assert the source bindings remain unchanged. Do not manufacture new commit metadata, publish supporting refs, rewrite the sealed archive or adopt controller state. The wrapper and its independent retained follow-up audit remain supporting evidence; fresh clean post-commit observations are separately required.

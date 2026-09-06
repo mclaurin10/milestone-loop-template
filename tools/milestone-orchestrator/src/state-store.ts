@@ -1,5 +1,9 @@
 import { randomUUID } from "node:crypto";
 import {
+  assertActiveAuthorityPublication,
+  assertNoPendingAuthorityMigration,
+} from "./authority-publication.mjs";
+import {
   link,
   lstat,
   mkdir,
@@ -902,6 +906,7 @@ export class StateStore {
     state: OrchestratorState,
     hooks: StateStoreHooks,
   ): Promise<void> {
+    await assertActiveAuthorityPublication(this.repositoryRoot);
     if (await this.mirrorMatches(state)) return;
     const directory = dirname(this.path);
     if (directory === this.repositoryRoot) {
@@ -912,7 +917,14 @@ export class StateStore {
         );
     } else await ensureContainedDirectory(this.repositoryRoot, directory);
     await hooks.beforeMirrorWrite?.(state);
-    await atomicWriteJson(this.path, state, hooks);
+    await assertNoPendingAuthorityMigration(this.repositoryRoot);
+    await atomicWriteJson(this.path, state, {
+      ...hooks,
+      beforeRename: async (temporaryPath, targetPath) => {
+        await hooks.beforeRename?.(temporaryPath, targetPath);
+        await assertNoPendingAuthorityMigration(this.repositoryRoot);
+      },
+    });
     await hooks.afterMirrorWrite?.(state);
   }
 
@@ -950,6 +962,7 @@ export class StateStore {
       objectId: candidate.objectId,
       revision: state.revision,
     });
+    await assertActiveAuthorityPublication(this.repositoryRoot);
     if (!this.generations.publish(null, candidate.objectId)) {
       const winner = this.generations.readCurrent();
       if (!winner)
@@ -970,6 +983,7 @@ export class StateStore {
   }
 
   async load(): Promise<OrchestratorState | null> {
+    await assertActiveAuthorityPublication(this.repositoryRoot);
     const canonical = this.generations.readCurrent();
     if (canonical) {
       this.assertPendingOperationLineage(canonical);
@@ -986,6 +1000,7 @@ export class StateStore {
   }
 
   async inspect(): Promise<StateStoreInspection> {
+    await assertActiveAuthorityPublication(this.repositoryRoot);
     const canonical = this.generations.readCurrent();
     if (canonical) {
       this.assertPendingOperationLineage(canonical);
@@ -1018,6 +1033,7 @@ export class StateStore {
   async loadForMutation(
     hooks: StateStoreHooks = {},
   ): Promise<OrchestratorState | null> {
+    await assertActiveAuthorityPublication(this.repositoryRoot);
     const canonical = this.generations.readCurrent();
     if (canonical) {
       const state = this.rememberGeneration(canonical);
@@ -1038,6 +1054,7 @@ export class StateStore {
     state: OrchestratorState,
     hooks: StateStoreHooks = {},
   ): Promise<OrchestratorState> {
+    await assertActiveAuthorityPublication(this.repositoryRoot);
     assertOrchestratorState(state);
     if (state.pendingOperation !== null)
       throw new Error(
@@ -1088,6 +1105,7 @@ export class StateStore {
     state: OrchestratorState,
     hooks: StateStoreHooks = {},
   ): Promise<OrchestratorState> {
+    await assertActiveAuthorityPublication(this.repositoryRoot);
     assertOrchestratorState(state);
     const expected = this.loadedGeneration;
     if (this.loadedSource !== "canonical" || !expected) {
@@ -1126,6 +1144,7 @@ export class StateStore {
       objectId: candidate.objectId,
       revision: saved.revision,
     });
+    await assertActiveAuthorityPublication(this.repositoryRoot);
     if (!this.generations.publish(expected.objectId, candidate.objectId))
       throw this.staleError(state.revision, expected.objectId);
     // The loaded generation was fully validated, the transition fence binds

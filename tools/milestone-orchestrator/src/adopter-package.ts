@@ -70,6 +70,7 @@ const runtimeRootFiles = [
   "tools/milestone-orchestrator/schemas/commissioning-amendment-request.schema.json",
   "tools/milestone-orchestrator/schemas/commissioning-amendment-ledger.schema.json",
   "tools/milestone-orchestrator/src/test-run-probe.cjs",
+  "tools/milestone-orchestrator/src/authority-publication.mjs",
   "tools/milestone-orchestrator/tsconfig.json",
   "tsconfig.base.json",
 ] as const;

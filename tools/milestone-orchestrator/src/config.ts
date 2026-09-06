@@ -33,6 +33,7 @@ import {
   assertVerificationScopePolicy,
 } from "./schema.js";
 import { resolveVerificationManifestProfile } from "./verification-manifest.js";
+import { assertActiveAuthorityPublication } from "./authority-publication.mjs";
 
 export const DEFAULT_CONFIG_PATH =
   "tools/milestone-orchestrator/config/default.json";
@@ -62,6 +63,7 @@ async function loadTrackedJson<T>(
   requestedPath: string,
   validate: (value: unknown) => T,
 ): Promise<TrackedJson<T>> {
+  await assertActiveAuthorityPublication(repositoryRoot);
   const root = resolve(repositoryRoot);
   const path = resolve(root, requestedPath);
   const repositoryRelative = relative(root, path).replaceAll("\\", "/");
@@ -339,6 +341,7 @@ export async function loadConfigForInspection(
   repositoryRoot: string,
   requestedPath?: string,
 ): Promise<OrchestratorConfig> {
+  await assertActiveAuthorityPublication(repositoryRoot);
   const path = resolve(
     repositoryRoot,
     requestedPath ??

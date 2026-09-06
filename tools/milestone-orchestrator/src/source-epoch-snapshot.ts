@@ -3,9 +3,8 @@ import { createHash } from "node:crypto";
 import { lstat, readFile, realpath } from "node:fs/promises";
 import { resolve } from "node:path";
 
-export const SOURCE_EPOCH = "orch-template.v1" as const;
-export const SOURCE_CONTRACT_ID =
-  "milestone-loop-orchestrator-source.v1" as const;
+import { SOURCE_EPOCH, SOURCE_CONTRACT_ID } from "./authority-publication.mjs";
+export { SOURCE_EPOCH, SOURCE_CONTRACT_ID } from "./authority-publication.mjs";
 export const SOURCE_APPROVED_DIGEST =
   "53d38a2c2038cd9c5ffc240275043709d23dd33a81237e3d12018a38a8378108" as const;
 export const SOURCE_APPROVAL_PATH =
