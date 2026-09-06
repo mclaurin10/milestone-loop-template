@@ -3,6 +3,14 @@
 Append one entry per completed increment: date, plan objective, verification
 evidence (commands, result paths), commit id, and known gaps. Newest first.
 
+## 2026-09-06 UTC — Preserve strict launcher discovery through canonical Windows fixtures
+
+Paused C5 when exact repair run 34012032506 at 827ebbf finished with four successful jobs and a failed Windows complete-unit suite. Its controller suite passed; complete unit results were 929/937, with eight failures confined to host-discovery fixture paths. Retained all five provider ZIPs and checked their digests. A native Windows uppercase TEMP/TMP reproduction reached the identical eight full failure identities (32/40 passed), with no receipt. An earlier redirection setup failure never launched pnpm and is separately recorded.
+
+Changed only the owned test fixture's mkdtemp result to its realpath and added that import. The production scanner and every original test assertion/deadline remain unchanged. The actual repository-tooling partition passed 128/128 under the same alias environment; typecheck, lint, format and five invariants passed (44,836 ms, no timing interpretation). Independent fresh extraction/audit passed over 113 regular files/ten receipts, raw matched failures, corrected cases and the exact two-line test-source change. Archive SHA256 daa7575dfa33966dba915c0779475f17b4365e0506b7f087885231854b80c97d; reproduction is documented at docs/ci-regressions/host-discovery-path/README.md.
+
+Commit identity is the scoped commit with subject "Canonicalize owned discovery fixtures for Windows CI" containing this entry. Fresh post-commit observations and the new exact hosted cohort remain pending at commit time. Preserve and restore all paused C5 bytes, then continue its consumed-build closeout, strict compatible readers, approved recoverable authority transition, actual candidate/four partitions and committed 5(a)/5(b). Historical WP6e remains BLOCKED; source state, legacy authorities and settled inactive r2 approval are unchanged. No Windows workflow qualification, source readiness, human acceptance or WP6f conclusion follows from this fixture repair.
+
 ## 2026-09-06 UTC — C4: exact inert authority snapshots and strict Git-object inspection
 
 Resumed C4 after integrating the narrow C3 fixture repair 827ebbf27b98fb1e2a3ea97cb5c1c0100618818d. Its clean 42-case native Windows alias run and independent retained audit passed before push. Exact repair CI run 34012032506 is still pending; the original C3 cohort remains failed. Preserved all nineteen paused C4 files through stash/fast-forward/explicit plan conflict resolution and verified every restored SHA256. The recovery stash remains and the user's roadmap hash is unchanged.

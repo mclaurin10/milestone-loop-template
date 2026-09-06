@@ -4,6 +4,7 @@ import {
   mkdir,
   mkdtemp,
   readFile,
+  realpath,
   rm,
   symlink,
   writeFile,
@@ -54,7 +55,7 @@ const pathFor = (root, name, script = false) =>
     name + (process.platform === "win32" ? (script ? ".cmd" : ".exe") : ""),
   );
 async function fixture() {
-  const root = await mkdtemp(join(tmpdir(), "host-discovery-"));
+  const root = await realpath(await mkdtemp(join(tmpdir(), "host-discovery-")));
   roots.push(root);
   return root;
 }

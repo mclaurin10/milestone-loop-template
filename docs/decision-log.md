@@ -1,5 +1,11 @@
 # Decision Log
 
+## 2026-09-06 UTC — Canonicalize owned discovery fixtures while preserving refusal of arbitrary aliases
+
+The launch-free scanner must continue rejecting noncanonical paths before reading a possible installer or binary. A test's newly created directory is owned and may be resolved with realpath before constructing the input; arbitrary discovered launcher paths may not. Preserve the original forty host-discovery assertions and the production scanner verbatim. A deliberately aliased/link input must still be refused. Native Windows TEMP aliases reproduce the actual hosted issue and support the narrow fixture fix; they do not qualify native Windows controller/container workflows.
+
+Keep the failed 827ebbf cohort and all five artifacts separately from the local correction and its later exact hosted cohort. Pause C5 without mixing its staged implementation into this repair. Ordinary source-control integration must restore every preserved C5 byte and continue the authorized prerequisites; no source-state initialization, authority activation or historical reinterpretation is permitted.
+
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
