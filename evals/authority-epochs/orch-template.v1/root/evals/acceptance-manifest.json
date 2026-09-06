@@ -1,0 +1,639 @@
+{
+  "schemaVersion": "source-template-acceptance.v1",
+  "contractId": "milestone-loop-orchestrator-source.v1",
+  "authorityEpoch": "orch-template.v1",
+  "claimScope": "orchestrator-template",
+  "title": "Milestone orchestrator/template source acceptance",
+  "platforms": [
+    {
+      "id": "windows",
+      "nativeControllerRequired": true,
+      "referenceRunner": "windows-2022",
+      "realProviderRequired": true
+    },
+    {
+      "id": "linux",
+      "nativeControllerRequired": true,
+      "referenceRunner": "ubuntu-24.04",
+      "realProviderRequired": true
+    }
+  ],
+  "requiredToolchain": {
+    "node": "24.18.0",
+    "pnpm": "11.15.1",
+    "typescript": "5.9.3",
+    "vitest": "4.1.10",
+    "otherDependencyAndModelPins": "unchanged"
+  },
+  "requirements": [
+    {
+      "id": "ORCH-STATIC-01",
+      "name": "Static, dependency and architecture integrity",
+      "required": true,
+      "outcome": "all installed-graph/import-boundary/static/regression checks pass",
+      "requiredArtifactKinds": [
+        "installed-graph-report",
+        "architecture-edge-report",
+        "vitest-report"
+      ],
+      "requiredPlatforms": [
+        "windows",
+        "linux"
+      ],
+      "specification": "evals/ACCEPTANCE.md#required-machine-outcomes"
+    },
+    {
+      "id": "ORCH-BUILD-01",
+      "name": "Reproducible consumed release",
+      "required": true,
+      "outcome": "two independent clean payloads per platform and portable inventories across platforms agree; extracted CLI generates and commissions adopter",
+      "requiredArtifactKinds": [
+        "build-report",
+        "release-manifest",
+        "external-release-smoke-report"
+      ],
+      "requiredPlatforms": [
+        "windows",
+        "linux"
+      ],
+      "specification": "evals/ACCEPTANCE.md#required-machine-outcomes"
+    },
+    {
+      "id": "ORCH-ADOPT-01",
+      "name": "Fresh adopter bootstrap compatibility",
+      "required": true,
+      "outcome": "two distinct definitions on each platform complete real generated bootstrap and preserve claim scope",
+      "requiredArtifactKinds": [
+        "adopter-package-report",
+        "bootstrap-result-index",
+        "screenshot",
+        "playwright-report",
+        "browser-diagnostics"
+      ],
+      "requiredPlatforms": [
+        "windows",
+        "linux"
+      ],
+      "specification": "evals/ACCEPTANCE.md#required-machine-outcomes"
+    },
+    {
+      "id": "ORCH-PLAN-01",
+      "name": "Bounded planning and diagnostics",
+      "required": true,
+      "outcome": "valid proposal admitted and invalid/protected proposal rejected before worker start",
+      "requiredArtifactKinds": [
+        "orchestration-workflow-report",
+        "proposal-policy-report"
+      ],
+      "requiredPlatforms": [
+        "windows",
+        "linux"
+      ],
+      "specification": "evals/ACCEPTANCE.md#required-machine-outcomes"
+    },
+    {
+      "id": "ORCH-VERIFY-01",
+      "name": "Candidate and evidence verification",
+      "required": true,
+      "outcome": "actual commissioned tier passes; four partitions once; invalid evidence rejected before integration",
+      "requiredArtifactKinds": [
+        "verification-tier-report",
+        "test-partition-report",
+        "receipt-audit-report"
+      ],
+      "requiredPlatforms": [
+        "windows",
+        "linux"
+      ],
+      "specification": "evals/ACCEPTANCE.md#required-machine-outcomes"
+    },
+    {
+      "id": "ORCH-REVIEW-01",
+      "name": "Independent review and integration",
+      "required": true,
+      "outcome": "stale/rejected review cannot integrate; independently reviewed exact candidate fast-forwards",
+      "requiredArtifactKinds": [
+        "orchestration-workflow-report",
+        "independent-review-record",
+        "git-transition-report"
+      ],
+      "requiredPlatforms": [
+        "windows",
+        "linux"
+      ],
+      "specification": "evals/ACCEPTANCE.md#required-machine-outcomes"
+    },
+    {
+      "id": "ORCH-STATE-01",
+      "name": "Canonical state, leases and parity",
+      "required": true,
+      "outcome": "single writer/owner, valid restart and equal semantic traces across repeated native-platform runs",
+      "requiredArtifactKinds": [
+        "state-generation-report",
+        "lease-contention-report",
+        "canonical-parity-report"
+      ],
+      "requiredPlatforms": [
+        "windows",
+        "linux"
+      ],
+      "specification": "evals/ACCEPTANCE.md#required-machine-outcomes"
+    },
+    {
+      "id": "ORCH-RECOVERY-01",
+      "name": "Intent-based recovery",
+      "required": true,
+      "outcome": "all registered durable boundaries resume exact intended state or preserve foreign state without adoption",
+      "requiredArtifactKinds": [
+        "recovery-boundary-inventory",
+        "fault-recovery-report"
+      ],
+      "requiredPlatforms": [
+        "windows",
+        "linux"
+      ],
+      "specification": "evals/ACCEPTANCE.md#required-machine-outcomes"
+    },
+    {
+      "id": "ORCH-RECONCILE-01",
+      "name": "External boundary reconciliation",
+      "required": true,
+      "outcome": "complete external range reviewed and verified before atomic adoption; mismatch fails closed",
+      "requiredArtifactKinds": [
+        "reconciliation-report",
+        "independent-reconciliation-review",
+        "archived-state-index"
+      ],
+      "requiredPlatforms": [
+        "windows",
+        "linux"
+      ],
+      "specification": "evals/ACCEPTANCE.md#required-machine-outcomes"
+    },
+    {
+      "id": "ORCH-RETENTION-01",
+      "name": "Approved retention and contained cleanup",
+      "required": true,
+      "outcome": "exact approved plan applies; stale/unapproved/escaped targets remain untouched",
+      "requiredArtifactKinds": [
+        "retention-plan",
+        "approval-record",
+        "retention-application-report",
+        "outside-sentinel-report"
+      ],
+      "requiredPlatforms": [
+        "windows",
+        "linux"
+      ],
+      "specification": "evals/ACCEPTANCE.md#required-machine-outcomes"
+    },
+    {
+      "id": "ORCH-CONTAIN-01",
+      "name": "Real OCI containment",
+      "required": true,
+      "outcome": "actual attested provider denies all prohibited access and preserves scoped process/resource boundaries",
+      "requiredArtifactKinds": [
+        "container-inspection-report",
+        "containment-attack-report"
+      ],
+      "requiredPlatforms": [
+        "windows",
+        "linux"
+      ],
+      "specification": "evals/ACCEPTANCE.md#required-machine-outcomes"
+    },
+    {
+      "id": "ORCH-BOUNDS-01",
+      "name": "Bounded supervision and truthful diagnostics",
+      "required": true,
+      "outcome": "actual caps/deadlines/drain/termination work with no surviving owned descendant or false success",
+      "requiredArtifactKinds": [
+        "supervision-report",
+        "process-survivor-report",
+        "diagnostic-report"
+      ],
+      "requiredPlatforms": [
+        "windows",
+        "linux"
+      ],
+      "specification": "evals/ACCEPTANCE.md#required-machine-outcomes"
+    }
+  ],
+  "negativeScenarios": [
+    {
+      "id": "NEG-01",
+      "name": "Invalid or overbroad proposal",
+      "requirementIds": [
+        "ORCH-PLAN-01"
+      ],
+      "requiredPlatforms": [
+        "windows",
+        "linux"
+      ],
+      "requiredVariantFraction": 1,
+      "earlierInfrastructureFailureSatisfiesScenario": false
+    },
+    {
+      "id": "NEG-02",
+      "name": "Protected worker write",
+      "requirementIds": [
+        "ORCH-PLAN-01",
+        "ORCH-VERIFY-01"
+      ],
+      "requiredPlatforms": [
+        "windows",
+        "linux"
+      ],
+      "requiredVariantFraction": 1,
+      "earlierInfrastructureFailureSatisfiesScenario": false
+    },
+    {
+      "id": "NEG-03",
+      "name": "Unclassified test",
+      "requirementIds": [
+        "ORCH-VERIFY-01",
+        "ORCH-STATIC-01"
+      ],
+      "requiredPlatforms": [
+        "windows",
+        "linux"
+      ],
+      "requiredVariantFraction": 1,
+      "earlierInfrastructureFailureSatisfiesScenario": false
+    },
+    {
+      "id": "NEG-04",
+      "name": "Missing/forged child evidence",
+      "requirementIds": [
+        "ORCH-VERIFY-01"
+      ],
+      "requiredPlatforms": [
+        "windows",
+        "linux"
+      ],
+      "requiredVariantFraction": 1,
+      "earlierInfrastructureFailureSatisfiesScenario": false
+    },
+    {
+      "id": "NEG-05",
+      "name": "Stale/rejected/worker-authored review",
+      "requirementIds": [
+        "ORCH-REVIEW-01"
+      ],
+      "requiredPlatforms": [
+        "windows",
+        "linux"
+      ],
+      "requiredVariantFraction": 1,
+      "earlierInfrastructureFailureSatisfiesScenario": false
+    },
+    {
+      "id": "NEG-06",
+      "name": "Diverged target ref",
+      "requirementIds": [
+        "ORCH-REVIEW-01"
+      ],
+      "requiredPlatforms": [
+        "windows",
+        "linux"
+      ],
+      "requiredVariantFraction": 1,
+      "earlierInfrastructureFailureSatisfiesScenario": false
+    },
+    {
+      "id": "NEG-07",
+      "name": "Stale/corrupt canonical state",
+      "requirementIds": [
+        "ORCH-STATE-01"
+      ],
+      "requiredPlatforms": [
+        "windows",
+        "linux"
+      ],
+      "requiredVariantFraction": 1,
+      "earlierInfrastructureFailureSatisfiesScenario": false
+    },
+    {
+      "id": "NEG-08",
+      "name": "Concurrent lease/generation and reused process identity",
+      "requirementIds": [
+        "ORCH-STATE-01"
+      ],
+      "requiredPlatforms": [
+        "windows",
+        "linux"
+      ],
+      "requiredVariantFraction": 1,
+      "earlierInfrastructureFailureSatisfiesScenario": false
+    },
+    {
+      "id": "NEG-09",
+      "name": "Workspace-create publication crash",
+      "requirementIds": [
+        "ORCH-RECOVERY-01"
+      ],
+      "requiredPlatforms": [
+        "windows",
+        "linux"
+      ],
+      "requiredVariantFraction": 1,
+      "earlierInfrastructureFailureSatisfiesScenario": false
+    },
+    {
+      "id": "NEG-10",
+      "name": "Candidate-prepare publication crash",
+      "requirementIds": [
+        "ORCH-RECOVERY-01"
+      ],
+      "requiredPlatforms": [
+        "windows",
+        "linux"
+      ],
+      "requiredVariantFraction": 1,
+      "earlierInfrastructureFailureSatisfiesScenario": false
+    },
+    {
+      "id": "NEG-11",
+      "name": "Integration publication crash",
+      "requirementIds": [
+        "ORCH-RECOVERY-01",
+        "ORCH-REVIEW-01"
+      ],
+      "requiredPlatforms": [
+        "windows",
+        "linux"
+      ],
+      "requiredVariantFraction": 1,
+      "earlierInfrastructureFailureSatisfiesScenario": false
+    },
+    {
+      "id": "NEG-12",
+      "name": "Cleanup escape/publication crash",
+      "requirementIds": [
+        "ORCH-RECOVERY-01",
+        "ORCH-RETENTION-01"
+      ],
+      "requiredPlatforms": [
+        "windows",
+        "linux"
+      ],
+      "requiredVariantFraction": 1,
+      "earlierInfrastructureFailureSatisfiesScenario": false
+    },
+    {
+      "id": "NEG-13",
+      "name": "Unapproved/stale/interrupted retention",
+      "requirementIds": [
+        "ORCH-RETENTION-01"
+      ],
+      "requiredPlatforms": [
+        "windows",
+        "linux"
+      ],
+      "requiredVariantFraction": 1,
+      "earlierInfrastructureFailureSatisfiesScenario": false
+    },
+    {
+      "id": "NEG-14",
+      "name": "External reconciliation range/identity mismatch",
+      "requirementIds": [
+        "ORCH-RECONCILE-01"
+      ],
+      "requiredPlatforms": [
+        "windows",
+        "linux"
+      ],
+      "requiredVariantFraction": 1,
+      "earlierInfrastructureFailureSatisfiesScenario": false
+    },
+    {
+      "id": "NEG-15",
+      "name": "Mixed/foreign/crashed amendment generation",
+      "requirementIds": [
+        "ORCH-RECOVERY-01",
+        "ORCH-VERIFY-01"
+      ],
+      "requiredPlatforms": [
+        "windows",
+        "linux"
+      ],
+      "requiredVariantFraction": 1,
+      "earlierInfrastructureFailureSatisfiesScenario": false
+    },
+    {
+      "id": "NEG-16",
+      "name": "Containment/supervision/unauthorized hidden request",
+      "requirementIds": [
+        "ORCH-CONTAIN-01",
+        "ORCH-BOUNDS-01",
+        "ORCH-VERIFY-01"
+      ],
+      "requiredPlatforms": [
+        "windows",
+        "linux"
+      ],
+      "requiredVariantFraction": 1,
+      "earlierInfrastructureFailureSatisfiesScenario": false
+    }
+  ],
+  "completionMetrics": [
+    {
+      "id": "ORCH-METRIC-COVERAGE",
+      "requiredDomains": 8,
+      "requiredMachineOutcomes": 12,
+      "requiredFraction": 1,
+      "freeze": "HUMAN_REVISION_ONLY"
+    },
+    {
+      "id": "ORCH-METRIC-NEGATIVE",
+      "requiredScenarioFamilies": 16,
+      "requiredVariantFraction": 1,
+      "requiredFamilyPassesPerPlatform": 16,
+      "freeze": "HUMAN_REVISION_ONLY"
+    },
+    {
+      "id": "ORCH-METRIC-INTEGRITY",
+      "maximumUnexpectedIntegrityViolations": 0,
+      "freeze": "HUMAN_REVISION_ONLY"
+    },
+    {
+      "id": "ORCH-METRIC-REPRODUCIBILITY",
+      "independentCleanBuildsPerPlatform": 2,
+      "requiredIdenticalPortablePayloadInventories": true,
+      "freeze": "HUMAN_REVISION_ONLY"
+    },
+    {
+      "id": "ORCH-METRIC-BOUNDS",
+      "commandOutputLimitBytes": 67108864,
+      "commandKillGraceMs": 5000,
+      "containerCpuCount": 2,
+      "containerMemoryBytes": 2147483648,
+      "containerPids": 256,
+      "ownerTierTimeoutMs": 3900000,
+      "otherFocusedTierTimeoutMs": 1200000,
+      "unrelatedDeadlines": "unchanged",
+      "freeze": "HUMAN_REVISION_ONLY"
+    }
+  ],
+  "calibration": {
+    "policy": "human-revision-only",
+    "provisionalFields": [],
+    "consumesLegacyCal1": false
+  },
+  "publicProductSeedGate": null,
+  "hiddenProductSeedGate": null,
+  "productBotRequirements": [],
+  "plannedCommandSurface": {
+    "commands": [
+      {
+        "id": "verify_source_full",
+        "plannedCommand": "pnpm verify"
+      }
+    ],
+    "profileContract": {
+      "id": "ORCH-PROFILE-01",
+      "defaultProfile": "readiness",
+      "profileOwner": "package.json#milestoneLoop.verification.defaultProfile",
+      "contractOwner": "package.json#milestoneLoop.verification.contractId",
+      "bootstrapIsSourceReadinessEvidence": false,
+      "markerAndHistoryPreserved": true,
+      "scopeOverrideCanAuthorizeCompletion": false
+    },
+    "implementationRegistry": "Versioned authority-anchored implementation; exact internal stage wiring is not frozen by this manifest."
+  },
+  "evidence": {
+    "id": "ORCH-EVIDENCE-01",
+    "receiptRequiredForEverySuccessfulChild": true,
+    "validateArtifactBytesAndHashes": true,
+    "sourceAndFixtureIdentitiesSeparate": true,
+    "authorityAndClaimScopeRequired": true,
+    "independentReviewRequired": true,
+    "attestedCandidateProviderRequired": true,
+    "qualifierHostAndCandidateProviderIdentitiesSeparate": true,
+    "freshQualificationNonceRequired": true,
+    "exactCompletionEvidenceReusable": false,
+    "unitSuccessSubstitutesForWorkflow": false,
+    "skippedUnavailableTimedOutOrFlaky": "non-passing",
+    "crossScopePassInheritance": false,
+    "candidateSupportingEvidenceCompletionEligible": false
+  },
+  "readinessGate": {
+    "id": "ORCH-AUTONOMOUS-READINESS-01",
+    "aggregation": "all",
+    "compensationBetweenRequirementsAllowed": false,
+    "requirements": [
+      "ORCH-STATIC-01",
+      "ORCH-BUILD-01",
+      "ORCH-ADOPT-01",
+      "ORCH-PLAN-01",
+      "ORCH-VERIFY-01",
+      "ORCH-REVIEW-01",
+      "ORCH-STATE-01",
+      "ORCH-RECOVERY-01",
+      "ORCH-RECONCILE-01",
+      "ORCH-RETENTION-01",
+      "ORCH-CONTAIN-01",
+      "ORCH-BOUNDS-01",
+      "ORCH-METRIC-COVERAGE",
+      "ORCH-METRIC-NEGATIVE",
+      "ORCH-METRIC-INTEGRITY",
+      "ORCH-METRIC-REPRODUCIBILITY",
+      "ORCH-METRIC-BOUNDS",
+      "ORCH-PROFILE-01",
+      "ORCH-EVIDENCE-01",
+      "all_negative_scenario_variants_on_both_platforms",
+      "fresh_clean_exact_default_source_verification_with_both_native_platforms",
+      "independently_validated_hosted_and_real_provider_evidence",
+      "ORCH-CADENCE-01"
+    ],
+    "claim": "source_machine_qualified_for_human_acceptance"
+  },
+  "humanAcceptanceGate": {
+    "id": "ORCH-HUMAN-ACCEPT-01",
+    "aggregation": "all",
+    "requirements": [
+      "ORCH-AUTONOMOUS-READINESS-01",
+      "real_released_artifact_installation_and_commissioning",
+      "live_configured_planner_worker_reviewer_workflow",
+      "successful_verified_reviewed_fast_forward",
+      "actual_stale_or_rejected_candidate_refusal",
+      "interrupted_operation_resume",
+      "explicit_maintainer_acceptance_bound_to_release_digest"
+    ],
+    "machineMayAssertHumanApproval": false
+  },
+  "claimBoundaries": {
+    "sourceQualificationDoesNotCompleteGeneratedAdopter": true,
+    "generatedBootstrapDoesNotCompleteProduct": true,
+    "downstreamAuthorityUnchanged": true,
+    "wp6eOrWp6fCompletionAuthorized": false,
+    "fieldReliabilityOrGeneralAgentSuccessRateClaim": false
+  },
+  "verificationCadence": {
+    "id": "ORCH-CADENCE-01",
+    "freeze": "HUMAN_REVISION_ONLY",
+    "addsVerificationProfile": false,
+    "changesExistingIntegrationRequirements": false,
+    "scopeSuppressionAuthorized": false,
+    "iteration": {
+      "completionEligible": false,
+      "automaticFullPlatformDispatch": false,
+      "required": [
+        "canonical-invariants",
+        "explicit-focused-checks-for-increment"
+      ]
+    },
+    "candidate": {
+      "completionEligible": false,
+      "automaticFullPlatformDispatch": false,
+      "requiredFloor": [
+        "canonical-invariants-first",
+        "exact-dependencies",
+        "format-lint-architecture-typecheck",
+        "single-real-payload-build-and-bounded-external-consumer-smoke",
+        "all-four-owner-partitions-exactly-once"
+      ],
+      "ownerOrder": [
+        "controller-runtime",
+        "repository-tooling",
+        "adopter-template",
+        "trusted-container-fixture"
+      ],
+      "additionalWorkflowCoverage": "Explicit affected-boundary cases with changed-path rationale and actual platform/provider; unresolved required coverage fails broad or stays unsupported.",
+      "omittedFromAutomaticDispatch": [
+        "full-native-platform-matrix",
+        "all-workflow-negative-variants",
+        "cross-platform-parity",
+        "complete-two-adopter-matrix",
+        "independent-repeated-build-matrix",
+        "full-containment-and-supervision-corpus"
+      ],
+      "excludesExistingMandatoryRegressionCases": false,
+      "supportingEvidenceAuthorizesReadinessOrRequiredExactIntegration": false
+    },
+    "full": {
+      "entrypoints": [
+        "literal-no-argument-pnpm-verify",
+        "milestone-exact-closure",
+        "periodic-exact-closure",
+        "before-any-operation-that-requires-full-exact-readiness"
+      ],
+      "requiredPlatforms": [
+        "windows",
+        "linux"
+      ],
+      "freshCompleteQualificationRequired": true,
+      "allOutcomesMetricsAndNegativeVariantsRequired": true,
+      "previousSameCommitQualificationReusable": false,
+      "candidateReceiptsReusableAsClosure": false
+    },
+    "dispatch": {
+      "purposeAndCoveragePlanRequired": true,
+      "actualCostRecordRequired": true,
+      "duplicateProducerDispatchForMultipleConsumersRequired": false,
+      "distinctMandatoryObservationsMayBeDeduplicated": false,
+      "automaticPerCommitFullReleaseTriggerAdded": false,
+      "protectedFiveJobCiUnchanged": true
+    }
+  }
+}

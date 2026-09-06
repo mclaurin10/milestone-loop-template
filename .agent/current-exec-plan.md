@@ -1,44 +1,58 @@
 # Current Execution Plan
 
-Status: In progress — exact C3 CI catalogue and Windows fixture regressions. Updated: 2026-09-06 UTC. Owner: authorized WP6e continuation.
+**Status:** In progress — C4 strict epoch inspection and inert approved snapshots. **Updated:** 2026-09-06 UTC. **Owner:** authorized WP6e continuation.
+
+**Regression repair integrated:** 827ebbf27b98fb1e2a3ea97cb5c1c0100618818d fixes the stale 91-file current catalogue expectation and canonicalizes the qualification-input test fixture's temporary root. C3 run 34010283121 failed Linux 808/809 and Windows 783/809; all 25 Windows qualification-input cases had stopped at the real stable-path guard. Both adopter jobs and the original Docker fixture passed. Both defects were reproduced locally; all 42 affected cases then passed under an actual differently cased Windows temporary path, including a clean post-commit run. Independent post-commit retained audit passed over 130 raw files/fourteen receipts. The new exact repair cohort is run 34012032506 and remains pending. Do not relabel the failed C3 cohort. Root C4's nineteen files were stashed during fast-forward integration, the plan conflict was resolved from its preserved exact bytes, and every restored hash matched. The stash remains as a recovery copy; the user's roadmap was untouched.
+
+C4 has prepared twelve exact inert files and implemented the inspector/CLI/new tests. Its initial focused run failed on new real-Git fixtures exceeding their unconfigured five-second test deadline; no original deadline was changed. Its typecheck found two ordinary typing errors. These remain unverified, staged local work and are excluded from the C3 repair candidate.
 
 ## Objective
 
-Repair the stale mutable current-catalogue expectation and the qualification-input fixture's noncanonical temporary path exposed by exact C3 hosted CI. Preserve both failed reports, exercise their actual rejection boundaries, and obtain verified local and new exact-commit hosted evidence while continuing the authorized prerequisites.
+Add strict read-only inspection of the approved source authority epoch and commit its exact inert snapshots while legacy authority remains active. The immediate consumer is a receipt-owning inspection CLI and the later migration preflight. This is the first source-authority prerequisite; continue compatible active-generation consumers, consumed build/source checks and the separately committed/reviewed recoverable migration before real candidate proof.
 
 ## Goal Constraints
 
-Keep all original authority, acceptance, commissioning/amendment history, legacy commands, readiness and human gates. Historical WP6e stays BLOCKED at e590e38. The fixed original 87-file baseline remains a historical fact; four explicitly recorded later qualification test additions make the C3 catalogue 91 files. Do not suppress discovery, discard those tests, weaken ownership invariants or change source controller state. ORCH-AUTH-01 r2 approval is settled but unactivated.
+PROJECT_GOAL.md and original acceptance still own the active scope. Settled ORCH-AUTH-01 r2 approval is 53d38a2c2038cd9c5ffc240275043709d23dd33a81237e3d12018a38a8378108; approval is not activation. Snapshot copies are inert data and cannot govern the active repository. Preserve legacy/bootstrap contracts, old authority/calibration/commissioning/amendment history, readiness marker/history, protected five-job CI and source state absence. Do not alter live frozen files, initialize/adopt source controller state, or include the untracked roadmap.
+
+Historical WP6e remains BLOCKED at e590e38. Its unit-domain recording obligation remains satisfied without a domain PASS. New evidence has its own commit/runtime/scope and cannot imply WP6f, native Windows from WSL, source readiness or human acceptance.
 
 ## Baseline Evidence
 
-C3 c9675791714fa23554277496078263744da8b26c passed its local host/OCI/evidence audit and was pushed. Hosted run 34010283121 has Linux controller failure: 808/809 tests pass; test-ownership.test.ts expects owner file counts 83/1/2/1 and 87 total instead of actual 84/4/2/1 and 91 total. The additions since e590e38 are qualification-input.test.ts plus qualification-host-discovery, qualification-vm-lifecycle and qualification-docker-host .test.mjs files. Both adopter jobs and the unchanged Docker fixture passed; retain the complete final cohort separately. C4 uncommitted snapshots/inspector work is paused in the original checkout and excluded from this isolated repair.
+C3 committed/pushed c9675791714fa23554277496078263744da8b26c with a clean tracked tree. Its fresh post-commit extraction/closeout passed: 1,168 raw files/nineteen receipts, six original OCI cases, six actual kernel faults and cleanup of fifteen host attempts. Actual runtime was clean 29dafb5 under legacy-source.v1; host/program identities are separately pinned. See docs/runtime-qualification/ORCH-AUTH-01-C3/README.md and artifacts/wp6e-continuation-20260906/postcommit-closeout/.
+
+Exact protected C3 CI run 34010283121 is completed and failed as recorded above. The repair's run 34012032506 is in progress at 827ebbf; retain all five outcomes before another master push cancels it. GitHub CLI lacks an API login; public REST and the existing GitHub connector supply actual metadata/logs/artifacts without requesting credentials.
+
+Source entry inspection reproduces the missing inert snapshot at HEAD (git cat-file exit 128), retained at artifacts/wp6e-source-prerequisites-20260906/entry-gap.json. Existing authority-anchor.ts parses only lock v1.0 and binds live root files to the commissioned strict ancestor. contract-integrity.ts and existing manifests remain legacy-only; this increment does not claim all active-generation consumers are migrated.
 
 ## Steps
 
-1. Complete: reproduced the single failing current-catalogue assertion in artifacts/ci-inventory-repair/baseline-focused; exit 1 and no PASS receipt.
-2. Complete: updated only the explicit expected current inventory to 84/4/2/1 and 91 total, with the four qualification additions explained. All classification/discovery rejection tests and original gates remain.
-3. Complete locally: the differently cased Windows temporary root reproduced all 25 fixture setup refusals, and canonicalizing only that fixture passed all 42 qualification-input/container-artifacts/ownership cases. Five invariants and final static checks pass; all production guards remain unchanged. Retained evidence is sealed and independently audited.
-4. In progress: scoped commit, clean post-commit focused/retained audits and new exact hosted cohort. Preserve and integrate/resume C4 while tracking that separate cohort; do not relabel the original C3 failures.
+1. Complete: reproduce missing snapshot/inspect existing reader and approved snapshot/approval contracts.
+2. Complete: fixed-scope Git-object inspection, trusted-control-plane approval pinning, receipt-owned read-only CLI and twelve exact inert new/legacy snapshots. Seventeen new cases exercise actual commit/subprocess boundaries.
+3. Complete locally: all 30 focused cases, original five invariants, typecheck/lint/format and retained evidence audit pass. The archive preserves the actual initial test/typecheck failures, 98 files/eleven receipts and a reconstructed tested index. See C4 README and newest logs; no original deadline or live authority changed.
+4. In progress: cohesive commit and real post-commit inert snapshot inspection, then the next necessary compatible-reader/build/migration increment. Continue until the actual candidate, committed 5(a)/5(b), four independent partitions/raw union/timeout and exact hosted evidence obligations are handled.
 
 ## Acceptance Criteria
 
-The focused baseline reaches the actual stale-count assertion. The corrected current-catalogue test passes all existing ownership rejection cases with explicit expected counts and exactly 91 declared/discovered files. The aliased Windows temporary root reproduces the original stable-realpath refusal, then the fixture reaches all 25 real qualification-input cases after canonicalization. No production identity check is relaxed. All applicable local/hosted checks pass at a new identified commit; old C3 failed CI remains failed. No source state, frozen authority, package script or CI policy changes.
+- Only the fixed approved epoch, snapshot prefixes and allowlisted files are accepted; unknown schema/epoch/approval, missing/extra/linked files, altered hashes or arbitrary paths reject.
+- Approval validation uses the fixed maintainer/control-plane record and known approved bytes, not a candidate-selected approval path or success field. The direct user approval is settled; no new approval flow is introduced.
+- Snapshot reads come from real Git commit objects. Retained results identify exact snapshot/current commits and strict ancestry. Inert inspection may inspect the current snapshot commit but grants no activation; future migration must independently require a strict ancestor.
+- Preserve exact new authority/lock/supporting bytes and original legacy authority/lock bytes under the approved epoch prefixes without replacing live authorities or config.
+- The existing legacy anchor API and tests remain unchanged in meaning. Source active-generation selection remains non-passing until its complete guarded consumers are implemented.
+- Inspection success is a scoped receipt, never candidate/full-readiness evidence. No state or lease is initialized by inspection.
+- Scoped verified commit and concrete next action; do not stop at this precursor if the next increment can proceed.
 
 ## Verification
 
-Exact Node 24.18.0/pnpm 11.15.1. Receipt-owning focused test-ownership.test.ts, real ownership invariant, typecheck/lint/format and applicable controller suite/CI. Preserve raw original hosted report, archive metadata/hash and new results. Full readiness remains incomplete and root production build remains NOT_READY.
+Node 24.18.0/pnpm 11.15.1. Real temporary Git-object fixtures exercise valid and malformed snapshots/ancestry/modes/approval boundaries. Receipt-owning focused tests and inspection CLI, applicable controller/owner tests, typecheck/lint/format/invariants and git diff --check. Add no success-only source stage or altered legacy test expectation. No visual/simulation surface changes. C3 CI remains separate exact-commit evidence.
 
 ## Risks and Recovery
 
-Do not turn a growing mutable repository-inventory fixture into an immutable 87-file ceiling or weaken the actual ownership invariant. Repair in .tools/wp6e-ci-inventory-repair on codex/wp6e-ci-inventory-repair, based exactly on C3, while preserving paused C4 changes and the roadmap in the original checkout. Ordinary verified source-control recovery only.
+The new source lock is human-revision-only and pins a fixed prefix; never regenerate hashes to accommodate implementation. Match the approved bytes and reject unknown/mixed data. Keep read-only snapshot inspection distinct from activation/publication. Full source readers, command scheduling, migration lease/intent/recovery, candidate containment and native platform qualification remain further required work. Use normal Git recovery; never change shared runtime/service state.
 
 ## Progress and Evidence
 
-Original failed Linux report is retained in the primary checkout at artifacts/wp6e-continuation-20260906/hosted-c3-linux-extracted/orchestrator/orchestrator-report.json. The hosted ZIP hash is 8e580150f9fd2b80502d50251fd9c0218df02400a1ec45eea5d20d6274d6beab. No failure is relabeled passing.
-
-The final Windows job 101424779471 failed 26/809: the stale count plus all 25 qualification-input tests during fixture setup at the production stable-realpath guard. Its ZIP was independently hashed to the provider's digest 2d6b1c99a03bf60d6dbfd85e0766c627f713c0c7138545d40c19470119ff537f; entries were inspected before reading the raw report. The fixture omitted realpath normalization used by existing container-artifacts fixtures. The original C3 cohort has two failed controller jobs and three successful adopter/OCI jobs. The local inventory-only baseline/fix, five invariants and static checks pass as scoped; invariant duration was 61,233 ms, above the unchanged advisory warm target, without any performance claim.
+C3 and the separate regression-repair post-commit audits/pushes succeeded with the scopes above. Twelve exact inert snapshot files, a strict inspector/CLI and seventeen new Git-object fixture cases are prepared. Initial focused evidence is 9/21 passing, with twelve new cases exceeding their unconfigured default five-second timeout. Set an explicit bounded sixty-second timeout only on this newly authored Git/subprocess suite; retain all original suite deadlines and the failed raw report. Correct the two ordinary TypeScript errors, include this new test in the explicit current inventory (92 files), then rerun affected original/new tests and static/invariant checks. Live authorities, package scripts, commissioning/amendment history and private state remain unchanged.
 
 ## Next Action
 
-Commit the two verified fixture repairs and their retained evidence, run clean post-commit checks and push the new identified candidate for all five protected jobs. Integrate without discarding paused C4 changes, then continue C4 and the full authorized WP6e continuation while retaining the hosted outcomes. Readiness and the remaining candidate obligations are not complete.
+Commit the exact approved inert snapshot objects and inspect that real commit through the CLI and independent retained audit. Track the repair's pending exact hosted cohort before the next push. Then immediately continue the compatible active-generation and consumed-build prerequisites, separate migration request/review/publication, and real candidate obligations. Readiness and human acceptance remain incomplete.

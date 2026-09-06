@@ -3,6 +3,12 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-09-06 UTC — Inspect exact inert epoch objects without granting activation
+
+Bind source snapshot inspection to the actual known maintainer/control-plane approval record and fixed approved source/legacy prefixes. Read exact committed Git blobs with a complete regular-file allowlist and preserve original legacy ancestry/bytes. The inspector accepts same-commit inspection only as explicitly non-ancestor evidence, with activationAuthorized and completionEligible always false. The later migration must separately require strict ancestry, a clean separately committed request, independent review, the existing lease, durable exclusive intent and coherent recoverable publication. No repository-authored approval flag, matching working bytes or fabricated future commit can replace those boundaries.
+
+The immediate consumer is the receipt-owning inert-snapshot CLI; its committed objects become the later migration's actual ancestor. Keep this supporting inspection separate from active authority selection, which remains legacy until all compatible consumers and the complete approved transition are implemented. This is a scoped prerequisite, not authority activation or a stopping point for the authorized WP6e continuation.
+
 ## 2026-09-06 UTC — Qualify the disposable host separately from its OCI children
 
 Use one task-local Ubuntu guest launched through the inspected/pinned C2 QEMU payload. A narrowly scoped root coordinator creates a transient resource-constrained unit; QEMU itself is UID/GID 65534 with only KVM group access, zero capabilities, no-new-privileges and seccomp. Do not change shared services, accounts/groups or device permissions, expose workstation mounts/credentials, or reuse the unintended LXD installation. The guest owns its package installation and Docker daemon. Outer host enforcement and inner OCI policy are separate independently checked records.
