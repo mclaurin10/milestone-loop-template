@@ -70,6 +70,7 @@
         "tools/milestone-orchestrator/src/schedule-projection.test.ts",
         "tools/milestone-orchestrator/src/schema.test.ts",
         "tools/milestone-orchestrator/src/source-authority-anchor.test.ts",
+        "tools/milestone-orchestrator/src/source-authority-transition.test.ts",
         "tools/milestone-orchestrator/src/source-epoch-snapshot.test.ts",
         "tools/milestone-orchestrator/src/source-schedule.test.ts",
         "tools/milestone-orchestrator/src/state-generation-store.test.ts",

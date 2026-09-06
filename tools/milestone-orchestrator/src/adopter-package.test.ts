@@ -439,7 +439,23 @@ describe("fresh adopter package creation", () => {
         "tools/milestone-orchestrator/schemas/model-policy.schema.json",
         "tools/milestone-orchestrator/schemas/orchestrator-config.schema.json",
         "tools/milestone-orchestrator/schemas/verification-schedule-projection.schema.json",
-      ].map((path) => readFile(join(outputRoot, path), "utf8")),
+      ].map(async (path) => {
+        const contents = await readFile(join(outputRoot, path), "utf8");
+        if (path !== result.generated.commissioningInputPath) return contents;
+        const input = JSON.parse(contents);
+        expect(input.commissioning.baseCommit).toMatch(/^[a-f0-9]{40}$/);
+        expect(input.commissioning.baseCommit).toBe(
+          result.git.authorityBaseCommit,
+        );
+        expect(input.commissioning.baseCommit).toBe(
+          git(outputRoot, "rev-parse", "HEAD^"),
+        );
+        // A verified opaque Git ID is not project prose: arbitrary hex can
+        // contain a former milestone label such as d31. Keep all other input
+        // fields and the original source-identity prohibition in this scan.
+        input.commissioning.baseCommit = "<verified-adopter-base-commit>";
+        return JSON.stringify(input);
+      }),
     );
     expect(activeSurface.join("\n")).not.toMatch(
       /d-?0?31|d-?0?32|ski[ -]?tycoon|milestone-loop-template|example project|89f3ea|8928aecc/i,

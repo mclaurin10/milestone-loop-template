@@ -1,5 +1,13 @@
 # Decision Log
 
+## 2026-09-06 UTC — Reproduce fixed transition outputs before admitting publication
+
+Use a strict twelve-file output allowlist and a canonical request-subject digest linking the new epoch ledger to real audited implementation and strict-ancestor snapshots. The separately committed request binds those output hashes and a fixed implementation-evidence path. It cannot supply arbitrary output bytes, file paths, approval flags or a weaker command floor. Inspect actual Git objects and reconstruct the full proposal in an owned temporary view; do not fabricate commits or copy source controller state. The read-only inspector is an immediate receipt-owning consumer, with publication, audit-authentication, review-authentication and completion flags false.
+
+Normal consumers continue refusing source generations until complete review/publication validation exists. Reserved source commissioning/policy IDs must not fall through as generic adopter schedules. Preserve every old command and commissioning/amendment prefix; new source candidates retain invariants first, the real dependency/static/architecture/build floor and four unchanged canonical owner commands with their existing 65-minute binding.
+
+The original adopter text scan can accidentally match milestone labels inside a valid opaque Git ID. Preserve its regex and all ordinary text/field checks, and independently bind the one excluded baseCommit value to actual Git HEAD^ and the producer's base identity. Do not change generated hashes, search for a favorable commit or change production generation to appease the test. Preserve the observed failure and original test bytes.
+
 ## 2026-09-06 UTC — Pin workspace package layout across sanitized child environments
 
 Make enableGlobalVirtualStore explicit in the versioned source workspace, which the existing adopter distribution copies. Pinned pnpm 11.15.1 otherwise changes its default under CI, while the production safe environment deliberately removes CI. The real regression demonstrated a strict dependency-verification rejection after a CI installation. Preserve that rejection when configuration differs; do not disable verification or expand the environment allowlist. Test actual dependency consumption and unchanged module metadata across both child environments.

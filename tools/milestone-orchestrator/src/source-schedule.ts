@@ -74,6 +74,16 @@ export function sourceScheduleGeneration(
     readonly commissioning?: { readonly id?: string };
     readonly scopePolicyId?: string;
   };
+  if (
+    identity.commissioning?.id?.startsWith(
+      "milestone-loop-orchestrator-source.",
+    ) ||
+    identity.scopePolicyId?.startsWith("milestone-loop-source-scope-policy.") ||
+    policy?.id.startsWith("milestone-loop-source-scope-policy.")
+  )
+    throw new Error(
+      "Source epoch scheduling requires an authenticated source authority generation.",
+    );
   if (identity.commissioning?.id !== SOURCE_COMMISSIONING_ID) {
     if (policy?.id === SOURCE_SCOPE_V2)
       throw new Error(

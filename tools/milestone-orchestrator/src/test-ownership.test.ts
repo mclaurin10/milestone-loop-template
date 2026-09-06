@@ -166,12 +166,12 @@ describe("test ownership classification", () => {
     // C4 adds the controller's inert source-epoch snapshot test.
     // C5 adds the portable source release's repository-tooling regressions.
     expect(result.owners.map((owner) => [owner.id, owner.count])).toEqual([
-      ["controller-runtime", 89],
+      ["controller-runtime", 90],
       ["repository-tooling", 5],
       ["adopter-template", 2],
       ["trusted-container-fixture", 1],
     ]);
-    expect(result.discoveredFiles).toHaveLength(97);
+    expect(result.discoveredFiles).toHaveLength(98);
   });
 
   it("rejects a discovered but unclassified test with a stable action", () => {

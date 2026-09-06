@@ -65,6 +65,36 @@ async function plan(
 }
 
 describe("source schedule generation compatibility", () => {
+  it.each(["commissioning", "manifest policy", "supplied policy"])(
+    "refuses an unactivated source epoch signaled by %s",
+    (signal) => {
+      const manifest = {
+        ...v2.manifest,
+        commissioning: {
+          ...v2.manifest.commissioning,
+          id:
+            signal === "commissioning"
+              ? "milestone-loop-orchestrator-source.v1"
+              : "ordinary-adopter",
+        },
+        scopePolicyId:
+          signal === "manifest policy"
+            ? "milestone-loop-source-scope-policy.v1"
+            : "ordinary-adopter-policy",
+      };
+      const policy = {
+        ...v2.policy,
+        id:
+          signal === "supplied policy"
+            ? "milestone-loop-source-scope-policy.v1"
+            : "ordinary-adopter-policy",
+      };
+      expect(() => sourceScheduleGeneration(manifest, policy)).toThrow(
+        /authenticated source authority generation/,
+      );
+    },
+  );
+
   it("binds four canonical partition definitions to the unchanged owner order", () => {
     expect(
       PARTITION_COMMANDS.map(({ argv }) =>
