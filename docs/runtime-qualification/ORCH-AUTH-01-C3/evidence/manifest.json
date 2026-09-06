@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "orch-auth-01-c3-evidence.v1",
+  "archive": {
+    "file": "supporting-evidence.tar.gz",
+    "bytes": 32304006,
+    "sha256": "91a368398226b631d8a739acebafa7c1dd6f2a521580b4866e1af97c017ac2b4"
+  },
+  "inventorySha256": "1507a9e2786f9e3c48e3ee210c44882346fddbf2d4f7f6be9def527664cf6f55",
+  "rawFiles": 1168,
+  "rawBytes": 37159590,
+  "supportingReceipts": 19,
+  "source": {
+    "head": "29dafb5668b125919a01779b1c8f168ad18332c1",
+    "tree": "681f0a0d8af7b47a1a08ee936b99af18b86626e3"
+  },
+  "hostRunId": "b5ae0551-b3eb-4a88-83c8-e5254332259c",
+  "completionEligible": false
+}

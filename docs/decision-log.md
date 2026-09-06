@@ -3,6 +3,16 @@
 Record durable or costly-to-reverse decisions: date, decision, alternatives
 considered, rationale, and affected files. Newest first.
 
+## 2026-09-06 UTC — Qualify the disposable host separately from its OCI children
+
+Use one task-local Ubuntu guest launched through the inspected/pinned C2 QEMU payload. A narrowly scoped root coordinator creates a transient resource-constrained unit; QEMU itself is UID/GID 65534 with only KVM group access, zero capabilities, no-new-privileges and seccomp. Do not change shared services, accounts/groups or device permissions, expose workstation mounts/credentials, or reuse the unintended LXD installation. The guest owns its package installation and Docker daemon. Outer host enforcement and inner OCI policy are separate independently checked records.
+
+Capture actual QMP, process/cgroup/mount and guest boot observations before the fixed provider dispatch. Six small real kernel fault probes establish mechanisms; the actual QEMU readbacks establish its configured 4 GiB/no-swap, 200% CPU, 64-task, 16 GiB virtual disk/17 GiB file, output and 30-minute bounds. Explicitly cap QEMU's I/O pool at sixteen after its default pool exhausted the whole-unit task bound. Increase the finite provisioning disk only after retained Docker ENOSPC evidence, remove duplicated store contents, and keep every original OCI case/container limit unchanged. These limits qualify this job and do not pre-authorize a longer candidate.
+
+The task-owned guest runs its trusted job in a separate bounded service with partial-write-safe channel framing, command heartbeats, bounded host observations, error transmission before disk writes and explicit export-failure handling. Attempt fourteen's actual failure and manually interrupted crash snapshot remain failed. Cleanup requires exact ownership, precise allowed entries, recorded process identity and whole-cgroup disappearance, plus an independent native observation. Missing early program/PID observations are disclosed; kernel-source inference about PID zero is not promoted to direct observation.
+
+Keep reusable payloads and crash disks outside Git; seal selected raw evidence, exact supporting source patches and nineteen validated receipts. Reconstruct and independently audit those artifacts before and after commit. Supporting staged executions remain dirty/completion-ineligible even though the guest runtime source is a clean old-epoch commit. Do not relabel historical WP6e, count evidence-tamper tests as candidate 5(a)/5(b), infer Windows from WSL, activate authority from approval, or adopt source controller state. The next increment consumes this qualified Linux route while implementing compatible source verification prerequisites.
+
 ## 2026-09-06 UTC — Prove a network-disabled task-local VM lifecycle before host admission
 
 Choose QEMU TCG with a signed Ubuntu cloud image for C2's bounded trusted diagnostic. The existing WSL user cannot use KVM and no qualified provider was discovered. Extract verified Debian payloads in a fresh task prefix without maintainer scripts; do not install a global provider, reuse the shared LXD service, mount a Docker socket, expose workstation directories or dispatch a source controller. Native Windows and the frozen Server 2022 reference remain distinct unsolved requirements.

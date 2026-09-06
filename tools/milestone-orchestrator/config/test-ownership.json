@@ -95,6 +95,7 @@
       "id": "repository-tooling",
       "files": [
         "tools/production-build.test.mjs",
+        "tools/qualification-docker-host.test.mjs",
         "tools/qualification-host-discovery.test.mjs",
         "tools/qualification-vm-lifecycle.test.mjs"
       ]
