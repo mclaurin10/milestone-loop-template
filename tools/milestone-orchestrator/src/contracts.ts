@@ -523,6 +523,54 @@ export interface VerificationTierResult {
   readonly durationMs: number;
 }
 
+/** Source scope never changes the legacy downstream result grammar. These
+ * identities describe the trusted dispatch; decoding them grants no authority. */
+export interface SourceVerificationCandidate {
+  readonly gitCommit: string;
+  readonly gitTree: string;
+  readonly workingTreeDirty: boolean;
+}
+export interface SourceVerificationScope {
+  readonly contractId: "milestone-loop-orchestrator-source.v1";
+  readonly authorityEpoch: "orch-template.v1";
+  readonly claimScope: "orchestrator-template";
+  readonly purpose: "candidate-support" | "full-source-qualification";
+  readonly sourceCandidate: SourceVerificationCandidate;
+  readonly fixtureCandidates: readonly {
+    readonly id: string;
+    readonly contractId: string;
+    readonly authorityEpoch: string | null;
+    readonly candidate: SourceVerificationCandidate;
+  }[];
+  readonly qualifierRun: {
+    readonly runId: string;
+    readonly nonce: string;
+    readonly identitySha256: string;
+  } | null;
+}
+export interface SourceVerificationScopeExpectation {
+  readonly kind: "aggregate" | "tier";
+  readonly scope: "source";
+  readonly purpose: SourceVerificationScope["purpose"];
+  readonly sourceCandidate: SourceVerificationCandidate;
+  readonly fixtureCandidates: SourceVerificationScope["fixtureCandidates"];
+  readonly qualifierRun: SourceVerificationScope["qualifierRun"];
+}
+export interface SourceExactVerificationIndex extends ExactVerificationIndex {
+  readonly resultSchemaVersion: "3.0.0";
+  readonly scope: SourceVerificationScope;
+  readonly profileId: "readiness";
+}
+export interface SourceVerificationTierResult extends Omit<
+  VerificationTierResult,
+  "schemaVersion" | "exactVerification"
+> {
+  readonly schemaVersion: "2.0.0";
+  readonly scope: SourceVerificationScope;
+  readonly completionEligible: false;
+  readonly exactVerification: SourceExactVerificationIndex | null;
+}
+
 export interface HiddenValidationRequest {
   readonly requested: boolean;
   readonly checkpointId?: string;
@@ -719,6 +767,19 @@ export interface AuthoritativeVerificationSummary {
   readonly sourceResultPath: string;
   readonly copiedResultPath: string;
   readonly executionProvider: ExecutionProviderIdentity;
+}
+
+/** Validated partial source evidence. Full source qualification is a separate
+ * authenticated boundary; this record can never authorize integration. */
+export interface IncompleteSourceVerificationSummary extends Omit<
+  AuthoritativeVerificationSummary,
+  "completionClaim" | "completionEligible" | "autonomousReadinessEquivalent"
+> {
+  readonly resultSchemaVersion: "3.0.0";
+  readonly scope: SourceVerificationScope;
+  readonly completionClaim: "source_machine_qualified_for_human_acceptance";
+  readonly completionEligible: false;
+  readonly autonomousReadinessEquivalent: false;
 }
 
 export type VerificationDisposition =

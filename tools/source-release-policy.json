@@ -148,6 +148,7 @@
     "tools/milestone-orchestrator/src/verification-cli.ts",
     "tools/milestone-orchestrator/src/verification-clone.ts",
     "tools/milestone-orchestrator/src/verification-manifest.ts",
+    "tools/milestone-orchestrator/src/verification-scope.mjs",
     "tools/milestone-orchestrator/src/verification-tier.ts",
     "tools/milestone-orchestrator/src/verifier.ts",
     "tools/milestone-orchestrator/src/worked-example-cli.ts",

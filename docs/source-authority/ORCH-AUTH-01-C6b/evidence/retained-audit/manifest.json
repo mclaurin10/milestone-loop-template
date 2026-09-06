@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0.0",
+  "manifestId": "manual-retained-source-scope-audit-20260906122938306-4056-cb2b9f18",
+  "stageId": "orch-auth-01-c6b",
+  "commandId": "retained-source-scope-audit",
+  "displayCommand": "C:\\Dev\\loop-extraction\\milestone-loop-template\\.tools\\node-v24.18.0-win-x64\\node.exe C:\\Dev\\loop-extraction\\milestone-loop-template\\docs\\source-authority\\ORCH-AUTH-01-C6b\\audit.ts artifacts/wp6e-c6b-fresh-extraction artifacts/wp6e-c6b-retained-audit-1",
+  "status": "PASS",
+  "candidate": {
+    "gitCommit": "c708945e4ba8e0b75f09bc9e564b4afc5cb47a0a",
+    "gitTree": "aff732d45db883212ceedce09b36fba311265464",
+    "workingTreeDirty": true
+  },
+  "receipt": {
+    "path": "result.json",
+    "sha256": "10ecc958f3e6d575654343a3af84ecad0efc514c511cee56aaad2fe53e1ee7dd",
+    "bytes": 712
+  },
+  "declaredArtifacts": {
+    "count": 1,
+    "bytes": 21749,
+    "declarations": [
+      {
+        "path": "audit.json",
+        "kind": "source-scope-retained-audit",
+        "bytes": 21749,
+        "sha256": "3b6c7067d207fcf47cc26722cebe789fec206b716048f194e8a590dda69f053b"
+      }
+    ]
+  },
+  "telemetry": {
+    "runId": null,
+    "manifestPath": null
+  },
+  "citationClass": "uncited-at-creation",
+  "durableCitations": {
+    "trackedPaths": [],
+    "controllerStateReferences": [],
+    "activeReconciliationReference": null
+  },
+  "createdAt": "2026-09-06T12:29:38.306Z",
+  "finishedAt": "2026-09-06T12:29:47.456Z",
+  "failureClassification": null
+}

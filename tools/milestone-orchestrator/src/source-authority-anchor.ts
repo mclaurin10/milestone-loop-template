@@ -2,6 +2,11 @@ import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { lstat, readFile, realpath } from "node:fs/promises";
 import { resolve } from "node:path";
+import type {
+  ContractIntegrityCheck,
+  ContractIntegrityStatus,
+} from "./contract-integrity.js";
+import { SOURCE_VERIFICATION_STAGES } from "./verification-scope.mjs";
 
 import { assertNoPendingAuthorityMigration } from "./authority-publication.mjs";
 import {
@@ -17,6 +22,122 @@ import {
 const hash = (bytes: Buffer) =>
   createHash("sha256").update(bytes).digest("hex");
 const READINESS_MARKER_PATH = ".agent/readiness-profile-activated.json";
+
+function sourceCheck(
+  id: string,
+  status: ContractIntegrityStatus,
+  message: string,
+  details?: Readonly<Record<string, unknown>>,
+): ContractIntegrityCheck {
+  return { id, status, message, ...(details === undefined ? {} : { details }) };
+}
+
+/** Read-only pre-publication integrity inspection. It validates the exact
+ * approved source projection and the implementation's coverage registry without
+ * replacing the thirteen legacy checks or authorizing an active generation. */
+export async function inspectApprovedSourceContractIntegrity(input: {
+  readonly repositoryRoot: string;
+  readonly snapshotCommit: string;
+}) {
+  const anchor = await inspectApprovedSourceAuthorityAnchor(input);
+  const bytes = await readFile(
+    resolve(input.repositoryRoot, "evals/acceptance-manifest.json"),
+  );
+  if (
+    createHash("sha256").update(bytes).digest("hex") !==
+    anchor.authorityFiles.find(
+      (file) => file.path === "evals/acceptance-manifest.json",
+    )?.sha256
+  )
+    throw new Error(
+      "Approved source manifest changed during integrity inspection.",
+    );
+  // The anchor authenticates exact approved bytes before this typed projection.
+  const manifest = JSON.parse(bytes.toString("utf8")) as {
+    requirements: { id: string; required: boolean }[];
+    readinessGate: { id: string; claim: string };
+    plannedCommandSurface: {
+      commands: { plannedCommand: string }[];
+      profileContract: { defaultProfile: string };
+    };
+    evidence: {
+      candidateSupportingEvidenceCompletionEligible: boolean;
+      crossScopePassInheritance: boolean;
+    };
+    verificationCadence: {
+      candidate: { requiredFloor: string[]; ownerOrder: string[] };
+      full: { freshCompleteQualificationRequired: boolean };
+    };
+  };
+  const requiredIds = manifest.requirements
+    .filter((item) => item.required)
+    .map((item) => item.id);
+  const gate = manifest.readinessGate.id;
+  const allowed = new Set([...requiredIds, gate]);
+  const mapped = SOURCE_VERIFICATION_STAGES.flatMap(
+    (stage) => stage.acceptanceIds,
+  );
+  if (
+    new Set(SOURCE_VERIFICATION_STAGES.map((stage) => stage.id)).size !==
+      SOURCE_VERIFICATION_STAGES.length ||
+    SOURCE_VERIFICATION_STAGES.some(
+      (stage) =>
+        stage.scripts.length === 0 ||
+        stage.requiredArtifactKinds.length === 0 ||
+        stage.acceptanceIds.length === 0,
+    ) ||
+    mapped.some((id) => !allowed.has(id)) ||
+    [...allowed].some((id) => !mapped.includes(id))
+  )
+    throw new Error(
+      "Source stage registry omits, duplicates, or substitutes an approved required outcome.",
+    );
+  if (
+    manifest.plannedCommandSurface.commands.length !== 1 ||
+    manifest.plannedCommandSurface.commands[0]?.plannedCommand !==
+      "pnpm verify" ||
+    manifest.plannedCommandSurface.profileContract.defaultProfile !==
+      "readiness" ||
+    manifest.readinessGate.claim !==
+      "source_machine_qualified_for_human_acceptance" ||
+    manifest.evidence.candidateSupportingEvidenceCompletionEligible !== false ||
+    manifest.evidence.crossScopePassInheritance !== false ||
+    manifest.verificationCadence.full.freshCompleteQualificationRequired !==
+      true
+  )
+    throw new Error(
+      "Source public command, cadence, or claim boundary differs from the approved contract.",
+    );
+  return {
+    schemaVersion: "source-contract-integrity-inspection.v1",
+    status: "PASS",
+    claimScope: "approved-source-contract-inspection",
+    activationAuthorized: false,
+    completionEligible: false,
+    anchor,
+    checks: [
+      sourceCheck(
+        "source-approved-anchor",
+        "PASS",
+        "Seven source authority roots and the preserved readiness marker match the approved strict ancestor.",
+      ),
+      sourceCheck(
+        "source-stage-coverage",
+        "PASS",
+        "Versioned source registry covers every approved required outcome and its separate source gate.",
+        {
+          requirementIds: requiredIds,
+          stageIds: SOURCE_VERIFICATION_STAGES.map((stage) => stage.id),
+        },
+      ),
+      sourceCheck(
+        "source-command-and-claim",
+        "PASS",
+        "Literal pnpm verify and fresh full source qualification retain distinct candidate, source, and adopter claims.",
+      ),
+    ],
+  } as const;
+}
 
 export interface SourceAuthorityAnchorInspection {
   readonly schemaVersion: "source-authority-anchor-inspection.v1";

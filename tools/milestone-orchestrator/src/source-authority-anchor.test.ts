@@ -13,6 +13,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { inspectApprovedSourceAuthorityAnchor } from "./source-authority-anchor.js";
+import { inspectApprovedSourceContractIntegrity } from "./source-authority-anchor.js";
 import {
   assertActiveAuthorityPublication,
   AUTHORITY_MIGRATION_PENDING_PATH,
@@ -96,6 +97,41 @@ describe(
   "approved version-2 source authority anchor inspection",
   { timeout: 60_000 },
   () => {
+    it("inspects approved source stage coverage without importing legacy product gates or activation", async () => {
+      const f = await fixture();
+      const result = await inspectApprovedSourceContractIntegrity({
+        repositoryRoot: f.root,
+        snapshotCommit: f.snapshot,
+      });
+      expect(result).toMatchObject({
+        status: "PASS",
+        activationAuthorized: false,
+        completionEligible: false,
+      });
+      expect(result.checks.map((item) => item.id)).toEqual([
+        "source-approved-anchor",
+        "source-stage-coverage",
+        "source-command-and-claim",
+      ]);
+      expect(result.checks.every((item) => item.status === "PASS")).toBe(true);
+      expect(result.checks[1]!.details?.["requirementIds"]).toHaveLength(12);
+      expect(
+        existsSync(join(f.root, "artifacts/orchestrator/state/state.json")),
+      ).toBe(false);
+    });
+    it("refuses altered acceptance semantics before interpreting source integrity", async () => {
+      const f = await fixture();
+      const path = "evals/acceptance-manifest.json";
+      const value = JSON.parse(await readFile(join(f.root, path), "utf8"));
+      value.requirements.pop();
+      await put(f.root, path, JSON.stringify(value));
+      await expect(
+        inspectApprovedSourceContractIntegrity({
+          repositoryRoot: f.root,
+          snapshotCommit: f.snapshot,
+        }),
+      ).rejects.toThrow(/exact approved/);
+    });
     it("checks all seven exact approved roots and strict ancestor provenance without activating authority", async () => {
       const f = await fixture(),
         before = text(f.root, [

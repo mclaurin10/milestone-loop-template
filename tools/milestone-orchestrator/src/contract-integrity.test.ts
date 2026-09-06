@@ -109,6 +109,7 @@ async function installCurrentVerifierConsumer(root: string): Promise<void> {
   await installCurrentPaths(root, [
     "scripts/verify.mjs",
     "tools/milestone-orchestrator/src/authority-publication.mjs",
+    "tools/milestone-orchestrator/src/verification-scope.mjs",
     "tools/milestone-orchestrator/src/contract-integrity.ts",
   ]);
 }

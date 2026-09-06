@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0.0",
+  "stageId": "orch-auth-01-c6b",
+  "commandId": "hosted-observation-audit",
+  "status": "PASS",
+  "checks": [
+    {
+      "id": "exact-hosted-observations",
+      "summary": "Rehashed all five exact-commit archives, independently validated their child receipts and artifact bytes, and retained actual hosted outcomes without substituting them for candidate or source qualification.",
+      "status": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "audit.json",
+      "kind": "hosted-observation-audit",
+      "bytes": 16372,
+      "sha256": "9752242142bbc51836176af6df8b1c17061f2fb607e7ad2ae619f3e8c85ba582"
+    }
+  ]
+}

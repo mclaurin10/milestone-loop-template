@@ -2,6 +2,12 @@ import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
 import { lstat, mkdir, readFile, realpath, stat } from "node:fs/promises";
 import { dirname, isAbsolute, relative, resolve } from "node:path";
+import {
+  assertVerificationResultScope,
+  SOURCE_AGGREGATE_SCHEMA_VERSION,
+  SOURCE_VERIFICATION_STAGES,
+  SOURCE_VERIFICATION_STAGE_IDS,
+} from "./verification-scope.mjs";
 
 import {
   BOOTSTRAP_VERIFICATION_STAGE_IDS,
@@ -11,6 +17,9 @@ import {
 } from "./contracts.js";
 import type {
   AuthoritativeVerificationSummary,
+  IncompleteSourceVerificationSummary,
+  SourceVerificationScope,
+  SourceVerificationScopeExpectation,
   CommandExecutionSummary,
   MilestoneProposal,
   OrchestratorConfig,
@@ -785,7 +794,7 @@ async function validatePassingCommandEvidence(input: {
   return { artifactCount: artifactPaths.size, kinds };
 }
 
-export async function parseAuthoritativeVerification(input: {
+interface AggregateVerificationInput {
   readonly workspacePath: string;
   readonly expectedCommit: string;
   readonly expectedTree?: string;
@@ -795,7 +804,45 @@ export async function parseAuthoritativeVerification(input: {
   readonly copiedResultPath: string;
   readonly readinessHistory?: ReadinessHistoryEvidence;
   readonly expectedExecutionProvider: ExecutionProviderIdentity;
-}): Promise<AuthoritativeVerificationSummary> {
+}
+
+export async function parseAuthoritativeVerification(
+  input: AggregateVerificationInput,
+): Promise<AuthoritativeVerificationSummary> {
+  const result = await parseAggregateVerification(input);
+  if ("scope" in result) throw malformed();
+  return result;
+}
+
+/** Consume real child artifacts from an incomplete source aggregate. Scope is
+ * supplied by trusted dispatch, never inferred from result bytes. A successful
+ * inspection is not source qualification, publication, or integration authority. */
+export async function parseIncompleteSourceVerification(
+  input: AggregateVerificationInput & {
+    readonly expectedScope: SourceVerificationScopeExpectation;
+  },
+): Promise<IncompleteSourceVerificationSummary> {
+  if (
+    input.expectedScope.kind !== "aggregate" ||
+    input.expectedScope.scope !== "source" ||
+    input.expectedScope.purpose !== "full-source-qualification" ||
+    input.expectedScope.qualifierRun === null ||
+    input.readinessHistory !== undefined
+  )
+    throw new Error(
+      "Incomplete source aggregate requires an explicit full source dispatch identity.",
+    );
+  const result = await parseAggregateVerification(input, input.expectedScope);
+  if (!("scope" in result)) throw malformed();
+  return result;
+}
+
+async function parseAggregateVerification(
+  input: AggregateVerificationInput,
+  sourceExpected?: SourceVerificationScopeExpectation,
+): Promise<
+  AuthoritativeVerificationSummary | IncompleteSourceVerificationSummary
+> {
   if (!existsSync(input.resultPath))
     throw new Error("Authoritative verifier did not produce result.json.");
   const realWorkspacePath = await realpath(input.workspacePath);
@@ -808,6 +855,45 @@ export async function parseAuthoritativeVerification(input: {
     await readFile(input.resultPath, "utf8"),
   ) as unknown;
   if (!isRecord(parsed)) throw malformed();
+  let sourceScope: SourceVerificationScope | null;
+  try {
+    sourceScope = assertVerificationResultScope(
+      parsed,
+      sourceExpected ?? { kind: "aggregate", scope: "legacy" },
+    ) as SourceVerificationScope | null;
+  } catch (error) {
+    // Preserve the public legacy malformed-result diagnostic while refusing
+    // foreign scope before any status or completion field is interpreted.
+    throw new Error(
+      `Authoritative verifier result is malformed: ${error instanceof Error ? error.message : String(error)}`,
+      { cause: error },
+    );
+  }
+  if (sourceScope) {
+    const keys = new Set([
+      "schemaVersion",
+      "scope",
+      "runId",
+      "status",
+      "exitCode",
+      "startedAt",
+      "finishedAt",
+      "durationMs",
+      "invocation",
+      "repositoryRoot",
+      "artifactRoot",
+      "profile",
+      "executionProvider",
+      "completion",
+      "candidate",
+      "candidateFinal",
+      "identityDrift",
+      "summary",
+      "stages",
+    ]);
+    if (Object.keys(parsed).some((key) => !keys.has(key)))
+      throw new Error("Source aggregate has an unknown result field.");
+  }
   const profileRecord = parsed["profile"];
   const completion = parsed["completion"];
   const candidate = parsed["candidate"];
@@ -823,13 +909,20 @@ export async function parseAuthoritativeVerification(input: {
     throw malformed();
   const profile = profileRecord["id"];
   const status = parsed["status"];
+  if (sourceScope && (profile !== "readiness" || status !== "NOT_READY"))
+    throw new Error(
+      "Partial source evidence cannot accept PASS; fresh complete source qualification must be independently authenticated.",
+    );
   if (
     (profile !== "bootstrap" && profile !== "readiness") ||
     (status !== "PASS" && status !== "NOT_READY")
   )
     throw malformed();
-  const expectedClaim =
-    profile === "readiness" ? "autonomous_readiness" : "bootstrap_complete";
+  const expectedClaim = sourceScope
+    ? "source_machine_qualified_for_human_acceptance"
+    : profile === "readiness"
+      ? "autonomous_readiness"
+      : "bootstrap_complete";
   const expectedExitCode = status === "PASS" ? 0 : 2;
   const expectedReasons = [
     ...(status === "PASS" ? [] : ["verification_status_not_pass"]),
@@ -838,12 +931,14 @@ export async function parseAuthoritativeVerification(input: {
       : ["execution_provider_not_completion_eligible"]),
   ];
   const reasons = completion["reasons"];
-  const profileAutonomousReadinessEquivalent = profile === "readiness";
+  const profileAutonomousReadinessEquivalent =
+    !sourceScope && profile === "readiness";
   const candidateFinal = parsed["candidateFinal"];
   const identityDrift = parsed["identityDrift"];
   const executionProvider = parsed["executionProvider"];
   if (
-    parsed["schemaVersion"] !== "2.1.0" ||
+    parsed["schemaVersion"] !==
+      (sourceScope ? SOURCE_AGGREGATE_SCHEMA_VERSION : "2.1.0") ||
     parsed["runId"] !== input.expectedRunId ||
     parsed["exitCode"] !== expectedExitCode ||
     input.observedExitCode !== expectedExitCode ||
@@ -878,16 +973,17 @@ export async function parseAuthoritativeVerification(input: {
     throw malformed();
 
   const readinessHistoryMode =
-    profile === "readiness"
+    profile === "readiness" && !sourceScope
       ? (input.readinessHistory?.mode ?? "not-applicable")
       : ("not-applicable" as const);
   const previouslyPassingStageIds =
-    profile === "readiness"
+    profile === "readiness" && !sourceScope
       ? [...(input.readinessHistory?.previouslyPassingStageIds ?? [])]
       : [];
   if (
     (profile === "bootstrap" && input.readinessHistory !== undefined) ||
     (profile === "readiness" &&
+      !sourceScope &&
       ((readinessHistoryMode !== "first-readiness-transition" &&
         readinessHistoryMode !== "durable-records") ||
         !input.readinessHistory ||
@@ -922,7 +1018,15 @@ export async function parseAuthoritativeVerification(input: {
       "Authoritative artifact root escapes the isolated workspace.",
     );
 
-  const expectedStageIds = EXPECTED_STAGE_IDS[profile];
+  const expectedStageIds = sourceScope
+    ? SOURCE_VERIFICATION_STAGE_IDS
+    : EXPECTED_STAGE_IDS[profile];
+  const evidenceContracts: Readonly<Record<string, StageEvidenceContract>> =
+    sourceScope
+      ? Object.fromEntries(
+          SOURCE_VERIFICATION_STAGES.map((stage) => [stage.id, stage]),
+        )
+      : STAGE_EVIDENCE_CONTRACTS;
   const requiredStageCountValue = resultSummary["requiredStageCount"];
   const stageCounts = resultSummary["stageCounts"];
   if (
@@ -943,7 +1047,7 @@ export async function parseAuthoritativeVerification(input: {
     const checks = stageValue["checks"];
     const commands = stageValue["commands"];
     const stageContract =
-      typeof id === "string" ? STAGE_EVIDENCE_CONTRACTS[id] : undefined;
+      typeof id === "string" ? evidenceContracts[id] : undefined;
     if (
       typeof id !== "string" ||
       id !== expectedStageIds[stageIndex] ||
@@ -1082,13 +1186,12 @@ export async function parseAuthoritativeVerification(input: {
   await atomicWriteJson(input.copiedResultPath, parsed);
   const disposition =
     status === "PASS" ? "completion-eligible" : "incremental-readiness";
-  return {
+  const summary = {
     runId: input.expectedRunId,
     status,
     exitCode: expectedExitCode,
     disposition,
     profileId: profile,
-    completionClaim: expectedClaim,
     completionEligible: status === "PASS",
     profileAutonomousReadinessEquivalent,
     autonomousReadinessEquivalent:
@@ -1104,6 +1207,20 @@ export async function parseAuthoritativeVerification(input: {
     sourceResultPath: input.resultPath,
     copiedResultPath: input.copiedResultPath,
     executionProvider,
+  } as const;
+  if (sourceScope)
+    return {
+      ...summary,
+      resultSchemaVersion: "3.0.0",
+      scope: sourceScope,
+      completionClaim: "source_machine_qualified_for_human_acceptance",
+      completionEligible: false,
+      autonomousReadinessEquivalent: false,
+    };
+  return {
+    ...summary,
+    completionClaim:
+      profile === "readiness" ? "autonomous_readiness" : "bootstrap_complete",
   };
 }
 

@@ -21,6 +21,7 @@ import {
 import { validateCommissionedAuthorityAnchor } from "../tools/milestone-orchestrator/src/authority-anchor.ts";
 import { evaluateContractIntegrity } from "../tools/milestone-orchestrator/src/contract-integrity.ts";
 import { assertActiveAuthorityPublication } from "../tools/milestone-orchestrator/src/authority-publication.mjs";
+import { assertVerificationResultScope } from "../tools/milestone-orchestrator/src/verification-scope.mjs";
 import {
   EXECUTION_PROVIDER_IDENTITY_ENV,
   decodeExecutionProviderIdentity,
@@ -1519,6 +1520,7 @@ async function runVerification(options) {
     stages,
   };
 
+  assertVerificationResultScope(result, { kind: "aggregate", scope: "legacy" });
   await atomicWriteJson(resolve(artifactRoot, "result.json"), result);
   await writeFile(
     resolve(artifactRoot, "summary.md"),

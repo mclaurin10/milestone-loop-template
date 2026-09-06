@@ -1,6 +1,11 @@
 import { createHash } from "node:crypto";
 import { isAbsolute, resolve } from "node:path";
 import {
+  assertVerificationResultScope,
+  SOURCE_AGGREGATE_SCHEMA_VERSION,
+  SOURCE_TIER_SCHEMA_VERSION,
+} from "./verification-scope.mjs";
+import {
   PARTITION_COMMANDS,
   PARTITION_TIMEOUT_MS,
   FOCUSED_TIMEOUT_MS,
@@ -53,6 +58,8 @@ import {
   type VerificationManifest,
   type VerificationScopePolicy,
   type VerificationTierResult,
+  type SourceVerificationTierResult,
+  type SourceVerificationScopeExpectation,
 } from "./contracts.js";
 import {
   executionProviderIdentitiesEqual,
@@ -3586,9 +3593,82 @@ export function assertVerificationScopePolicy(
 export function validateVerificationTierResult(
   value: unknown,
 ): ValidationResult<VerificationTierResult> {
-  const errors: string[] = [];
   if (!isRecord(value))
     return validation(value, ["Verification tier result must be an object."]);
+  try {
+    assertVerificationResultScope(value, { kind: "tier", scope: "legacy" });
+  } catch (error) {
+    return validation(value, [
+      error instanceof Error ? error.message : String(error),
+      ...(value["authoritative"] === true
+        ? ["Verification tiers cannot claim authority."]
+        : []),
+    ]);
+  }
+  return validateVerificationTierBody<VerificationTierResult>(
+    value,
+    VERIFICATION_TIER_SCHEMA_VERSION,
+  );
+}
+
+/** Structural source decoding shares every legacy command/body rule. It does
+ * not authenticate a qualifier, activate source authority, or read artifacts. */
+export function validateSourceVerificationTierResult(
+  value: unknown,
+  expected: SourceVerificationScopeExpectation,
+): ValidationResult<SourceVerificationTierResult> {
+  if (!isRecord(value))
+    return validation(value, [
+      "Source verification tier result must be an object.",
+    ]);
+  try {
+    if (expected.kind !== "tier" || expected.scope !== "source")
+      throw new Error("Source tier decoding requires a trusted tier scope.");
+    assertVerificationResultScope(value, expected);
+    const exact = value["exactVerification"];
+    if (exact !== null) {
+      if (
+        !isRecord(exact) ||
+        exact["resultSchemaVersion"] !== SOURCE_AGGREGATE_SCHEMA_VERSION ||
+        exact["profileId"] !== "readiness"
+      )
+        throw new Error("Source exact closure has a legacy schema or profile.");
+      assertVerificationResultScope(
+        {
+          schemaVersion: exact["resultSchemaVersion"],
+          scope: exact["scope"],
+          candidate: {
+            gitCommit: exact["candidateCommit"],
+            gitTree: exact["candidateTree"],
+            workingTreeDirty: false,
+          },
+        },
+        {
+          ...expected,
+          kind: "aggregate",
+          purpose: "full-source-qualification",
+        },
+      );
+    }
+  } catch (error) {
+    return validation(value, [
+      error instanceof Error ? error.message : String(error),
+    ]);
+  }
+  return validateVerificationTierBody<SourceVerificationTierResult>(
+    value,
+    SOURCE_TIER_SCHEMA_VERSION,
+    expected,
+  );
+}
+
+function validateVerificationTierBody<T>(
+  value: Record<string, unknown>,
+  schemaVersion:
+    typeof VERIFICATION_TIER_SCHEMA_VERSION | typeof SOURCE_TIER_SCHEMA_VERSION,
+  sourceExpected?: SourceVerificationScopeExpectation,
+): ValidationResult<T> {
+  const errors: string[] = [];
   const resultKeys = [
     "schemaVersion",
     "runId",
@@ -3616,6 +3696,7 @@ export function validateVerificationTierResult(
     "startedAt",
     "finishedAt",
     "durationMs",
+    ...(sourceExpected ? ["scope", "completionEligible"] : []),
   ] as const;
   const candidate = value["candidate"];
   const candidateFinal = value["candidateFinal"];
@@ -3639,7 +3720,7 @@ export function validateVerificationTierResult(
   if (
     !hasOnlyKeys(value, resultKeys) ||
     resultKeys.some((key) => !(key in value)) ||
-    value["schemaVersion"] !== VERIFICATION_TIER_SCHEMA_VERSION ||
+    value["schemaVersion"] !== schemaVersion ||
     !nonEmptyString(value["runId"]) ||
     !VERIFICATION_TIERS.includes(value["tier"] as never) ||
     !validStatus ||
@@ -3822,6 +3903,44 @@ export function validateVerificationTierResult(
   }
 
   const exact = value["exactVerification"];
+  if (sourceExpected) {
+    const supportingTier =
+      value["tier"] === "iteration" || value["tier"] === "candidate";
+    if (
+      value["completionEligible"] !== false ||
+      sourceExpected.purpose !==
+        (supportingTier ? "candidate-support" : "full-source-qualification") ||
+      (supportingTier && exact !== null) ||
+      (!supportingTier && sourceExpected.qualifierRun === null)
+    )
+      errors.push(
+        "Source tier purpose, qualifier, exact closure, or completion claim is invalid.",
+      );
+    if (value["status"] === "PASS") {
+      const commands = value["commands"];
+      if (
+        !Array.isArray(commands) ||
+        commands.length === 0 ||
+        commands.some(
+          (command) =>
+            !isRecord(command) ||
+            command["status"] !== "PASS" ||
+            command["exitCode"] !== 0 ||
+            command["signal"] !== null ||
+            !isRecord(command["receipt"]) ||
+            !positiveInteger(command["artifactCount"]) ||
+            !positiveInteger(command["artifactBytes"]),
+        )
+      )
+        errors.push(
+          "Passing source tiers require passing receipt-bearing commands.",
+        );
+      if (!supportingTier && (!isRecord(exact) || exact["status"] !== "PASS"))
+        errors.push(
+          "Passing full source tiers require their exact source closure.",
+        );
+    }
+  }
   if (exact !== null) {
     const exactKeys = [
       "invokedWithNoArguments",
@@ -3835,6 +3954,7 @@ export function validateVerificationTierResult(
       "candidateCommit",
       "candidateTree",
       "executionProvider",
+      ...(sourceExpected ? ["resultSchemaVersion", "scope"] : []),
     ] as const;
     if (
       !isRecord(exact) ||
@@ -3882,6 +4002,18 @@ export function assertVerificationTierResult(
   if (!result.valid || !result.value)
     throw new Error(
       `Invalid verification tier result: ${result.errors.join(" ")}`,
+    );
+  return result.value;
+}
+
+export function assertSourceVerificationTierResult(
+  value: unknown,
+  expected: SourceVerificationScopeExpectation,
+): SourceVerificationTierResult {
+  const result = validateSourceVerificationTierResult(value, expected);
+  if (!result.valid || !result.value)
+    throw new Error(
+      `Invalid source verification tier result: ${result.errors.join(" ")}`,
     );
   return result.value;
 }

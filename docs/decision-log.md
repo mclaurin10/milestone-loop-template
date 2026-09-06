@@ -1,5 +1,11 @@
 # Decision Log
 
+## 2026-09-06 UTC — Separate source evidence decoding from qualification authority
+
+Use explicit source aggregate 3.0.0 and tier 2.0.0 envelopes with trusted dispatch scope and separate source, fixture and qualifier identities. Refuse unknown or foreign scope before reading status, including nested exact closure. Preserve legacy aggregate 2.1.0, tier 1.2.0, command artifact validation and original diagnostics. Partial source evidence can be inspected only as NOT_READY; a source PASS requires future actual full-qualification authentication. No reader inspection activates authority, supplies independent review or replaces a missing producer.
+
+Keep the approved source integrity inspection in the typed source-anchor module. The first placement introduced a real native Node import-resolution failure through contract-integrity.ts; restore that legacy module byte for byte and retain the failed evidence. Native node scripts/verify.mjs and generated adopters must remain executable without a TypeScript loader. Share native scope/registry metadata through the explicit distributed MJS dependency. Do not solve import failures by changing the public verifier command, original assertions or runtime pins.
+
 ## 2026-09-06 UTC — Preserve original controller boundaries with valid legacy fixture metadata
 
 The strict authority publication reader exposed plain-text package/lock seeds in ten original test fixtures. Keep the production refusal intact and change only those fixture writes to parseable legacy JSON before their original Git commits and protected hashes are captured. Preserve absent optional manifests, all assertions, fault loops and original deadlines. An independent whole-file transformation check must prove the exact edit; correcting incidental fixture encoding does not change acceptance meaning.

@@ -1,0 +1,381 @@
+{
+  "schemaVersion": "source-hosted-observation-audit.v1",
+  "status": "PASS",
+  "completionEligible": false,
+  "observer": {
+    "gitCommit": "c708945e4ba8e0b75f09bc9e564b4afc5cb47a0a",
+    "gitTree": "aff732d45db883212ceedce09b36fba311265464",
+    "gitStatus": "M .agent/current-exec-plan.md\n M docs/decision-log.md\n M scripts/verify.mjs\n M tools/milestone-orchestrator/config/test-ownership.json\n M tools/milestone-orchestrator/src/adopter-package.ts\n M tools/milestone-orchestrator/src/aggregate-verify-identity.test.ts\n M tools/milestone-orchestrator/src/authority-publication.test.ts\n M tools/milestone-orchestrator/src/contract-integrity.test.ts\n M tools/milestone-orchestrator/src/contracts.ts\n M tools/milestone-orchestrator/src/schema.ts\n M tools/milestone-orchestrator/src/source-authority-anchor.test.ts\n M tools/milestone-orchestrator/src/source-authority-anchor.ts\n M tools/milestone-orchestrator/src/test-ownership.test.ts\n M tools/milestone-orchestrator/src/verifier.ts\n M tools/source-release-policy.json\n?? \"Implementation-ready improvement plan 8-5-26.txt\"\n?? docs/source-authority/ORCH-AUTH-01-C6b/README.md\n?? docs/source-authority/ORCH-AUTH-01-C6b/audit-hosted.ts\n?? docs/source-authority/ORCH-AUTH-01-C6b/audit.ts\n?? docs/source-authority/ORCH-AUTH-01-C6b/collect-vm.py\n?? docs/source-authority/ORCH-AUTH-01-C6b/curate.ps1\n?? docs/source-authority/ORCH-AUTH-01-C6b/evidence/manifest.json\n?? docs/source-authority/ORCH-AUTH-01-C6b/evidence/retained-evidence.zip\n?? docs/source-authority/ORCH-AUTH-01-C6b/prepare-source.mjs\n?? docs/source-authority/ORCH-AUTH-01-C6b/prepare-vm.py\n?? docs/source-authority/ORCH-AUTH-01-C6b/run-focused.ts\n?? tools/milestone-orchestrator/src/verification-scope.mjs\n?? tools/milestone-orchestrator/src/verification-scope.test.ts",
+    "nodeVersion": "v24.18.0",
+    "pnpmVersion": "11.15.1"
+  },
+  "hostedCommit": "c708945e4ba8e0b75f09bc9e564b4afc5cb47a0a",
+  "workflowRunId": "34029390274",
+  "observations": [
+    {
+      "name": "controller-windows",
+      "jobId": 101476015102,
+      "conclusion": "success",
+      "suites": [
+        {
+          "directory": "orchestrator",
+          "outcome": "PASS",
+          "total": 869,
+          "passed": 869,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "directory": "unit",
+          "outcome": "PASS",
+          "total": 1043,
+          "passed": 1043,
+          "failed": 0,
+          "skipped": 0
+        }
+      ],
+      "ownedReceipts": 11
+    },
+    {
+      "name": "controller-linux",
+      "jobId": 101476015087,
+      "conclusion": "success",
+      "suites": [
+        {
+          "directory": "orchestrator",
+          "outcome": "PASS",
+          "total": 869,
+          "passed": 869,
+          "failed": 0,
+          "skipped": 0
+        },
+        {
+          "directory": "unit",
+          "outcome": "PASS",
+          "total": 1043,
+          "passed": 1043,
+          "failed": 0,
+          "skipped": 0
+        }
+      ],
+      "ownedReceipts": 11
+    },
+    {
+      "name": "fresh-adopter-windows",
+      "jobId": 101476014977,
+      "conclusion": "success",
+      "ownedReceipts": 10,
+      "completionEligible": false
+    },
+    {
+      "name": "trusted-container-linux",
+      "jobId": 101476015146,
+      "conclusion": "success",
+      "ownedReceipts": 1,
+      "cases": [
+        {
+          "id": "normal",
+          "status": "PASS"
+        },
+        {
+          "id": "boundary",
+          "status": "PASS"
+        },
+        {
+          "id": "artifact-link",
+          "status": "ERROR"
+        },
+        {
+          "id": "artifact-quota",
+          "status": "ERROR"
+        },
+        {
+          "id": "output-flood",
+          "status": "ERROR"
+        },
+        {
+          "id": "hang",
+          "status": "TIMEOUT"
+        }
+      ]
+    },
+    {
+      "name": "fresh-adopter-linux",
+      "jobId": 101476015109,
+      "conclusion": "success",
+      "ownedReceipts": 10,
+      "completionEligible": false
+    }
+  ],
+  "receipts": [
+    {
+      "path": "controller-windows/format/result.json",
+      "sha256": "46b04b4b40ded61d354313c96140e9e1e3752c548a960ce9f67604c79cd76197"
+    },
+    {
+      "path": "controller-windows/invariants/entries/fail-closed-evidence/result.json",
+      "sha256": "e93b9834f4b39faab3cfebbde4ffc451e4c2489710003cf07012e9e279457061"
+    },
+    {
+      "path": "controller-windows/invariants/entries/orchestrator-policy-integrity/result.json",
+      "sha256": "80978e5badc160e52c511387a2fa0959057758d2269f29bce6a3e5385eb1667d"
+    },
+    {
+      "path": "controller-windows/invariants/entries/orchestrator-schema-integrity/result.json",
+      "sha256": "3df28097d0dd8d91dc2827625b48cb1f551bac9578af1f121b0e2ebc6880fa3d"
+    },
+    {
+      "path": "controller-windows/invariants/entries/protected-integrity/result.json",
+      "sha256": "255193f8551cc7af3c7c9e89eea2f09593864b44518e7888f7915fee66c3140f"
+    },
+    {
+      "path": "controller-windows/invariants/entries/test-ownership/result.json",
+      "sha256": "4723b4238ae5cd14ab3ce0e0b0856dc352cde73dd388ad2236924a33d4085bdd"
+    },
+    {
+      "path": "controller-windows/invariants/result.json",
+      "sha256": "de91762cfb90964db8af7e53990610da5082ea932cc9f6788ed4a68d770ecc50"
+    },
+    {
+      "path": "controller-windows/lint/result.json",
+      "sha256": "0efddcb7dd24fbcf8f6fa66eee1bde38713883a6e0d933edb4d4f4ad2dd51aa1"
+    },
+    {
+      "path": "controller-windows/orchestrator/result.json",
+      "sha256": "1adbb71eeeda1af7bd855173dc3da32de6555b589e4d5a257c07353d4f18993d"
+    },
+    {
+      "path": "controller-windows/typecheck/result.json",
+      "sha256": "62579b7ca67950def72891ae6805347ca8a70a04641293f0523dcc69d140f7af"
+    },
+    {
+      "path": "controller-windows/unit/result.json",
+      "sha256": "5ce368366098ccfa9712997d658c3db1e6af76d3ccec9f8cde57c84385e39cea"
+    },
+    {
+      "path": "controller-linux/format/result.json",
+      "sha256": "d810926f16cc7adb509e15149ab619145228b6ab6d389d2cf146c0fdd64279ee"
+    },
+    {
+      "path": "controller-linux/invariants/entries/fail-closed-evidence/result.json",
+      "sha256": "47c3f3b096b594d6523865477ef584e0c43cbeae81ef2806311f788dd8f59762"
+    },
+    {
+      "path": "controller-linux/invariants/entries/orchestrator-policy-integrity/result.json",
+      "sha256": "f41b783dcf471d88c7e3cb0bd031be118195bef2405e178a831cb227806c6976"
+    },
+    {
+      "path": "controller-linux/invariants/entries/orchestrator-schema-integrity/result.json",
+      "sha256": "1753064e5fd3b5b23d716e35339f5e4dae3a26e2ebc67abb3545fec4597ea244"
+    },
+    {
+      "path": "controller-linux/invariants/entries/protected-integrity/result.json",
+      "sha256": "1b7471331ce67c30eba7e9634e344eadb05f1ed4e947caff84a0b1b7d531748c"
+    },
+    {
+      "path": "controller-linux/invariants/entries/test-ownership/result.json",
+      "sha256": "4723b4238ae5cd14ab3ce0e0b0856dc352cde73dd388ad2236924a33d4085bdd"
+    },
+    {
+      "path": "controller-linux/invariants/result.json",
+      "sha256": "b28d6a513dd3fd3776c12fa19d720989dce315e1f888d0e1f62f226d629b1206"
+    },
+    {
+      "path": "controller-linux/lint/result.json",
+      "sha256": "9238c879c634ed1789d18b446de4668e0fddceafa77146a24153adaccc6eb728"
+    },
+    {
+      "path": "controller-linux/orchestrator/result.json",
+      "sha256": "2ff4deb764513b147aa0002147ab3631458d394c81d963aa1e2d5a72466f745a"
+    },
+    {
+      "path": "controller-linux/typecheck/result.json",
+      "sha256": "b4e19206aae1231716e65b745c8cfa3f7d01d86c3590061a26f6219902f1bfce"
+    },
+    {
+      "path": "controller-linux/unit/result.json",
+      "sha256": "f93a019b5b96ba49836d41c13eef10b647564bae714a63a1dc2fa877e86f55bb"
+    },
+    {
+      "path": "fresh-adopter-windows/smoke/verification/stages/bootstrap-browser/01-verify-bootstrap-browser/result.json",
+      "sha256": "c307caf3d5b76558ed79479b5525352fd90cdb4f295b542a535d586efee1e9c3"
+    },
+    {
+      "path": "fresh-adopter-windows/smoke/verification/stages/bootstrap-persistence/01-verify-bootstrap-persistence/result.json",
+      "sha256": "d70b18585583e8705f7692d3569b390475b982d04f2dbeddd396c2de2c20a205"
+    },
+    {
+      "path": "fresh-adopter-windows/smoke/verification/stages/bootstrap-simulation/01-verify-bootstrap-simulation/result.json",
+      "sha256": "7788b5b25a29340ada47c6c398908e22cf028a0595e03cf92c54b08163a710bd"
+    },
+    {
+      "path": "fresh-adopter-windows/smoke/verification/stages/bootstrap-tests/01-test-unit/result.json",
+      "sha256": "6cd473ea55a3ba4d9a21350eeb123957c494ed60dbf0e3768ab36a1fb51cf62a"
+    },
+    {
+      "path": "fresh-adopter-windows/smoke/verification/stages/environment/01-verify-dependencies/result.json",
+      "sha256": "75dd95c1b69dd32a5b429cd5e268204d6888701b92d0b9fe44cbd3bf5e0b30dc"
+    },
+    {
+      "path": "fresh-adopter-windows/smoke/verification/stages/format-lint/01-format-check/result.json",
+      "sha256": "fa9a328bb3325c86125090ff2265998e438e9e6c3a802fb5895edeb11cbe723f"
+    },
+    {
+      "path": "fresh-adopter-windows/smoke/verification/stages/format-lint/02-lint/result.json",
+      "sha256": "076ff8dc3e8d908c9fa5ff79f221fc1e12df0aa6c8531d3cb4cd78329323963c"
+    },
+    {
+      "path": "fresh-adopter-windows/smoke/verification/stages/format-lint/03-lint-architecture/result.json",
+      "sha256": "ff52750bd7cfda79c0c9aee1aa15f96ae8acceefb637bbff5a2159e021bf4f3f"
+    },
+    {
+      "path": "fresh-adopter-windows/smoke/verification/stages/production-build/01-build/result.json",
+      "sha256": "db75b1b8f63e7f6f13ae26ce80d6a1a65daf3518349be7ad9a65368c3eb1ab5b"
+    },
+    {
+      "path": "fresh-adopter-windows/smoke/verification/stages/typecheck/01-typecheck/result.json",
+      "sha256": "0d3fb730a8e3676f47dd23f1cbc4bac45b29627243b6dd9e28a5939ac3869970"
+    },
+    {
+      "path": "trusted-container-linux/matrix/cases/normal/evidence/result.json",
+      "sha256": "771b1fd49ff8c08b777b3a955c7487fc76adcfc6b203a0f48d6aa532d77c5d4a"
+    },
+    {
+      "path": "fresh-adopter-linux/smoke/verification/stages/bootstrap-browser/01-verify-bootstrap-browser/result.json",
+      "sha256": "f1cb352448918384faaf537a259be0ba934a333aa0c51dd12ccb42a5969fcdcb"
+    },
+    {
+      "path": "fresh-adopter-linux/smoke/verification/stages/bootstrap-persistence/01-verify-bootstrap-persistence/result.json",
+      "sha256": "d70b18585583e8705f7692d3569b390475b982d04f2dbeddd396c2de2c20a205"
+    },
+    {
+      "path": "fresh-adopter-linux/smoke/verification/stages/bootstrap-simulation/01-verify-bootstrap-simulation/result.json",
+      "sha256": "569fedd49025cb6607ca701292dde23e1ad4b2f2bc81cc513cc321dd7c24a0c9"
+    },
+    {
+      "path": "fresh-adopter-linux/smoke/verification/stages/bootstrap-tests/01-test-unit/result.json",
+      "sha256": "333a407326c6466d9d8d7bec54437985aeed85a1397fc7ad65d7d4e3d9a9bf0e"
+    },
+    {
+      "path": "fresh-adopter-linux/smoke/verification/stages/environment/01-verify-dependencies/result.json",
+      "sha256": "875784d33b2007d84a5c25690719d6871f01f2b3593576feebd4115f8cbbf558"
+    },
+    {
+      "path": "fresh-adopter-linux/smoke/verification/stages/format-lint/01-format-check/result.json",
+      "sha256": "9d4c646b866b6babbad3745c5468d23a91fe8e552e0ab6517d01db7f2ce631c9"
+    },
+    {
+      "path": "fresh-adopter-linux/smoke/verification/stages/format-lint/02-lint/result.json",
+      "sha256": "3bd0a8a09fa7656c65e9d911901709eef68aebd5621184feea9eb687ff948d6f"
+    },
+    {
+      "path": "fresh-adopter-linux/smoke/verification/stages/format-lint/03-lint-architecture/result.json",
+      "sha256": "ff52750bd7cfda79c0c9aee1aa15f96ae8acceefb637bbff5a2159e021bf4f3f"
+    },
+    {
+      "path": "fresh-adopter-linux/smoke/verification/stages/production-build/01-build/result.json",
+      "sha256": "57161c62f375f23af983b5439c3e34e9f95e58130a55da57a1176cd794abb366"
+    },
+    {
+      "path": "fresh-adopter-linux/smoke/verification/stages/typecheck/01-typecheck/result.json",
+      "sha256": "a0da3f6527148a1ab6b53c58745ecbe70dee23ee174e33b0185ad73775c26f5e"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 9989294141,
+      "name": "controller-windows-c708945e4ba8e0b75f09bc9e564b4afc5cb47a0a",
+      "size_in_bytes": 126850,
+      "url": "https://api.github.com/repos/mclaurin10/milestone-loop-template/actions/artifacts/9989294141",
+      "archive_download_url": "https://api.github.com/repos/mclaurin10/milestone-loop-template/actions/artifacts/9989294141/zip",
+      "expired": false,
+      "created_at": "2026-09-06T12:28:40Z",
+      "expires_at": "2026-09-20T12:28:39Z",
+      "updated_at": "2026-09-06T12:28:40Z",
+      "digest": "sha256:cb32b7ec8a2194122fa6d2c7e66fafbdf74c5b9c434f12f3671ea1077e8040ec",
+      "workflow_run": {
+        "id": 34029390274,
+        "repository_id": 1323393515,
+        "head_repository_id": 1323393515,
+        "head_branch": "master",
+        "head_sha": "c708945e4ba8e0b75f09bc9e564b4afc5cb47a0a"
+      }
+    },
+    {
+      "id": 9988244238,
+      "name": "controller-linux-c708945e4ba8e0b75f09bc9e564b4afc5cb47a0a",
+      "size_in_bytes": 128764,
+      "url": "https://api.github.com/repos/mclaurin10/milestone-loop-template/actions/artifacts/9988244238",
+      "archive_download_url": "https://api.github.com/repos/mclaurin10/milestone-loop-template/actions/artifacts/9988244238/zip",
+      "expired": false,
+      "created_at": "2026-09-06T11:19:25Z",
+      "expires_at": "2026-09-20T11:19:24Z",
+      "updated_at": "2026-09-06T11:19:25Z",
+      "digest": "sha256:595ac4df2395634e56efb688e81179406dcb2daa9188610db64991c7a044e3a3",
+      "workflow_run": {
+        "id": 34029390274,
+        "repository_id": 1323393515,
+        "head_repository_id": 1323393515,
+        "head_branch": "master",
+        "head_sha": "c708945e4ba8e0b75f09bc9e564b4afc5cb47a0a"
+      }
+    },
+    {
+      "id": 9988112693,
+      "name": "fresh-adopter-windows-c708945e4ba8e0b75f09bc9e564b4afc5cb47a0a",
+      "size_in_bytes": 196444,
+      "url": "https://api.github.com/repos/mclaurin10/milestone-loop-template/actions/artifacts/9988112693",
+      "archive_download_url": "https://api.github.com/repos/mclaurin10/milestone-loop-template/actions/artifacts/9988112693/zip",
+      "expired": false,
+      "created_at": "2026-09-06T11:10:32Z",
+      "expires_at": "2026-09-20T11:10:30Z",
+      "updated_at": "2026-09-06T11:10:32Z",
+      "digest": "sha256:14af4a5e5b832c3d81523ba6d319eef2712916d00b91766c98280049e5acb641",
+      "workflow_run": {
+        "id": 34029390274,
+        "repository_id": 1323393515,
+        "head_repository_id": 1323393515,
+        "head_branch": "master",
+        "head_sha": "c708945e4ba8e0b75f09bc9e564b4afc5cb47a0a"
+      }
+    },
+    {
+      "id": 9988105864,
+      "name": "trusted-container-linux-c708945e4ba8e0b75f09bc9e564b4afc5cb47a0a",
+      "size_in_bytes": 23377,
+      "url": "https://api.github.com/repos/mclaurin10/milestone-loop-template/actions/artifacts/9988105864",
+      "archive_download_url": "https://api.github.com/repos/mclaurin10/milestone-loop-template/actions/artifacts/9988105864/zip",
+      "expired": false,
+      "created_at": "2026-09-06T11:10:02Z",
+      "expires_at": "2026-09-20T11:10:01Z",
+      "updated_at": "2026-09-06T11:10:02Z",
+      "digest": "sha256:af310a59b83eda94aad39d3abb77b9d4399af55e4c3979b2fec134cfc2fef9c0",
+      "workflow_run": {
+        "id": 34029390274,
+        "repository_id": 1323393515,
+        "head_repository_id": 1323393515,
+        "head_branch": "master",
+        "head_sha": "c708945e4ba8e0b75f09bc9e564b4afc5cb47a0a"
+      }
+    },
+    {
+      "id": 9988103854,
+      "name": "fresh-adopter-linux-c708945e4ba8e0b75f09bc9e564b4afc5cb47a0a",
+      "size_in_bytes": 208305,
+      "url": "https://api.github.com/repos/mclaurin10/milestone-loop-template/actions/artifacts/9988103854",
+      "archive_download_url": "https://api.github.com/repos/mclaurin10/milestone-loop-template/actions/artifacts/9988103854/zip",
+      "expired": false,
+      "created_at": "2026-09-06T11:09:54Z",
+      "expires_at": "2026-09-20T11:09:53Z",
+      "updated_at": "2026-09-06T11:09:54Z",
+      "digest": "sha256:91261cd37decd5b3353418c92d94cf2d8a7581916fb0b06742fd53eee020960a",
+      "workflow_run": {
+        "id": 34029390274,
+        "repository_id": 1323393515,
+        "head_repository_id": 1323393515,
+        "head_branch": "master",
+        "head_sha": "c708945e4ba8e0b75f09bc9e564b4afc5cb47a0a"
+      }
+    }
+  ]
+}

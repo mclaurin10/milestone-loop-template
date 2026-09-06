@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0.0",
+  "stageId": "orch-auth-01-c6b",
+  "commandId": "retained-source-scope-audit",
+  "status": "PASS",
+  "checks": [
+    {
+      "id": "retained-source-readers",
+      "summary": "Independently checked retained raw files, real child receipts, current source/unchanged authority bytes, actual development Git objects, native regressions and the complete Linux unit multiset. No authority activation, candidate or readiness claim is made.",
+      "status": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "audit.json",
+      "kind": "source-scope-retained-audit",
+      "bytes": 21749,
+      "sha256": "3b6c7067d207fcf47cc26722cebe789fec206b716048f194e8a590dda69f053b"
+    }
+  ]
+}

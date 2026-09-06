@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0.0",
+  "manifestId": "manual-hosted-observation-audit-20260906123115618-12040-78bd73a2",
+  "stageId": "orch-auth-01-c6b",
+  "commandId": "hosted-observation-audit",
+  "displayCommand": "C:\\Dev\\loop-extraction\\milestone-loop-template\\.tools\\node-v24.18.0-win-x64\\node.exe C:\\Dev\\loop-extraction\\milestone-loop-template\\docs\\source-authority\\ORCH-AUTH-01-C6b\\audit-hosted.ts artifacts/wp6e-authority-fixture-repair-20260906/hosted-c708945 c708945e4ba8e0b75f09bc9e564b4afc5cb47a0a 34029390274 artifacts/wp6e-authority-fixture-repair-20260906/hosted-c708945-audit-1",
+  "status": "PASS",
+  "candidate": {
+    "gitCommit": "c708945e4ba8e0b75f09bc9e564b4afc5cb47a0a",
+    "gitTree": "aff732d45db883212ceedce09b36fba311265464",
+    "workingTreeDirty": true
+  },
+  "receipt": {
+    "path": "result.json",
+    "sha256": "d70bbbac52835c1f1d09ebba1abe3a10a5f72b12ea3eeee4dea067804b16e836",
+    "bytes": 658
+  },
+  "declaredArtifacts": {
+    "count": 1,
+    "bytes": 16372,
+    "declarations": [
+      {
+        "path": "audit.json",
+        "kind": "hosted-observation-audit",
+        "bytes": 16372,
+        "sha256": "9752242142bbc51836176af6df8b1c17061f2fb607e7ad2ae619f3e8c85ba582"
+      }
+    ]
+  },
+  "telemetry": {
+    "runId": null,
+    "manifestPath": null
+  },
+  "citationClass": "uncited-at-creation",
+  "durableCitations": {
+    "trackedPaths": [],
+    "controllerStateReferences": [],
+    "activeReconciliationReference": null
+  },
+  "createdAt": "2026-09-06T12:31:15.618Z",
+  "finishedAt": "2026-09-06T12:31:18.655Z",
+  "failureClassification": null
+}

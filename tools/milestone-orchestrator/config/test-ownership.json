@@ -85,6 +85,7 @@
         "tools/milestone-orchestrator/src/verification-cli.test.ts",
         "tools/milestone-orchestrator/src/verification-clone.test.ts",
         "tools/milestone-orchestrator/src/verification-manifest.test.ts",
+        "tools/milestone-orchestrator/src/verification-scope.test.ts",
         "tools/milestone-orchestrator/src/verification-tier.test.ts",
         "tools/milestone-orchestrator/src/verifier.test.ts",
         "tools/milestone-orchestrator/src/worked-example.test.ts",

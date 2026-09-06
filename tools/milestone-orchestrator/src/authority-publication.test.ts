@@ -396,6 +396,7 @@ describe("shared authority publication fence", { timeout: 60_000 }, () => {
       "scripts/verify.mjs",
       "tools/milestone-orchestrator/src/authority-anchor.ts",
       "tools/milestone-orchestrator/src/authority-publication.mjs",
+      "tools/milestone-orchestrator/src/verification-scope.mjs",
       "tools/milestone-orchestrator/src/contract-integrity.ts",
       "tools/milestone-orchestrator/src/process-supervisor.ts",
       "tools/milestone-orchestrator/src/execution-provider-identity.ts",
