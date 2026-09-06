@@ -519,13 +519,23 @@ describe("production-build evidence", () => {
   );
 
   it("the template wrapper exits 2 and cannot leave a PASS receipt", async () => {
+    // Keep the original absent-declaration contract executable after the source
+    // repository itself acquires its approved real production build.
+    const fixture = await createFixture({
+      declaration: undefined,
+      includeEvidenceWrapper: true,
+    });
     const parent = await mkdtemp(join(tmpdir(), "milestone-build-wrapper-"));
     temporaryDirectories.push(parent);
     const result = spawnSync(
       process.execPath,
-      ["node_modules/tsx/dist/cli.mjs", "tools/run-tool-evidence.mjs", "build"],
+      [
+        resolve(repositoryRoot, "node_modules/tsx/dist/cli.mjs"),
+        "tools/run-tool-evidence.mjs",
+        "build",
+      ],
       {
-        cwd: repositoryRoot,
+        cwd: fixture.repository,
         encoding: "utf8",
         env: {
           ...process.env,

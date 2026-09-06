@@ -488,6 +488,23 @@ export async function runProductionBuild({
       ["pnpm", ...buildArgs],
     );
     if (command.error !== null || command.exitCode !== 0) {
+      // Keep the real failed child output before the disposable clone is removed.
+      // This diagnostic is never a PASS receipt or a successful build report.
+      await mkdir(artifactDirectory, { recursive: true });
+      await writeFile(
+        resolve(artifactDirectory, "build-failure.json"),
+        JSON.stringify(
+          {
+            schemaVersion: "1.0.0",
+            status: "FAIL",
+            source,
+            productionBuild: contract,
+            command,
+          },
+          null,
+          2,
+        ) + "\n",
+      );
       const disposition =
         command.error !== null
           ? `could not start: ${command.error}`

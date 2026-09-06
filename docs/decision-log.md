@@ -1,5 +1,13 @@
 # Decision Log
 
+## 2026-09-06 UTC — Package committed runtime bytes and retain the real consumer
+
+Use an explicit portable TS/tsx payload and deterministic regular-file ustar/gzip archive, keeping exact source provenance inside the payload and wall-clock consumer telemetry outside it. Parse actual imports and model the generated scaffold overlay; shipped code may not resolve through source-only checkers. Reuse the existing clean-clone production build and its twice-checked output inventory. The declared source build's afterReport consumer independently inspects and retains the real archive, manifest, child receipt and detached generation output before cleanup. Preserve generic adopter build behavior and its original safety assertions.
+
+Compare installed dependency bytes against a fresh frozen offline copy-mode reference in addition to exact runtime/lock/store checks. Normalize only a pnpm workspace alias whose parent, relative target and installed identity are verified; do not ignore version disagreements or package contents. The independent standard tar reader checks the actual archive format outside the JavaScript encoder/parser. This supporting single-build path expressly leaves full native/repeated build and inaccessible-source generation/commissioning qualification incomplete.
+
+Keep universal adopter AGENTS bytes in a dedicated template so later source authority activation cannot leak source scope into generated projects. Retarget only the old undeclared-root build test's fixture, preserving its original assertions and deadline, because the approved source build makes permanent absence incorrect. Every old public argv, authority/commissioning record and readiness marker stays unchanged until the approved migration. Never promote these supporting receipts or synthetic output-retention fixtures into candidate 5(a)/5(b), source readiness or historical WP6 completion.
+
 ## 2026-09-06 UTC — Canonicalize owned discovery fixtures while preserving refusal of arbitrary aliases
 
 The launch-free scanner must continue rejecting noncanonical paths before reading a possible installer or binary. A test's newly created directory is owned and may be resolved with realpath before constructing the input; arbitrary discovered launcher paths may not. Preserve the original forty host-discovery assertions and the production scanner verbatim. A deliberately aliased/link input must still be refused. Native Windows TEMP aliases reproduce the actual hosted issue and support the narrow fixture fix; they do not qualify native Windows controller/container workflows.

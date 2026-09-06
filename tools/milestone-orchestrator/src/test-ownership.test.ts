@@ -164,13 +164,14 @@ describe("test ownership classification", () => {
     // The historical WP6e catalogue had 87 files. Qualification added one
     // controller input test and three repository-tooling host/lifecycle tests.
     // C4 adds the controller's inert source-epoch snapshot test.
+    // C5 adds the portable source release's repository-tooling regressions.
     expect(result.owners.map((owner) => [owner.id, owner.count])).toEqual([
       ["controller-runtime", 85],
-      ["repository-tooling", 4],
+      ["repository-tooling", 5],
       ["adopter-template", 2],
       ["trusted-container-fixture", 1],
     ]);
-    expect(result.discoveredFiles).toHaveLength(92);
+    expect(result.discoveredFiles).toHaveLength(93);
   });
 
   it("rejects a discovered but unclassified test with a stable action", () => {

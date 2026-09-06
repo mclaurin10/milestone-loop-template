@@ -51,7 +51,6 @@ const IMMUTABLE_LOCK_PATH = "evals/immutable-contract-lock.json" as const;
 const runtimeRootFiles = [
   ".gitattributes",
   ".gitignore",
-  "AGENTS.md",
   "eslint.config.mjs",
   "pnpm-lock.yaml",
   "pnpm-workspace.yaml",
@@ -59,6 +58,8 @@ const runtimeRootFiles = [
   "scripts/verify.ps1",
   "tools/evidence.mjs",
   "tools/production-build.mjs",
+  "tools/source-release-archive.mjs",
+  "tools/source-release-evidence.mjs",
   "tools/run-tool-evidence.mjs",
   "tools/workspace-typecheck.mjs",
   "tools/milestone-orchestrator/ci/exact-runtime-workflow-contract.ts",
@@ -447,6 +448,7 @@ async function copyRepositoryFile(
   sourceRoot: string,
   outputRoot: string,
   repositoryPath: string,
+  destinationPath = repositoryPath,
 ): Promise<void> {
   const source = resolve(sourceRoot, repositoryPath);
   const metadata = await lstat(source);
@@ -454,7 +456,7 @@ async function copyRepositoryFile(
     throw new Error(
       `Reusable runtime path is not a regular file: ${repositoryPath}.`,
     );
-  const destination = resolve(outputRoot, repositoryPath);
+  const destination = resolve(outputRoot, destinationPath);
   await mkdir(dirname(destination), { recursive: true });
   await copyFile(source, destination, 0);
 }
@@ -494,6 +496,12 @@ async function copyReusableRuntime(
 ): Promise<void> {
   for (const path of runtimeRootFiles)
     await copyRepositoryFile(sourceRoot, outputRoot, path);
+  await copyRepositoryFile(
+    sourceRoot,
+    outputRoot,
+    "tools/milestone-orchestrator/template/bootstrap-adopter/AGENTS.md",
+    "AGENTS.md",
+  );
 
   const runtimeSourceRoot = resolve(
     sourceRoot,

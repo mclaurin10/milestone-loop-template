@@ -292,6 +292,7 @@ if (mode === "invariant-vitest" || mode === "focused-verify") {
   let telemetry = null;
   let context = null;
   let measurement = null;
+  let retainedBuildArtifacts = [];
   try {
     context = await evidenceContext(definition.stageId, definition.commandId);
     telemetry = await beginDirectTelemetry(context, {
@@ -336,9 +337,31 @@ if (mode === "invariant-vitest" || mode === "focused-verify") {
       ]);
     }
     if (mode === "build") {
+      const packageJson = JSON.parse(
+        await readFile(resolve(context.repositoryRoot, "package.json"), "utf8"),
+      );
+      const sourceRelease =
+        packageJson.scripts?.[
+          packageJson.milestoneLoop?.productionBuild?.script
+        ] === "node tools/source-release.mjs build";
+      const retain = sourceRelease
+        ? (await import("./source-release-evidence.mjs"))
+            .retainSourceReleaseEvidence
+        : null;
       await runProductionBuild({
         repositoryRoot: context.repositoryRoot,
         artifactDirectory: context.artifactDirectory,
+        ...(retain
+          ? {
+              afterReport: async ({ report, workspace }) => {
+                retainedBuildArtifacts = await retain({
+                  report,
+                  workspace,
+                  artifactDirectory: context.artifactDirectory,
+                });
+              },
+            }
+          : {}),
       });
     } else {
       const results = [];
@@ -389,6 +412,7 @@ if (mode === "invariant-vitest" || mode === "focused-verify") {
       ],
       [
         { path: `${mode}-report.json`, kind: definition.kind },
+        ...retainedBuildArtifacts,
         ...(measurement
           ? [{ path: TEST_RUN_SUMMARY_NAME, kind: TEST_RUN_SUMMARY_KIND }]
           : []),

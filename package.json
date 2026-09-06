@@ -11,9 +11,18 @@
   "milestoneLoop": {
     "verification": {
       "defaultProfile": "readiness"
+    },
+    "productionBuild": {
+      "script": "build:production",
+      "outputRoots": [
+        "dist"
+      ]
     }
   },
   "scripts": {
+    "build:production": "node tools/source-release.mjs build",
+    "verify:source-dependencies": "node tools/source-release.mjs dependencies",
+    "lint:source-architecture": "node tools/source-release.mjs architecture",
     "verify": "node scripts/verify.mjs",
     "verify:dependencies": "node tools/placeholder-check.mjs verify:dependencies",
     "format": "prettier --write scripts tools fixtures/oci-candidate fixtures/fresh-adopter eslint.config.mjs package.json pnpm-workspace.yaml tsconfig.base.json tsconfig.tools.json vitest.config.ts",
