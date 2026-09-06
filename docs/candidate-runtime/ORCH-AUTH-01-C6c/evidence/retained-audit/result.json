@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0.0",
+  "stageId": "orch-auth-01-c6c",
+  "commandId": "candidate-runtime-retained-audit",
+  "status": "PASS",
+  "checks": [
+    {
+      "id": "candidate-runtime-prerequisites",
+      "summary": "Audited actual baseline package-layout rejection, complete corrected focused checks, unchanged original PATH inputs/assertions, disjoint current report identities and clean C6b post-commit artifacts. No candidate or qualification claim.",
+      "status": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "audit.json",
+      "kind": "candidate-runtime-retained-audit",
+      "bytes": 6072,
+      "sha256": "e533ebf40ac3b5f69a22c5c9db03369285bd814b27575f9b54760023af5b301d"
+    }
+  ]
+}

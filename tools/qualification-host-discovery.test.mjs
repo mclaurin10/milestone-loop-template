@@ -170,13 +170,24 @@ describe("launch-free qualification host discovery", () => {
   });
 
   it.each([
-    ["linux", "/a:".repeat(HOST_DISCOVERY_LIMITS.pathEntries)],
-    ["linux", "/" + "a".repeat(HOST_DISCOVERY_LIMITS.pathBytes)],
-    ["linux", "/a\0b"],
-    ["darwin", "/usr/bin"],
-  ])("refuses unsafe or unbounded PATH input (%s)", (platform, path) => {
-    expect(() => discoverySearch(platform, path)).toThrow();
-  });
+    [
+      "too many entries",
+      "linux",
+      "/a:".repeat(HOST_DISCOVERY_LIMITS.pathEntries),
+    ],
+    [
+      "too many bytes",
+      "linux",
+      "/" + "a".repeat(HOST_DISCOVERY_LIMITS.pathBytes),
+    ],
+    ["NUL byte", "linux", "/a\0b"],
+    ["unsupported platform", "darwin", "/usr/bin"],
+  ])(
+    "refuses unsafe or unbounded PATH input (%s; %s)",
+    (_label, platform, path) => {
+      expect(() => discoverySearch(platform, path)).toThrow();
+    },
+  );
 
   it("refuses a stale scanner pin before inspecting launchers", async () => {
     await expect(

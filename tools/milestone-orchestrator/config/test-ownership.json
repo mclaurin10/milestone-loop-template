@@ -15,6 +15,7 @@
         "tools/milestone-orchestrator/src/benchmark.test.ts",
         "tools/milestone-orchestrator/src/budget.test.ts",
         "tools/milestone-orchestrator/src/candidate-identity.test.ts",
+        "tools/milestone-orchestrator/src/candidate-package-runtime.test.ts",
         "tools/milestone-orchestrator/src/candidate-prepare-baseline.test.ts",
         "tools/milestone-orchestrator/src/candidate-prepare.test.ts",
         "tools/milestone-orchestrator/src/cli.test.ts",

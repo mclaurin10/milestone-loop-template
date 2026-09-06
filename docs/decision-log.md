@@ -1,5 +1,11 @@
 # Decision Log
 
+## 2026-09-06 UTC — Pin workspace package layout across sanitized child environments
+
+Make enableGlobalVirtualStore explicit in the versioned source workspace, which the existing adopter distribution copies. Pinned pnpm 11.15.1 otherwise changes its default under CI, while the production safe environment deliberately removes CI. The real regression demonstrated a strict dependency-verification rejection after a CI installation. Preserve that rejection when configuration differs; do not disable verification or expand the environment allowlist. Test actual dependency consumption and unchanged module metadata across both child environments.
+
+Give the four later host-discovery table rows stable descriptive labels and retain their exact prior/new observation mapping. Preserve the original parameters and assertion, and keep the strict exactly-once comparator unchanged. A bounded whole-file transformation plus real raw report comparison prevents a rename from hiding lost or altered acceptance. Original historical IDs remain unaffected, and the final candidate must still reconcile the complete historical/later universe.
+
 ## 2026-09-06 UTC — Separate source evidence decoding from qualification authority
 
 Use explicit source aggregate 3.0.0 and tier 2.0.0 envelopes with trusted dispatch scope and separate source, fixture and qualifier identities. Refuse unknown or foreign scope before reading status, including nested exact closure. Preserve legacy aggregate 2.1.0, tier 1.2.0, command artifact validation and original diagnostics. Partial source evidence can be inspected only as NOT_READY; a source PASS requires future actual full-qualification authentication. No reader inspection activates authority, supplies independent review or replaces a missing producer.

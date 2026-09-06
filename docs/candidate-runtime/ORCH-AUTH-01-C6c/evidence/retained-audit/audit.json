@@ -1,0 +1,149 @@
+{
+  "schemaVersion": "candidate-runtime-retained-audit.v1",
+  "status": "PASS",
+  "observer": {
+    "gitCommit": "e072287ac054197a469b39031f2a348a6c47a100",
+    "gitTree": "16e6437bbcec22023a6208236b76f699cff6f88a",
+    "gitStatus": "M .agent/current-exec-plan.md\n M pnpm-workspace.yaml\n M tools/milestone-orchestrator/config/test-ownership.json\n M tools/milestone-orchestrator/src/test-ownership.test.ts\n M tools/qualification-host-discovery.test.mjs\n?? \"Implementation-ready improvement plan 8-5-26.txt\"\n?? docs/candidate-runtime/ORCH-AUTH-01-C6c/audit.ts\n?? docs/candidate-runtime/ORCH-AUTH-01-C6c/curate.ps1\n?? docs/candidate-runtime/ORCH-AUTH-01-C6c/evidence/manifest.json\n?? docs/candidate-runtime/ORCH-AUTH-01-C6c/evidence/retained-evidence.zip\n?? tools/milestone-orchestrator/src/candidate-package-runtime.test.ts",
+    "nodeVersion": "v24.18.0",
+    "pnpmVersion": "11.15.1"
+  },
+  "sourceBase": "e072287ac054197a469b39031f2a348a6c47a100",
+  "completionEligible": false,
+  "authorityActivated": false,
+  "rawFiles": 130,
+  "receipts": [
+    {
+      "path": "architecture-1/result.json",
+      "sha256": "a8dbc3b2947fbf17703e1e75cd90a5c0bc5ce54711b481664917f58b0ce7785c"
+    },
+    {
+      "path": "c6b-postcommit/audit/result.json",
+      "sha256": "493535c5d8daf0955b3cdf048a872eb0e88b2a04653ffd19495114e45b7c0e38"
+    },
+    {
+      "path": "c6b-postcommit/build/result.json",
+      "sha256": "f49e46d03759ce22df0c727c8eecc097926334906415276d928b24d115b6b206"
+    },
+    {
+      "path": "c6b-postcommit/build/source-release/build-evidence/result.json",
+      "sha256": "67cf3e7915389824efec35fb3a8ad450b94758692136cf5c26d8e9aa0ff208b9"
+    },
+    {
+      "path": "c6b-postcommit/dependencies/result.json",
+      "sha256": "184ad4488d27d5cd7cd7240251db24a7a5ec1d7ed3d9de4773a2dc7ab3b34702"
+    },
+    {
+      "path": "focused-2/result.json",
+      "sha256": "b3b2956752385de095a75b301b9f32b1cb4ea0d2ac039688362961c7e4b34b6b"
+    },
+    {
+      "path": "format-1/result.json",
+      "sha256": "8e236e6f96c15439967ae70c688c4581ea1224afca0102400ea43d34e3a4667b"
+    },
+    {
+      "path": "invariants-1/entries/fail-closed-evidence/result.json",
+      "sha256": "9e020098b7e21743b3309f289befaec34a2a1939a4839b7610f27a6618fb0142"
+    },
+    {
+      "path": "invariants-1/entries/orchestrator-policy-integrity/result.json",
+      "sha256": "c3ede8b8c1a5fe40f76d619be3149d00164e2de63774be7d9a3c138fdb4303d1"
+    },
+    {
+      "path": "invariants-1/entries/orchestrator-schema-integrity/result.json",
+      "sha256": "352625d5117d72a48f7249a369a5b0ba6695fb066f1cc6b7c2f7339e3402802d"
+    },
+    {
+      "path": "invariants-1/entries/protected-integrity/result.json",
+      "sha256": "84d585828131ea1aa95be0f4a250ed5d7663dd6399329770ff8e41b919404f7d"
+    },
+    {
+      "path": "invariants-1/entries/test-ownership/result.json",
+      "sha256": "57cdd918606cbc0861c6e3537eb944e5188c3c35ebe1c3f453c8d625f246ddb6"
+    },
+    {
+      "path": "invariants-1/result.json",
+      "sha256": "c6ad603f39b561605ae9e906212698f75be875dfbe96b721f14a702604e7155e"
+    },
+    {
+      "path": "lint-1/result.json",
+      "sha256": "6f086d3130c5b7cd5c8a9a182dbcfb2554fed3c7e6c0ba8cf79e58f54f1d6348"
+    },
+    {
+      "path": "typecheck-2/result.json",
+      "sha256": "66c85550d34763cbf913cba80079e10de0e28ece295df8ae1abf194df0c1a6c0"
+    }
+  ],
+  "focusedCases": 118,
+  "priorDuplicateComparison": {
+    "status": "FAIL",
+    "legacy": {
+      "observationCount": 40,
+      "uniqueTestCount": 38,
+      "duplicateObservationCount": 2,
+      "semanticSha256": "5a08d51370f20066dd45424717d70c29d08153b5beb0922fdf3c713cf9d02314"
+    },
+    "partitions": {
+      "observationCount": 40,
+      "uniqueTestCount": 38,
+      "semanticSha256": "5a08d51370f20066dd45424717d70c29d08153b5beb0922fdf3c713cf9d02314"
+    },
+    "legacyConflicts": [],
+    "multiplySelectedTests": [
+      {
+        "testId": "tools/qualification-host-discovery.test.mjs::launch-free qualification host discovery refuses unsafe or unbounded PATH input (linux)",
+        "count": 3,
+        "sources": [
+          "observed-discovery-file"
+        ]
+      }
+    ],
+    "missingTests": [],
+    "unexpectedTests": [],
+    "outcomeMismatches": []
+  },
+  "currentDiscoveryComparison": {
+    "status": "PASS",
+    "legacy": {
+      "observationCount": 40,
+      "uniqueTestCount": 40,
+      "duplicateObservationCount": 0,
+      "semanticSha256": "477340b51e17952f5c7ca0951f8080b353b33c511162db82d735c69caf45f506"
+    },
+    "partitions": {
+      "observationCount": 40,
+      "uniqueTestCount": 40,
+      "semanticSha256": "477340b51e17952f5c7ca0951f8080b353b33c511162db82d735c69caf45f506"
+    },
+    "legacyConflicts": [],
+    "multiplySelectedTests": [],
+    "missingTests": [],
+    "unexpectedTests": [],
+    "outcomeMismatches": []
+  },
+  "identityMapping": [
+    {
+      "row": 0,
+      "priorIdentity": "launch-free qualification host discovery refuses unsafe or unbounded PATH input (linux)",
+      "currentIdentity": "launch-free qualification host discovery refuses unsafe or unbounded PATH input (too many entries; linux)"
+    },
+    {
+      "row": 1,
+      "priorIdentity": "launch-free qualification host discovery refuses unsafe or unbounded PATH input (linux)",
+      "currentIdentity": "launch-free qualification host discovery refuses unsafe or unbounded PATH input (too many bytes; linux)"
+    },
+    {
+      "row": 2,
+      "priorIdentity": "launch-free qualification host discovery refuses unsafe or unbounded PATH input (linux)",
+      "currentIdentity": "launch-free qualification host discovery refuses unsafe or unbounded PATH input (NUL byte; linux)"
+    },
+    {
+      "row": 3,
+      "priorIdentity": "launch-free qualification host discovery refuses unsafe or unbounded PATH input (darwin)",
+      "currentIdentity": "launch-free qualification host discovery refuses unsafe or unbounded PATH input (unsupported platform; darwin)"
+    }
+  ],
+  "preservedUnrenamedCases": 36,
+  "actualCandidate": "NOT_RUN",
+  "historicalWP6e": "BLOCKED_AT_e590e38c32de2b5baa7423f66bbd8a0230b61839"
+}
