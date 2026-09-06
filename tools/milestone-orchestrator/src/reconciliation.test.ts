@@ -110,7 +110,13 @@ async function fixtureRepository(): Promise<Fixture> {
     const absolute = join(root, ...path.split("/"));
     if (existsSync(absolute)) continue;
     await mkdir(dirname(absolute), { recursive: true });
-    await writeFile(absolute, `${path}\n`, "utf8");
+    await writeFile(
+      absolute,
+      path === "evals/immutable-contract-lock.json"
+        ? '{"schemaVersion":"1.0.0"}\n'
+        : `${path}\n`,
+      "utf8",
+    );
     canonicalPlaceholders.push(path);
   }
   git(

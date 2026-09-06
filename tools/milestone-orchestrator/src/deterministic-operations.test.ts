@@ -28,7 +28,15 @@ async function deterministicFixture(): Promise<string> {
   for (const file of config.protectedPaths) {
     const path = join(root, file);
     await mkdir(dirname(path), { recursive: true });
-    await writeFile(path, `${file}\n`, "utf8");
+    await writeFile(
+      path,
+      file === "evals/immutable-contract-lock.json"
+        ? '{"schemaVersion":"1.0.0"}\n'
+        : file === "package.json"
+          ? "{}\n"
+          : `${file}\n`,
+      "utf8",
+    );
   }
   const configPath = join(
     root,

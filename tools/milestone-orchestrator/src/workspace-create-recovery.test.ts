@@ -88,7 +88,12 @@ async function fixture() {
   git(root, "config", "user.email", "workspace-recovery@example.invalid");
   for (const path of config.protectedPaths) {
     await mkdir(dirname(join(root, path)), { recursive: true });
-    await writeFile(join(root, path), `${path}\n`);
+    await writeFile(
+      join(root, path),
+      path === "evals/immutable-contract-lock.json"
+        ? '{"schemaVersion":"1.0.0"}\n'
+        : `${path}\n`,
+    );
   }
   await writeFile(
     join(root, "package.json"),

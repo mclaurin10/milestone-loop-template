@@ -109,7 +109,13 @@ async function operationalFixture(): Promise<{
   for (const path of buildCanonicalProtectedSet(config)) {
     const absolute = join(root, path);
     await mkdir(dirname(absolute), { recursive: true });
-    await writeFile(absolute, `${path}\n`, "utf8");
+    await writeFile(
+      absolute,
+      path === "evals/immutable-contract-lock.json"
+        ? '{"schemaVersion":"1.0.0"}\n'
+        : `${path}\n`,
+      "utf8",
+    );
   }
   await writeJson(
     join(root, "tools/milestone-orchestrator/config/default.json"),

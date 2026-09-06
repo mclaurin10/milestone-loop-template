@@ -106,7 +106,13 @@ async function runningFixture(
   git(root, "config", "user.email", "candidate-prepare@example.invalid");
   for (const path of config.protectedPaths) {
     await mkdir(dirname(join(root, path)), { recursive: true });
-    await writeFile(join(root, path), `${path}\n`, "utf8");
+    await writeFile(
+      join(root, path),
+      path === "evals/immutable-contract-lock.json"
+        ? '{"schemaVersion":"1.0.0"}\n'
+        : `${path}\n`,
+      "utf8",
+    );
   }
   await writeFile(
     join(root, "package.json"),
