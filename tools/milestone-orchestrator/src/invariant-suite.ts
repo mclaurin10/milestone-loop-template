@@ -17,6 +17,11 @@ import type {
 } from "./contracts.js";
 import { loadInvariantSuiteRegistry, loadSlowSuiteRegistry } from "./config.js";
 import { validateCommissionedAuthorityAnchor } from "./authority-anchor.js";
+import { assertActiveAuthorityPublication } from "./authority-publication.mjs";
+import {
+  inspectActiveSourceContractIntegrity,
+  SOURCE_CONTRACT_INTEGRITY_CHECK_IDS,
+} from "./source-authority-anchor.js";
 import { runCommand } from "./command-runner.js";
 import {
   CONTRACT_INTEGRITY_CHECK_IDS,
@@ -59,10 +64,18 @@ export async function runContractIntegrityInvariant(
       "Contract-integrity evidence context does not match the evaluated repository root.",
     );
   const startedAt = new Date();
-  const checks = await evaluateContractIntegrity({
-    repositoryRoot,
-    validateAuthorityAnchor: validateCommissionedAuthorityAnchor,
-  });
+  const scope = await assertActiveAuthorityPublication(repositoryRoot);
+  const checks =
+    scope === "source"
+      ? (await inspectActiveSourceContractIntegrity(repositoryRoot)).checks
+      : await evaluateContractIntegrity({
+          repositoryRoot,
+          validateAuthorityAnchor: validateCommissionedAuthorityAnchor,
+        });
+  const expectedCheckIds =
+    scope === "source"
+      ? SOURCE_CONTRACT_INTEGRITY_CHECK_IDS
+      : CONTRACT_INTEGRITY_CHECK_IDS;
   const finishedAt = new Date();
   const counts = {
     total: checks.length,
@@ -71,17 +84,21 @@ export async function runContractIntegrityInvariant(
     notReady: checks.filter((item) => item.status === "NOT_READY").length,
   };
   const checkIdentityValid =
-    checks.length === CONTRACT_INTEGRITY_CHECK_IDS.length &&
-    checks.every(
-      (item, index) => item.id === CONTRACT_INTEGRITY_CHECK_IDS[index],
-    );
+    checks.length === expectedCheckIds.length &&
+    checks.every((item, index) => item.id === expectedCheckIds[index]);
   const passed = checkIdentityValid && counts.pass === counts.total;
   const reportPath = resolve(
     context.artifactDirectory,
     "contract-integrity-report.json",
   );
   await writeJson(reportPath, {
-    schemaVersion: CONTRACT_INTEGRITY_REPORT_SCHEMA_VERSION,
+    schemaVersion:
+      scope === "source"
+        ? "source-contract-integrity-report.v1"
+        : CONTRACT_INTEGRITY_REPORT_SCHEMA_VERSION,
+    ...(scope === "source"
+      ? { claimScope: "source-contract-invariant", activationAuthorized: false }
+      : {}),
     status: passed ? "PASS" : "FAIL",
     completionEligible: false,
     completionIneligibilityReason: "independent-invariant-adapter",
@@ -94,7 +111,7 @@ export async function runContractIntegrityInvariant(
     durationMs: finishedAt.getTime() - startedAt.getTime(),
     counts,
     checkIdentityValid,
-    expectedCheckIds: CONTRACT_INTEGRITY_CHECK_IDS,
+    expectedCheckIds,
     checks,
   });
   if (!passed)

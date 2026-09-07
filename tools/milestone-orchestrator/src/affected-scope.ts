@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { isAbsolute } from "node:path";
+import { SOURCE_CONTRACT_ID } from "./authority-publication.mjs";
 import {
   LEGACY_TEST_COMMANDS,
   PARTITION_CHECK_IDS,
@@ -185,12 +186,24 @@ export function buildScopeCheckCatalogue(
   manifest: VerificationCommandManifest,
 ): ScopeCheckCatalogue {
   const byId = new Map<string, ScopeCheckDefinition>();
+  const identity = manifest as VerificationCommandManifest & {
+    readonly commissioning?: { readonly id?: string };
+  };
+  const source =
+    identity.commissioning?.id === SOURCE_CONTRACT_ID &&
+    sourceScheduleGeneration(manifest) === "source";
+  // The authenticated source floor owns its exact dependency argv and artifact
+  // meaning. Legacy manifests still receive the original auxiliary definition
+  // and retain duplicate rejection; this is not generic ID deduplication.
+  const auxiliaries = AUXILIARY_CHECKS.filter(
+    ({ id }) => !(source && id === "dependencies"),
+  );
   const legacyAuxiliaries = LEGACY_TEST_COMMANDS.filter(
     ({ id }) => !manifest.focusedCommands.some((command) => command.id === id),
   ).map((command) => ({ ...command, tiers: [] }));
   for (const command of [
     ...manifest.focusedCommands,
-    ...AUXILIARY_CHECKS,
+    ...auxiliaries,
     ...legacyAuxiliaries,
   ]) {
     if (byId.has(command.id))
@@ -422,7 +435,11 @@ export function recommendAffectedScope(input: {
   ) {
     for (const entry of catalogue.entries)
       if (entry.tiers.includes("candidate")) recommended.add(entry.id);
-    if (sourceScheduleGeneration(input.manifest, input.policy) === "v2") {
+    if (
+      ["v2", "source"].includes(
+        sourceScheduleGeneration(input.manifest, input.policy) ?? "",
+      )
+    ) {
       for (const id of ROOT_PARTITION_CHECK_IDS) recommended.add(id);
     } else recommended.add("test-unit");
   }

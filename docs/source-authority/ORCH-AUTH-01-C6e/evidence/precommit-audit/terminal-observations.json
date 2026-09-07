@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "source-publication-precommit-terminal-observations.v1",
+  "curation": {
+    "chunk_id": "538f46",
+    "wall_time_seconds": 0.0000023,
+    "exit_code": 0,
+    "original_token_count": 53,
+    "output": "{\r\n  \"files\": 4644,\r\n  \"bytes\": 36087328,\r\n  \"archive\": {\r\n    \"path\": \"retained-evidence.zip\",\r\n    \"bytes\": 12312397,\r\n    \"sha256\": \"e0371481596574c29e5c756d3376cec21dec4f8dbdd625cccbff1499fb12841f\"\r\n  }\r\n}\r\n"
+  },
+  "extraction": {
+    "chunk_id": "44edee",
+    "wall_time_seconds": 0.000002,
+    "exit_code": 0,
+    "original_token_count": 62,
+    "output": "{\r\n  \"files\": 4677,\r\n  \"bytes\": 36087328,\r\n  \"archiveSha256\": \"e0371481596574c29e5c756d3376cec21dec4f8dbdd625cccbff1499fb12841f\",\r\n  \"destination\": \"C:\\\\Dev\\\\loop-extraction\\\\milestone-loop-template\\\\artifacts\\\\c6e-precommit-retained-input-1\"\r\n}\r\n"
+  },
+  "retainedAudit": {
+    "chunk_id": "becfba",
+    "wall_time_seconds": 0.0000018,
+    "exit_code": 0,
+    "original_token_count": 40,
+    "output": "{\"rawFiles\":4644,\"receipts\":278,\"rootTests\":1250,\"receiptSha256\":\"700dde37609ea25c4cb32f053211ba47458e0a8c4400fab23726c7f0336a9607\",\"completionEligible\":false}\n"
+  },
+  "completionEligible": false
+}

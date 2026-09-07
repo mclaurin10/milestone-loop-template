@@ -20,6 +20,7 @@
     }
   },
   "scripts": {
+    "loop:authority:migrate": "tsx tools/milestone-orchestrator/src/authority-migration-cli.ts",
     "build:production": "node tools/source-release.mjs build",
     "verify:source-dependencies": "node tools/source-release.mjs dependencies",
     "lint:source-architecture": "node tools/source-release.mjs architecture",

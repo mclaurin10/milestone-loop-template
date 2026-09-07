@@ -18,7 +18,8 @@ export type ControllerLeaseOperation =
   | "canary"
   | "reconcile"
   | "retention-apply"
-  | "commission-amend";
+  | "commission-amend"
+  | "authority-migrate";
 
 export interface ControllerLeaseHooks {
   readonly afterObservedExisting?: (observation: {
@@ -60,6 +61,7 @@ const OPERATIONS = new Set<ControllerLeaseOperation>([
   "reconcile",
   "retention-apply",
   "commission-amend",
+  "authority-migrate",
 ]);
 function serializeJson(value: unknown): string {
   return `${JSON.stringify(value, null, 2)}\n`;
@@ -330,11 +332,40 @@ export class ControllerLease {
     readonly repositoryRoot: string;
     readonly statePath: string;
     readonly operation: ControllerLeaseOperation;
+    readonly sourceAuthorityRequest?: {
+      readonly commit: string;
+      readonly sha256: string;
+    };
+    readonly sourceReviewPermit?: import("./source-authority-review.js").SourceReviewPermit;
     readonly hooks?: ControllerLeaseHooks;
   }): Promise<ControllerLease> {
     const repositoryRoot = resolve(input.repositoryRoot);
-    await assertActiveAuthorityPublication(repositoryRoot);
-    if (input.operation !== "commission-amend") {
+    const assertAdmission = async () => {
+      if (input.operation === "authority-migrate") {
+        if (!input.sourceAuthorityRequest || !input.sourceReviewPermit)
+          throw new Error(
+            "Source migration lease requires its exact committed request and live SDK review permit.",
+          );
+        const { assertSourceMigrationLeaseAdmission } =
+          await import("./source-authority-publication.js");
+        await assertSourceMigrationLeaseAdmission(
+          repositoryRoot,
+          input.sourceAuthorityRequest,
+          input.sourceReviewPermit,
+        );
+      } else {
+        if (input.sourceAuthorityRequest || input.sourceReviewPermit)
+          throw new Error(
+            "A source migration request cannot override an ordinary lease operation.",
+          );
+        await assertActiveAuthorityPublication(repositoryRoot);
+      }
+    };
+    await assertAdmission();
+    if (
+      input.operation !== "commission-amend" &&
+      input.operation !== "authority-migrate"
+    ) {
       const { assertNoPendingAmendment } =
         await import("./commissioning-audit.js");
       await assertNoPendingAmendment(repositoryRoot);
@@ -414,7 +445,7 @@ export class ControllerLease {
           );
       }
 
-      await assertActiveAuthorityPublication(repositoryRoot);
+      await assertAdmission();
       if (store.compareAndSwap(existingObjectId, ownerObjectId)) {
         await input.hooks?.afterPublished?.({
           path: CONTROLLER_LEASE_REF,
@@ -442,6 +473,30 @@ export class ControllerLease {
       throw new Error(
         `Controller lease ownership changed or disappeared; ${CONTROLLER_LEASE_REF} was left untouched.`,
       );
+  }
+
+  /** Reobserve the actual CAS owner immediately before a protected mutation.
+   * This is an ownership check, never an authority/pending-fence override. */
+  async assertHeld(): Promise<void> {
+    const store = new GitPrivateRefStore(
+      this.repositoryRoot,
+      CONTROLLER_LEASE_REF,
+    );
+    if (
+      (await readLegacyPath(this.path)) !== LEGACY_GUARD ||
+      store.readReference() !== this.ownerObjectId
+    )
+      throw new Error(
+        "Controller mutation lease was lost or its legacy guard changed; mutation refused.",
+      );
+    parseOwner(store.readBlob(this.ownerObjectId), this.ownerObjectId);
+  }
+
+  ownershipPin(): {
+    readonly reference: typeof CONTROLLER_LEASE_REF;
+    readonly objectId: string;
+  } {
+    return { reference: CONTROLLER_LEASE_REF, objectId: this.ownerObjectId };
   }
 
   static async inspect(

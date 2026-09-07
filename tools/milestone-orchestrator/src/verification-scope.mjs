@@ -1,10 +1,154 @@
 import { SOURCE_CONTRACT_ID, SOURCE_EPOCH } from "./authority-publication.mjs";
+import { createHash, randomBytes } from "node:crypto";
 
 export const LEGACY_AGGREGATE_SCHEMA_VERSION = "2.1.0";
 export const SOURCE_AGGREGATE_SCHEMA_VERSION = "3.0.0";
 export const LEGACY_TIER_SCHEMA_VERSION = "1.2.0";
 export const SOURCE_TIER_SCHEMA_VERSION = "2.0.0";
 export const SOURCE_VERIFICATION_CLAIM_SCOPE = "orchestrator-template";
+export const SOURCE_SCOPE_POLICY_ID = "milestone-loop-source-scope-policy.v1";
+export const SOURCE_QUALIFIER_DISPATCH_ENV = "LOOP_SOURCE_QUALIFIER_DISPATCH";
+
+/** @param {import("./contracts.js").SourceVerificationCandidate} candidate
+ * @param {import("./contracts.js").SourceVerificationScope["purpose"]} purpose
+ * @param {import("./contracts.js").SourceVerificationScope["qualifierRun"]} [qualifierRun] */
+export function sourceVerificationScope(
+  candidate,
+  purpose,
+  qualifierRun = null,
+) {
+  return {
+    contractId: SOURCE_CONTRACT_ID,
+    authorityEpoch: SOURCE_EPOCH,
+    claimScope: SOURCE_VERIFICATION_CLAIM_SCOPE,
+    purpose,
+    sourceCandidate: {
+      gitCommit: candidate.gitCommit,
+      gitTree: candidate.gitTree,
+      workingTreeDirty: candidate.workingTreeDirty,
+    },
+    fixtureCandidates: [],
+    qualifierRun,
+  };
+}
+function canonicalDispatch(value) {
+  if (Array.isArray(value))
+    return "[" + value.map(canonicalDispatch).join(",") + "]";
+  if (value !== null && typeof value === "object")
+    return (
+      "{" +
+      Object.keys(value)
+        .sort()
+        .map((key) => JSON.stringify(key) + ":" + canonicalDispatch(value[key]))
+        .join(",") +
+      "}"
+    );
+  return JSON.stringify(value);
+}
+function dispatchDigest(runId, nonce, sourceCandidate, executionProvider) {
+  return createHash("sha256")
+    .update(
+      canonicalDispatch({ runId, nonce, sourceCandidate, executionProvider }),
+    )
+    .digest("hex");
+}
+/** Fresh correlation for a real full-verifier invocation, never a qualification
+ * PASS or host attestation. The parent retains this before provider dispatch. */
+export function createSourceQualifierDispatch(
+  runId,
+  candidate,
+  executionProvider,
+) {
+  const sourceCandidate = sourceVerificationScope(
+    candidate,
+    "full-source-qualification",
+  ).sourceCandidate;
+  const nonce = randomBytes(32).toString("hex");
+  return {
+    sourceCandidate,
+    qualifierRun: {
+      runId,
+      nonce,
+      identitySha256: dispatchDigest(
+        runId,
+        nonce,
+        sourceCandidate,
+        executionProvider,
+      ),
+    },
+  };
+}
+export function inspectSourceQualifierDispatch(
+  raw,
+  candidate,
+  executionProvider,
+) {
+  const value = typeof raw === "string" ? JSON.parse(raw) : raw;
+  exact(
+    value,
+    ["sourceCandidate", "qualifierRun"],
+    "Source qualifier dispatch",
+  );
+  qualifier(value.qualifierRun);
+  const sourceCandidate = sourceVerificationScope(
+    candidate,
+    "full-source-qualification",
+  ).sourceCandidate;
+  if (
+    !sameCandidate(sourceCandidate, value.sourceCandidate) ||
+    value.qualifierRun.identitySha256 !==
+      dispatchDigest(
+        value.qualifierRun.runId,
+        value.qualifierRun.nonce,
+        sourceCandidate,
+        executionProvider,
+      )
+  )
+    throw new Error(
+      "Source qualifier dispatch differs from the actual candidate/provider boundary.",
+    );
+  return value;
+}
+
+/** Fixed approved candidate floor; metadata alone grants no active authority. */
+export function expectedSourceFloor() {
+  const command = (id, script, kinds, tiers = ["candidate", "milestone"]) => ({
+    id,
+    argv: ["pnpm", script],
+    tiers,
+    expectedArtifactKinds: kinds,
+  });
+  return [
+    command(
+      "test-invariants",
+      "test:invariants",
+      ["invariant-suite-report"],
+      ["iteration", "candidate", "milestone"],
+    ),
+    command("dependencies", "verify:source-dependencies", [
+      "source-dependencies-report",
+    ]),
+    command("format-check", "format:check", ["format-report"]),
+    command("lint", "lint", ["lint-report"]),
+    command("lint-architecture", "lint:source-architecture", [
+      "source-architecture-report",
+    ]),
+    command("typecheck", "typecheck", ["typecheck-report"]),
+    command("build", "build", ["build-report"]),
+    ...[
+      "controller-runtime",
+      "repository-tooling",
+      "adopter-template",
+      "trusted-container-fixture",
+    ].map((owner) =>
+      command("test-partition-" + owner, "test:partition:" + owner, [
+        "test-partition-report",
+        "test-partition-vitest-report",
+        "test-run-summary",
+      ]),
+    ),
+  ];
+}
 
 const versions = Object.freeze({
   aggregate: Object.freeze({

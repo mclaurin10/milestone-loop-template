@@ -1,8 +1,16 @@
 import { createHash } from "node:crypto";
+import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  realpath,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   assertVerificationResultScope,
@@ -10,8 +18,16 @@ import {
   SOURCE_TIER_SCHEMA_VERSION,
   SOURCE_VERIFICATION_STAGES,
   SOURCE_VERIFICATION_STAGE_IDS,
+  createSourceQualifierDispatch,
+  inspectSourceQualifierDispatch,
+  sourceVerificationScope,
 } from "./verification-scope.mjs";
-import { SOURCE_CONTRACT_ID, SOURCE_EPOCH } from "./authority-publication.mjs";
+import {
+  assertActiveAuthorityPublication,
+  SOURCE_AUTHORITY_PUBLICATION_PATH,
+  SOURCE_CONTRACT_ID,
+  SOURCE_EPOCH,
+} from "./authority-publication.mjs";
 import {
   validateVerificationTierResult,
   validateSourceVerificationTierResult,
@@ -23,6 +39,179 @@ import {
   parseIncompleteSourceVerification,
 } from "./verifier.js";
 import { unattestedExecutionProviderIdentity } from "./execution-provider-identity.js";
+
+describe("source authority history in unborn legacy repositories", () => {
+  async function fixture(
+    run: (
+      root: string,
+      git: (args: string[], input?: string) => string,
+    ) => Promise<void>,
+  ) {
+    const parent = await realpath(tmpdir());
+    const root = await realpath(
+      await mkdtemp(join(parent, "source-legacy-history-")),
+    );
+    const git = (args: string[], input?: string) => {
+      const result = spawnSync(
+        "git",
+        [
+          "-C",
+          root,
+          "-c",
+          "user.name=History fixture",
+          "-c",
+          "user.email=history@example.invalid",
+          ...args,
+        ],
+        { encoding: "utf8", windowsHide: true, timeout: 30_000, input },
+      );
+      expect(result.error).toBeUndefined();
+      expect(result.signal).toBeNull();
+      expect(result.status, result.stderr).toBe(0);
+      return result.stdout.trim();
+    };
+    try {
+      git(["init", "--initial-branch=fixture"]);
+      await run(root, git);
+    } finally {
+      expect(dirname(root)).toBe(parent);
+      expect(await realpath(root)).toBe(root);
+      await rm(root, { recursive: true, force: true });
+    }
+  }
+  it("accepts an actual unborn branch before and after private legacy state history", async () => {
+    await fixture(async (root, git) => {
+      await expect(assertActiveAuthorityPublication(root)).resolves.toBe(
+        "legacy",
+      );
+      const tree = git(["mktree"], "");
+      const commit = git([
+        "commit-tree",
+        tree,
+        "-m",
+        "Private legacy state history fixture",
+      ]);
+      git(["update-ref", "refs/milestone-loop/state", commit]);
+      await expect(assertActiveAuthorityPublication(root)).resolves.toBe(
+        "legacy",
+      );
+      expect(git(["symbolic-ref", "HEAD"])).toBe("refs/heads/fixture");
+    });
+  });
+  it.each(["branch", "detached"])(
+    "rejects a missing commit in a corrupt %s HEAD",
+    async (kind) => {
+      await fixture(async (root) => {
+        const path =
+          kind === "branch" ? ".git/refs/heads/fixture" : ".git/HEAD";
+        await writeFile(resolve(root, path), "1".repeat(40) + "\n");
+        await expect(assertActiveAuthorityPublication(root)).rejects.toThrow(
+          "Source authority rollback history cannot be inspected",
+        );
+      });
+    },
+  );
+  it("rejects a branch pointing to a blob instead of a commit", async () => {
+    await fixture(async (root, git) => {
+      const blob = git(
+        ["hash-object", "-w", "--stdin"],
+        "Non-commit branch fixture\n",
+      );
+      await writeFile(resolve(root, ".git/refs/heads/fixture"), blob + "\n");
+      await expect(assertActiveAuthorityPublication(root)).rejects.toThrow(
+        "Source authority rollback history cannot be inspected",
+      );
+    });
+  });
+  it.each(["ref", "reflog"])(
+    "rejects an unborn branch when a %s retains source publication history",
+    async (history) => {
+      await fixture(async (root, git) => {
+        const path = resolve(root, SOURCE_AUTHORITY_PUBLICATION_PATH);
+        await mkdir(dirname(path), { recursive: true });
+        await writeFile(path, "{}\n");
+        git(["add", "--", SOURCE_AUTHORITY_PUBLICATION_PATH]);
+        git(["commit", "--quiet", "-m", "Source publication history fixture"]);
+        await rm(path);
+        git(["symbolic-ref", "HEAD", "refs/heads/unborn"]);
+        if (history === "reflog")
+          git(["update-ref", "-d", "refs/heads/fixture"]);
+        await expect(assertActiveAuthorityPublication(root)).rejects.toThrow(
+          "cannot be rolled back to legacy",
+        );
+      });
+    },
+  );
+});
+
+describe("source verifier dispatch correlation", () => {
+  it("creates fresh bounded identities and rejects candidate, provider and digest substitution", () => {
+    const candidate = {
+      gitCommit: "1".repeat(40),
+      gitTree: "2".repeat(40),
+      workingTreeDirty: false,
+    };
+    const provider = trustedTestExecutionProviderIdentity();
+    const first = createSourceQualifierDispatch(
+      "source-dispatch-1",
+      candidate,
+      provider,
+    );
+    const second = createSourceQualifierDispatch(
+      "source-dispatch-1",
+      candidate,
+      provider,
+    );
+    expect(second.qualifierRun.nonce).not.toBe(first.qualifierRun.nonce);
+    expect(
+      inspectSourceQualifierDispatch(
+        JSON.stringify(first),
+        candidate,
+        provider,
+      ),
+    ).toEqual(first);
+    expect(() =>
+      inspectSourceQualifierDispatch(
+        first,
+        { ...candidate, gitTree: "3".repeat(40) },
+        provider,
+      ),
+    ).toThrow("actual candidate/provider");
+    expect(() =>
+      inspectSourceQualifierDispatch(
+        first,
+        candidate,
+        unattestedExecutionProviderIdentity(null, process.version),
+      ),
+    ).toThrow("actual candidate/provider");
+    expect(() =>
+      inspectSourceQualifierDispatch(
+        {
+          ...first,
+          qualifierRun: {
+            ...first.qualifierRun,
+            identitySha256: "4".repeat(64),
+          },
+        },
+        candidate,
+        provider,
+      ),
+    ).toThrow("actual candidate/provider");
+    const scope = sourceVerificationScope(
+      candidate,
+      "full-source-qualification",
+      first.qualifierRun,
+    );
+    expect(scope.fixtureCandidates).toEqual([]);
+    expect(scope).not.toHaveProperty("completionEligible");
+    expect(() =>
+      assertVerificationResultScope(
+        { schemaVersion: SOURCE_AGGREGATE_SCHEMA_VERSION, candidate, scope },
+        { kind: "aggregate", scope: "source", ...scope },
+      ),
+    ).not.toThrow();
+  });
+});
 
 function fixture() {
   const sourceCandidate = {

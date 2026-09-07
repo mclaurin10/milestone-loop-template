@@ -99,6 +99,58 @@ function writeRawGeneration(input: {
 }
 
 describe("canonical Git state generations", () => {
+  it("reads exact Unicode commit contents through the typed object boundary", async () => {
+    const root = await repositoryFixture(true);
+    const refs = new GitPrivateRefStore(root, STATE_REF);
+    const tree = refs.writeTree([]);
+    const objectId = refs.writeCommit({
+      treeObjectId: tree,
+      parentObjectId: null,
+      timestamp: "2026-08-05T00:00:00.000Z",
+      message: "Resume café λ\n\nExact Unicode object contents",
+    });
+    const commit = refs.readCommit(objectId);
+    expect(commit.objectId).toBe(objectId);
+    expect(commit.treeObjectId).toBe(tree);
+    expect(commit.parentObjectIds).toEqual([]);
+    expect(commit.entries).toEqual([]);
+    expect(commit.message).toBe(
+      "Resume café λ\n\nExact Unicode object contents\n",
+    );
+  });
+
+  it.each(["tree", "tag"])(
+    "rejects a %s object without interpreting or peeling it as a commit",
+    async (type) => {
+      const root = await repositoryFixture(true);
+      const refs = new GitPrivateRefStore(root, STATE_REF);
+      const tree = refs.writeTree([]);
+      let objectId = tree;
+      if (type === "tag") {
+        const commit = refs.writeCommit({
+          treeObjectId: tree,
+          parentObjectId: null,
+          timestamp: "2026-08-05T00:00:00.000Z",
+          message: "Tagged commit fixture",
+        });
+        objectId = git(
+          root,
+          ["hash-object", "-t", "tag", "-w", "--stdin"],
+          `object ${commit}\ntype commit\ntag fixture\ntagger State Fixture <state@example.invalid> 1785888000 +0000\n\nTag fixture\n`,
+        );
+      }
+      expect(() => refs.readCommit(objectId)).toThrow(
+        `which is a ${type} rather than a commit`,
+      );
+    },
+  );
+
+  it("rejects an absent commit object without treating an empty response as state", async () => {
+    const root = await repositoryFixture(true);
+    const refs = new GitPrivateRefStore(root, STATE_REF);
+    expect(() => refs.readCommit("1".repeat(40))).toThrow(/missing/);
+  });
+
   it(
     "roots complete current and previous generations through commit ancestry",
     { timeout: 30_000 },

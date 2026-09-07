@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0.0",
+  "stageId": "orch-auth-01-c6e",
+  "commandId": "source-publication-retained-audit",
+  "status": "PASS",
+  "checks": [
+    {
+      "id": "retained-publication-and-source-boundaries",
+      "summary": "Independently checked every retained file and receipt artifact, reconstructed the frozen inputs, preserved failed and non-completion results, reconciled raw identities, and verified clean precommit observations separately from parent hosted evidence.",
+      "status": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "audit.json",
+      "kind": "source-publication-retained-audit",
+      "bytes": 306594,
+      "sha256": "8414003e6c0913aeafe1e4ade2b99429343cb73f00ae9afdf155986373d9f372"
+    }
+  ]
+}

@@ -550,41 +550,74 @@ export function assertManualEvidenceManifest(value) {
   return value;
 }
 
+// Keep finalized contexts until process exit: a later process failure must
+// revoke every earlier PASS receipt, not only the last or unfinished command.
+// One listener pair covers arbitrarily many real commands in this process.
+const manualEvidenceContexts = new Set();
 function registerManualEvidenceLifecycle(context) {
-  const state = context.manualEvidence;
-  process.once("beforeExit", async (code) => {
-    if (state.finalized) return;
-    state.finalized = true;
-    await writeManualEvidenceFailure(context, {
-      kind: code === 64 ? "usage" : "unknown",
-      message: "Command exited without producing a passing evidence receipt.",
-    });
+  manualEvidenceContexts.add(context);
+  if (manualEvidenceContexts.size !== 1) return;
+  process.on("beforeExit", async (code) => {
+    const unfinished = [...manualEvidenceContexts].filter(
+      (context) => !context.manualEvidence.finalized,
+    );
+    if (unfinished.length === 0) return;
     if ((process.exitCode ?? code) === 0) process.exitCode = 1;
+    const results = await Promise.allSettled(
+      unfinished.map((context) => {
+        context.manualEvidence.finalized = true;
+        return writeManualEvidenceFailure(context, {
+          kind: code === 64 ? "usage" : "unknown",
+          message:
+            "Command exited without producing a passing evidence receipt.",
+        });
+      }),
+    );
+    const failures = results.filter((result) => result.status === "rejected");
+    if (failures.length)
+      throw new AggregateError(
+        failures.map((result) => result.reason),
+        "Could not finalize unfinished command evidence.",
+      );
   });
   process.once("exit", (code) => {
     if (code === 0) return;
-    const receiptPath = resolve(context.artifactDirectory, "result.json");
-    try {
-      unlinkSync(receiptPath);
-    } catch (error) {
-      if (
-        !(error instanceof Error) ||
-        !("code" in error) ||
-        error.code !== "ENOENT"
-      )
-        throw error;
+    const failures = [];
+    for (const context of manualEvidenceContexts) {
+      const state = context.manualEvidence;
+      try {
+        const receiptPath = resolve(context.artifactDirectory, "result.json");
+        try {
+          unlinkSync(receiptPath);
+        } catch (error) {
+          if (
+            !(error instanceof Error) ||
+            !("code" in error) ||
+            error.code !== "ENOENT"
+          )
+            throw error;
+        }
+        if (state.lastManifest && state.lastManifest.status !== "PASS")
+          continue;
+        const manifest = fallbackFailureManifest(
+          context,
+          state,
+          "Command process exited unsuccessfully; any passing receipt was removed.",
+        );
+        writeFileSync(
+          resolve(context.artifactDirectory, "manifest.json"),
+          `${JSON.stringify(manifest, null, 2)}\n`,
+          "utf8",
+        );
+      } catch (error) {
+        failures.push(error);
+      }
     }
-    if (state.lastManifest && state.lastManifest.status !== "PASS") return;
-    const manifest = fallbackFailureManifest(
-      context,
-      state,
-      "Command process exited unsuccessfully; any passing receipt was removed.",
-    );
-    writeFileSync(
-      resolve(context.artifactDirectory, "manifest.json"),
-      `${JSON.stringify(manifest, null, 2)}\n`,
-      "utf8",
-    );
+    if (failures.length)
+      throw new AggregateError(
+        failures,
+        "Could not revoke failed command evidence.",
+      );
   });
 }
 

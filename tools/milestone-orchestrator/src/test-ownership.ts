@@ -909,7 +909,7 @@ async function validateEntrypointContracts(input: {
       throw new Error(
         "Source ownership requires a complete source schedule generation.",
       );
-    if (generation === "v2") {
+    if (generation === "v2" || generation === "source") {
       const registry = await loadInvariantSuiteRegistry(input.repositoryRoot);
       assertPartitionPrerequisite(activeManifest.value, registry.value);
     }

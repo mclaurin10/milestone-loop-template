@@ -179,20 +179,39 @@ export class GitPrivateRefStore {
 
   readCommit(objectId: string): GitCommitObject {
     validateObjectId(objectId, "private state commit object ID");
-    const type = runGit(this.repositoryRoot, [
-      "cat-file",
-      "-t",
-      objectId,
-    ]).stdout.trim();
+    // Batch framing binds type and contents to one exact object observation.
+    // This avoids a second process without caching or peeling a tag to a commit.
+    const framed = runGit(this.repositoryRoot, ["cat-file", "--batch"], {
+      input: `${objectId}\n`,
+    }).stdout;
+    const headerEnd = framed.indexOf("\n");
+    const header = framed.slice(0, headerEnd);
+    const match =
+      /^([0-9a-f]{40}|[0-9a-f]{64}) (commit|tree|blob|tag) (0|[1-9][0-9]*)$/u.exec(
+        header,
+      );
+    if (header === `${objectId} missing`)
+      throw new Error(`Private state commit ${objectId} is missing.`);
+    if (!match || match[1] !== objectId)
+      throw new Error(
+        `Private state commit ${objectId} has invalid object framing.`,
+      );
+    const type = match[2];
     if (type !== "commit")
       throw new Error(
         `Private ref ${this.reference} points to ${objectId}, which is a ${type || "missing object"} rather than a commit.`,
       );
-    const rawCommit = runGit(this.repositoryRoot, [
-      "cat-file",
-      "commit",
-      objectId,
-    ]).stdout;
+    const rawCommit = framed.slice(headerEnd + 1, -1);
+    const bytes = Number(match[3]);
+    if (
+      !Number.isSafeInteger(bytes) ||
+      bytes > MAX_GIT_OUTPUT_BYTES ||
+      !framed.endsWith("\n") ||
+      Buffer.byteLength(rawCommit, "utf8") !== bytes
+    )
+      throw new Error(
+        `Private state commit ${objectId} has invalid object framing.`,
+      );
     const separator = rawCommit.indexOf("\n\n");
     if (separator === -1)
       throw new Error(

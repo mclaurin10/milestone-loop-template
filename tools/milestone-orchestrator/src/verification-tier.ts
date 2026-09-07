@@ -16,7 +16,15 @@ import type {
   VerificationTier,
   VerificationTierCommandRecord,
   VerificationTierResult,
+  SourceVerificationTierResult,
+  SourceVerificationScope,
+  SourceExactVerificationIndex,
 } from "./contracts.js";
+import {
+  SOURCE_QUALIFIER_DISPATCH_ENV,
+  createSourceQualifierDispatch,
+  sourceVerificationScope,
+} from "./verification-scope.mjs";
 import {
   assertScopeSelection,
   buildScopeCheckCatalogue,
@@ -58,12 +66,16 @@ import {
   inspectReadinessLifecycle,
   readinessHistoryEvidenceForCandidate,
 } from "./orchestrator.js";
-import { assertVerificationTierResult } from "./schema.js";
+import {
+  assertVerificationTierResult,
+  assertSourceVerificationTierResult,
+} from "./schema.js";
 import { atomicWriteJson, StateStore } from "./state-store.js";
 import { TelemetryStore } from "./telemetry-store.js";
 import type { TelemetrySpan } from "./telemetry-store.js";
 import {
   parseAuthoritativeVerification,
+  parseIncompleteSourceVerification,
   validateCommandReceiptDirectory,
   type ValidatedCommandReceipt,
 } from "./verifier.js";
@@ -210,8 +222,17 @@ export async function planVerificationTier(input: {
   readonly focusedCheckIds?: readonly string[];
   readonly protectedAuthorityPaths?: readonly string[];
 }): Promise<VerificationTierPlan> {
-  await assertActiveAuthorityPublication(input.repositoryRoot);
-  sourceScheduleGeneration(input.manifest, input.scopePolicy);
+  const authorityScope = await assertActiveAuthorityPublication(
+    input.repositoryRoot,
+  );
+  const generation = sourceScheduleGeneration(
+    input.manifest,
+    input.scopePolicy,
+  );
+  if ((generation === "source") !== (authorityScope === "source"))
+    throw new Error(
+      "Source scheduling requires the authenticated active source authority generation.",
+    );
   const [packageGraph] = await Promise.all([
     buildPackageGraph(input.repositoryRoot),
   ]);
@@ -513,9 +534,10 @@ async function runExactVerification(input: {
   readonly actualCheckIds: readonly string[];
   readonly executionProvider: CandidateExecutionProvider;
   readonly expectedProfile: VerificationProfile;
+  readonly sourceScope?: SourceVerificationScope;
 }): Promise<{
   readonly command: VerificationTierCommandRecord;
-  readonly exact: ExactVerificationIndex | null;
+  readonly exact: ExactVerificationIndex | SourceExactVerificationIndex | null;
   readonly failureClass: "product" | "infrastructure" | null;
 }> {
   const commandRoot = resolve(
@@ -529,6 +551,16 @@ async function runExactVerification(input: {
       workingDirectory: input.repositoryRoot,
       artifactDirectory: resolve(commandRoot, "logs"),
       timeoutMs: DEFAULT_COMMAND_TIMEOUT_MS,
+      ...(input.sourceScope
+        ? {
+            extraEnvironment: {
+              [SOURCE_QUALIFIER_DISPATCH_ENV]: JSON.stringify({
+                sourceCandidate: input.sourceScope.sourceCandidate,
+                qualifierRun: input.sourceScope.qualifierRun,
+              }),
+            },
+          }
+        : {}),
       ...(input.telemetry
         ? {
             telemetry: {
@@ -562,7 +594,8 @@ async function runExactVerification(input: {
       executionProvider: input.executionProvider.identity,
     };
   }
-  let exact: ExactVerificationIndex | null = null;
+  let exact: ExactVerificationIndex | SourceExactVerificationIndex | null =
+    null;
   let exactArtifactCount = 0;
   let exactArtifactBytes = 0;
   let message: string;
@@ -598,13 +631,13 @@ async function runExactVerification(input: {
       "exact-verification-result.json",
     );
     const history =
-      input.expectedProfile === "readiness"
+      !input.sourceScope && input.expectedProfile === "readiness"
         ? await readinessHistory(
             input.repositoryRoot,
             input.candidate.baseCommit,
           )
         : null;
-    const summary = await parseAuthoritativeVerification({
+    const parseInput = {
       workspacePath: input.repositoryRoot,
       expectedCommit: input.candidate.gitCommit,
       expectedTree: input.candidate.gitTree,
@@ -614,7 +647,17 @@ async function runExactVerification(input: {
       copiedResultPath,
       expectedExecutionProvider: input.executionProvider.identity,
       ...(history ? { readinessHistory: history } : {}),
-    });
+    };
+    const summary = input.sourceScope
+      ? await parseIncompleteSourceVerification({
+          ...parseInput,
+          expectedScope: {
+            kind: "aggregate",
+            scope: "source",
+            ...input.sourceScope,
+          },
+        })
+      : await parseAuthoritativeVerification(parseInput);
     const candidate = parsed["candidate"] as
       Record<string, unknown> | undefined;
     const profile = parsed["profile"] as Record<string, unknown> | undefined;
@@ -627,7 +670,7 @@ async function runExactVerification(input: {
         `Exact verification is not package-default ${input.expectedProfile} for the exact candidate tree.`,
       );
     const contents = await readFile(resultPath);
-    exact = {
+    const index: ExactVerificationIndex = {
       invokedWithNoArguments: true,
       resultPath: relativePath(input.repositoryRoot, resultPath),
       resultSha256: createHash("sha256").update(contents).digest("hex"),
@@ -640,6 +683,14 @@ async function runExactVerification(input: {
       candidateTree: input.candidate.gitTree,
       executionProvider: input.executionProvider.identity,
     };
+    exact = input.sourceScope
+      ? {
+          ...index,
+          profileId: "readiness",
+          resultSchemaVersion: "3.0.0",
+          scope: input.sourceScope,
+        }
+      : index;
     const retainedArtifacts = Array.isArray(parsed["stages"])
       ? parsed["stages"].flatMap((stage) => {
           const commands =
@@ -784,8 +835,11 @@ export interface RunVerificationTierInput {
 
 export async function runVerificationTier(
   input: RunVerificationTierInput,
-): Promise<VerificationTierResult> {
+): Promise<VerificationTierResult | SourceVerificationTierResult> {
   const startedAt = new Date();
+  const authorityScope = await assertActiveAuthorityPublication(
+    input.repositoryRoot,
+  );
   const [invariant, scopePolicy, config] = await Promise.all([
     loadInvariantSuiteRegistry(input.repositoryRoot),
     loadVerificationScopePolicy(input.repositoryRoot),
@@ -860,6 +914,31 @@ export async function runVerificationTier(
     },
   );
   await mkdir(runRoot, { recursive: false });
+  const sourcePurpose =
+    input.tier === "iteration" || input.tier === "candidate"
+      ? "candidate-support"
+      : "full-source-qualification";
+  const sourceDispatch =
+    authorityScope === "source" && sourcePurpose === "full-source-qualification"
+      ? createSourceQualifierDispatch(
+          runId,
+          candidate,
+          executionProvider.identity,
+        )
+      : null;
+  if (sourceDispatch)
+    await atomicWriteJson(
+      resolve(runRoot, "source-qualifier-dispatch.json"),
+      sourceDispatch,
+    );
+  const sourceScope =
+    authorityScope === "source"
+      ? (sourceVerificationScope(
+          candidate,
+          sourcePurpose,
+          sourceDispatch?.qualifierRun ?? null,
+        ) as SourceVerificationScope)
+      : null;
   let telemetry: TelemetryStore | null = null;
   try {
     telemetry = await TelemetryStore.open({
@@ -942,7 +1021,8 @@ export async function runVerificationTier(
       }
     }
 
-    let exact: ExactVerificationIndex | null = null;
+    let exact: ExactVerificationIndex | SourceExactVerificationIndex | null =
+      null;
     let exactFailureClass: "product" | "infrastructure" | null = null;
     if (
       !cleanFailure &&
@@ -960,6 +1040,7 @@ export async function runVerificationTier(
         actualCheckIds: [...plan.actualCheckIds, EXACT_CHECK_ID],
         executionProvider,
         expectedProfile: manifest.packageDefaultProfile,
+        ...(sourceScope ? { sourceScope } : {}),
       });
       commandRecords.push(exactRun.command);
       exact = exactRun.exact;
@@ -1016,13 +1097,12 @@ export async function runVerificationTier(
       shadowSelectionPath = relativePath(input.repositoryRoot, path);
     }
     const finishedAt = new Date();
-    const result: VerificationTierResult = {
-      schemaVersion: VERIFICATION_TIER_SCHEMA_VERSION,
+    const resultBody = {
       runId,
       tier: input.tier,
       status: outcome.status,
       exitCode: outcome.exitCode,
-      authoritative: false,
+      authoritative: false as const,
       executionProvider: executionProvider.identity,
       providerCompletionEligible: executionProvider.identity.completionEligible,
       candidate: {
@@ -1051,7 +1131,20 @@ export async function runVerificationTier(
       finishedAt: finishedAt.toISOString(),
       durationMs: finishedAt.getTime() - startedAt.getTime(),
     };
-    assertVerificationTierResult(result);
+    const result = sourceScope
+      ? assertSourceVerificationTierResult(
+          {
+            ...resultBody,
+            schemaVersion: "2.0.0",
+            scope: sourceScope,
+            completionEligible: false,
+          },
+          { kind: "tier", scope: "source", ...sourceScope },
+        )
+      : assertVerificationTierResult({
+          ...resultBody,
+          schemaVersion: VERIFICATION_TIER_SCHEMA_VERSION,
+        });
     const measuredTestCounts = commandRecords
       .map((command) => command.testCounts)
       .filter((counts): counts is VerificationTestCounts => counts !== null);

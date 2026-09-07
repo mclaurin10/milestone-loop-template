@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0.0",
+  "manifestId": "manual-source-publication-retained-audit-20260907051426090-24096-dd0a465a",
+  "stageId": "orch-auth-01-c6e",
+  "commandId": "source-publication-retained-audit",
+  "displayCommand": "C:\\Dev\\loop-extraction\\milestone-loop-template\\.tools\\node-v24.18.0-win-x64\\node.exe C:\\Dev\\loop-extraction\\milestone-loop-template\\docs\\source-authority\\ORCH-AUTH-01-C6e\\audit.ts artifacts/c6e-precommit-retained-input-1 artifacts/c6e-precommit-retained-audit-1",
+  "status": "PASS",
+  "candidate": {
+    "gitCommit": "fc2419d8bdfc3658fe76edf2b543b38051b359f1",
+    "gitTree": "e8afdd61b47db88f4c6964b77c90ee8db9c1b4b1",
+    "workingTreeDirty": true
+  },
+  "receipt": {
+    "path": "result.json",
+    "sha256": "700dde37609ea25c4cb32f053211ba47458e0a8c4400fab23726c7f0336a9607",
+    "bytes": 738
+  },
+  "declaredArtifacts": {
+    "count": 1,
+    "bytes": 306594,
+    "declarations": [
+      {
+        "path": "audit.json",
+        "kind": "source-publication-retained-audit",
+        "bytes": 306594,
+        "sha256": "8414003e6c0913aeafe1e4ade2b99429343cb73f00ae9afdf155986373d9f372"
+      }
+    ]
+  },
+  "telemetry": {
+    "runId": null,
+    "manifestPath": null
+  },
+  "citationClass": "uncited-at-creation",
+  "durableCitations": {
+    "trackedPaths": [],
+    "controllerStateReferences": [],
+    "activeReconciliationReference": null
+  },
+  "createdAt": "2026-09-07T05:14:26.090Z",
+  "finishedAt": "2026-09-07T05:14:49.669Z",
+  "failureClassification": null
+}

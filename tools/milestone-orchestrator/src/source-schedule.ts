@@ -5,6 +5,11 @@ import type {
   VerificationScopePolicy,
 } from "./contracts.js";
 import { canonicalJson } from "./package-graph.js";
+import { SOURCE_CONTRACT_ID } from "./authority-publication.mjs";
+import {
+  expectedSourceFloor,
+  SOURCE_SCOPE_POLICY_ID,
+} from "./verification-scope.mjs";
 
 export const SOURCE_COMMISSIONING_ID = "milestone-loop-template-source.v1";
 export const SOURCE_SCOPE_V1 = "milestone-loop-shadow-scope-policy.v1";
@@ -69,7 +74,7 @@ export const SUBSUMED_TEST_IDS = [
 export function sourceScheduleGeneration(
   manifest: VerificationCommandManifest,
   policy?: VerificationScopePolicy,
-): "v1" | "v2" | null {
+): "v1" | "v2" | "source" | null {
   const identity = manifest as VerificationCommandManifest & {
     readonly commissioning?: { readonly id?: string };
     readonly scopePolicyId?: string;
@@ -80,10 +85,38 @@ export function sourceScheduleGeneration(
     ) ||
     identity.scopePolicyId?.startsWith("milestone-loop-source-scope-policy.") ||
     policy?.id.startsWith("milestone-loop-source-scope-policy.")
-  )
-    throw new Error(
-      "Source epoch scheduling requires an authenticated source authority generation.",
-    );
+  ) {
+    if (
+      identity.commissioning?.id !== SOURCE_CONTRACT_ID ||
+      identity.scopePolicyId !== SOURCE_SCOPE_POLICY_ID ||
+      (policy && policy.id !== SOURCE_SCOPE_POLICY_ID)
+    )
+      throw new Error(
+        "Source epoch scheduling requires an authenticated source authority generation.",
+      );
+    const floor = expectedSourceFloor();
+    if (canonicalJson(manifest.focusedCommands) !== canonicalJson(floor))
+      throw new Error(
+        "Source schedule differs from the complete approved command floor.",
+      );
+    if (
+      policy &&
+      (policy.mode !== "shadow-only" ||
+        policy.unknownDisposition !== "fail-broad" ||
+        policy.closureSuppressionAllowed !== false ||
+        [
+          ...Object.values(policy.mandatoryChecks),
+          ...Object.values(policy.workspaceChecks),
+        ].some(
+          (checks) =>
+            canonicalJson(checks) !== canonicalJson(floor.map(({ id }) => id)),
+        ))
+    )
+      throw new Error(
+        "Source policy omits the complete approved command floor.",
+      );
+    return "source";
+  }
   if (identity.commissioning?.id !== SOURCE_COMMISSIONING_ID) {
     if (policy?.id === SOURCE_SCOPE_V2)
       throw new Error(

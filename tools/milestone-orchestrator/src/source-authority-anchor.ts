@@ -9,6 +9,7 @@ import type {
 import { SOURCE_VERIFICATION_STAGES } from "./verification-scope.mjs";
 
 import { assertNoPendingAuthorityMigration } from "./authority-publication.mjs";
+import type { SourceEpochSnapshotInspection } from "./source-epoch-snapshot.js";
 import {
   inspectSourceEpochSnapshot,
   SOURCE_APPROVAL_PATH,
@@ -16,12 +17,31 @@ import {
   SOURCE_CONTRACT_ID,
   SOURCE_EPOCH,
   SOURCE_SNAPSHOT_ROOT_FILES,
-  type SourceEpochSnapshotInspection,
-} from "./source-epoch-snapshot.js";
+} from "./source-authority-generation.mjs";
 
 const hash = (bytes: Buffer) =>
   createHash("sha256").update(bytes).digest("hex");
 const READINESS_MARKER_PATH = ".agent/readiness-profile-activated.json";
+export const SOURCE_CONTRACT_INTEGRITY_CHECK_IDS = [
+  "source-approved-anchor",
+  "source-stage-coverage",
+  "source-command-and-claim",
+] as const;
+
+/** Public source integrity consumption additionally requires the actual
+ * committed publication. The pre-publication inspector grants no such trust. */
+export async function inspectActiveSourceContractIntegrity(
+  repositoryRoot: string,
+) {
+  const { inspectCommittedSourcePublication } =
+    await import("./source-authority-records.mjs");
+  const publication = await inspectCommittedSourcePublication(repositoryRoot);
+  const integrity = await inspectApprovedSourceContractIntegrity({
+    repositoryRoot,
+    snapshotCommit: publication.context.snapshot.snapshotCommit,
+  });
+  return { ...integrity, activationCommit: publication.activationCommit };
+}
 
 function sourceCheck(
   id: string,

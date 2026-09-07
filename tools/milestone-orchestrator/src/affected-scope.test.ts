@@ -4,11 +4,17 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
+  buildScopeCheckCatalogue,
   finalizeScopeSelection,
   recommendAffectedScope,
   scopeSelectionBytes,
   validateScopeSelection,
 } from "./affected-scope.js";
+import { SOURCE_CONTRACT_ID } from "./authority-publication.mjs";
+import {
+  expectedSourceFloor,
+  SOURCE_SCOPE_POLICY_ID,
+} from "./verification-scope.mjs";
 import { loadHistoricalVerificationManifest } from "./config.js";
 import { sourceV1ScopePolicyFixture } from "../test/fixtures.js";
 import { buildPackageGraph } from "./package-graph.js";
@@ -47,6 +53,58 @@ async function setup() {
 }
 
 describe("shadow affected-scope selection", () => {
+  it("retains the exact approved source dependency definition without adding its legacy auxiliary", async () => {
+    const { manifest } = await setup();
+    const source = {
+      ...manifest.value,
+      commissioning: {
+        id: SOURCE_CONTRACT_ID,
+      },
+      scopePolicyId: SOURCE_SCOPE_POLICY_ID,
+      focusedCommands:
+        expectedSourceFloor() as typeof manifest.value.focusedCommands,
+    };
+    const catalogue = buildScopeCheckCatalogue(source);
+    expect(catalogue.entries.filter(({ id }) => id === "dependencies")).toEqual(
+      [
+        {
+          id: "dependencies",
+          argv: ["pnpm", "verify:source-dependencies"],
+          tiers: ["candidate", "milestone"],
+          expectedArtifactKinds: ["source-dependencies-report"],
+        },
+      ],
+    );
+    expect(() =>
+      buildScopeCheckCatalogue({
+        ...source,
+        focusedCommands: source.focusedCommands.map((command) =>
+          command.id === "dependencies"
+            ? { ...command, argv: ["pnpm", "verify:dependencies"] }
+            : command,
+        ),
+      }),
+    ).toThrow("complete approved command floor");
+  });
+
+  it("still rejects a legacy manifest that duplicates the dependency auxiliary", async () => {
+    const { manifest } = await setup();
+    expect(() =>
+      buildScopeCheckCatalogue({
+        ...manifest.value,
+        focusedCommands: [
+          ...manifest.value.focusedCommands,
+          {
+            id: "dependencies",
+            argv: ["pnpm", "verify:dependencies"],
+            tiers: ["candidate"],
+            expectedArtifactKinds: ["dependency-report"],
+          },
+        ],
+      }),
+    ).toThrow("Scope check catalogue repeats dependencies");
+  });
+
   it("covers every semantic trigger fixture without a false negative", async () => {
     const { manifest, policy, graph } = await setup();
     const files = (await readdir(fixtureRoot))

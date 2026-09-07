@@ -1,4 +1,5 @@
 import { lstat, readFile, realpath } from "node:fs/promises";
+import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
 export const SOURCE_CONTRACT_ID = "milestone-loop-orchestrator-source.v1";
 export const SOURCE_EPOCH = "orch-template.v1";
@@ -36,8 +37,7 @@ export async function assertNoPendingAuthorityMigration(root) {
   );
 }
 async function optionalJson(root, path) {
-  const canonicalRoot = await realpath(root),
-    absolute = resolve(canonicalRoot, path);
+  const absolute = resolve(root, path);
   try {
     const info = await lstat(absolute);
     if (
@@ -99,10 +99,72 @@ export function classifyAuthorityScope(input) {
     );
   return "source";
 }
-/** Normal consumers cannot adopt staged source bytes. The next generation
- * reader must prove the committed request/review/publication before replacing
- * this refusal; no caller override or candidate-authored success flag exists. */
+/** Keep the legacy boundary self-contained for downstream native verifiers.
+ * A real repository with source history cannot erase it to regain legacy rules. */
+async function assertNoSourceRollback(root) {
+  try {
+    await lstat(resolve(root, ".git"));
+  } catch (error) {
+    if (error.code === "ENOENT") return;
+    throw error;
+  }
+  const env = { ...process.env, GIT_OPTIONAL_LOCKS: "0" };
+  for (const name of [
+    "GIT_DIR",
+    "GIT_WORK_TREE",
+    "GIT_INDEX_FILE",
+    "GIT_OBJECT_DIRECTORY",
+    "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+  ])
+    delete env[name];
+  const historyPaths = [
+    SOURCE_AUTHORITY_PUBLICATION_PATH,
+    ".agent/authority-requests/ORCH-AUTH-01/publication-evidence/result.json",
+  ];
+  const git = (args) =>
+    spawnSync("git", ["-C", root, ...args], {
+      env,
+      encoding: "utf8",
+      windowsHide: true,
+      timeout: 30_000,
+      killSignal: "SIGKILL",
+      maxBuffer: 1024 * 1024,
+    });
+  // --all includes HEAD when it resolves and permits a valid unborn HEAD.
+  // Include reflogs so moving/deleting a branch cannot hide retained source
+  // publication. The explicit commit peel emits a diagnostic for non-commit
+  // HEADs; only the missing unborn name may be ignored. Require empty stderr
+  // as well as a successful exit. No observation is cached across boundaries.
+  const result = git([
+    "log",
+    "--all",
+    "--reflog",
+    "--ignore-missing",
+    "HEAD^{commit}",
+    "-1",
+    "--format=%H",
+    "--",
+    ...historyPaths,
+  ]);
+  if (
+    result.error ||
+    result.status !== 0 ||
+    result.signal !== null ||
+    result.stderr
+  )
+    throw new Error("Source authority rollback history cannot be inspected.", {
+      cause: result.error,
+    });
+  if (result.stdout.trim())
+    throw new Error(
+      "Committed source authority cannot be rolled back to legacy; an explicitly approved appended revision is required.",
+    );
+}
+
+/** Normal consumers accept only the complete authenticated committed packet.
+ * No caller override or candidate-authored success flag supplies authority. */
 export async function assertActiveAuthorityPublication(root) {
+  root = await realpath(root);
   await assertNoPendingAuthorityMigration(root);
   const [pkg, lock, manifest, publication] = await Promise.all([
     optionalJson(root, "package.json"),
@@ -119,9 +181,20 @@ export async function assertActiveAuthorityPublication(root) {
     publicationPresent: publication !== null,
   });
   await assertNoPendingAuthorityMigration(root);
-  if (scope === "source")
-    throw new Error(
-      "Source authority is not activated: complete committed request/review/publication validation is required; approval or matching staged bytes cannot activate it.",
-    );
+  if (scope === "source") {
+    try {
+      const { inspectCommittedSourcePublication } =
+        await import("./source-authority-records.mjs");
+      await inspectCommittedSourcePublication(root);
+      return "source";
+    } catch (cause) {
+      throw new Error(
+        "Source authority is not activated: complete committed request/review/publication validation failed.",
+        { cause },
+      );
+    }
+  }
+  await assertNoSourceRollback(root);
+  await assertNoPendingAuthorityMigration(root);
   return "legacy";
 }

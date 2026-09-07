@@ -48,6 +48,7 @@ import {
   type SupervisedExit,
 } from "./process-supervisor.js";
 import { redactSensitiveText, safeAgentEnvironment } from "./redaction.js";
+import { SOURCE_QUALIFIER_DISPATCH_ENV } from "./verification-scope.mjs";
 import {
   createDisposableVerificationClone,
   type DisposableVerificationClone,
@@ -994,6 +995,9 @@ function fixedEnvironment(
     "LOOP_VERIFY_COMMAND_ARTIFACT_DIR",
     "LOOP_TELEMETRY_PARENT_MANAGED",
     EXECUTION_PROVIDER_IDENTITY_ENV,
+    // Correlates a real full source verifier invocation with its parent. It
+    // carries no qualification result, filesystem access, or mutation permit.
+    SOURCE_QUALIFIER_DISPATCH_ENV,
     // Controller-owned adversarial probes use deliberately unmounted paths.
     "LOOP_TEST_CANARY",
     "LOOP_TEST_TARGET",

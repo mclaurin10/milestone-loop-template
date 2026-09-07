@@ -535,6 +535,21 @@ async function validateImmutableContractLock(
   baseCommit: string,
   expectedSha256?: string,
 ): Promise<string> {
+  if ((await assertActiveAuthorityPublication(repositoryRoot)) === "source") {
+    const { inspectActiveSourceContractIntegrity } =
+      await import("./source-authority-anchor.js");
+    const { anchor } =
+      await inspectActiveSourceContractIntegrity(repositoryRoot);
+    if (
+      anchor.baseCommit !== baseCommit ||
+      (expectedSha256 !== undefined &&
+        anchor.immutableContractLockSha256 !== expectedSha256)
+    )
+      throw new Error(
+        "Source commissioning anchor differs from the authenticated publication.",
+      );
+    return anchor.immutableContractLockSha256;
+  }
   const anchor = await validateCommissionedAuthorityAnchor({
     repositoryRoot,
     baseCommit,

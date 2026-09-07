@@ -472,9 +472,18 @@ export async function inspectSourceDependencies(root, artifacts) {
     captures.push({
       id,
       argv: ["pnpm", ...args],
+      cwd,
       exitCode: result.status,
       stdoutPath: `${id}.stdout.log`,
       stderrPath: `${id}.stderr.log`,
+      stdout: {
+        bytes: Buffer.byteLength(result.stdout ?? ""),
+        sha256: releaseHash(Buffer.from(result.stdout ?? "")),
+      },
+      stderr: {
+        bytes: Buffer.byteLength(result.stderr ?? ""),
+        sha256: releaseHash(Buffer.from(result.stderr ?? "")),
+      },
     });
     assertCommandPassed(result, id);
     return result.stdout;
@@ -485,7 +494,6 @@ export async function inspectSourceDependencies(root, artifacts) {
   );
   const store = (await command("store-path", ["store", "path"], root)).trim();
   assert.equal(resolve(store), resolve(modules.storeDir));
-  await command("store-integrity", ["store", "status"], root);
   const actualGraph = JSON.parse(
     await command(
       "installed-graph",
@@ -496,16 +504,38 @@ export async function inspectSourceDependencies(root, artifacts) {
   const temporary = await realpath(
     await mkdtemp(resolve(tmpdir(), "source-dependency-reference-")),
   );
+  const pristine = resolve(temporary, "pristine"),
+    reference = resolve(temporary, "built");
   try {
-    for (const path of [
-      ...manifests,
-      "pnpm-lock.yaml",
-      "pnpm-workspace.yaml",
-    ]) {
-      const target = resolve(temporary, path);
-      await mkdir(dirname(target), { recursive: true });
-      await copyFile(resolve(root, path), target);
+    for (const directory of [pristine, reference]) {
+      for (const path of [
+        ...manifests,
+        "pnpm-lock.yaml",
+        "pnpm-workspace.yaml",
+      ]) {
+        const target = resolve(directory, path);
+        await mkdir(dirname(target), { recursive: true });
+        await copyFile(resolve(root, path), target);
+      }
     }
+    // pnpm 11 store status compares installed files with the unbuilt index.
+    // Check that index against a pristine install, then independently compare
+    // normal allowed build output. Never exempt a package or ignore a failure.
+    await command(
+      "pristine-install",
+      [
+        "install",
+        "--frozen-lockfile",
+        "--offline",
+        "--ignore-scripts",
+        "--side-effects-cache=false",
+        "--package-import-method=copy",
+        "--store-dir",
+        store,
+      ],
+      pristine,
+    );
+    await command("store-integrity", ["store", "status"], pristine);
     await command(
       "reference-install",
       [
@@ -516,24 +546,24 @@ export async function inspectSourceDependencies(root, artifacts) {
         "--store-dir",
         store,
       ],
-      temporary,
+      reference,
     );
     const expectedGraph = JSON.parse(
       await command(
         "reference-graph",
         ["list", "--recursive", "--depth", "Infinity", "--json"],
-        temporary,
+        reference,
       ),
     );
     const packages = await compareInstalledDependencyGraphs(
       actualGraph,
       root,
       expectedGraph,
-      temporary,
+      reference,
       workspaceRoots,
     );
     return {
-      schemaVersion: "source-dependencies-report.v1",
+      schemaVersion: "source-dependencies-report.v2",
       status: "PASS",
       claimScope: "source-supporting-check",
       completionEligible: false,
@@ -548,6 +578,7 @@ export async function inspectSourceDependencies(root, artifacts) {
         offline: true,
         importMethod: "copy",
       },
+      references: { actual: root, pristine, built: reference },
       packages,
       captures,
     };

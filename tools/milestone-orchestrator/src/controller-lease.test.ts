@@ -292,6 +292,43 @@ async function forcedMultiprocessRace(
 }
 
 describe("controller mutation lease", () => {
+  it.each(["owner replacement", "owner deletion", "guard replacement"])(
+    "refuses a held-owner mutation check after %s",
+    async (fault) => {
+      const fixture = await leaseFixture();
+      const lease = await ControllerLease.acquire({
+        repositoryRoot: fixture.root,
+        statePath: STATE_PATH,
+        operation: "run",
+      });
+      await expect(lease.assertHeld()).resolves.toBeUndefined();
+      expect(lease.ownershipPin()).toEqual({
+        reference: LEASE_REF,
+        objectId: git(fixture.root, "rev-parse", LEASE_REF),
+      });
+      if (fault === "owner replacement")
+        writeLeaseObject(fixture.root, owner({ token: "foreign-held-owner" }));
+      else if (fault === "owner deletion")
+        git(
+          fixture.root,
+          "update-ref",
+          "-d",
+          LEASE_REF,
+          lease.ownershipPin().objectId,
+        );
+      else await writeFile(fixture.leasePath, "foreign guard bytes\n");
+      await expect(lease.assertHeld()).rejects.toThrow(
+        /lease was lost or its legacy guard changed/,
+      );
+      if (fault === "guard replacement") {
+        expect(await readFile(fixture.leasePath, "utf8")).toBe(
+          "foreign guard bytes\n",
+        );
+        await lease.release();
+      }
+    },
+  );
+
   it("grants one private-ref lease and refuses a live same-host contender", async () => {
     const fixture = await leaseFixture();
     const lease = await ControllerLease.acquire({

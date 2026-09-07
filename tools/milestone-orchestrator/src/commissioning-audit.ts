@@ -333,6 +333,10 @@ export function assertAllowedGeneration(
 ): void {
   const parsed = parseSourceGeneration(generation);
   const version = sourceScheduleGeneration(parsed.manifest, parsed.policy);
+  if (version === "source")
+    throw new Error(
+      "The approved source epoch cannot use a legacy schedule amendment as activation authority.",
+    );
   const expected = version ? expectedSourceGeneration(anchor, version) : null;
   // The committed request and ledger bind exact source text. Formatting may
   // differ for v2, but every parsed field and canonical manifest must equal
@@ -781,8 +785,11 @@ export async function inspectSourceAmendmentAudit(
 export async function assertActiveCommissioningAudit(
   root: string,
 ): Promise<void> {
-  await assertActiveAuthorityPublication(root);
+  const scope = await assertActiveAuthorityPublication(root);
   await assertNoPendingAmendment(root);
+  // The source reader has checked the real activation, complete original
+  // ledger prefix, fixed new generation and permanent publication history.
+  if (scope === "source") return;
   // Generated adopters commission a different input and retain their bootstrap
   // lifecycle. Source deletion is detected from history, not from a live ID.
   const sourceHistory = amendmentGit(

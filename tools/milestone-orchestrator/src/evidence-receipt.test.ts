@@ -3,6 +3,7 @@ import { spawnSync } from "node:child_process";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -12,6 +13,7 @@ import {
   writeManualEvidenceFailure,
   writeReceipt,
 } from "../../evidence.mjs";
+import { validateCommandReceiptDirectory } from "./verifier.js";
 
 const temporaryDirectories: string[] = [];
 afterEach(async () => {
@@ -245,4 +247,102 @@ describe("durable evidence citation matching", () => {
       },
     });
   });
+});
+
+describe("manual evidence process lifecycle", () => {
+  it.each([
+    { outcome: "success", exitCode: 0, retainsReceipts: true },
+    { outcome: "nonzero exit", exitCode: 7, retainsReceipts: false },
+    { outcome: "unfinished context", exitCode: 1, retainsReceipts: false },
+  ])(
+    "keeps listeners bounded and preserves receipt semantics for $outcome",
+    async ({ outcome, exitCode, retainsReceipts }) => {
+      const directory = await temporaryDirectory();
+      const child = spawnSync(
+        process.execPath,
+        [
+          "--input-type=module",
+          "--eval",
+          `import { mkdir, writeFile } from 'node:fs/promises';
+           import { join } from 'node:path';
+           import { evidenceContext, writeReceipt } from ${JSON.stringify(new URL("../../evidence.mjs", import.meta.url).href)};
+           const directory = process.argv[1];
+           const outcome = process.argv[2];
+           const initial = ['beforeExit', 'exit'].map(name => process.listenerCount(name));
+           for (let index = 0; index < 12; index++) {
+             process.env.LOOP_VERIFY_COMMAND_ARTIFACT_DIR = join(directory, String(index));
+             process.env.LOOP_VERIFY_STAGE_ID = 'lifecycle-fixture';
+             process.env.LOOP_VERIFY_COMMAND_ID = 'lifecycle-' + index;
+             const context = await evidenceContext('unused', 'unused');
+             await writeFile(join(context.artifactDirectory, 'report.json'), JSON.stringify({ index, status: 'PASS' }) + '\\n');
+             await writeReceipt(context, [{ id: 'actual-fixture', summary: 'Wrote the indexed fixture artifact.' }], [{ path: 'report.json', kind: 'lifecycle-report' }]);
+           }
+           if (outcome === 'unfinished context') {
+             process.env.LOOP_VERIFY_COMMAND_ARTIFACT_DIR = join(directory, 'unfinished');
+             process.env.LOOP_VERIFY_COMMAND_ID = 'lifecycle-unfinished';
+             await evidenceContext('unused', 'unused');
+           }
+           await writeFile(join(directory, 'listeners.json'), JSON.stringify({ initial, final: ['beforeExit', 'exit'].map(name => process.listenerCount(name)) }));
+           if (outcome === 'nonzero exit') process.exitCode = 7;`,
+          directory,
+          outcome,
+        ],
+        {
+          cwd: fileURLToPath(new URL("../../../", import.meta.url)),
+          env: { ...process.env },
+          encoding: "utf8",
+          windowsHide: true,
+          timeout: 90_000,
+          maxBuffer: 2 * 1024 * 1024,
+        },
+      );
+      expect(child.error).toBeUndefined();
+      expect(child.signal).toBeNull();
+      expect(child.status).toBe(exitCode);
+      const listeners = JSON.parse(
+        await readFile(join(directory, "listeners.json"), "utf8"),
+      ) as { initial: number[]; final: number[] };
+      expect(
+        listeners.final.map(
+          (value, index) => value - listeners.initial[index]!,
+        ),
+      ).toEqual([1, 1]);
+      expect(child.stderr).not.toContain("MaxListenersExceededWarning");
+      for (let index = 0; index < 12; index++) {
+        const artifactDirectory = join(directory, String(index));
+        expect(existsSync(join(artifactDirectory, "result.json"))).toBe(
+          retainsReceipts,
+        );
+        const manifest = JSON.parse(
+          await readFile(join(artifactDirectory, "manifest.json"), "utf8"),
+        ) as { status: string; receipt: unknown };
+        if (retainsReceipts) {
+          expect(manifest.status).toBe("PASS");
+          await validateCommandReceiptDirectory({
+            directory: artifactDirectory,
+            expectedStageId: "lifecycle-fixture",
+            expectedCommandId: `lifecycle-${index}`,
+            requiredKinds: ["lifecycle-report"],
+          });
+        } else {
+          expect(manifest.status).not.toBe("PASS");
+          expect(manifest.receipt).toBeNull();
+        }
+      }
+      if (outcome === "unfinished context") {
+        expect(existsSync(join(directory, "unfinished", "result.json"))).toBe(
+          false,
+        );
+        expect(
+          JSON.parse(
+            await readFile(
+              join(directory, "unfinished", "manifest.json"),
+              "utf8",
+            ),
+          ),
+        ).toMatchObject({ status: "ERROR", receipt: null });
+      }
+    },
+    100_000,
+  );
 });

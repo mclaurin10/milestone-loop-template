@@ -21,7 +21,15 @@ import {
 import { validateCommissionedAuthorityAnchor } from "../tools/milestone-orchestrator/src/authority-anchor.ts";
 import { evaluateContractIntegrity } from "../tools/milestone-orchestrator/src/contract-integrity.ts";
 import { assertActiveAuthorityPublication } from "../tools/milestone-orchestrator/src/authority-publication.mjs";
-import { assertVerificationResultScope } from "../tools/milestone-orchestrator/src/verification-scope.mjs";
+import {
+  assertVerificationResultScope,
+  SOURCE_AGGREGATE_SCHEMA_VERSION,
+  SOURCE_VERIFICATION_STAGES,
+  SOURCE_QUALIFIER_DISPATCH_ENV,
+  createSourceQualifierDispatch,
+  inspectSourceQualifierDispatch,
+  sourceVerificationScope,
+} from "../tools/milestone-orchestrator/src/verification-scope.mjs";
 import {
   EXECUTION_PROVIDER_IDENTITY_ENV,
   decodeExecutionProviderIdentity,
@@ -397,11 +405,13 @@ not autonomous readiness. Missing prerequisites, evidence receipts, or scripts
 are non-passing. Results are written beneath artifacts/<run-id>/.`);
 }
 
-function printStageList(profileId = undefined) {
+function printStageList(profileId = undefined, activeScope = "legacy") {
   const profiles =
-    profileId === undefined
-      ? Object.values(PROFILES)
-      : [resolveProfile(profileId)];
+    activeScope === "source"
+      ? [sourceProfile]
+      : profileId === undefined
+        ? Object.values(PROFILES)
+        : [resolveProfile(profileId)];
   for (const profile of profiles) {
     console.log(`${profile.id} - ${profile.name}`);
     for (const stage of profile.stages) {
@@ -425,6 +435,17 @@ function resolveProfile(profileId) {
   }
   return profile;
 }
+
+const sourceProfile = Object.freeze({
+  id: "readiness",
+  name: "Approved orchestrator source qualification",
+  completionClaim: "source_machine_qualified_for_human_acceptance",
+  autonomousReadinessEquivalent: false,
+  stages: SOURCE_VERIFICATION_STAGES.map((stage) => ({
+    ...stage,
+    ...(stage.id === "environment" ? { kind: "internal" } : {}),
+  })),
+});
 
 function defaultRunId() {
   const timestamp = new Date()
@@ -1247,12 +1268,20 @@ async function evaluateScriptStage(
 ) {
   const started = Date.now();
   const checks =
-    stage.kind === "contract"
-      ? await evaluateContractIntegrity({
-          repositoryRoot,
-          validateAuthorityAnchor: validateCommissionedAuthorityAnchor,
-        })
-      : [];
+    stage.kind === "source-contract"
+      ? [
+          ...(
+            await (
+              await import("../tools/milestone-orchestrator/src/source-authority-anchor.ts")
+            ).inspectActiveSourceContractIntegrity(repositoryRoot)
+          ).checks,
+        ]
+      : stage.kind === "contract"
+        ? await evaluateContractIntegrity({
+            repositoryRoot,
+            validateAuthorityAnchor: validateCommissionedAuthorityAnchor,
+          })
+        : [];
   const commands = [];
   for (const [index, scriptName] of stage.scripts.entries()) {
     commands.push(
@@ -1267,6 +1296,14 @@ async function evaluateScriptStage(
     );
   }
   checks.push(...requiredArtifactChecks(stage, commands));
+  if (stage.id === "source-acceptance")
+    checks.push(
+      check(
+        "source-qualification-authentication",
+        STATUS.NOT_READY,
+        "The complete authenticated native-platform source qualifier is not implemented. A dispatch identity or candidate receipt cannot establish this gate.",
+      ),
+    );
   const statuses = [
     ...checks.map((item) => item.status),
     ...commands.map((item) => item.status),
@@ -1357,14 +1394,23 @@ async function loadPackageJson() {
 }
 
 async function runVerification(options) {
-  await assertActiveAuthorityPublication(repositoryRoot);
+  const activeScope = await assertActiveAuthorityPublication(repositoryRoot);
   const packageLoad = await loadPackageJson();
   const { packageJson } = packageLoad;
   const configuredProfileId =
     packageJson?.milestoneLoop?.verification?.defaultProfile;
-  const profile = resolveProfile(
-    options.profileId ?? configuredProfileId ?? "bootstrap",
-  );
+  if (
+    activeScope === "source" &&
+    options.profileId !== undefined &&
+    options.profileId !== "readiness"
+  )
+    throw new Error(
+      "The approved source epoch cannot select a legacy or weaker profile.",
+    );
+  const profile =
+    activeScope === "source"
+      ? sourceProfile
+      : resolveProfile(options.profileId ?? configuredProfileId ?? "bootstrap");
   const fullRun = options.stageIds.length === 0;
   const selectedIds =
     options.stageIds.length > 0
@@ -1391,6 +1437,26 @@ async function runVerification(options) {
   const executionProvider = await executionProviderForRun();
   const pnpmVersion = await detectPnpmVersion();
   const candidate = await collectCandidateIdentity(packageJson, pnpmVersion);
+  const qualifierDispatch =
+    activeScope === "source" && fullRun
+      ? inspectSourceQualifierDispatch(
+          process.env[SOURCE_QUALIFIER_DISPATCH_ENV] ??
+            createSourceQualifierDispatch(runId, candidate, executionProvider),
+          candidate,
+          executionProvider,
+        )
+      : null;
+  const scope =
+    activeScope === "source"
+      ? sourceVerificationScope(
+          candidate,
+          fullRun ? "full-source-qualification" : "candidate-support",
+          qualifierDispatch?.qualifierRun ?? null,
+        )
+      : null;
+  const resultSchemaVersion = scope
+    ? SOURCE_AGGREGATE_SCHEMA_VERSION
+    : RESULT_SCHEMA_VERSION;
   const profileResult = {
     id: profile.id,
     name: profile.name,
@@ -1399,7 +1465,8 @@ async function runVerification(options) {
     autonomousReadinessEquivalent: profile.autonomousReadinessEquivalent,
   };
   const runManifest = {
-    schemaVersion: RESULT_SCHEMA_VERSION,
+    schemaVersion: resultSchemaVersion,
+    ...(scope ? { scope } : {}),
     runId,
     state: "RUNNING",
     startedAt: startedAt.toISOString(),
@@ -1500,7 +1567,8 @@ async function runVerification(options) {
     ]),
   );
   const result = {
-    schemaVersion: RESULT_SCHEMA_VERSION,
+    schemaVersion: resultSchemaVersion,
+    ...(scope ? { scope } : {}),
     runId,
     status,
     exitCode,
@@ -1520,7 +1588,12 @@ async function runVerification(options) {
     stages,
   };
 
-  assertVerificationResultScope(result, { kind: "aggregate", scope: "legacy" });
+  assertVerificationResultScope(
+    result,
+    scope
+      ? { kind: "aggregate", scope: "source", ...scope }
+      : { kind: "aggregate", scope: "legacy" },
+  );
   await atomicWriteJson(resolve(artifactRoot, "result.json"), result);
   await writeFile(
     resolve(artifactRoot, "summary.md"),
@@ -1560,7 +1633,10 @@ async function main() {
     return 0;
   }
   if (options.list) {
-    printStageList(options.profileId);
+    printStageList(
+      options.profileId,
+      await assertActiveAuthorityPublication(repositoryRoot),
+    );
     return 0;
   }
 
